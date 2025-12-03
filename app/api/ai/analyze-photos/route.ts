@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
               },
               // Images dans l'ordre référencé dans le prompt
               ...validImages.map((img) => ({
-                type: "input_image",
+                type: "image",
                 source: {
                   type: "base64",
                   media_type: "image/jpeg",
