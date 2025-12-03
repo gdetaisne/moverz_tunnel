@@ -1824,8 +1824,22 @@ function DevisGratuitsPageInner() {
                     );
 
                     const pendingFiles = localUploadFiles
-                      .filter((f) => f.status === "pending" || f.status === "uploading")
+                      .filter((f) => f.status === "pending")
                       .map((f) => f.file);
+
+                    // Si aucune nouvelle photo à envoyer mais qu'on a déjà un inventaire,
+                    // on ne relance pas l'upload ni l'analyse.
+                    if (pendingFiles.length === 0 && analysisRooms) {
+                      setIsUploadingPhotos(false);
+                      setIsAnalyzing(false);
+                      return;
+                    }
+
+                    if (pendingFiles.length === 0) {
+                      throw new Error(
+                        "Aucune nouvelle photo à analyser. Ajoutez des photos puis réessayez."
+                      );
+                    }
 
                     const result = await uploadLeadPhotos(leadId, pendingFiles);
 
