@@ -958,8 +958,8 @@ function DevisGratuitsPageInner() {
                 </div>
               </div>
 
-              {/* Choix niveau de confort */}
-              <div className="grid gap-3 sm:grid-cols-3">
+              {/* Choix niveau de confort (swipe horizontal sur mobile) */}
+              <div className="flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 sm:overflow-visible">
                 {(["ECONOMIQUE", "STANDARD", "PREMIUM"] as FormuleType[]).map(
                   (formule) => {
                     const isActive = form.formule === formule;
@@ -1003,7 +1003,7 @@ function DevisGratuitsPageInner() {
                         type="button"
                         onClick={() => updateField("formule", formule)}
                         className={[
-                          "flex flex-col gap-2 rounded-2xl border p-3 text-left text-xs transition",
+                          "flex min-w-[78%] flex-col gap-2 rounded-2xl border p-3 text-left text-xs transition sm:min-w-0",
                           isActive
                             ? "border-sky-400 bg-sky-500/15 shadow-sm shadow-sky-500/30"
                             : "border-slate-700 bg-slate-950/60 hover:border-slate-500",
