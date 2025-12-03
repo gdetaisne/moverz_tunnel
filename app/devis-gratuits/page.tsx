@@ -703,46 +703,6 @@ function DevisGratuitsPageInner() {
               />
             </div>
 
-            {analysisRooms && (
-              <div className="space-y-3 rounded-2xl bg-slate-950/80 p-3 text-xs text-slate-200 ring-1 ring-slate-800">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Aperçu de votre inventaire par pièce
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {analysisRooms.map((room) => (
-                    <div
-                      key={room.roomId}
-                      className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-3"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-semibold text-slate-50">
-                          {room.label}
-                        </p>
-                        <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
-                          {room.items.reduce((acc, it) => acc + it.quantity, 0)}{" "}
-                          éléments
-                        </span>
-                      </div>
-                      <ul className="space-y-1 text-[11px] text-slate-300">
-                        {room.items.map((item, idx) => (
-                          <li key={`${room.roomId}-${idx}`} className="flex justify-between gap-2">
-                            <span className="truncate">
-                              {item.quantity}× {item.label}
-                            </span>
-                            {item.flags?.fragile && (
-                              <span className="text-[10px] text-amber-300">
-                                fragile
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {error && (
               <p className="text-sm text-rose-400" role="alert">
                 {error}
@@ -1793,6 +1753,49 @@ function DevisGratuitsPageInner() {
                 </div>
               )}
             </div>
+
+            {analysisRooms && (
+              <div className="space-y-3 rounded-2xl bg-slate-950/80 p-3 text-xs text-slate-200 ring-1 ring-slate-800">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Aperçu de votre inventaire par pièce
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {analysisRooms.map((room) => (
+                    <div
+                      key={room.roomId}
+                      className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-slate-50">
+                          {room.label}
+                        </p>
+                        <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
+                          {room.items.reduce((acc, it) => acc + it.quantity, 0)}{" "}
+                          éléments
+                        </span>
+                      </div>
+                      <ul className="space-y-1 text-[11px] text-slate-300">
+                        {room.items.map((item, idx) => (
+                          <li
+                            key={`${room.roomId}-${idx}`}
+                            className="flex justify-between gap-2"
+                          >
+                            <span className="truncate">
+                              {item.quantity}× {item.label}
+                            </span>
+                            {item.flags?.fragile && (
+                              <span className="text-[10px] text-amber-300">
+                                fragile
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {error && (
               <p className="text-sm text-rose-400" role="alert">
