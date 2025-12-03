@@ -234,6 +234,7 @@ function DevisGratuitsPageInner() {
   const src = searchParams.get("src") ?? undefined;
 
   const [currentStep, setCurrentStep] = useState<StepId>(1);
+  const [maxReachedStep, setMaxReachedStep] = useState<StepId>(1);
   const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE);
   const [leadId, setLeadId] = useState<string | null>(null);
   const [linkingToken, setLinkingToken] = useState<string | null>(null);
@@ -258,6 +259,11 @@ function DevisGratuitsPageInner() {
   const [photoFlowChoice, setPhotoFlowChoice] = useState<
     "none" | "photos_now" | "whatsapp_later"
   >("none");
+
+  const goToStep = (next: StepId) => {
+    setCurrentStep(next);
+    setMaxReachedStep((prev) => (next > prev ? next : prev));
+  };
 
   const distanceKm = useMemo(
     () => estimateDistanceKm(form.originPostalCode, form.destinationPostalCode),
@@ -341,6 +347,7 @@ function DevisGratuitsPageInner() {
       setForm((prev) => ({ ...prev, ...parsed.form }));
       if (parsed.currentStep && parsed.currentStep >= 1 && parsed.currentStep <= 4) {
         setCurrentStep(parsed.currentStep);
+        setMaxReachedStep(parsed.currentStep);
       }
       if (parsed.leadId) {
         setLeadId(parsed.leadId);
@@ -751,7 +758,7 @@ function DevisGratuitsPageInner() {
 
       const { id } = await createLead(payload);
       setLeadId(id);
-      setCurrentStep(2);
+      goToStep(2);
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -938,7 +945,7 @@ function DevisGratuitsPageInner() {
             const isActive = step.id === currentStep;
             const isCompleted = step.id < currentStep;
             const isLast = index === STEPS.length - 1;
-            const canGoToStep = step.id < currentStep;
+            const canGoToStep = step.id <= maxReachedStep;
 
             return (
               <div
@@ -948,7 +955,7 @@ function DevisGratuitsPageInner() {
                 <button
                   type="button"
                   disabled={!canGoToStep}
-                  onClick={canGoToStep ? () => setCurrentStep(step.id as StepId) : undefined}
+                  onClick={canGoToStep ? () => goToStep(step.id as StepId) : undefined}
                   className="flex flex-col items-center gap-1 text-center disabled:cursor-default"
                 >
                   <div
@@ -1078,7 +1085,7 @@ function DevisGratuitsPageInner() {
             className="space-y-5"
             onSubmit={(e) => {
               e.preventDefault();
-              setCurrentStep(3);
+              goToStep(3);
             }}
           >
             {/* Bloc départ : accordéon avec résumé + statut de complétion */}
@@ -1425,7 +1432,7 @@ function DevisGratuitsPageInner() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setCurrentStep(1)}
+                onClick={() => goToStep(1)}
                 className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-400"
               >
                 Retour
@@ -1877,7 +1884,7 @@ function DevisGratuitsPageInner() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setCurrentStep(2)}
+                onClick={() => goToStep(2)}
                 className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-400"
               >
                 Modifier
