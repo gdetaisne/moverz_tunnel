@@ -3,7 +3,6 @@ import { promises as fs } from "fs";
 import path from "path";
 import { nanoid } from "nanoid";
 import sharp from "sharp";
-import { prisma } from "@/lib/db";
 
 // Images uniquement (plus de vidéos)
 const ALLOWED_MIME_TYPES = [
@@ -100,26 +99,14 @@ export async function POST(req: NextRequest) {
 
         await fs.writeFile(diskPath, normalized);
 
-        // Création de l'entrée LeadPhoto liée au lead
-        const photo = await prisma.leadPhoto.create({
-          data: {
-            leadId,
-            storageKey: key,
-            url: null,
-            originalFilename,
-            mimeType: "image/jpeg",
-            sizeBytes: normalized.length,
-            // analysisStatus par défaut
-          },
-        });
-
         success.push({
-          id: photo.id,
-          url: photo.url,
-          storageKey: photo.storageKey,
-          originalFilename: photo.originalFilename,
-          mimeType: photo.mimeType,
-          sizeBytes: photo.sizeBytes,
+          // Identifiant technique local (non stocké en base pour l’instant)
+          id: nanoid(),
+          url: null,
+          storageKey: key,
+          originalFilename,
+          mimeType: "image/jpeg",
+          sizeBytes: normalized.length,
         });
       } catch (error) {
         console.error("❌ Erreur d'upload fichier:", {
