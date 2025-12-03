@@ -1522,6 +1522,40 @@ function DevisGratuitsPageInner() {
               <h2 className="text-lg font-semibold text-slate-50">
                 Pourquoi ajouter des photos ?
               </h2>
+              {/* Schéma visuel simple : photos → IA → inventaire + déclaration */}
+              <div className="space-y-1 rounded-2xl bg-slate-950/80 p-3 ring-1 ring-slate-800/70">
+                <p className="text-[11px] font-medium text-slate-300">
+                  Ce qui se passe derrière en 2 minutes :
+                </p>
+                <div className="flex flex-col items-stretch gap-2 text-[11px] text-slate-100 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-1 items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/20 text-[12px]">
+                      📷
+                    </div>
+                    <span className="font-medium">Vos photos du logement</span>
+                  </div>
+                  <div className="hidden items-center text-slate-500 sm:flex">
+                    ➜
+                  </div>
+                  <div className="flex flex-1 items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 text-[12px]">
+                      🤖
+                    </div>
+                    <span className="font-medium">Traitement intelligent Moverz</span>
+                  </div>
+                  <div className="hidden items-center text-slate-500 sm:flex">
+                    ➜
+                  </div>
+                  <div className="flex flex-1 items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/20 text-[12px]">
+                      📋
+                    </div>
+                    <span className="font-medium">
+                      Inventaire détaillé + déclaration de valeur prête
+                    </span>
+                  </div>
+                </div>
+              </div>
               <p className="text-xs text-slate-300">
                 En 2 minutes, vos photos nous donnent tout ce qu’il faut :
               </p>
