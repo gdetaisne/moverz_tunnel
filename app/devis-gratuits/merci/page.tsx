@@ -1,0 +1,26 @@
+'use client';
+
+export default function MerciPage() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center text-center">
+      <div className="w-full max-w-md space-y-5 rounded-3xl bg-slate-900/80 p-6 shadow-lg ring-1 ring-slate-800 sm:p-8">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-400 text-slate-950 shadow-[0_0_0_6px_rgba(16,185,129,0.25)]">
+          <span className="text-2xl">✓</span>
+        </div>
+        <h1 className="text-2xl font-semibold text-slate-50 sm:text-3xl">
+          Merci pour votre demande !
+        </h1>
+        <p className="text-sm text-slate-300 sm:text-base">
+          Votre dossier de déménagement a bien été créé. Vous allez recevoir un
+          email pour confirmer votre adresse – sans cette étape, nous ne
+          pourrons pas lancer la recherche de devis.
+        </p>
+        <p className="text-xs text-slate-400 sm:text-sm">
+          Vous pouvez fermer cette page une fois la confirmation effectuée.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+

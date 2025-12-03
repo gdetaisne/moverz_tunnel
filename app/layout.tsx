@@ -1,0 +1,24 @@
+import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Moverz – Tunnel de demande de devis",
+  description:
+    "Tunnel centralisé de demande de devis déménagement Moverz, pensé mobile first avec option d’envoi de photos par WhatsApp.",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="fr">
+      <body className="min-h-screen bg-slate-950 text-slate-50 antialiased">
+        {children}
+      </body>
+    </html>
+  );
+}
+
+

@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model LeadTunnel {
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Canal principal d’entrée
+  primaryChannel    String   // 'web' | 'whatsapp'
+
+  // Données contact
+  firstName         String?
+  lastName          String?
+  email             String?
+  phone             String?
+
+  // Suivi de progression
+  formCompletionStatus String @default("none")   // 'none' | 'partial' | 'complete'
+  photoStatus          String @default("none")   // 'none' | 'planned_whatsapp' | 'received_whatsapp' | 'received_web'
+
+  // Liaison Web ↔ WhatsApp
+  linkingToken      String? @unique
+  whatsappThreadId  String?
+
+  // Source marketing / site d’origine
+  source            String?
+
+  // Champs du formulaire contact & projet
+  originPostalCode      String?
+  originCity            String?
+  originAddress         String?
+  destinationPostalCode String?
+  destinationCity       String?
+  destinationAddress    String?
+  movingDate            String? // ISO date string
+  details               String? // Champ "détails utiles"
+
+  // Estimation volume & formule choisie
+  housingType      String? // 'studio' | 't1' | 't2' | 't3' | 't4' | 't5' | 'house'
+  surfaceM2        Int?
+  density          String? // 'light' | 'normal' | 'dense'
+  formule          String? // 'ECONOMIQUE' | 'STANDARD' | 'PREMIUM'
+  volumeM3         Float?
+  distanceKm       Float?
+  priceMin         Int?
+  priceMax         Int?
+}
+
+
