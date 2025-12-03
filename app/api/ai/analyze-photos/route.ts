@@ -19,6 +19,10 @@ const CLAUDE_MODEL =
 // Même dossier que pour la route d'upload
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 
+// Pour garder la requête IA rapide et légère, on limite le nombre
+// d'images envoyées à Claude (les autres restent utilisables côté humain).
+const MAX_PHOTOS_FOR_AI = Number(process.env.AI_MAX_PHOTOS ?? "6");
+
 export async function POST(req: NextRequest) {
   try {
     const json = (await req.json().catch(() => ({}))) as AnalyzeRequestBody;
@@ -41,9 +45,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ rooms: fallbackRooms });
     }
 
+    // On ne prend que les premières photos pour l'IA (limite dure côté serveur)
+    const photosForAi = json.photos.slice(0, MAX_PHOTOS_FOR_AI);
+
     // Charger les images normalisées depuis le disque
     const loadedImages = await Promise.all(
-      json.photos.map(async (photo, index) => {
+      photosForAi.map(async (photo, index) => {
         const fullPath = path.join(UPLOAD_DIR, photo.storageKey);
         try {
           const buffer = await fs.readFile(fullPath);
