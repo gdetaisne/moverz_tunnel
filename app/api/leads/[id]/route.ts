@@ -66,7 +66,8 @@ export async function PATCH(
     const json = await req.json().catch(() => ({}));
     const parsed = updateLeadSchema.parse(json);
 
-    const { ensureLinkingToken, ...updatable } = parsed;
+    const { ensureLinkingToken, photosStatus: nextPhotosStatus, ...updatable } =
+      parsed;
 
     const existing = await prisma.leadTunnel.findUnique({
       where: { id },
@@ -93,17 +94,26 @@ export async function PATCH(
         formCompletionStatus:
           updatable.formCompletionStatus ?? existing.formCompletionStatus,
         photoStatus: updatable.photoStatus ?? existing.photoStatus,
-        photosStatus: updatable.photosStatus ?? existing.photosStatus,
         linkingToken,
       },
     });
+
+    // ⚠️ Contournement : Prisma ne connaît pas encore le champ photosStatus
+    // dans le client généré, donc on le met à jour via une requête brute.
+    if (nextPhotosStatus && nextPhotosStatus !== existing.photosStatus) {
+      await prisma.$executeRawUnsafe(
+        'UPDATE "LeadTunnel" SET "photosStatus" = ? WHERE "id" = ?',
+        nextPhotosStatus,
+        id
+      );
+    }
 
     return NextResponse.json({
       id: updated.id,
       linkingToken: updated.linkingToken,
       formCompletionStatus: updated.formCompletionStatus,
       photoStatus: updated.photoStatus,
-      photosStatus: updated.photosStatus,
+      photosStatus: nextPhotosStatus ?? existing.photosStatus,
     });
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
