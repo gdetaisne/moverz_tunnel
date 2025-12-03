@@ -55,6 +55,7 @@ model LeadTunnel {
 
   photos           LeadPhoto[]
   rooms            LeadRoom[]
+  analysisRuns     LeadAnalysisRun[]
 }
 
 model LeadPhoto {
@@ -78,7 +79,14 @@ model LeadPhoto {
   sizeBytes        Int
 
   // Préparation future pour l'analyse IA
-  analysisStatus   String   @default("NONE") // 'NONE' | 'PENDING' | 'DONE' | 'ERROR'
+  // analysisStatus : pipeline global (ex: inventaire complet)
+  analysisStatus           String   @default("NONE") // 'NONE' | 'PENDING' | 'DONE' | 'ERROR'
+
+  // Étape A – classification par pièce (Process 2)
+  roomClassificationStatus String   @default("NONE") // 'NONE' | 'PENDING' | 'DONE' | 'AMBIGU' | 'ERROR'
+  roomGuessPrimary         String?
+  roomGuessConfidence      Float?
+  roomGuessAlternatives    Json?
 }
 
 model LeadRoom {
@@ -122,5 +130,25 @@ model LeadRoomItem {
   isHighValue         Boolean @default(false)
   requiresDisassembly Boolean @default(false)
 }
+
+model LeadAnalysisRun {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+
+  leadId      String
+  lead        LeadTunnel @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  // ex: 'PROCESS1', 'PROCESS2'
+  processType String
+  model       String
+
+  photosCount Int
+  totalMs     Int
+
+  // Évaluation manuelle de la qualité de l'inventaire (1–5 ou 1–10)
+  qualityScore Int?
+  qualityNotes String?
+}
+
 
 

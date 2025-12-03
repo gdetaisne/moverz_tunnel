@@ -13,8 +13,17 @@ interface AnalyzeRequestBody {
   photos: AnalyzePhotoInput[];
 }
 
-const CLAUDE_MODEL =
+interface AnalysisProcessPayload {
+  model: string;
+  rooms: any[];
+}
+
+const CLAUDE_MODEL_PRIMARY =
   process.env.CLAUDE_MODEL ?? "claude-3-5-haiku-20241022";
+
+// Modèle alternatif pour comparaison (process 2)
+const CLAUDE_MODEL_SECONDARY =
+  process.env.CLAUDE_MODEL_ALT ?? "claude-3-5-sonnet-20241022";
 
 // Même dossier que pour la route d'upload
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
@@ -42,7 +51,11 @@ export async function POST(req: NextRequest) {
         "[AI] CLAUDE_API_KEY non défini – utilisation du fallback local d'inventaire."
       );
       const fallbackRooms = createFallbackAnalysis(json.photos);
-      return NextResponse.json({ rooms: fallbackRooms });
+      return NextResponse.json({
+        rooms: fallbackRooms,
+        process1: { model: "fallback", rooms: fallbackRooms },
+        process2: { model: "fallback", rooms: fallbackRooms },
+      });
     }
 
     // On ne prend que les premières photos pour l'IA (limite dure côté serveur)
@@ -77,13 +90,74 @@ export async function POST(req: NextRequest) {
         "[AI] Aucune image exploitable pour l'analyse – fallback local utilisé."
       );
       const fallbackRooms = createFallbackAnalysis(json.photos);
-      return NextResponse.json({ rooms: fallbackRooms });
+      return NextResponse.json({
+        rooms: fallbackRooms,
+        process1: { model: "fallback", rooms: fallbackRooms },
+        process2: { model: "fallback", rooms: fallbackRooms },
+      });
     }
 
     const prompt = buildPrompt(validImages.map((i) => i.photo));
 
+    // On lance deux processus d'analyse en parallèle pour comparer 2 modèles / stratégies.
+    const [primaryResult, secondaryResult] = await Promise.allSettled([
+      callClaudeForRooms(
+        CLAUDE_MODEL_PRIMARY,
+        validImages,
+        prompt,
+        json.photos
+      ),
+      callClaudeForRooms(
+        CLAUDE_MODEL_SECONDARY,
+        validImages,
+        prompt,
+        json.photos
+      ),
+    ]);
+
+    const fallbackRooms = createFallbackAnalysis(json.photos);
+
+    const process1: AnalysisProcessPayload = (() => {
+      if (primaryResult.status === "fulfilled" && primaryResult.value) {
+        return primaryResult.value;
+      }
+      return { model: CLAUDE_MODEL_PRIMARY, rooms: fallbackRooms };
+    })();
+
+    const process2: AnalysisProcessPayload = (() => {
+      if (secondaryResult.status === "fulfilled" && secondaryResult.value) {
+        return secondaryResult.value;
+      }
+      return { model: CLAUDE_MODEL_SECONDARY, rooms: fallbackRooms };
+    })();
+
+    // Pour compatibilité, on garde `rooms` = résultat du process 1
+    return NextResponse.json({
+      rooms: process1.rooms,
+      process1,
+      process2,
+    });
+  } catch (error) {
+    console.error("❌ Erreur POST /api/ai/analyze-photos:", error);
+    const fallbackRooms = createFallbackAnalysis([]);
+    return NextResponse.json({
+      rooms: fallbackRooms,
+      process1: { model: CLAUDE_MODEL_PRIMARY, rooms: fallbackRooms },
+      process2: { model: CLAUDE_MODEL_SECONDARY, rooms: fallbackRooms },
+      error: "Erreur interne lors de l'analyse.",
+    });
+  }
+}
+
+async function callClaudeForRooms(
+  model: string,
+  validImages: { photo: AnalyzePhotoInput; base64: string; index: number }[],
+  prompt: string,
+  allPhotos: AnalyzePhotoInput[]
+): Promise<AnalysisProcessPayload | null> {
+  try {
     console.log("[AI] Appel Claude", {
-      model: CLAUDE_MODEL,
+      processModel: model,
       photos: validImages.length,
     });
 
@@ -95,8 +169,8 @@ export async function POST(req: NextRequest) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: CLAUDE_MODEL,
-        max_tokens: 1200,
+        model,
+        max_tokens: 900,
         temperature: 0.2,
         messages: [
           {
@@ -122,9 +196,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (!res.ok) {
-      console.error("❌ Erreur appel Claude:", await res.text());
-      const fallbackRooms = createFallbackAnalysis(json.photos);
-      return NextResponse.json({ rooms: fallbackRooms });
+      console.error(`❌ Erreur appel Claude (${model}):`, await res.text());
+      return null;
     }
 
     const data = (await res.json()) as any;
@@ -134,24 +207,24 @@ export async function POST(req: NextRequest) {
     try {
       parsed = JSON.parse(text);
     } catch {
-      console.error("❌ Réponse Claude non JSON, fallback utilisé:", text);
-      const fallbackRooms = createFallbackAnalysis(json.photos);
-      return NextResponse.json({ rooms: fallbackRooms });
+      console.error(
+        `❌ Réponse Claude non JSON pour le modèle ${model}, fallback utilisé:`,
+        text
+      );
+      return null;
     }
 
     if (!parsed || !Array.isArray(parsed.rooms)) {
-      const fallbackRooms = createFallbackAnalysis(json.photos);
-      return NextResponse.json({ rooms: fallbackRooms });
+      console.error(
+        `❌ Réponse Claude JSON invalide (pas de rooms) pour le modèle ${model}`
+      );
+      return null;
     }
 
-    return NextResponse.json({ rooms: parsed.rooms });
+    return { model, rooms: parsed.rooms };
   } catch (error) {
-    console.error("❌ Erreur POST /api/ai/analyze-photos:", error);
-    const fallbackRooms = createFallbackAnalysis([]);
-    return NextResponse.json(
-      { rooms: fallbackRooms, error: "Erreur interne lors de l'analyse." },
-      { status: 500 }
-    );
+    console.error(`❌ Exception lors de l'appel Claude (${model}):`, error);
+    return null;
   }
 }
 

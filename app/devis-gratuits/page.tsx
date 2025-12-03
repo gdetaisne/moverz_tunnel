@@ -117,6 +117,7 @@ interface LocalUploadFile {
   status: UploadStatus;
   error?: string;
   previewUrl: string;
+  photoId?: string;
 }
 
 interface AnalyzedItem {
@@ -137,6 +138,27 @@ interface AnalyzedRoom {
   label: string;
   photoIds: string[];
   items: AnalyzedItem[];
+}
+
+interface AnalysisProcess {
+  id: "process1" | "process2";
+  label: string;
+  model: string;
+  rooms: AnalyzedRoom[];
+}
+
+interface Process2InventoryRow {
+  roomType: string;
+  roomLabel: string;
+  itemLabel: string;
+  quantity: number;
+}
+
+function compactModelName(model?: string): string {
+  if (!model) return "modèle IA";
+  if (model.startsWith("claude-3-5-haiku")) return "Claude 3.5 Haiku";
+  if (model.startsWith("claude-3-5-sonnet")) return "Claude 3.5 Sonnet";
+  return model;
 }
 
 const INITIAL_FORM_STATE: FormState = {
@@ -214,10 +236,17 @@ function DevisGratuitsPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
-  const [analysisRooms, setAnalysisRooms] = useState<AnalyzedRoom[] | null>(null);
+  const [analysisProcesses, setAnalysisProcesses] = useState<AnalysisProcess[] | null>(
+    null
+  );
+  const [process2Inventory, setProcess2Inventory] = useState<Process2InventoryRow[] | null>(
+    null
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isOriginOpen, setIsOriginOpen] = useState(true);
   const [isDestinationOpen, setIsDestinationOpen] = useState(false);
+  const [analysisStartedAt, setAnalysisStartedAt] = useState<number | null>(null);
+  const [analysisElapsedMs, setAnalysisElapsedMs] = useState<number>(0);
 
   const distanceKm = useMemo(
     () => estimateDistanceKm(form.originPostalCode, form.destinationPostalCode),
@@ -407,7 +436,10 @@ function DevisGratuitsPageInner() {
     });
     setIsUploadingPhotos(false);
     setIsAnalyzing(false);
-    setAnalysisRooms(null);
+    setAnalysisProcesses(null);
+    setProcess2Inventory(null);
+    setAnalysisStartedAt(null);
+    setAnalysisElapsedMs(0);
   };
 
   const isOriginComplete =
@@ -481,6 +513,21 @@ function DevisGratuitsPageInner() {
       setIsSubmitting(false);
     }
   };
+
+  // Chronomètre simple pour l'analyse Process 2
+  useEffect(() => {
+    if (!analysisStartedAt) return;
+    if (!isUploadingPhotos && !isAnalyzing) return;
+    if (typeof window === "undefined") return;
+
+    const id = window.setInterval(() => {
+      setAnalysisElapsedMs(Date.now() - analysisStartedAt);
+    }, 200);
+
+    return () => {
+      window.clearInterval(id);
+    };
+  }, [analysisStartedAt, isUploadingPhotos, isAnalyzing]);
 
   const handleSubmitStep3 = async (e: FormEvent) => {
     e.preventDefault();
@@ -1754,45 +1801,133 @@ function DevisGratuitsPageInner() {
               )}
             </div>
 
-            {analysisRooms && (
+            {analysisProcesses && (
               <div className="space-y-3 rounded-2xl bg-slate-950/80 p-3 text-xs text-slate-200 ring-1 ring-slate-800">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                   Aperçu de votre inventaire par pièce
                 </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {analysisRooms.map((room) => (
-                    <div
-                      key={room.roomId}
-                      className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-3"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-semibold text-slate-50">
-                          {room.label}
-                        </p>
-                        <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
-                          {room.items.reduce((acc, it) => acc + it.quantity, 0)}{" "}
-                          éléments
-                        </span>
+                {analysisStartedAt && (
+                  <p className="text-[11px] text-slate-400">
+                    Temps d’analyse{" "}
+                    {isUploadingPhotos || isAnalyzing ? "en cours" : "total"} :{" "}
+                    {(analysisElapsedMs / 1000).toFixed(1)} s
+                  </p>
+                )}
+                <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr),minmax(0,1.1fr)]">
+                  {/* Colonne gauche : cartes Process 2 avec vignettes par pièce */}
+                  <div className="space-y-3">
+                    {analysisProcesses.map((proc) => (
+                      <div
+                        key={proc.id}
+                        className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-3"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="space-y-0.5">
+                            <p className="text-[11px] font-semibold text-slate-50">
+                              {proc.label}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              Modèle : {proc.model}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
+                            {proc.rooms.reduce(
+                              (sum, room) =>
+                                sum +
+                                room.items.reduce(
+                                  (acc, it) => acc + it.quantity,
+                                  0
+                                ),
+                              0
+                            )}{" "}
+                            éléments
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {proc.rooms.map((room) => (
+                            <div
+                              key={room.roomId}
+                              className="space-y-1 rounded-xl bg-slate-900/70 p-2"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-[11px] font-semibold text-slate-50">
+                                  {room.label}
+                                </p>
+                                <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
+                                  {room.items.reduce(
+                                    (acc, it) => acc + it.quantity,
+                                    0
+                                  )}{" "}
+                                  éléments
+                                </span>
+                              </div>
+                              {/* Pour le Process 2, on affiche un mini strip de vignettes par pièce */}
+                              {proc.id === "process2" && room.photoIds.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {room.photoIds.slice(0, 6).map((pid) => {
+                                    const file = localUploadFiles.find(
+                                      (f) => f.photoId === pid
+                                    );
+                                    if (file) {
+                                      return (
+                                        <div
+                                          key={pid}
+                                          className="h-8 w-8 overflow-hidden rounded-md border border-slate-700/80 bg-slate-800"
+                                        >
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                                          <img
+                                            src={file.previewUrl}
+                                            alt={file.file.name}
+                                            className="h-full w-full object-cover"
+                                          />
+                                        </div>
+                                      );
+                                    }
+                                    return (
+                                      <div
+                                        key={pid}
+                                        className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700/80 bg-slate-800 text-[9px] text-slate-300"
+                                      >
+                                        ?
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <ul className="space-y-1 text-[11px] text-slate-300">
-                        {room.items.map((item, idx) => (
-                          <li
-                            key={`${room.roomId}-${idx}`}
-                            className="flex justify-between gap-2"
-                          >
-                            <span className="truncate">
-                              {item.quantity}× {item.label}
-                            </span>
-                            {item.flags?.fragile && (
-                              <span className="text-[10px] text-amber-300">
-                                fragile
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
+                    ))}
+                  </div>
+
+                  {/* Colonne droite : tableau synthétique Pièce / Article / Qté */}
+                  {process2Inventory && process2Inventory.length > 0 && (
+                    <div className="space-y-2 rounded-2xl bg-slate-950/90 p-3 ring-1 ring-slate-800/80">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Détail des objets détectés
+                      </p>
+                      <div className="overflow-hidden rounded-xl border border-slate-800/80 bg-slate-950">
+                        <div className="grid grid-cols-[minmax(0,1.2fr),minmax(0,1.6fr),auto] border-b border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] font-semibold text-slate-200">
+                          <span>Pièce</span>
+                          <span>Article</span>
+                          <span className="text-right">Qté</span>
+                        </div>
+                        <div className="max-h-52 space-y-[1px] overflow-y-auto bg-slate-950">
+                          {process2Inventory.map((row, idx) => (
+                            <div
+                              key={`${row.roomLabel}-${row.itemLabel}-${idx}`}
+                              className="grid grid-cols-[minmax(0,1.2fr),minmax(0,1.6fr),auto] px-3 py-1.5 text-[11px] text-slate-200 odd:bg-slate-950 even:bg-slate-900/50"
+                            >
+                              <span className="truncate">{row.roomLabel}</span>
+                              <span className="truncate">{row.itemLabel}</span>
+                              <span className="text-right">{row.quantity}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
@@ -1816,6 +1951,9 @@ function DevisGratuitsPageInner() {
                   if (!leadId || localUploadFiles.length === 0) return;
                   setError(null);
                   try {
+                    const start = Date.now();
+                    setAnalysisStartedAt(start);
+                    setAnalysisElapsedMs(0);
                     setIsUploadingPhotos(true);
                     setIsAnalyzing(true);
                     setLocalUploadFiles((prev) =>
@@ -1832,7 +1970,7 @@ function DevisGratuitsPageInner() {
 
                     // Si aucune nouvelle photo à envoyer mais qu'on a déjà un inventaire,
                     // on ne relance pas l'upload ni l'analyse.
-                    if (pendingFiles.length === 0 && analysisRooms) {
+                    if (pendingFiles.length === 0 && analysisProcesses) {
                       setIsUploadingPhotos(false);
                       setIsAnalyzing(false);
                       return;
@@ -1855,7 +1993,12 @@ function DevisGratuitsPageInner() {
                           (e) => e.originalFilename === f.file.name
                         );
                         if (ok) {
-                          return { ...f, status: "uploaded", error: undefined };
+                          return {
+                            ...f,
+                            status: "uploaded",
+                            error: undefined,
+                            photoId: ok.id,
+                          };
                         }
                         if (ko) {
                           return {
@@ -1869,69 +2012,99 @@ function DevisGratuitsPageInner() {
                     );
 
                     if (result.success.length > 0) {
-                      // Appel IA : un seul call pour l'analyse des photos
-                      const aiRes = await fetch("/api/ai/analyze-photos", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          leadId,
-                          photos: result.success.map((p) => ({
-                            id: p.id,
-                            storageKey: p.storageKey,
-                            originalFilename: p.originalFilename,
-                          })),
-                        }),
-                      });
+                      // Process 1 (inventaire global) est temporairement mis en pause.
+                      // On ne garde ici que le Process 2 : classification par photo.
 
-                      if (!aiRes.ok) {
-                        const data = await aiRes.json().catch(() => null);
-                        throw new Error(
-                          data?.error ||
-                            "Analyse IA indisponible pour le moment, réessayez plus tard."
-                        );
+                      const processes: AnalysisProcess[] = [];
+
+                      // Process 2 : classification par photo (1 call IA par photo, route dédiée)
+                      try {
+                        const classifyRes = await fetch("/api/ai/process2-classify", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            leadId,
+                            photos: result.success.map((p) => ({
+                              id: p.id,
+                              storageKey: p.storageKey,
+                              originalFilename: p.originalFilename,
+                            })),
+                          }),
+                        });
+
+                      if (classifyRes.ok) {
+                        const classifyData = (await classifyRes.json()) as {
+                          results?: {
+                            photoId: string;
+                            roomGuessPrimary: string | null;
+                            roomGuessConfidence: number | null;
+                          }[];
+                          inventory?: Process2InventoryRow[];
+                        };
+
+                        const results = classifyData.results ?? [];
+                        const inventory = classifyData.inventory ?? [];
+
+                          // Regroupement simple par type de pièce devinée
+                          const byRoomType = new Map<string, string[]>(); // roomType -> liste de photoIds
+                          for (const r of results) {
+                            const type = r.roomGuessPrimary ?? "INCONNU";
+                            const list = byRoomType.get(type) ?? [];
+                            list.push(r.photoId);
+                            byRoomType.set(type, list);
+                          }
+
+                          const roomTypeLabels: Record<string, string> = {
+                            SALON: "Salon",
+                            CUISINE: "Cuisine",
+                            CHAMBRE: "Chambre",
+                            "SALLE_DE_BAIN": "Salle de bain",
+                            WC: "WC",
+                            COULOIR: "Couloir",
+                            BUREAU: "Bureau",
+                            BALCON: "Balcon",
+                            CAVE: "Cave",
+                            GARAGE: "Garage",
+                            ENTREE: "Entrée",
+                            AUTRE: "Autre pièce",
+                            INCONNU: "À classer / incertain",
+                          };
+
+                          const process2Rooms: AnalyzedRoom[] = Array.from(
+                            byRoomType.entries()
+                          ).map(([roomType, photoIds], index) => ({
+                            roomId: `process2-${roomType}-${index}`,
+                            roomType,
+                            label: roomTypeLabels[roomType] ?? roomType,
+                            photoIds,
+                            items: [
+                              {
+                                label: `${photoIds.length} photo(s)`,
+                                category: "AUTRE",
+                                quantity: photoIds.length,
+                                confidence: 1,
+                                flags: {},
+                              },
+                            ],
+                          }));
+
+                          processes.push({
+                            id: "process2",
+                            label: "Process 2",
+                            model: "Claude (1 requête par photo)",
+                            rooms: process2Rooms,
+                          });
+                          setProcess2Inventory(inventory);
+                        }
+                      } catch (err) {
+                        console.error("Erreur Process 2 (classification par photo):", err);
                       }
 
-                      const data = (await aiRes.json()) as {
-                        rooms?: AnalyzedRoom[];
-                      };
-
-                      let rooms: AnalyzedRoom[] =
-                        Array.isArray(data.rooms) && data.rooms.length > 0
-                          ? data.rooms
-                          : [
-                              {
-                                roomId: "fallback-salon",
-                                roomType: "SALON",
-                                label: "Salon",
-                                photoIds: result.success.map((p) => p.id),
-                                items: [
-                                  {
-                                    label: "Canapé 3 places",
-                                    category: "CANAPE",
-                                    quantity: 1,
-                                    confidence: 0.8,
-                                    flags: {
-                                      fragile: false,
-                                      highValue: false,
-                                      requiresDisassembly: false,
-                                    },
-                                  },
-                                  {
-                                    label: "Table basse",
-                                    category: "TABLE",
-                                    quantity: 1,
-                                    confidence: 0.7,
-                                    flags: {
-                                      fragile: false,
-                                      highValue: false,
-                                      requiresDisassembly: false,
-                                    },
-                                  },
-                                ],
-                              },
-                            ];
-
-                      setAnalysisRooms(rooms);
+                      setAnalysisProcesses(processes);
+                      // on fige la durée finale côté front
+                      setAnalysisElapsedMs((prev) =>
+                        prev > 0 ? prev : Date.now() - (analysisStartedAt ?? Date.now())
+                      );
 
                       // On marque simplement le lead comme ayant des photos ; le reste reste async côté back plus tard
                       await updateLead(leadId, { photosStatus: "UPLOADED" });

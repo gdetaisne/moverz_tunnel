@@ -93,7 +93,8 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      // Normalisation : image JPEG, long côté max 2048px, qualité ~80
+      // Normalisation : image JPEG
+      // Pour les tests, on réduit fortement la définition (~400x300px) pour privilégier la vitesse.
       const key = path.join(leadId, `${Date.now()}-${nanoid(8)}.jpg`);
       const diskPath = path.join(UPLOAD_DIR, key);
 
@@ -106,8 +107,8 @@ export async function POST(req: NextRequest) {
         const normalized = await sharp(buffer, { failOnError: false })
           .rotate()
           .resize({
-            width: 2048,
-            height: 2048,
+            width: 400,
+            height: 300,
             fit: "inside",
             withoutEnlargement: true,
           })
@@ -119,15 +120,26 @@ export async function POST(req: NextRequest) {
 
         await fs.writeFile(diskPath, normalized);
 
-        // V1 : on ne dépend pas encore de la DB pour tester le flux.
-        // On enregistre seulement les infos de base pour le front.
+        // Création de l'entrée LeadPhoto liée au lead
+        const photo = await prisma.leadPhoto.create({
+          data: {
+            leadId,
+            storageKey: key,
+            url: null,
+            originalFilename,
+            mimeType: "image/jpeg",
+            sizeBytes: normalized.length,
+            // analysisStatus par défaut
+          },
+        });
+
         success.push({
-          id: key,
-          url: null,
-          storageKey: key,
-          originalFilename,
-          mimeType: "image/jpeg",
-          sizeBytes: normalized.length,
+          id: photo.id,
+          url: photo.url,
+          storageKey: photo.storageKey,
+          originalFilename: photo.originalFilename,
+          mimeType: photo.mimeType,
+          sizeBytes: photo.sizeBytes,
         });
       } catch (error) {
         console.error("❌ Erreur d'upload fichier:", {
