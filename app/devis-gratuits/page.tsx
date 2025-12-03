@@ -1518,18 +1518,59 @@ function DevisGratuitsPageInner() {
       {currentStep === 4 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <div className="space-y-6">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h2 className="text-lg font-semibold text-slate-50">
-                Ajoutez vos photos (2 minutes), on s’occupe de l’inventaire.
+                Pourquoi ajouter des photos ?
               </h2>
-              <ul className="list-disc space-y-1 pl-5 text-xs text-slate-300">
-                <li>Volume plus précis → moins de mauvaises surprises.</li>
+              <p className="text-xs text-slate-300">
+                Cela change vraiment tout pour votre déménagement :
+              </p>
+              <ul className="space-y-2 text-xs text-slate-300">
                 <li>
-                  Inventaire détaillé généré automatiquement pour vous et le
-                  déménageur.
+                  <span className="font-semibold text-slate-50">
+                    Un volume plus précis → un prix plus juste.
+                  </span>
+                  <br />
+                  <span className="text-slate-400">
+                    Nos estimations deviennent ultra‑fiables : moins de marges
+                    d’erreur, moins de suppléments.
+                  </span>
                 </li>
-                <li>Préparation de votre déclaration de valeur.</li>
+                <li>
+                  <span className="font-semibold text-slate-50">
+                    Un inventaire automatique, prêt pour le déménageur.
+                  </span>
+                  <br />
+                  <span className="text-slate-400">
+                    Pas besoin de tout noter pièce par pièce : on le génère pour
+                    vous.
+                  </span>
+                </li>
+                <li>
+                  <span className="font-semibold text-slate-50">
+                    Votre déclaration de valeur remplie automatiquement.
+                  </span>
+                  <br />
+                  <span className="text-slate-400">
+                    C’est obligatoire pour être couvert en cas de casse — on la
+                    prépare pour vous.
+                  </span>
+                </li>
+                <li>
+                  <span className="font-semibold text-slate-50">
+                    Moins d’échanges, plus rapide, zéro stress.
+                  </span>
+                  <br />
+                  <span className="text-slate-400">
+                    Le déménageur comprend immédiatement votre besoin, sans
+                    visite ni appels.
+                  </span>
+                </li>
               </ul>
+              <p className="text-[11px] font-medium text-emerald-300">
+                → 4 photos par pièce suffisent (vue générale + deux angles +
+                détails si besoin).
+              </p>
             </div>
 
             {/* Zone d'upload */}
