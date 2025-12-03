@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Moverz – Tunnel de demande de devis",
   description:
     "Tunnel centralisé de demande de devis déménagement Moverz, pensé mobile first avec option d’envoi de photos par WhatsApp.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
