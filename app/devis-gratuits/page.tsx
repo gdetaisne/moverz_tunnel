@@ -938,13 +938,19 @@ function DevisGratuitsPageInner() {
             const isActive = step.id === currentStep;
             const isCompleted = step.id < currentStep;
             const isLast = index === STEPS.length - 1;
+            const canGoToStep = step.id < currentStep;
 
             return (
               <div
                 key={step.id}
                 className="flex flex-1 items-center gap-3 last:flex-none"
               >
-                <div className="flex flex-col items-center gap-1 text-center">
+                <button
+                  type="button"
+                  disabled={!canGoToStep}
+                  onClick={canGoToStep ? () => setCurrentStep(step.id as StepId) : undefined}
+                  className="flex flex-col items-center gap-1 text-center disabled:cursor-default"
+                >
                   <div
                     className={[
                       "flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold transition-all",
@@ -953,6 +959,7 @@ function DevisGratuitsPageInner() {
                         : isCompleted
                         ? "border-emerald-400 bg-emerald-400 text-slate-950"
                         : "border-slate-600/70 bg-slate-900 text-slate-300",
+                      canGoToStep && !isActive ? "hover:border-sky-300 hover:text-sky-200" : "",
                     ].join(" ")}
                   >
                     {isCompleted ? "✓" : step.id}
@@ -969,7 +976,7 @@ function DevisGratuitsPageInner() {
                   >
                     {step.label}
                   </span>
-                </div>
+                </button>
                 {!isLast && (
                   <div className="h-px flex-1 rounded-full bg-slate-700/70" />
                 )}
