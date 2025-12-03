@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createLead, ensureLinkingToken, updateLead } from "@/lib/api/client";
 import {
@@ -44,6 +44,8 @@ const HOUSING_LABELS: Record<HousingType, string> = {
   house_2floors: "Maison 2 étages",
   house_3floors: "Maison 3+ étages",
 };
+
+const COMFORT_FORMULAS: FormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
 
 interface FormState {
   firstName: string;
@@ -244,6 +246,8 @@ function DevisGratuitsPageInner() {
     [pricingByFormule, form.formule]
   );
 
+  const comfortScrollRef = useRef<HTMLDivElement | null>(null);
+
   // Restauration session (évite toute perte de données en cas de refresh / fermeture onglet)
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -284,6 +288,30 @@ function DevisGratuitsPageInner() {
     });
     window.localStorage.setItem("moverz_tunnel_form_state", payload);
   }, [form, currentStep, leadId]);
+
+  // Centrer la formule active dans le swiper mobile (Standard par défaut)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const container = comfortScrollRef.current;
+    if (!container) return;
+    if (window.innerWidth >= 640) return; // desktop: pas de scroll horizontal
+
+    const index = COMFORT_FORMULAS.indexOf(form.formule);
+    if (index === -1) return;
+
+    const cardWidth = container.clientWidth * 0.8; // min-w-[78%] ~ 80%
+    const gap = 12; // approx gap-3
+    const target =
+      Math.max(
+        0,
+        index * (cardWidth + gap) - (container.clientWidth - cardWidth) / 2
+      ) || 0;
+
+    container.scrollTo({
+      left: target,
+      behavior: "smooth",
+    });
+  }, [form.formule]);
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
 
@@ -1085,8 +1113,11 @@ function DevisGratuitsPageInner() {
               </div>
 
               {/* Choix niveau de confort (swipe horizontal sur mobile) */}
-              <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible">
-                {(["ECONOMIQUE", "STANDARD", "PREMIUM"] as FormuleType[]).map(
+              <div
+                ref={comfortScrollRef}
+                className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible"
+              >
+                {COMFORT_FORMULAS.map(
                   (formule) => {
                     const isActive = form.formule === formule;
                     const pricing =
