@@ -636,7 +636,6 @@ function DevisGratuitsPageInner() {
       setIsSubmitting(false);
     }
   };
-      setIsSubmitting(true);
 
   return (
     <div className="flex flex-1 flex-col gap-6">
