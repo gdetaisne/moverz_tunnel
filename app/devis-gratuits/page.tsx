@@ -168,7 +168,7 @@ function compactModelName(model?: string): string {
 
 const INITIAL_FORM_STATE: FormState = {
   firstName: "Guillaume",
-  lastName: "Test",
+  lastName: "",
   email: "test@moverz.dev",
   phone: "0612345678",
   originPostalCode: "33000",
@@ -732,7 +732,7 @@ function DevisGratuitsPageInner() {
     const trimmedEmail = form.email.trim().toLowerCase();
 
     if (!trimmedFirstName) {
-      setError("Merci de renseigner un prénom.");
+      setError("Merci de renseigner un prénom ou surnom.");
       return;
     }
     if (
@@ -997,33 +997,21 @@ function DevisGratuitsPageInner() {
       {currentStep === 1 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep1}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-100">
-                  Prénom
-                </label>
-                <input
-                  type="text"
-                  value={form.firstName}
-                  onChange={(e) => updateField("firstName", e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                  placeholder="Jean"
-                  autoComplete="given-name"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-100">
-                  Nom (optionnel)
-                </label>
-                <input
-                  type="text"
-                  value={form.lastName}
-                  onChange={(e) => updateField("lastName", e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                  placeholder="Dupont"
-                  autoComplete="family-name"
-                />
-              </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-100">
+                Comment voulez-vous qu’on vous appelle ?
+              </label>
+              <p className="text-xs text-slate-400">
+                Juste pour personnaliser nos échanges, vous pouvez mettre un prénom ou un surnom.
+              </p>
+              <input
+                type="text"
+                value={form.firstName}
+                onChange={(e) => updateField("firstName", e.target.value)}
+                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                placeholder="Prénom ou surnom"
+                autoComplete="given-name"
+              />
             </div>
 
             <div className="space-y-1">
@@ -1032,7 +1020,9 @@ function DevisGratuitsPageInner() {
               </label>
               <p className="text-xs text-slate-400">
                 Nous l’utilisons uniquement pour suivre votre dossier et vous
-                envoyer les devis.
+                envoyer vos devis, et nous vérifierons cette adresse avec un
+                lien de confirmation. Pas de newsletter, pas de prospection
+                commerciale, pas de revente de votre email.
               </p>
               <input
                 type="email"
