@@ -11,6 +11,9 @@ interface AnalyzeRequestBody {
   photos: AnalyzePhotoInput[];
 }
 
+const CLAUDE_MODEL =
+  process.env.CLAUDE_MODEL ?? "claude-3-5-haiku-20241022";
+
 export async function POST(req: NextRequest) {
   try {
     const json = (await req.json().catch(() => ({}))) as AnalyzeRequestBody;
@@ -26,11 +29,19 @@ export async function POST(req: NextRequest) {
 
     // V1: si pas de clé ou pour rester robuste, on a un fallback déterministe.
     if (!hasClaudeKey) {
+      console.warn(
+        "[AI] CLAUDE_API_KEY non défini – utilisation du fallback local d'inventaire."
+      );
       const fallbackRooms = createFallbackAnalysis(json.photos);
       return NextResponse.json({ rooms: fallbackRooms });
     }
 
     const prompt = buildPrompt(json.photos);
+
+    console.log("[AI] Appel Claude", {
+      model: CLAUDE_MODEL,
+      photos: json.photos.length,
+    });
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -40,7 +51,7 @@ export async function POST(req: NextRequest) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
+        model: CLAUDE_MODEL,
         max_tokens: 1200,
         temperature: 0.2,
         messages: [
