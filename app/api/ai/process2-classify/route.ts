@@ -228,75 +228,31 @@ export async function POST(req: NextRequest) {
 
         if (base64Images.length === 0) return;
 
+        // 1) Appel IA pour l'inventaire de cette pièce
+        let items: RoomInventoryItem[] = [];
         try {
-          const items = await callClaudeInventoryForRoom(roomType, label, base64Images);
-
-          // LeadRoom pour cette pièce
-          let room = await prisma.leadRoom.findFirst({
-            where: { leadId: json.leadId, roomType },
-          });
-
-          if (!room) {
-            room = await prisma.leadRoom.create({
-              data: {
-                leadId: json.leadId,
-                roomType,
-                roomIndex: null,
-                label,
-                coverPhotoId: photoIds[0] ?? null,
-                analysisStatus: "DONE",
-                inventoryStatus: "DONE",
-              },
-            });
-          } else {
-            await prisma.leadRoomItem.deleteMany({
-              where: { roomIdId: room.id },
-            });
-            room = await prisma.leadRoom.update({
-              where: { id: room.id },
-              data: {
-                label,
-                analysisStatus: "DONE",
-                inventoryStatus: "DONE",
-              },
-            });
-          }
-
-          // Attacher les photos à la pièce
-          await prisma.leadPhoto.updateMany({
-            where: { id: { in: photoIds } },
-            data: { roomId: room.id },
-          });
-
-          // Créer les items + remplir le tableau de synthèse
-          for (const item of items) {
-            await prisma.leadRoomItem.create({
-              data: {
-                roomIdId: room.id,
-                label: item.label,
-                category: item.category,
-                quantity: item.quantity,
-                confidence: item.confidence,
-                notes: null,
-                isFragile: item.flags?.fragile ?? false,
-                isHighValue: item.flags?.highValue ?? false,
-                requiresDisassembly: item.flags?.requiresDisassembly ?? false,
-              },
-            });
-
-            inventoryRows.push({
-              roomType,
-              roomLabel: label,
-              itemLabel: item.label,
-              quantity: item.quantity,
-            });
-          }
+          items = await callClaudeInventoryForRoom(roomType, label, base64Images);
         } catch (error) {
           console.error(
-            `[AI][Process2] Erreur inventaire pour la pièce ${roomType}:`,
+            `[AI][Process2] Erreur appel inventaire pour la pièce ${roomType}:`,
             error
           );
+          return;
         }
+
+        // 2) On remplit toujours le tableau de synthèse pour le front,
+        //    même si la persistance en base échoue plus tard.
+        for (const item of items) {
+          inventoryRows.push({
+            roomType,
+            roomLabel: label,
+            itemLabel: item.label,
+            quantity: item.quantity,
+          });
+        }
+
+        // 3) Persistance en base (LeadRoom / LeadRoomItem / LeadPhoto) mise en pause :
+        //    on privilégie pour l'instant le retour rapide au front.
       })
     );
 
