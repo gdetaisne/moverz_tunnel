@@ -54,6 +54,7 @@ model LeadTunnel {
   priceMax         Int?
 
   photos           LeadPhoto[]
+  rooms            LeadRoom[]
 }
 
 model LeadPhoto {
@@ -63,6 +64,10 @@ model LeadPhoto {
   // Lien vers le lead tunnel
   leadId           String
   lead             LeadTunnel @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  // Lien éventuel vers une pièce
+  roomId           String?
+  room             LeadRoom?  @relation(fields: [roomId], references: [id])
 
   // Stockage
   storageKey       String
@@ -74,6 +79,48 @@ model LeadPhoto {
 
   // Préparation future pour l'analyse IA
   analysisStatus   String   @default("NONE") // 'NONE' | 'PENDING' | 'DONE' | 'ERROR'
+}
+
+model LeadRoom {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leadId   String
+  lead     LeadTunnel @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  // Type de pièce et index (ex: CHAMBRE + 1 => "Chambre 1")
+  roomType  String   // 'ENTREE' | 'SALON' | 'CUISINE' | 'CHAMBRE' | ...
+  roomIndex Int?
+  label     String
+
+  coverPhotoId String?
+
+  // Statuts d'analyse et d'inventaire
+  analysisStatus   String @default("NONE") // 'NONE' | 'PENDING' | 'DONE' | 'ERROR'
+  inventoryStatus  String @default("NONE") // 'NONE' | 'PENDING' | 'DONE' | 'ERROR'
+
+  photos  LeadPhoto[]
+  items   LeadRoomItem[]
+}
+
+model LeadRoomItem {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roomId LeadRoom @relation(fields: [roomIdId], references: [id], onDelete: Cascade)
+  roomIdId String
+
+  label    String
+  category String
+  quantity Int
+  confidence Float
+
+  notes               String?
+  isFragile           Boolean @default(false)
+  isHighValue         Boolean @default(false)
+  requiresDisassembly Boolean @default(false)
 }
 
 
