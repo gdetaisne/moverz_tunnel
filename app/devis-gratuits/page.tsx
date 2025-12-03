@@ -1523,50 +1523,66 @@ function DevisGratuitsPageInner() {
                 Pourquoi ajouter des photos ?
               </h2>
               <p className="text-xs text-slate-300">
-                Cela change vraiment tout pour votre déménagement :
+                En 2 minutes, vos photos nous donnent tout ce qu’il faut :
               </p>
-              <ul className="space-y-2 text-xs text-slate-300">
-                <li>
-                  <span className="font-semibold text-slate-50">
-                    Un volume plus précis → un prix plus juste.
-                  </span>
-                  <br />
-                  <span className="text-slate-400">
-                    Nos estimations deviennent ultra‑fiables : moins de marges
-                    d’erreur, moins de suppléments.
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold text-slate-50">
-                    Un inventaire automatique, prêt pour le déménageur.
-                  </span>
-                  <br />
-                  <span className="text-slate-400">
-                    Pas besoin de tout noter pièce par pièce : on le génère pour
-                    vous.
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold text-slate-50">
-                    Votre déclaration de valeur remplie automatiquement.
-                  </span>
-                  <br />
-                  <span className="text-slate-400">
-                    C’est obligatoire pour être couvert en cas de casse — on la
-                    prépare pour vous.
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold text-slate-50">
-                    Moins d’échanges, plus rapide, zéro stress.
-                  </span>
-                  <br />
-                  <span className="text-slate-400">
-                    Le déménageur comprend immédiatement votre besoin, sans
-                    visite ni appels.
-                  </span>
-                </li>
-              </ul>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-[11px] font-semibold text-emerald-300">
+                    V
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <p className="font-semibold text-slate-50">
+                      Volume ultra‑précis
+                    </p>
+                    <p className="text-slate-400">
+                      Estimation calibrée, moins de suppléments et de mauvaises
+                      surprises.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/15 text-[11px] font-semibold text-sky-300">
+                    i
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <p className="font-semibold text-slate-50">
+                      Inventaire automatique
+                    </p>
+                    <p className="text-slate-400">
+                      Plus besoin de tout lister pièce par pièce, on le fait pour
+                      vous et le déménageur.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/15 text-[11px] font-semibold text-amber-300">
+                    €
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <p className="font-semibold text-slate-50">
+                      Déclaration de valeur prête
+                    </p>
+                    <p className="text-slate-400">
+                      Document obligatoire pour être bien couvert en cas de casse,
+                      pré‑rempli pour vous.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-fuchsia-500/15 text-[11px] font-semibold text-fuchsia-300">
+                    ⚡
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <p className="font-semibold text-slate-50">
+                      Zéro stress, moins d’échanges
+                    </p>
+                    <p className="text-slate-400">
+                      Le déménageur comprend tout de suite votre logement, sans
+                      visite ni appels.
+                    </p>
+                  </div>
+                </div>
+              </div>
               <p className="text-[11px] font-medium text-emerald-300">
                 → 4 photos par pièce suffisent (vue générale + deux angles +
                 détails si besoin).
