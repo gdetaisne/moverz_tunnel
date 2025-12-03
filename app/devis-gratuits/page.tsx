@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createLead, ensureLinkingToken, updateLead } from "@/lib/api/client";
 import {
@@ -85,7 +85,7 @@ function formatPrice(price: number | null | undefined) {
   }).format(price);
 }
 
-export default function DevisGratuitsPage() {
+function DevisGratuitsPageInner() {
   const searchParams = useSearchParams();
   const src = searchParams.get("src") ?? undefined;
 
@@ -1069,4 +1069,11 @@ export default function DevisGratuitsPage() {
   );
 }
 
+export default function DevisGratuitsPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-slate-300">Chargement…</div>}>
+      <DevisGratuitsPageInner />
+    </Suspense>
+  );
+}
 
