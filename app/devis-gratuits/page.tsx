@@ -456,6 +456,187 @@ function DevisGratuitsPageInner() {
     }
   };
 
+  const handleAnalyzePhotos = async () => {
+    if (!leadId || localUploadFiles.length === 0) return;
+    setError(null);
+    try {
+      const start = Date.now();
+      setAnalysisStartedAt(start);
+      setAnalysisElapsedMs(0);
+      setIsUploadingPhotos(true);
+      setIsAnalyzing(true);
+      setLocalUploadFiles((prev) =>
+        prev.map((f) =>
+          f.status === "pending" ? { ...f, status: "uploading", error: undefined } : f
+        )
+      );
+
+      const pendingFiles = localUploadFiles
+        .filter((f) => f.status === "pending")
+        .map((f) => f.file);
+
+      if (pendingFiles.length === 0 && analysisProcesses) {
+        setIsUploadingPhotos(false);
+        setIsAnalyzing(false);
+        return;
+      }
+
+      if (pendingFiles.length === 0) {
+        throw new Error(
+          "Aucune nouvelle photo à analyser. Ajoutez des photos puis réessayez."
+        );
+      }
+
+      const result = await uploadLeadPhotos(leadId, pendingFiles);
+
+      const totalForTimer = result.success.length || pendingFiles.length || 1;
+      setAnalysisTargetSeconds(totalForTimer * 3);
+
+      setLocalUploadFiles((prev) =>
+        prev.map((f) => {
+          const ok = result.success.find(
+            (s) => s.originalFilename === f.file.name
+          );
+          const ko = result.errors.find(
+            (e) => e.originalFilename === f.file.name
+          );
+          if (ok) {
+            return {
+              ...f,
+              status: "uploaded",
+              error: undefined,
+              photoId: ok.id,
+            };
+          }
+          if (ko) {
+            return {
+              ...f,
+              status: "error",
+              error: ko.reason,
+            };
+          }
+          return f;
+        })
+      );
+
+      if (result.success.length > 0) {
+        const processes: AnalysisProcess[] = [];
+        try {
+          const classifyRes = await fetch("/api/ai/process2-classify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              leadId,
+              photos: result.success.map((p) => ({
+                id: p.id,
+                storageKey: p.storageKey,
+                originalFilename: p.originalFilename,
+              })),
+            }),
+          });
+
+          if (classifyRes.ok) {
+            const classifyData = (await classifyRes.json()) as {
+              results?: {
+                photoId: string;
+                roomGuessPrimary: string | null;
+                roomGuessConfidence: number | null;
+              }[];
+              inventory?: Process2InventoryRow[];
+            };
+
+            const results = classifyData.results ?? [];
+            const inventory = classifyData.inventory ?? [];
+
+            const byRoomType = new Map<string, string[]>();
+            for (const r of results) {
+              const type = r.roomGuessPrimary ?? "INCONNU";
+              const list = byRoomType.get(type) ?? [];
+              list.push(r.photoId);
+              byRoomType.set(type, list);
+            }
+
+            const roomTypeLabels: Record<string, string> = {
+              SALON: "Salon",
+              CUISINE: "Cuisine",
+              CHAMBRE: "Chambre",
+              SALLE_DE_BAIN: "Salle de bain",
+              WC: "WC",
+              COULOIR: "Couloir",
+              BUREAU: "Bureau",
+              BALCON: "Balcon",
+              CAVE: "Cave",
+              GARAGE: "Garage",
+              ENTREE: "Entrée",
+              AUTRE: "Autre pièce",
+              INCONNU: "À classer / incertain",
+            };
+
+            const process2Rooms: AnalyzedRoom[] = Array.from(
+              byRoomType.entries()
+            ).map(([roomType, photoIds], index) => ({
+              roomId: `process2-${roomType}-${index}`,
+              roomType,
+              label: roomTypeLabels[roomType] ?? roomType,
+              photoIds,
+              items: [
+                {
+                  label: `${photoIds.length} photo(s)`,
+                  category: "AUTRE",
+                  quantity: photoIds.length,
+                  confidence: 1,
+                  flags: {},
+                },
+              ],
+            }));
+
+            processes.push({
+              id: "process2",
+              label: "Process 2",
+              model: "Claude (1 requête par photo)",
+              rooms: process2Rooms,
+            });
+            setProcess2Inventory(inventory);
+          }
+        } catch (err) {
+          console.error("Erreur Process 2 (classification par photo):", err);
+        }
+
+        setAnalysisProcesses(processes);
+        setAnalysisElapsedMs((prev) =>
+          prev > 0 ? prev : Date.now() - (analysisStartedAt ?? Date.now())
+        );
+
+        try {
+          await updateLead(leadId, { photosStatus: "UPLOADED" });
+        } catch (e: unknown) {
+          const msg =
+            e instanceof Error ? e.message.toLowerCase() : String(e ?? "");
+          if (msg.includes("leadtunnel introuvable")) {
+            console.warn(
+              "Lead introuvable lors de la mise à jour photosStatus (UPLOADED)."
+            );
+          } else {
+            throw e;
+          }
+        }
+      } else if (result.errors.length > 0) {
+        setError(
+          "Aucun fichier n’a pu être enregistré. Vous pouvez réessayer ou les envoyer plus tard."
+        );
+      }
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Erreur lors de l’upload ou de l’analyse des photos.";
+      setError(message);
+    } finally {
+      setIsUploadingPhotos(false);
+      setIsAnalyzing(false);
+    }
+  };
+
   const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => {
       const next: FormState = { ...prev, [key]: value };
@@ -1978,14 +2159,32 @@ function DevisGratuitsPageInner() {
                           );
                         })}
                       </div>
+                      <div className="mt-3 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={handleAnalyzePhotos}
+                          disabled={
+                            !leadId ||
+                            isUploadingPhotos ||
+                            isAnalyzing ||
+                            localUploadFiles.every((f) => f.status !== "pending")
+                          }
+                          className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isUploadingPhotos || isAnalyzing
+                            ? "Analyse en cours…"
+                            : "Analyser mes photos"}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
               </>
             )}
 
-            {photoFlowChoice === "photos_now" && analysisProcesses && (
-              <div className="space-y-3 rounded-2xl bg-slate-950/80 p-3 text-xs text-slate-200 ring-1 ring-slate-800">
+            {photoFlowChoice === "photos_now" &&
+              (analysisProcesses || isUploadingPhotos || isAnalyzing) && (
+                <div className="space-y-3 rounded-2xl bg-slate-950/80 p-3 text-xs text-slate-200 ring-1 ring-slate-800">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                   Aperçu de votre inventaire par pièce
                 </p>
@@ -1996,7 +2195,8 @@ function DevisGratuitsPageInner() {
                     {(analysisElapsedMs / 1000).toFixed(1)} s
                   </p>
                 )}
-                <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr),minmax(0,1.1fr)]">
+                {analysisProcesses && (
+                  <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr),minmax(0,1.1fr)]">
                   {/* Colonne gauche : cartes Process 2 avec vignettes par pièce */}
                   <div className="space-y-3">
                     {analysisProcesses.map((proc) => (
@@ -2112,8 +2312,9 @@ function DevisGratuitsPageInner() {
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+          )}
 
             {error && (
               <p className="text-sm text-rose-400" role="alert">
