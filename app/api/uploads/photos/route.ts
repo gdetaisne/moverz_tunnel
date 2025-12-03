@@ -119,25 +119,15 @@ export async function POST(req: NextRequest) {
 
         await fs.writeFile(diskPath, normalized);
 
-        const record = await prisma.leadPhoto.create({
-          data: {
-            leadId,
-            storageKey: key,
-            url: null,
-            originalFilename,
-            mimeType: "image/jpeg",
-            sizeBytes: normalized.length,
-            analysisStatus: "NONE",
-          },
-        });
-
+        // V1 : on ne dépend pas encore de la DB pour tester le flux.
+        // On enregistre seulement les infos de base pour le front.
         success.push({
-          id: record.id,
-          url: record.url,
-          storageKey: record.storageKey,
-          originalFilename: record.originalFilename,
-          mimeType: record.mimeType,
-          sizeBytes: record.sizeBytes,
+          id: key,
+          url: null,
+          storageKey: key,
+          originalFilename,
+          mimeType: "image/jpeg",
+          sizeBytes: normalized.length,
         });
       } catch (error) {
         console.error("❌ Erreur d'upload fichier:", {

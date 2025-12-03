@@ -116,6 +116,27 @@ interface LocalUploadFile {
   file: File;
   status: UploadStatus;
   error?: string;
+  previewUrl: string;
+}
+
+interface AnalyzedItem {
+  label: string;
+  category: string;
+  quantity: number;
+  confidence: number;
+  flags?: {
+    fragile?: boolean;
+    highValue?: boolean;
+    requiresDisassembly?: boolean;
+  };
+}
+
+interface AnalyzedRoom {
+  roomId: string;
+  roomType: string;
+  label: string;
+  photoIds: string[];
+  items: AnalyzedItem[];
 }
 
 const INITIAL_FORM_STATE: FormState = {
@@ -193,6 +214,8 @@ function DevisGratuitsPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
+  const [analysisRooms, setAnalysisRooms] = useState<AnalyzedRoom[] | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isOriginOpen, setIsOriginOpen] = useState(true);
   const [isDestinationOpen, setIsDestinationOpen] = useState(false);
 
@@ -370,6 +393,7 @@ function DevisGratuitsPageInner() {
           id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
           file,
           status: "pending",
+          previewUrl: URL.createObjectURL(file),
         });
       }
       return next;
@@ -377,8 +401,13 @@ function DevisGratuitsPageInner() {
   };
 
   const resetUploads = () => {
-    setLocalUploadFiles([]);
+    setLocalUploadFiles((prev) => {
+      prev.forEach((f) => URL.revokeObjectURL(f.previewUrl));
+      return [];
+    });
     setIsUploadingPhotos(false);
+    setIsAnalyzing(false);
+    setAnalysisRooms(null);
   };
 
   const isOriginComplete =
@@ -673,6 +702,46 @@ function DevisGratuitsPageInner() {
                 autoComplete="tel"
               />
             </div>
+
+            {analysisRooms && (
+              <div className="space-y-3 rounded-2xl bg-slate-950/80 p-3 text-xs text-slate-200 ring-1 ring-slate-800">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Aperçu de votre inventaire par pièce
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {analysisRooms.map((room) => (
+                    <div
+                      key={room.roomId}
+                      className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-slate-50">
+                          {room.label}
+                        </p>
+                        <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
+                          {room.items.reduce((acc, it) => acc + it.quantity, 0)}{" "}
+                          éléments
+                        </span>
+                      </div>
+                      <ul className="space-y-1 text-[11px] text-slate-300">
+                        {room.items.map((item, idx) => (
+                          <li key={`${room.roomId}-${idx}`} className="flex justify-between gap-2">
+                            <span className="truncate">
+                              {item.quantity}× {item.label}
+                            </span>
+                            {item.flags?.fragile && (
+                              <span className="text-[10px] text-amber-300">
+                                fragile
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {error && (
               <p className="text-sm text-rose-400" role="alert">
@@ -1681,8 +1750,19 @@ function DevisGratuitsPageInner() {
                           className="flex items-center justify-between gap-3 rounded-xl bg-slate-900/70 px-3 py-2"
                         >
                           <div className="flex min-w-0 items-center gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-800 text-[11px]">
-                              {isImage ? "IMG" : isVideo ? "VID" : "FILE"}
+                            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-slate-800">
+                              {isImage ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={item.previewUrl}
+                                  alt={item.file.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-[10px] text-slate-200">
+                                  FILE
+                                </span>
+                              )}
                             </div>
                             <div className="min-w-0">
                               <p className="truncate text-[11px] font-medium">
@@ -1726,13 +1806,15 @@ function DevisGratuitsPageInner() {
                 disabled={
                   !leadId ||
                   localUploadFiles.length === 0 ||
-                  isUploadingPhotos
+                  isUploadingPhotos ||
+                  isAnalyzing
                 }
                 onClick={async () => {
                   if (!leadId || localUploadFiles.length === 0) return;
                   setError(null);
                   try {
                     setIsUploadingPhotos(true);
+                    setIsAnalyzing(true);
                     setLocalUploadFiles((prev) =>
                       prev.map((f) =>
                         f.status === "pending"
@@ -1770,9 +1852,33 @@ function DevisGratuitsPageInner() {
                     );
 
                     if (result.success.length > 0) {
+                      // Appel IA : un seul call pour l'analyse des photos
+                      const aiRes = await fetch("/api/ai/analyze-photos", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          leadId,
+                          photos: result.success.map((p) => ({
+                            id: p.id,
+                            storageKey: p.storageKey,
+                            originalFilename: p.originalFilename,
+                          })),
+                        }),
+                      });
+
+                      if (!aiRes.ok) {
+                        const data = await aiRes.json().catch(() => null);
+                        throw new Error(
+                          data?.error ||
+                            "Analyse IA indisponible pour le moment, réessayez plus tard."
+                        );
+                      }
+
+                      const data = (await aiRes.json()) as { rooms: AnalyzedRoom[] };
+                      setAnalysisRooms(data.rooms ?? []);
+
+                      // On marque simplement le lead comme ayant des photos ; le reste reste async côté back plus tard
                       await updateLead(leadId, { photosStatus: "UPLOADED" });
-                      router.push("/devis-gratuits/merci");
-                      resetUploads();
                     } else if (result.errors.length > 0) {
                       setError(
                         "Aucun fichier n’a pu être enregistré. Vous pouvez réessayer ou les envoyer plus tard."
@@ -1786,11 +1892,14 @@ function DevisGratuitsPageInner() {
                     setError(message);
                   } finally {
                     setIsUploadingPhotos(false);
+                    setIsAnalyzing(false);
                   }
                 }}
                 className="inline-flex flex-1 items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isUploadingPhotos ? "Envoi en cours…" : "Envoyer mes photos"}
+                {isUploadingPhotos || isAnalyzing
+                  ? "Analyse en cours…"
+                  : "Analyser mes photos"}
               </button>
 
               <button
