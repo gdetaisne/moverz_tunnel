@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
 
 interface AnalyzePhotoInput {
   id: string;
@@ -13,6 +15,9 @@ interface AnalyzeRequestBody {
 
 const CLAUDE_MODEL =
   process.env.CLAUDE_MODEL ?? "claude-3-5-haiku-20241022";
+
+// Même dossier que pour la route d'upload
+const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,11 +41,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ rooms: fallbackRooms });
     }
 
-    const prompt = buildPrompt(json.photos);
+    // Charger les images normalisées depuis le disque
+    const loadedImages = await Promise.all(
+      json.photos.map(async (photo, index) => {
+        const fullPath = path.join(UPLOAD_DIR, photo.storageKey);
+        try {
+          const buffer = await fs.readFile(fullPath);
+          const base64 = buffer.toString("base64");
+          return { photo, base64, index };
+        } catch (error) {
+          console.error("❌ Impossible de lire le fichier pour l'analyse IA:", {
+            storageKey: photo.storageKey,
+            fullPath,
+            error,
+          });
+          return null;
+        }
+      })
+    );
+
+    const validImages = loadedImages.filter(
+      (img): img is { photo: AnalyzePhotoInput; base64: string; index: number } =>
+        img !== null
+    );
+
+    if (validImages.length === 0) {
+      console.warn(
+        "[AI] Aucune image exploitable pour l'analyse – fallback local utilisé."
+      );
+      const fallbackRooms = createFallbackAnalysis(json.photos);
+      return NextResponse.json({ rooms: fallbackRooms });
+    }
+
+    const prompt = buildPrompt(validImages.map((i) => i.photo));
 
     console.log("[AI] Appel Claude", {
       model: CLAUDE_MODEL,
-      photos: json.photos.length,
+      photos: validImages.length,
     });
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -62,7 +99,16 @@ export async function POST(req: NextRequest) {
                 type: "text",
                 text: prompt,
               },
-            ],
+              // Images dans l'ordre référencé dans le prompt
+              ...validImages.map((img) => ({
+                type: "input_image",
+                source: {
+                  type: "base64",
+                  media_type: "image/jpeg",
+                  data: img.base64,
+                },
+              })),
+            ] as any[],
           },
         ],
       }),
