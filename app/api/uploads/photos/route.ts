@@ -14,6 +14,8 @@ const ALLOWED_MIME_TYPES = [
   "image/heif",
 ] as const;
 
+type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number];
+
 // On garde une limite confortable d'upload brut, mais on compresse ensuite.
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 Mo
 
