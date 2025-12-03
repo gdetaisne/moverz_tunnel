@@ -1072,18 +1072,18 @@ function DevisGratuitsPageInner() {
                       <p className="text-[11px] text-slate-400">
                         Cela nous aide à estimer le volume à déménager.
                       </p>
-                      <div className="space-y-2 sm:grid sm:grid-cols-3 sm:gap-2 sm:space-y-0">
+                      <div className="grid gap-2 sm:grid-cols-3">
                         <button
                           type="button"
                           onClick={() => updateField("density", "light")}
                           className={[
-                            "flex w-full items-center gap-2 rounded-2xl border px-3 py-2 text-left text-[11px] transition",
+                            "flex w-full flex-col items-center justify-between rounded-2xl border px-4 py-4 text-center text-[11px] transition",
                             form.density === "light"
-                              ? "border-emerald-400 bg-emerald-500/10 text-emerald-100"
-                              : "border-slate-700 bg-slate-950/60 text-slate-200",
+                              ? "border-emerald-400 bg-emerald-500/8 shadow-[0_0_0_1px_rgba(16,185,129,0.35)]"
+                              : "border-slate-700/80 bg-slate-950/60 hover:border-emerald-300/70",
                           ].join(" ")}
                         >
-                          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-300/60 bg-emerald-500/10">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-300/60 bg-emerald-500/10">
                             <div className="grid grid-cols-3 gap-[1px]">
                               {[
                                 true,
@@ -1096,8 +1096,8 @@ function DevisGratuitsPageInner() {
                                 false,
                                 true,
                               ].map((filled, idx) => (
+                                // eslint-disable-next-line react/no-array-index-key
                                 <span
-                                  // eslint-disable-next-line react/no-array-index-key
                                   key={idx}
                                   className={[
                                     "h-2 w-2 rounded-[2px]",
@@ -1109,27 +1109,30 @@ function DevisGratuitsPageInner() {
                               ))}
                             </div>
                           </div>
-                          <div className="flex-1">
-                            <div className="font-semibold">Minimaliste</div>
+                          <div className="mt-3 space-y-1">
+                            <div className="text-xs font-semibold text-slate-50">
+                              Minimaliste
+                            </div>
                             <div className="text-[10px] text-slate-400">
                               Peu de meubles · cartons limités
                             </div>
-                            <div className="mt-1 inline-flex items-center rounded-full border border-emerald-300/70 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-100">
-                              -10% volume
-                            </div>
+                          </div>
+                          <div className="mt-3 inline-flex items-center rounded-full border border-emerald-300/70 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-100">
+                            -10% volume
                           </div>
                         </button>
+
                         <button
                           type="button"
                           onClick={() => updateField("density", "normal")}
                           className={[
-                            "flex w-full items-center gap-2 rounded-2xl border px-3 py-2 text-left text-[11px] transition",
+                            "flex w-full flex-col items-center justify-between rounded-2xl border px-4 py-4 text-center text-[11px] transition",
                             form.density === "normal"
-                              ? "border-sky-400 bg-sky-500/10 text-sky-100"
-                              : "border-slate-700 bg-slate-950/60 text-slate-200",
+                              ? "border-sky-400 bg-sky-500/8 shadow-[0_0_0_1px_rgba(56,189,248,0.45)]"
+                              : "border-slate-700/80 bg-slate-950/60 hover:border-sky-300/70",
                           ].join(" ")}
                         >
-                          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-sky-300/60 bg-sky-500/10">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-sky-300/60 bg-sky-500/10">
                             <div className="grid grid-cols-3 gap-[1px]">
                               {[
                                 true,
@@ -1142,8 +1145,8 @@ function DevisGratuitsPageInner() {
                                 false,
                                 true,
                               ].map((filled, idx) => (
+                                // eslint-disable-next-line react/no-array-index-key
                                 <span
-                                  // eslint-disable-next-line react/no-array-index-key
                                   key={idx}
                                   className={[
                                     "h-2 w-2 rounded-[2px]",
@@ -1153,27 +1156,30 @@ function DevisGratuitsPageInner() {
                               ))}
                             </div>
                           </div>
-                          <div className="flex-1">
-                            <div className="font-semibold">Standard</div>
+                          <div className="mt-3 space-y-1">
+                            <div className="text-xs font-semibold text-slate-50">
+                              Standard
+                            </div>
                             <div className="text-[10px] text-slate-400">
                               Meubles classiques · affaires normales
                             </div>
-                            <div className="mt-1 inline-flex items-center rounded-full border border-sky-300/70 bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold text-sky-100">
-                              Volume normal
-                            </div>
+                          </div>
+                          <div className="mt-3 inline-flex items-center rounded-full border border-sky-300/70 bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold text-sky-100">
+                            Volume normal
                           </div>
                         </button>
+
                         <button
                           type="button"
                           onClick={() => updateField("density", "dense")}
                           className={[
-                            "flex w-full items-center gap-2 rounded-2xl border px-3 py-2 text-left text-[11px] transition",
+                            "flex w-full flex-col items-center justify-between rounded-2xl border px-4 py-4 text-center text-[11px] transition",
                             form.density === "dense"
-                              ? "border-amber-400 bg-amber-500/10 text-amber-100"
-                              : "border-slate-700 bg-slate-950/60 text-slate-200",
+                              ? "border-amber-400 bg-amber-500/8 shadow-[0_0_0_1px_rgba(251,191,36,0.45)]"
+                              : "border-slate-700/80 bg-slate-950/60 hover:border-amber-300/70",
                           ].join(" ")}
                         >
-                          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-amber-300/60 bg-amber-500/10">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-amber-300/60 bg-amber-500/10">
                             <div className="grid grid-cols-3 gap-[1px]">
                               {[
                                 true,
@@ -1186,8 +1192,8 @@ function DevisGratuitsPageInner() {
                                 true,
                                 true,
                               ].map((filled, idx) => (
+                                // eslint-disable-next-line react/no-array-index-key
                                 <span
-                                  // eslint-disable-next-line react/no-array-index-key
                                   key={idx}
                                   className={[
                                     "h-2 w-2 rounded-[2px]",
@@ -1197,14 +1203,16 @@ function DevisGratuitsPageInner() {
                               ))}
                             </div>
                           </div>
-                          <div className="flex-1">
-                            <div className="font-semibold">Bien rempli</div>
+                          <div className="mt-3 space-y-1">
+                            <div className="text-xs font-semibold text-slate-50">
+                              Bien rempli
+                            </div>
                             <div className="text-[10px] text-slate-400">
-                              Beaucoup de meubles / déco · intérieur chargé
+                              Beaucoup de meubles · déco · intérieur chargé
                             </div>
-                            <div className="mt-1 inline-flex items-center rounded-full border border-amber-300/70 bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-100">
-                              +10% volume
-                            </div>
+                          </div>
+                          <div className="mt-3 inline-flex items-center rounded-full border border-amber-300/70 bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-100">
+                            +10% volume
                           </div>
                         </button>
                       </div>
@@ -1297,239 +1305,148 @@ function DevisGratuitsPageInner() {
                 )}
               </div>
 
-              {/* Services supplémentaires */}
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <label className="inline-flex items-start gap-2 text-[11px] text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={form.serviceMonteMeuble}
-                    onChange={(e) =>
-                      updateField("serviceMonteMeuble", e.target.checked)
-                    }
-                    className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
-                  />
-                  <span>
-                    Monte‑meuble à prévoir
-                    <span className="block text-[10px] text-slate-500">
-                      Utile pour les étages élevés ou rues très étroites.
-                    </span>
-                  </span>
-                </label>
-                <div className="space-y-1 text-[11px] text-slate-300">
-                  <span className="block text-xs font-medium text-slate-200">
-                    Piano
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      ["none", "Pas de piano"],
-                      ["droit", "Piano droit"],
-                      ["quart", "Quart de queue"],
-                    ].map(([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() =>
-                          updateField(
-                            "servicePiano",
-                            value as FormState["servicePiano"]
-                          )
-                        }
-                        className={[
-                          "rounded-full border px-3 py-1",
-                          form.servicePiano === value
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
-                        ].join(" ")}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <label className="inline-flex items-start gap-2 text-[11px] text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={form.serviceDebarras}
-                    onChange={(e) =>
-                      updateField("serviceDebarras", e.target.checked)
-                    }
-                    className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
-                  />
-                  <span>
-                    Besoin de débarras
-                    <span className="block text-[10px] text-slate-500">
-                      Si vous souhaitez que l&apos;on évacue certains objets.
-                    </span>
-                  </span>
-                </label>
-              </div>
-
-              {/* Autres besoins fréquents */}
+              {/* Autres besoins éventuels (tous les services optionnels regroupés) */}
               <div className="mt-4 space-y-2 rounded-2xl bg-slate-950/60 p-3 text-[11px] text-slate-300">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                   Autres besoins éventuels
                 </p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <label className="inline-flex items-start gap-2">
-                    <input
-                      type="checkbox"
-                      checked={form.optionPackingMaterials}
-                      onChange={(e) =>
-                        updateField("optionPackingMaterials", e.target.checked)
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "serviceMonteMeuble",
+                        !form.serviceMonteMeuble
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.serviceMonteMeuble
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Monte‑meuble à prévoir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField("serviceDebarras", !form.serviceDebarras)
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.serviceDebarras
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Besoin de débarras
+                  </button>
+                  {[
+                    ["none", "Pas de piano"],
+                    ["droit", "Piano droit"],
+                    ["quart", "Piano quart de queue"],
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() =>
+                        updateField(
+                          "servicePiano",
+                          value as FormState["servicePiano"]
+                        )
                       }
-                      className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
-                    />
-                    <span>
-                      Je souhaite que les cartons / protections soient fournis
-                    </span>
-                  </label>
-                  <label className="inline-flex items-start gap-2">
-                    <input
-                      type="checkbox"
-                      checked={form.optionDismantlingFull}
-                      onChange={(e) =>
-                        updateField("optionDismantlingFull", e.target.checked)
-                      }
-                      className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
-                    />
-                    <span>
-                      Beaucoup de meubles à démonter / remonter (armoires,
-                      cuisine…)
-                    </span>
-                  </label>
-                  <label className="inline-flex items-start gap-2">
-                    <input
-                      type="checkbox"
-                      checked={form.optionStorage}
-                      onChange={(e) =>
-                        updateField("optionStorage", e.target.checked)
-                      }
-                      className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
-                    />
-                    <span>
-                      Besoin d&apos;un stockage temporaire / garde‑meuble
-                    </span>
-                  </label>
-                  <label className="inline-flex items-start gap-2">
-                    <input
-                      type="checkbox"
-                      checked={form.optionCleaning}
-                      onChange={(e) =>
-                        updateField("optionCleaning", e.target.checked)
-                      }
-                      className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
-                    />
-                    <span>
-                      Besoin d&apos;un nettoyage de fin de déménagement
-                    </span>
-                  </label>
-                  <label className="inline-flex items-start gap-2 sm:col-span-2">
-                    <input
-                      type="checkbox"
-                      checked={form.optionDifficultAccess}
-                      onChange={(e) =>
-                        updateField("optionDifficultAccess", e.target.checked)
-                      }
-                      className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
-                    />
-                    <span>
-                      Accès très contraint (rue étroite, centre‑ville difficile
-                      pour le camion)
-                    </span>
-                  </label>
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        form.servicePiano === value
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "optionPackingMaterials",
+                        !form.optionPackingMaterials
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.optionPackingMaterials
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Cartons / protections fournis
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "optionDismantlingFull",
+                        !form.optionDismantlingFull
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.optionDismantlingFull
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Beaucoup de meubles à démonter / remonter
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField("optionStorage", !form.optionStorage)
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.optionStorage
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Besoin de stockage temporaire / garde‑meuble
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField("optionCleaning", !form.optionCleaning)
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.optionCleaning
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Nettoyage de fin de déménagement
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "optionDifficultAccess",
+                        !form.optionDifficultAccess
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.optionDifficultAccess
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Accès très contraint (rue étroite, centre‑ville difficile
+                    pour le camion)
+                  </button>
                 </div>
-              </div>
-            </div>
-
-            {/* Récapitulatif synthétique */}
-            <div className="space-y-3 text-sm text-slate-200">
-              <div>
-                <p className="font-medium text-slate-100">Contact</p>
-                <p>
-                  {form.firstName} {form.lastName}
-                </p>
-                <p>{form.email}</p>
-                {form.phone && <p>{form.phone}</p>}
-              </div>
-              <div>
-                <p className="font-medium text-slate-100">Déménagement</p>
-                {form.originCity && (
-                  <p>
-                    <span className="text-slate-400">Départ :</span>{" "}
-                    {[form.originPostalCode, form.originCity]
-                      .filter(Boolean)
-                      .join(" ")}
-                  </p>
-                )}
-                {form.destinationCity && (
-                  <p>
-                    <span className="text-slate-400">Arrivée :</span>{" "}
-                    {[form.destinationPostalCode, form.destinationCity]
-                      .filter(Boolean)
-                      .join(" ")}
-                  </p>
-                )}
-                {form.originAddress && (
-                  <p className="text-xs text-slate-300">
-                    <span className="text-slate-500">Adresse départ :</span>{" "}
-                    {form.originAddress}
-                  </p>
-                )}
-                {form.destinationAddress && (
-                  <p className="text-xs text-slate-300">
-                    <span className="text-slate-500">Adresse arrivée :</span>{" "}
-                    {form.destinationAddress}
-                  </p>
-                )}
-                {form.movingDate && (
-                  <p>
-                    <span className="text-slate-400">Date :</span>{" "}
-                    {new Date(form.movingDate).toLocaleDateString("fr-FR")}
-                  </p>
-                )}
-                {form.movingDateEnd && form.movingDateEnd !== form.movingDate && (
-                  <p className="text-xs text-slate-300">
-                    <span className="text-slate-500">Jusqu&apos;au :</span>{" "}
-                    {new Date(form.movingDateEnd).toLocaleDateString("fr-FR")}
-                  </p>
-                )}
-                <p className="text-xs text-slate-300">
-                  <span className="text-slate-500">Flexibilité :</span>{" "}
-                  {form.dateFlexible
-                    ? "quelques jours autour de la date"
-                    : "date plutôt fixe"}
-                </p>
-                <p className="mt-1 text-xs text-slate-300">
-                  <span className="text-slate-500">Accès départ :</span>{" "}
-                  {form.originFloor === "0" ? "RDC" : `${form.originFloor}e`} ·{" "}
-                  {form.originElevator === "none"
-                    ? "sans ascenseur"
-                    : form.originElevator === "small"
-                    ? "petit ascenseur"
-                    : form.originElevator === "medium"
-                    ? "ascenseur moyen"
-                    : "grand ascenseur"}
-                </p>
-                <p className="text-xs text-slate-300">
-                  <span className="text-slate-500">Accès arrivée :</span>{" "}
-                  {form.destinationFloor === "0"
-                    ? "RDC"
-                    : `${form.destinationFloor}e`}{" "}
-                  ·{" "}
-                  {form.destinationElevator === "none"
-                    ? "sans ascenseur"
-                    : form.destinationElevator === "small"
-                    ? "petit ascenseur"
-                    : form.destinationElevator === "medium"
-                    ? "ascenseur moyen"
-                    : "grand ascenseur"}
-                </p>
-                {form.notes && (
-                  <p className="mt-1 text-slate-300">
-                    <span className="text-slate-400">Détails :</span>{" "}
-                    {form.notes}
-                  </p>
-                )}
               </div>
             </div>
 
