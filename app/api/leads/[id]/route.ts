@@ -8,6 +8,7 @@ const updateLeadSchema = z.object({
   photoStatus: z
     .enum(["none", "planned_whatsapp", "received_whatsapp", "received_web"])
     .optional(),
+  photosStatus: z.enum(["NONE", "PENDING", "UPLOADED"]).optional(),
 
   // Champs projet & estimation
   originPostalCode: z.string().nullable().optional(),
@@ -92,6 +93,7 @@ export async function PATCH(
         formCompletionStatus:
           updatable.formCompletionStatus ?? existing.formCompletionStatus,
         photoStatus: updatable.photoStatus ?? existing.photoStatus,
+        photosStatus: updatable.photosStatus ?? existing.photosStatus,
         linkingToken,
       },
     });
@@ -101,6 +103,7 @@ export async function PATCH(
       linkingToken: updated.linkingToken,
       formCompletionStatus: updated.formCompletionStatus,
       photoStatus: updated.photoStatus,
+      photosStatus: updated.photosStatus,
     });
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {

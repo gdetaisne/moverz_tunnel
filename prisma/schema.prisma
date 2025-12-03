@@ -23,7 +23,8 @@ model LeadTunnel {
 
   // Suivi de progression
   formCompletionStatus String @default("none")   // 'none' | 'partial' | 'complete'
-  photoStatus          String @default("none")   // 'none' | 'planned_whatsapp' | 'received_whatsapp' | 'received_web'
+  photoStatus          String @default("none")   // historique WhatsApp (non utilisé en V1 photos)
+  photosStatus         String @default("NONE")   // 'NONE' | 'PENDING' | 'UPLOADED'
 
   // Liaison Web ↔ WhatsApp
   linkingToken      String? @unique
@@ -51,6 +52,28 @@ model LeadTunnel {
   distanceKm       Float?
   priceMin         Int?
   priceMax         Int?
+
+  photos           LeadPhoto[]
+}
+
+model LeadPhoto {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+
+  // Lien vers le lead tunnel
+  leadId           String
+  lead             LeadTunnel @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  // Stockage
+  storageKey       String
+  url              String?
+
+  originalFilename String
+  mimeType         String
+  sizeBytes        Int
+
+  // Préparation future pour l'analyse IA
+  analysisStatus   String   @default("NONE") // 'NONE' | 'PENDING' | 'DONE' | 'ERROR'
 }
 
 

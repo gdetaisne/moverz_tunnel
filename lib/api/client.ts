@@ -12,6 +12,7 @@ export interface LeadTunnelCreatePayload {
 export interface LeadTunnelUpdatePayload {
   formCompletionStatus?: "none" | "partial" | "complete";
   photoStatus?: "none" | "planned_whatsapp" | "received_whatsapp" | "received_web";
+  photosStatus?: "NONE" | "PENDING" | "UPLOADED";
   // Projet & estimation
   originPostalCode?: string | null;
   originCity?: string | null;
@@ -106,6 +107,55 @@ export async function ensureLinkingToken(id: string): Promise<LeadTunnelResponse
     ensureLinkingToken: true,
     photoStatus: "planned_whatsapp",
   });
+}
+
+export interface UploadedPhoto {
+  id: string;
+  url: string | null;
+  storageKey: string;
+  originalFilename: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
+export interface UploadPhotosResult {
+  success: UploadedPhoto[];
+  errors: { originalFilename: string; reason: string }[];
+}
+
+export async function uploadLeadPhotos(
+  leadId: string,
+  files: File[]
+): Promise<UploadPhotosResult> {
+  const formData = new FormData();
+  formData.append("leadId", leadId);
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  const res = await fetch("/api/uploads/photos", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    let errorMessage = "Erreur lors de l'upload des photos.";
+    try {
+      const data = await res.json();
+      if (typeof data?.error === "string") {
+        errorMessage = data.error;
+      }
+    } catch {
+      // garder message générique
+    }
+    throw new Error(errorMessage);
+  }
+
+  const data = (await res.json()) as UploadPhotosResult;
+  return {
+    success: data.success ?? [],
+    errors: data.errors ?? [],
+  };
 }
 
 // Client HTTP pour communiquer avec le Back Office (routes /public/leads)

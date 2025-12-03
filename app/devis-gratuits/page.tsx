@@ -1,8 +1,8 @@
 'use client';
 
 import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { createLead, ensureLinkingToken, updateLead } from "@/lib/api/client";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createLead, updateLead, uploadLeadPhotos } from "@/lib/api/client";
 import {
   calculatePricing,
   type DensityType,
@@ -14,7 +14,7 @@ const STEPS = [
   { id: 1, label: "Contact" },
   { id: 2, label: "Projet" },
   { id: 3, label: "Volume & formules" },
-  { id: 4, label: "Photos / WhatsApp" },
+  { id: 4, label: "Photos & inventaire" },
 ] as const;
 
 type StepId = (typeof STEPS)[number]["id"];
@@ -109,6 +109,15 @@ interface FormState {
   notes: string;
 }
 
+type UploadStatus = "pending" | "uploading" | "uploaded" | "error";
+
+interface LocalUploadFile {
+  id: string;
+  file: File;
+  status: UploadStatus;
+  error?: string;
+}
+
 const INITIAL_FORM_STATE: FormState = {
   firstName: "Guillaume",
   lastName: "Test",
@@ -172,6 +181,7 @@ function formatPrice(price: number | null | undefined) {
 }
 
 function DevisGratuitsPageInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const src = searchParams.get("src") ?? undefined;
 
@@ -181,6 +191,8 @@ function DevisGratuitsPageInner() {
   const [linkingToken, setLinkingToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [isOriginOpen, setIsOriginOpen] = useState(true);
   const [isDestinationOpen, setIsDestinationOpen] = useState(false);
 
@@ -341,6 +353,32 @@ function DevisGratuitsPageInner() {
 
       return next;
     });
+  };
+
+  const addLocalFiles = (files: FileList | File[]) => {
+    const array = Array.from(files);
+    if (array.length === 0) return;
+    setLocalUploadFiles((prev) => {
+      const existingKeys = new Set(
+        prev.map((f) => `${f.file.name}-${f.file.size}-${f.file.type}`)
+      );
+      const next: LocalUploadFile[] = [...prev];
+      for (const file of array) {
+        const key = `${file.name}-${file.size}-${file.type}`;
+        if (existingKeys.has(key)) continue;
+        next.push({
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          file,
+          status: "pending",
+        });
+      }
+      return next;
+    });
+  };
+
+  const resetUploads = () => {
+    setLocalUploadFiles([]);
+    setIsUploadingPhotos(false);
   };
 
   const isOriginComplete =
@@ -1476,78 +1514,215 @@ function DevisGratuitsPageInner() {
         </section>
       )}
 
-      {/* Étape 4 – Photos / WhatsApp */}
+      {/* Étape 4 – Photos & inventaire */}
       {currentStep === 4 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
-          <div className="space-y-5">
-            <h2 className="text-lg font-semibold text-slate-50">
-              Merci, ton dossier est créé ✅
-            </h2>
-            <p className="text-sm text-slate-200">
-              Tu peux maintenant nous envoyer des photos de ton logement pour
-              affiner l&apos;inventaire, ou le faire plus tard avec ton code
-              dossier.
-            </p>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-slate-50">
+                Ajoutez vos photos (2 minutes), on s’occupe de l’inventaire.
+              </h2>
+              <ul className="list-disc space-y-1 pl-5 text-xs text-slate-300">
+                <li>Volume plus précis → moins de mauvaises surprises.</li>
+                <li>
+                  Inventaire détaillé généré automatiquement pour vous et le
+                  déménageur.
+                </li>
+                <li>Préparation de votre déclaration de valeur.</li>
+              </ul>
+            </div>
 
-            <button
-              type="button"
-              onClick={async () => {
-                if (!leadId) return;
-                setError(null);
-                try {
-                  setIsSubmitting(true);
-                  const res = await ensureLinkingToken(leadId);
-                  setLinkingToken(res.linkingToken);
-                } catch (err: unknown) {
-                  const message =
-                    err instanceof Error
-                      ? err.message
-                      : "Erreur lors de la génération du code dossier.";
-                  setError(message);
-                } finally {
-                  setIsSubmitting(false);
-                }
-              }}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-200 hover:border-sky-400"
-            >
-              Générer / afficher mon code dossier
-            </button>
-
-            {linkingToken && (
-              <div className="space-y-3 rounded-2xl bg-slate-950/60 p-4 ring-1 ring-slate-800">
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-sky-300">
-                  Code dossier
+            {/* Zone d'upload */}
+            <div className="space-y-3">
+              <div
+                className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (e.dataTransfer?.files?.length) {
+                    addLocalFiles(e.dataTransfer.files);
+                  }
+                }}
+              >
+                <input
+                  type="file"
+                  multiple
+                  accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.mp4,.mov"
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                  onChange={(e) => {
+                    if (e.target.files?.length) {
+                      addLocalFiles(e.target.files);
+                    }
+                  }}
+                />
+                <p className="text-sm font-medium text-slate-100">
+                  Glissez vos photos ici ou cliquez pour sélectionner des
+                  fichiers.
                 </p>
-                <p className="text-xl font-mono font-semibold text-slate-50">
-                  {linkingToken}
+                <p className="mt-2 text-[11px] text-slate-400">
+                  Formats acceptés : JPG, PNG, WEBP, HEIC, HEIF, MP4, MOV.
                 </p>
-                <p className="text-xs text-slate-400">
-                  Garde-le précieusement : il permet de lier ta conversation
-                  WhatsApp à ton dossier.
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Idéal : 4 photos par pièce (vue générale, deux angles, détails).
                 </p>
-                {deepLinkWhatsapp ? (
-                  <a
-                    href={deepLinkWhatsapp}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 transition hover:bg-emerald-300"
-                  >
-                    Envoyer mes photos via WhatsApp
-                  </a>
-                ) : (
-                  <p className="text-xs text-amber-400">
-                    Numéro WhatsApp non configuré côté tunnel. Contacte l’équipe
-                    si tu veux tester l’option WhatsApp en local.
-                  </p>
-                )}
               </div>
-            )}
+
+              {localUploadFiles.length > 0 && (
+                <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Fichiers sélectionnés
+                  </p>
+                  <ul className="space-y-1">
+                    {localUploadFiles.map((item) => {
+                      const isImage = item.file.type.startsWith("image/");
+                      const isVideo = item.file.type.startsWith("video/");
+                      const sizeMb = item.file.size / (1024 * 1024);
+                      let statusLabel = "En attente";
+                      if (item.status === "uploading") statusLabel = "En cours…";
+                      if (item.status === "uploaded") statusLabel = "Envoyé";
+                      if (item.status === "error") statusLabel = "Erreur";
+
+                      return (
+                        <li
+                          key={item.id}
+                          className="flex items-center justify-between gap-3 rounded-xl bg-slate-900/70 px-3 py-2"
+                        >
+                          <div className="flex min-w-0 items-center gap-2">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-800 text-[11px]">
+                              {isImage ? "IMG" : isVideo ? "VID" : "FILE"}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-[11px] font-medium">
+                                {item.file.name}
+                              </p>
+                              <p className="text-[10px] text-slate-400">
+                                {sizeMb.toFixed(1)} Mo · {statusLabel}
+                                {item.error && ` – ${item.error}`}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="text-[11px] text-slate-400 hover:text-rose-400"
+                            onClick={() =>
+                              setLocalUploadFiles((prev) =>
+                                prev.filter((f) => f.id !== item.id)
+                              )
+                            }
+                            disabled={item.status === "uploading"}
+                          >
+                            Retirer
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
 
             {error && (
               <p className="text-sm text-rose-400" role="alert">
                 {error}
               </p>
             )}
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                disabled={
+                  !leadId ||
+                  localUploadFiles.length === 0 ||
+                  isUploadingPhotos
+                }
+                onClick={async () => {
+                  if (!leadId || localUploadFiles.length === 0) return;
+                  setError(null);
+                  try {
+                    setIsUploadingPhotos(true);
+                    setLocalUploadFiles((prev) =>
+                      prev.map((f) =>
+                        f.status === "pending"
+                          ? { ...f, status: "uploading", error: undefined }
+                          : f
+                      )
+                    );
+
+                    const pendingFiles = localUploadFiles
+                      .filter((f) => f.status === "pending" || f.status === "uploading")
+                      .map((f) => f.file);
+
+                    const result = await uploadLeadPhotos(leadId, pendingFiles);
+
+                    setLocalUploadFiles((prev) =>
+                      prev.map((f) => {
+                        const ok = result.success.find(
+                          (s) => s.originalFilename === f.file.name
+                        );
+                        const ko = result.errors.find(
+                          (e) => e.originalFilename === f.file.name
+                        );
+                        if (ok) {
+                          return { ...f, status: "uploaded", error: undefined };
+                        }
+                        if (ko) {
+                          return {
+                            ...f,
+                            status: "error",
+                            error: ko.reason,
+                          };
+                        }
+                        return f;
+                      })
+                    );
+
+                    if (result.success.length > 0) {
+                      await updateLead(leadId, { photosStatus: "UPLOADED" });
+                      router.push("/devis-gratuits/merci");
+                      resetUploads();
+                    } else if (result.errors.length > 0) {
+                      setError(
+                        "Aucun fichier n’a pu être enregistré. Vous pouvez réessayer ou les envoyer plus tard."
+                      );
+                    }
+                  } catch (err: unknown) {
+                    const message =
+                      err instanceof Error
+                        ? err.message
+                        : "Erreur lors de l’upload des photos.";
+                    setError(message);
+                  } finally {
+                    setIsUploadingPhotos(false);
+                  }
+                }}
+                className="inline-flex flex-1 items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isUploadingPhotos ? "Envoi en cours…" : "Envoyer mes photos"}
+              </button>
+
+              <button
+                type="button"
+                disabled={!leadId || isUploadingPhotos}
+                onClick={async () => {
+                  if (!leadId) return;
+                  setError(null);
+                  try {
+                    await updateLead(leadId, { photosStatus: "PENDING" });
+                  } catch (err: unknown) {
+                    console.error("Erreur mise à jour photosStatus:", err);
+                    // On n'empêche pas la complétion du tunnel
+                  } finally {
+                    router.push("/devis-gratuits/merci");
+                    resetUploads();
+                  }
+                }}
+                className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Je les enverrai plus tard
+              </button>
+            </div>
           </div>
         </section>
       )}
