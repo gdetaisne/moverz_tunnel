@@ -1490,14 +1490,16 @@ function DevisGratuitsPageInner() {
                         className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <p className="block text-xs font-medium text-slate-200">
-                        Quantité de meubles et affaires
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        Cela nous aide à estimer le volume à déménager.
-                      </p>
-                      <div className="grid gap-2 sm:grid-cols-3">
+                  </div>
+
+                  <div className="mt-3 space-y-1">
+                    <p className="block text-xs font-medium text-slate-200">
+                      Quantité de meubles et affaires
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Cela nous aide à estimer le volume à déménager.
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-3 lg:gap-4">
                         <button
                           type="button"
                           onClick={() => updateField("density", "light")}
@@ -1644,10 +1646,6 @@ function DevisGratuitsPageInner() {
                     </div>
                   </div>
                 </div>
-
-                {/* Colonne droite libre pour extensions futures (prix détaillé, etc.) */}
-                <div className="hidden text-xs text-slate-300 sm:block" />
-              </div>
 
               {/* Choix niveau de confort (swipe horizontal sur mobile) */}
               <div
