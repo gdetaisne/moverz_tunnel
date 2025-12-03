@@ -2,11 +2,9 @@ FROM node:20-bullseye-slim AS builder
 
 WORKDIR /usr/src/app
 
-ENV NODE_ENV=production
-
-# 1) Installer les dépendances
+# 1) Installer les dépendances (y compris dev, nécessaires au build: Tailwind, TypeScript, etc.)
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # 2) Copier le code applicatif
 COPY . .
