@@ -2,7 +2,12 @@
 
 import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createLead, updateLead, uploadLeadPhotos } from "@/lib/api/client";
+import {
+  createLead,
+  updateLead,
+  uploadLeadPhotos,
+  ensureLinkingToken,
+} from "@/lib/api/client";
 import {
   calculatePricing,
   type DensityType,
@@ -247,6 +252,12 @@ function DevisGratuitsPageInner() {
   const [isDestinationOpen, setIsDestinationOpen] = useState(false);
   const [analysisStartedAt, setAnalysisStartedAt] = useState<number | null>(null);
   const [analysisElapsedMs, setAnalysisElapsedMs] = useState<number>(0);
+  const [analysisTargetSeconds, setAnalysisTargetSeconds] = useState<number | null>(
+    null
+  );
+  const [photoFlowChoice, setPhotoFlowChoice] = useState<
+    "none" | "photos_now" | "whatsapp_later"
+  >("none");
 
   const distanceKm = useMemo(
     () => estimateDistanceKm(form.originPostalCode, form.destinationPostalCode),
@@ -388,6 +399,63 @@ function DevisGratuitsPageInner() {
     return `https://wa.me/${whatsappNumber}?text=${encoded}`;
   }, [whatsappNumber, linkingToken]);
 
+  const handleWhatsappLater = async () => {
+    if (!leadId) {
+      setError("Lead introuvable. Revenez à l’étape précédente puis réessayez.");
+      return;
+    }
+    if (!whatsappNumber) {
+      setError(
+        "Numéro WhatsApp non configuré. Merci de terminer sans WhatsApp pour le moment."
+      );
+      return;
+    }
+    setError(null);
+    try {
+      setIsSubmitting(true);
+      const res = await ensureLinkingToken(leadId);
+      const token = res.linkingToken;
+      if (token && typeof window !== "undefined") {
+        const message = `Bonjour, je souhaite envoyer des photos pour mon déménagement. Mon code dossier est : ${token}`;
+        const encoded = encodeURIComponent(message);
+        const url = `https://wa.me/${whatsappNumber}?text=${encoded}`;
+        window.open(url, "_blank");
+      }
+      // On marque le tunnel comme continué plus tard
+      await updateLead(leadId, { photosStatus: "PENDING" });
+      router.push("/devis-gratuits/merci");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Erreur lors de la préparation de la suite sur WhatsApp.";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleNoInventory = async () => {
+    if (!leadId) {
+      setError("Lead introuvable. Revenez à l’étape précédente puis réessayez.");
+      return;
+    }
+    setError(null);
+    try {
+      setIsSubmitting(true);
+      await updateLead(leadId, { photosStatus: "NONE" });
+      router.push("/devis-gratuits/merci");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Erreur lors de la finalisation sans inventaire.";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => {
       const next: FormState = { ...prev, [key]: value };
@@ -514,20 +582,24 @@ function DevisGratuitsPageInner() {
     }
   };
 
-  // Chronomètre simple pour l'analyse Process 2
+  // Chronomètre affiché (≈ 3 s / photo) pour l'analyse Process 2
   useEffect(() => {
     if (!analysisStartedAt) return;
+    if (analysisTargetSeconds == null) return;
     if (!isUploadingPhotos && !isAnalyzing) return;
     if (typeof window === "undefined") return;
 
+    const start = analysisStartedAt;
     const id = window.setInterval(() => {
-      setAnalysisElapsedMs(Date.now() - analysisStartedAt);
+      const elapsedSec = (Date.now() - start) / 1000;
+      const cappedMs = Math.min(elapsedSec, analysisTargetSeconds) * 1000;
+      setAnalysisElapsedMs(cappedMs);
     }, 200);
 
     return () => {
       window.clearInterval(id);
     };
-  }, [analysisStartedAt, isUploadingPhotos, isAnalyzing]);
+  }, [analysisStartedAt, analysisTargetSeconds, isUploadingPhotos, isAnalyzing]);
 
   const handleSubmitStep3 = async (e: FormEvent) => {
     e.preventDefault();
@@ -1638,12 +1710,13 @@ function DevisGratuitsPageInner() {
       {currentStep === 4 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <div className="space-y-6">
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-50">
-                Pourquoi ajouter des photos ?
-              </h2>
-              {/* Schéma visuel simple : photos → IA → inventaire + déclaration */}
-              <div className="space-y-1 rounded-2xl bg-slate-950/80 p-3 ring-1 ring-slate-800/70">
+            {photoFlowChoice !== "photos_now" && (
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold text-slate-50">
+                  Pourquoi ajouter des photos ?
+                </h2>
+                {/* Schéma visuel simple : photos → IA → inventaire + déclaration */}
+                <div className="space-y-1 rounded-2xl bg-slate-950/80 p-3 ring-1 ring-slate-800/70">
                 <p className="text-[11px] font-medium text-slate-300">
                   Ce qui se passe derrière en 2 minutes :
                 </p>
@@ -1675,11 +1748,11 @@ function DevisGratuitsPageInner() {
                     </span>
                   </div>
                 </div>
-              </div>
-              <p className="text-xs text-slate-300">
-                En 2 minutes, vos photos nous donnent tout ce qu’il faut :
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
+                </div>
+                <p className="text-xs text-slate-300">
+                  En 2 minutes, vos photos nous donnent tout ce qu’il faut :
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
                 <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-[11px] font-semibold text-emerald-300">
                     V
@@ -1736,123 +1809,189 @@ function DevisGratuitsPageInner() {
                     </p>
                   </div>
                 </div>
-              </div>
-              <p className="text-[11px] font-medium text-emerald-300">
-                → 4 photos par pièce suffisent (vue générale + deux angles +
-                détails si besoin).
-              </p>
-            </div>
-
-            {/* Zone d'upload */}
-            <div className="space-y-3">
-              <div
-                className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
-                onDragOver={(e) => {
-                  e.preventDefault();
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  if (e.dataTransfer?.files?.length) {
-                    addLocalFiles(e.dataTransfer.files);
-                  }
-                }}
-              >
-                <input
-                  type="file"
-                  multiple
-                  accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
-                  className="absolute inset-0 cursor-pointer opacity-0"
-                  onChange={(e) => {
-                    if (e.target.files?.length) {
-                      addLocalFiles(e.target.files);
-                    }
-                  }}
-                />
-                <p className="text-sm font-medium text-slate-100">
-                  Glissez vos photos ici ou cliquez pour sélectionner des
-                  fichiers.
-                </p>
-                <p className="mt-2 text-[11px] text-slate-400">
-                  Formats acceptés : JPG, PNG, WEBP, HEIC, HEIF, MP4, MOV.
-                </p>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  Idéal : 4 photos par pièce (vue générale, deux angles, détails).
+                </div>
+                <p className="text-[11px] font-medium text-emerald-300">
+                  → 4 photos par pièce suffisent (vue générale + deux angles +
+                  détails si besoin).
                 </p>
               </div>
+            )}
 
-              {localUploadFiles.length > 0 && (
-                <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    Fichiers sélectionnés
+            {/* Choix initial du mode de complétion */}
+            {photoFlowChoice === "none" && (
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => setPhotoFlowChoice("photos_now")}
+                  className="w-full rounded-2xl bg-sky-500/90 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-400"
+                >
+                  J’ai les photos (ou je peux les prendre maintenant)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPhotoFlowChoice("whatsapp_later")}
+                  className="w-full rounded-2xl border border-sky-400/70 bg-slate-950/70 px-4 py-3 text-sm font-semibold text-sky-100 hover:border-sky-300"
+                >
+                  Je ne peux pas le faire maintenant, continuer plus tard sur WhatsApp
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNoInventory}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-500"
+                >
+                  Je ne souhaite pas d’inventaire détaillé ni de déclaration de valeur
+                  (devis approximatifs sans photos)
+                </button>
+              </div>
+            )}
+
+            {/* Mode WhatsApp plus tard : petite confirmation puis déclenchement du lien */}
+            {photoFlowChoice === "whatsapp_later" && (
+              <div className="space-y-4 rounded-2xl bg-slate-950/70 p-4 ring-1 ring-slate-800">
+                <p className="text-sm font-semibold text-slate-50">
+                  Continuer plus tard sur WhatsApp
+                </p>
+                <p className="text-xs text-slate-300">
+                  Nous allons préparer une conversation WhatsApp avec votre dossier.
+                  Vous pourrez nous envoyer vos photos plus tard, en toute
+                  tranquillité.
+                </p>
+                <div className="space-y-1 text-xs text-slate-300">
+                  <p className="font-medium text-slate-200">
+                    Numéro de téléphone indiqué :
                   </p>
-                  <ul className="space-y-1">
-                    {localUploadFiles.map((item) => {
-                      const isImage = item.file.type.startsWith("image/");
-                      const isVideo = item.file.type.startsWith("video/");
-                      const sizeMb = item.file.size / (1024 * 1024);
-                      let statusLabel = "En attente";
-                      if (item.status === "uploading") statusLabel = "En cours…";
-                      if (item.status === "uploaded") statusLabel = "Envoyé";
-                      if (item.status === "error") statusLabel = "Erreur";
+                  <p className="rounded-xl bg-slate-900/70 px-3 py-2 text-sm">
+                    {form.phone && form.phone.trim().length > 0
+                      ? form.phone
+                      : "Non renseigné"}
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Si ce numéro est incorrect, vous pourrez le préciser directement
+                    dans la conversation WhatsApp.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleWhatsappLater}
+                    disabled={isSubmitting}
+                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSubmitting
+                      ? "Ouverture de WhatsApp…"
+                      : "Ouvrir WhatsApp et continuer plus tard"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPhotoFlowChoice("none")}
+                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-200 hover:border-slate-400"
+                  >
+                    Retour
+                  </button>
+                </div>
+              </div>
+            )}
 
-                      return (
-                        <li
-                          key={item.id}
-                          className="flex items-center justify-between gap-3 rounded-xl bg-slate-900/70 px-3 py-2"
-                        >
-                          <div className="flex min-w-0 items-center gap-2">
-                            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-slate-800">
+            {/* Mode photos maintenant : zone d'upload + analyse */}
+            {photoFlowChoice === "photos_now" && (
+              <>
+                {/* Zone d'upload */}
+                <div className="space-y-3">
+                  <div
+                    className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (e.dataTransfer?.files?.length) {
+                        addLocalFiles(e.dataTransfer.files);
+                      }
+                    }}
+                  >
+                    <input
+                      type="file"
+                      multiple
+                      accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+                      className="absolute inset-0 cursor-pointer opacity-0"
+                      onChange={(e) => {
+                        if (e.target.files?.length) {
+                          addLocalFiles(e.target.files);
+                        }
+                      }}
+                    />
+                    <p className="text-sm font-medium text-slate-100">
+                      Glissez vos photos ici ou cliquez pour sélectionner des fichiers.
+                    </p>
+                    <p className="mt-2 text-[11px] text-slate-400">
+                      Formats acceptés : JPG, JPEG, PNG, WEBP, HEIC, HEIF.
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Idéal : 4 photos par pièce (vue générale, deux angles, détails).
+                    </p>
+                  </div>
+
+                  {localUploadFiles.length > 0 && (
+                    <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Photos sélectionnées
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {localUploadFiles.map((item) => {
+                          const isImage = item.file.type.startsWith("image/");
+                          const borderClass =
+                            item.status === "uploaded"
+                              ? "border-emerald-400"
+                              : item.status === "uploading"
+                              ? "border-sky-400"
+                              : item.status === "error"
+                              ? "border-rose-400"
+                              : "border-slate-600";
+
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              className={`relative h-14 w-14 overflow-hidden rounded-xl border ${borderClass} bg-slate-900`}
+                              onClick={() =>
+                                setLocalUploadFiles((prev) =>
+                                  prev.filter((f) => f.id !== item.id)
+                                )
+                              }
+                              disabled={item.status === "uploading"}
+                              title="Retirer cette photo"
+                            >
                               {isImage ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   src={item.previewUrl}
-                                  alt={item.file.name}
+                                  alt=""
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                <span className="text-[10px] text-slate-200">
-                                  FILE
-                                </span>
+                                <span className="text-[10px] text-slate-200">FILE</span>
                               )}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-[11px] font-medium">
-                                {item.file.name}
-                              </p>
-                              <p className="text-[10px] text-slate-400">
-                                {sizeMb.toFixed(1)} Mo · {statusLabel}
-                                {item.error && ` – ${item.error}`}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            className="text-[11px] text-slate-400 hover:text-rose-400"
-                            onClick={() =>
-                              setLocalUploadFiles((prev) =>
-                                prev.filter((f) => f.id !== item.id)
-                              )
-                            }
-                            disabled={item.status === "uploading"}
-                          >
-                            Retirer
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                              <span className="absolute right-0 top-0 rounded-bl-md bg-slate-900/80 px-1 text-[9px] text-slate-100">
+                                ×
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
 
-            {analysisProcesses && (
+            {photoFlowChoice === "photos_now" && analysisProcesses && (
               <div className="space-y-3 rounded-2xl bg-slate-950/80 p-3 text-xs text-slate-200 ring-1 ring-slate-800">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                   Aperçu de votre inventaire par pièce
                 </p>
                 {analysisStartedAt && (
                   <p className="text-[11px] text-slate-400">
-                    Temps d’analyse{" "}
+                    Temps d’analyse (≈ 3 s / photo){" "}
                     {isUploadingPhotos || isAnalyzing ? "en cours" : "total"} :{" "}
                     {(analysisElapsedMs / 1000).toFixed(1)} s
                   </p>
@@ -2027,6 +2166,10 @@ function DevisGratuitsPageInner() {
                     }
 
                     const result = await uploadLeadPhotos(leadId, pendingFiles);
+
+                    const totalForTimer =
+                      result.success.length || localUploadFiles.length || 1;
+                    setAnalysisTargetSeconds(totalForTimer * 3);
 
                     setLocalUploadFiles((prev) =>
                       prev.map((f) => {
