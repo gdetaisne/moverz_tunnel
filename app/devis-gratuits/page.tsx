@@ -557,29 +557,73 @@ function DevisGratuitsPageInner() {
     const extraText =
       extras.length > 0 ? `Options : ${extras.join(", ")}` : "";
 
+    const updatePayload = {
+      formCompletionStatus: "complete" as const,
+      originPostalCode: form.originPostalCode || null,
+      originCity: form.originCity || null,
+      originAddress: form.originAddress || null,
+      destinationPostalCode: form.destinationPostalCode || null,
+      destinationCity: form.destinationCity || null,
+      destinationAddress: form.destinationAddress || null,
+      movingDate: form.movingDate || null,
+      details:
+        [form.notes, extraText].filter((part) => part && part.length > 0).join("\n\n") ||
+        null,
+      housingType: form.housingType,
+      surfaceM2: Number.isFinite(surface) && surface > 0 ? surface : null,
+      density: form.density,
+      formule: form.formule,
+      volumeM3: pricing ? pricing.volumeM3 : null,
+      distanceKm: pricing ? pricing.distanceKm : distanceKm,
+      priceMin: pricing ? pricing.prixMin : null,
+      priceMax: pricing ? pricing.prixMax : null,
+    };
+
     try {
       setIsSubmitting(true);
-      await updateLead(leadId, {
-        formCompletionStatus: "complete",
-        originPostalCode: form.originPostalCode || null,
-        originCity: form.originCity || null,
-        originAddress: form.originAddress || null,
-        destinationPostalCode: form.destinationPostalCode || null,
-        destinationCity: form.destinationCity || null,
-        destinationAddress: form.destinationAddress || null,
-        movingDate: form.movingDate || null,
-        details:
-          [form.notes, extraText].filter((part) => part && part.length > 0).join("\n\n") ||
-          null,
-        housingType: form.housingType,
-        surfaceM2: Number.isFinite(surface) && surface > 0 ? surface : null,
-        density: form.density,
-        formule: form.formule,
-        volumeM3: pricing ? pricing.volumeM3 : null,
-        distanceKm: pricing ? pricing.distanceKm : distanceKm,
-        priceMin: pricing ? pricing.prixMin : null,
-        priceMax: pricing ? pricing.prixMax : null,
-      });
+
+      const performUpdate = async (id: string) => {
+        await updateLead(id, updatePayload);
+      };
+
+      try {
+        await performUpdate(leadId);
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error ? err.message.toLowerCase() : String(err ?? "");
+
+        // Cas fréquent en prod : l'ID présent dans le localStorage ne correspond plus
+        // à la base (redeploy, reset SQLite). On recrée un lead et on rejoue la mise à jour.
+        if (msg.includes("leadtunnel introuvable")) {
+          try {
+            const trimmedFirstName = form.firstName.trim();
+            const trimmedEmail = form.email.trim().toLowerCase();
+
+            const createPayload = {
+              primaryChannel: "web" as const,
+              firstName: trimmedFirstName || "Client",
+              lastName: form.lastName.trim() || null,
+              email: trimmedEmail || "test@moverz.dev",
+              phone: form.phone.trim() || null,
+              source: src ?? null,
+            };
+
+            const { id: newId } = await createLead(createPayload);
+            setLeadId(newId);
+
+            await performUpdate(newId);
+          } catch (retryErr) {
+            console.error(
+              "❌ Erreur lors de la recréation du lead après 404:",
+              retryErr
+            );
+            throw err; // on remonte l'erreur d'origine au handler global
+          }
+        } else {
+          throw err;
+        }
+      }
+
       setCurrentStep(4);
       // token sera généré à la demande côté écran final
     } catch (err: unknown) {
@@ -592,6 +636,7 @@ function DevisGratuitsPageInner() {
       setIsSubmitting(false);
     }
   };
+      setIsSubmitting(true);
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -2106,8 +2151,23 @@ function DevisGratuitsPageInner() {
                         prev > 0 ? prev : Date.now() - (analysisStartedAt ?? Date.now())
                       );
 
-                      // On marque simplement le lead comme ayant des photos ; le reste reste async côté back plus tard
-                      await updateLead(leadId, { photosStatus: "UPLOADED" });
+                      // On marque simplement le lead comme ayant des photos ; le reste reste async côté back plus tard.
+                      try {
+                        await updateLead(leadId, { photosStatus: "UPLOADED" });
+                      } catch (e: unknown) {
+                        const msg =
+                          e instanceof Error
+                            ? e.message.toLowerCase()
+                            : String(e ?? "");
+                        if (msg.includes("leadtunnel introuvable")) {
+                          // Session expirée / base réinitialisée : on ne bloque pas l'utilisateur.
+                          console.warn(
+                            "Lead introuvable lors de la mise à jour photosStatus (UPLOADED)."
+                          );
+                        } else {
+                          throw e;
+                        }
+                      }
                     } else if (result.errors.length > 0) {
                       setError(
                         "Aucun fichier n’a pu être enregistré. Vous pouvez réessayer ou les envoyer plus tard."
