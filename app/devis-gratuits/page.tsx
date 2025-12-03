@@ -19,6 +19,32 @@ const STEPS = [
 
 type StepId = (typeof STEPS)[number]["id"];
 
+const HOUSING_SURFACE_DEFAULTS: Record<HousingType, string> = {
+  studio: "20",
+  t1: "25",
+  t2: "40",
+  t3: "60",
+  t4: "75",
+  t5: "90",
+  house: "110",
+  house_1floor: "120",
+  house_2floors: "140",
+  house_3floors: "160",
+};
+
+const HOUSING_LABELS: Record<HousingType, string> = {
+  studio: "Studio",
+  t1: "T1",
+  t2: "T2",
+  t3: "T3",
+  t4: "T4",
+  t5: "T5+",
+  house: "Maison plain-pied",
+  house_1floor: "Maison 1 étage",
+  house_2floors: "Maison 2 étages",
+  house_3floors: "Maison 3+ étages",
+};
+
 interface FormState {
   firstName: string;
   lastName: string;
@@ -73,6 +99,11 @@ interface FormState {
   serviceMonteMeuble: boolean;
   servicePiano: "none" | "droit" | "quart";
   serviceDebarras: boolean;
+  optionStorage: boolean;
+  optionCleaning: boolean;
+  optionPackingMaterials: boolean;
+  optionDismantlingFull: boolean;
+  optionDifficultAccess: boolean;
   notes: string;
 }
 
@@ -110,6 +141,11 @@ const INITIAL_FORM_STATE: FormState = {
   serviceMonteMeuble: false,
   servicePiano: "none",
   serviceDebarras: false,
+  optionStorage: false,
+  optionCleaning: false,
+  optionPackingMaterials: false,
+  optionDismantlingFull: false,
+  optionDifficultAccess: false,
   notes: "Test local – veuillez ignorer ce dossier.",
 };
 
@@ -203,6 +239,11 @@ function DevisGratuitsPageInner() {
     distanceKm,
   ]);
 
+  const activePricing = useMemo(
+    () => (pricingByFormule ? pricingByFormule[form.formule] : null),
+    [pricingByFormule, form.formule]
+  );
+
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
 
   const deepLinkWhatsapp = useMemo(() => {
@@ -213,7 +254,22 @@ function DevisGratuitsPageInner() {
   }, [whatsappNumber, linkingToken]);
 
   const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => {
+      const next: FormState = { ...prev, [key]: value };
+
+      // Garder housingType cohérent avec le logement de départ
+      if (key === "originHousingType") {
+        const housing = value as HousingType;
+        next.housingType = housing;
+        const suggestedSurface = HOUSING_SURFACE_DEFAULTS[housing];
+        // Si on était encore sur la valeur par défaut précédente, on met à jour
+        if (!prev.surfaceM2 || prev.surfaceM2 === HOUSING_SURFACE_DEFAULTS[prev.housingType]) {
+          next.surfaceM2 = suggestedSurface;
+        }
+      }
+
+      return next;
+    });
   };
 
   const handleSubmitStep1 = async (e: FormEvent) => {
@@ -273,6 +329,23 @@ function DevisGratuitsPageInner() {
         ? pricingByFormule[form.formule]
         : null;
 
+    const extras: string[] = [];
+    if (form.serviceMonteMeuble) extras.push("Monte‑meuble à prévoir");
+    if (form.servicePiano === "droit") extras.push("Piano droit");
+    if (form.servicePiano === "quart") extras.push("Piano quart de queue");
+    if (form.serviceDebarras) extras.push("Besoin de débarras");
+    if (form.optionPackingMaterials)
+      extras.push("Cartons et protections fournis par Moverz");
+    if (form.optionDismantlingFull)
+      extras.push("Beaucoup de meubles à démonter / remonter");
+    if (form.optionStorage) extras.push("Stockage temporaire / garde‑meuble");
+    if (form.optionCleaning) extras.push("Nettoyage de fin de déménagement");
+    if (form.optionDifficultAccess)
+      extras.push("Accès camion très contraint (rue étroite / centre‑ville)");
+
+    const extraText =
+      extras.length > 0 ? `Options : ${extras.join(", ")}` : "";
+
     try {
       setIsSubmitting(true);
       await updateLead(leadId, {
@@ -284,7 +357,9 @@ function DevisGratuitsPageInner() {
         destinationCity: form.destinationCity || null,
         destinationAddress: form.destinationAddress || null,
         movingDate: form.movingDate || null,
-        details: form.notes || null,
+        details:
+          [form.notes, extraText].filter((part) => part && part.length > 0).join("\n\n") ||
+          null,
         housingType: form.housingType,
         surfaceM2: Number.isFinite(surface) && surface > 0 ? surface : null,
         density: form.density,
@@ -311,9 +386,6 @@ function DevisGratuitsPageInner() {
     <div className="flex flex-1 flex-col gap-6">
       {/* En-tête tunnel */}
       <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-300">
-          Moverz • Tunnel devis
-        </p>
         <h1 className="text-2xl font-semibold leading-snug text-slate-50 sm:text-3xl">
           Demande de devis déménagement
         </h1>
@@ -321,11 +393,6 @@ function DevisGratuitsPageInner() {
           Obtenez plusieurs devis personnalisés de déménageurs vérifiés en
           quelques minutes, sur mobile.
         </p>
-        {src && (
-          <p className="text-xs text-slate-400">
-            Source tunnel : <span className="font-mono text-slate-200">{src}</span>
-          </p>
-        )}
       </header>
 
       {/* Stepper simple, mobile first */}
@@ -497,7 +564,7 @@ function DevisGratuitsPageInner() {
               setCurrentStep(3);
             }}
           >
-            {/* Bloc départ */}
+            {/* Bloc départ : adresse + logement & accès */}
             <div className="space-y-3 rounded-2xl bg-slate-950/40 p-3 ring-1 ring-slate-800">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
                 Départ
@@ -603,7 +670,7 @@ function DevisGratuitsPageInner() {
               </div>
             </div>
 
-            {/* Bloc arrivée */}
+            {/* Bloc arrivée : adresse + logement & accès */}
             <div className="space-y-3 rounded-2xl bg-slate-950/40 p-3 ring-1 ring-slate-800">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
                 Arrivée
@@ -748,156 +815,6 @@ function DevisGratuitsPageInner() {
               <span>Je peux être flexible de quelques jours autour de cette date</span>
             </label>
 
-            {/* Logement & accès */}
-            <div className="space-y-3 rounded-2xl bg-slate-950/40 p-3 ring-1 ring-slate-800">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-                Logement & accès
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-200">
-                    Étage départ
-                  </label>
-                  <select
-                    value={form.originFloor}
-                    onChange={(e) => updateField("originFloor", e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                  >
-                    <option value="0">RDC</option>
-                    <option value="1">1er</option>
-                    <option value="2">2e</option>
-                    <option value="3">3e</option>
-                    <option value="4">4e</option>
-                    <option value="5">5e</option>
-                    <option value="6">6e+</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-200">
-                    Ascenseur départ
-                  </label>
-                  <select
-                    value={form.originElevator}
-                    onChange={(e) =>
-                      updateField("originElevator", e.target.value)
-                    }
-                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                  >
-                    <option value="none">Pas d&apos;ascenseur</option>
-                    <option value="small">Petit (1–3 pers)</option>
-                    <option value="medium">Moyen (4–6 pers)</option>
-                    <option value="large">Grand (&gt; 6 pers)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-200">
-                    Étage arrivée
-                  </label>
-                  <select
-                    value={form.destinationFloor}
-                    onChange={(e) =>
-                      updateField("destinationFloor", e.target.value)
-                    }
-                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                  >
-                    <option value="0">RDC</option>
-                    <option value="1">1er</option>
-                    <option value="2">2e</option>
-                    <option value="3">3e</option>
-                    <option value="4">4e</option>
-                    <option value="5">5e</option>
-                    <option value="6">6e+</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-200">
-                    Ascenseur arrivée
-                  </label>
-                  <select
-                    value={form.destinationElevator}
-                    onChange={(e) =>
-                      updateField("destinationElevator", e.target.value)
-                    }
-                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                  >
-                    <option value="none">Pas d&apos;ascenseur</option>
-                    <option value="small">Petit (1–3 pers)</option>
-                    <option value="medium">Moyen (4–6 pers)</option>
-                    <option value="large">Grand (&gt; 6 pers)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-200">
-                    Monte‑meuble possible ?
-                  </label>
-                  <select
-                    value={form.originFurnitureLift}
-                    onChange={(e) =>
-                      updateField(
-                        "originFurnitureLift",
-                        e.target.value as FormState["originFurnitureLift"]
-                      )
-                    }
-                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                  >
-                    <option value="unknown">Je ne sais pas</option>
-                    <option value="no">A priori non</option>
-                    <option value="yes">Oui, probablement</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-200">
-                    Monte‑meuble à l&apos;arrivée ?
-                  </label>
-                  <select
-                    value={form.destinationFurnitureLift}
-                    onChange={(e) =>
-                      updateField(
-                        "destinationFurnitureLift",
-                        e.target.value as FormState["destinationFurnitureLift"]
-                      )
-                    }
-                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                  >
-                    <option value="unknown">Je ne sais pas</option>
-                    <option value="no">A priori non</option>
-                    <option value="yes">Oui, probablement</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="inline-flex items-center gap-2 text-xs text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={form.originParkingAuth}
-                    onChange={(e) =>
-                      updateField("originParkingAuth", e.target.checked)
-                    }
-                    className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
-                  />
-                  <span>Autorisation de stationnement demandée au départ</span>
-                </label>
-                <label className="inline-flex items-center gap-2 text-xs text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={form.destinationParkingAuth}
-                    onChange={(e) =>
-                      updateField("destinationParkingAuth", e.target.checked)
-                    }
-                    className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
-                  />
-                  <span>Autorisation de stationnement demandée à l&apos;arrivée</span>
-                </label>
-              </div>
-            </div>
-
             <div className="space-y-1">
               <label className="block text-sm font-medium text-slate-100">
                 Détails utiles (optionnel)
@@ -933,7 +850,7 @@ function DevisGratuitsPageInner() {
         </section>
       )}
 
-      {/* Étape 3 – Volume & formules + récap */}
+      {/* Étape 3 – Volume & formules */}
       {currentStep === 3 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep3}>
@@ -948,57 +865,17 @@ function DevisGratuitsPageInner() {
               </p>
 
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr),minmax(0,1.3fr)]">
-                {/* Choix type logement + surface + densité */}
+                {/* Surface + densité (type de logement affiché en lecture seule depuis l'étape Projet) */}
                 <div className="space-y-3">
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-slate-200">
-                      Type de logement
+                  <div className="space-y-1 text-xs text-slate-300">
+                    <p className="font-medium text-slate-200">
+                      Type de logement (départ)
                     </p>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      {(
-                        [
-                          ["studio", "Studio"],
-                          ["t1", "T1"],
-                          ["t2", "T2"],
-                          ["t3", "T3"],
-                          ["t4", "T4"],
-                          ["t5", "T5"],
-                          ["house", "Maison"],
-                        ] as [HousingType, string][]
-                      ).map(([value, label]) => {
-                        const isActive = form.housingType === value;
-                        return (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => {
-                              updateField("housingType", value);
-                              // auto‐suggest surface si champ vide ou valeur par défaut
-                              const defaults: Record<HousingType, string> = {
-                                studio: "20",
-                                t1: "25",
-                                t2: "40",
-                                t3: "60",
-                                t4: "75",
-                                t5: "90",
-                                house: "110",
-                              };
-                              if (!form.surfaceM2 || form.surfaceM2 === "65") {
-                                updateField("surfaceM2", defaults[value]);
-                              }
-                            }}
-                            className={[
-                              "rounded-xl border px-2.5 py-1.5 text-center",
-                              isActive
-                                ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                                : "border-slate-700 bg-slate-900/60 text-slate-200",
-                            ].join(" ")}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <p className="text-[11px]">
+                      {HOUSING_LABELS[form.originHousingType]} —{" "}
+                      {HOUSING_SURFACE_DEFAULTS[form.originHousingType]} m²
+                      estimés (ajustables ci‑dessous).
+                    </p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -1081,7 +958,7 @@ function DevisGratuitsPageInner() {
                 </div>
               </div>
 
-              {/* Cartes formules */}
+              {/* Choix niveau de confort */}
               <div className="grid gap-3 sm:grid-cols-3">
                 {(["ECONOMIQUE", "STANDARD", "PREMIUM"] as FormuleType[]).map(
                   (formule) => {
@@ -1092,41 +969,67 @@ function DevisGratuitsPageInner() {
                         : null;
                     const title =
                       formule === "ECONOMIQUE"
-                        ? "Éco"
+                        ? "Je privilégie le budget"
                         : formule === "STANDARD"
-                        ? "Standard"
-                        : "Premium";
-                    const description =
+                        ? "Équilibre budget / confort"
+                        : "Je veux être 100 % tranquille";
+                    const label =
                       formule === "ECONOMIQUE"
-                        ? "Vous gérez les cartons, on s’occupe surtout du transport."
+                        ? "ÉCO"
                         : formule === "STANDARD"
-                        ? "Équilibre idéal : chargement, transport et manutention confort."
-                        : "Service confort maxi, idéal si vous manquez de temps.";
+                        ? "STANDARD"
+                        : "PREMIUM";
+                    const bullets =
+                      formule === "ECONOMIQUE"
+                        ? [
+                            "Vous emballez vos cartons",
+                            "Nous gérons portage + transport",
+                            "Démontage limité (lit principal)",
+                          ]
+                        : formule === "STANDARD"
+                        ? [
+                            "Protection du mobilier et portage complet",
+                            "Démontage/remontage des meubles principaux",
+                            "Bon compromis budget / confort",
+                          ]
+                        : [
+                            "Emballage renforcé (fragiles, penderies…)",
+                            "Démontage/remontage étendu, repositionnement",
+                            "Planning plus souple et équipe dédiée",
+                          ];
                     return (
                       <button
                         key={formule}
                         type="button"
                         onClick={() => updateField("formule", formule)}
                         className={[
-                          "flex flex-col gap-1 rounded-2xl border p-3 text-left text-xs transition",
+                          "flex flex-col gap-2 rounded-2xl border p-3 text-left text-xs transition",
                           isActive
                             ? "border-sky-400 bg-sky-500/15 shadow-sm shadow-sky-500/30"
                             : "border-slate-700 bg-slate-950/60 hover:border-slate-500",
                         ].join(" ")}
                       >
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-300">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-300">
+                          {label}
+                        </span>
+                        <span className="text-[12px] font-medium text-slate-50">
                           {title}
                         </span>
-                        <span className="text-[13px] font-medium text-slate-50">
+                        <span className="text-[12px] font-semibold text-slate-100">
                           {pricing
                             ? `${formatPrice(pricing.prixMin)} – ${formatPrice(
                                 pricing.prixMax
                               )}`
-                            : "Calcul en cours…"}
+                            : "Calcul…"}
                         </span>
-                        <span className="text-[11px] text-slate-400">
-                          {description}
-                        </span>
+                        <ul className="mt-1 space-y-1 text-[11px] text-slate-400">
+                          {bullets.map((b) => (
+                            <li key={b} className="flex gap-1">
+                              <span className="mt-[2px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-sky-400" />
+                              <span>{b}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </button>
                     );
                   }
@@ -1198,6 +1101,82 @@ function DevisGratuitsPageInner() {
                     </span>
                   </span>
                 </label>
+              </div>
+
+              {/* Autres besoins fréquents */}
+              <div className="mt-4 space-y-2 rounded-2xl bg-slate-950/60 p-3 text-[11px] text-slate-300">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Autres besoins éventuels
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="inline-flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={form.optionPackingMaterials}
+                      onChange={(e) =>
+                        updateField("optionPackingMaterials", e.target.checked)
+                      }
+                      className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
+                    />
+                    <span>
+                      Je souhaite que les cartons / protections soient fournis
+                    </span>
+                  </label>
+                  <label className="inline-flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={form.optionDismantlingFull}
+                      onChange={(e) =>
+                        updateField("optionDismantlingFull", e.target.checked)
+                      }
+                      className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
+                    />
+                    <span>
+                      Beaucoup de meubles à démonter / remonter (armoires,
+                      cuisine…)
+                    </span>
+                  </label>
+                  <label className="inline-flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={form.optionStorage}
+                      onChange={(e) =>
+                        updateField("optionStorage", e.target.checked)
+                      }
+                      className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
+                    />
+                    <span>
+                      Besoin d&apos;un stockage temporaire / garde‑meuble
+                    </span>
+                  </label>
+                  <label className="inline-flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={form.optionCleaning}
+                      onChange={(e) =>
+                        updateField("optionCleaning", e.target.checked)
+                      }
+                      className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
+                    />
+                    <span>
+                      Besoin d&apos;un nettoyage de fin de déménagement
+                    </span>
+                  </label>
+                  <label className="inline-flex items-start gap-2 sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={form.optionDifficultAccess}
+                      onChange={(e) =>
+                        updateField("optionDifficultAccess", e.target.checked)
+                      }
+                      className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
+                    />
+                    <span>
+                      Accès très contraint (rue étroite, centre‑ville difficile
+                      pour le camion)
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
 
