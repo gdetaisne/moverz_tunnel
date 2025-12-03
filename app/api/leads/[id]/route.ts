@@ -20,7 +20,18 @@ const updateLeadSchema = z.object({
   details: z.string().nullable().optional(),
 
   housingType: z
-    .enum(["studio", "t1", "t2", "t3", "t4", "t5", "house"])
+    .enum([
+      "studio",
+      "t1",
+      "t2",
+      "t3",
+      "t4",
+      "t5",
+      "house",
+      "house_1floor",
+      "house_2floors",
+      "house_3floors",
+    ])
     .nullable()
     .optional(),
   surfaceM2: z.number().int().nullable().optional(),

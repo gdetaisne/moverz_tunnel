@@ -22,7 +22,18 @@ export interface LeadTunnelUpdatePayload {
   movingDate?: string | null;
   details?: string | null;
 
-  housingType?: "studio" | "t1" | "t2" | "t3" | "t4" | "t5" | "house" | null;
+  housingType?:
+    | "studio"
+    | "t1"
+    | "t2"
+    | "t3"
+    | "t4"
+    | "t5"
+    | "house"
+    | "house_1floor"
+    | "house_2floors"
+    | "house_3floors"
+    | null;
   surfaceM2?: number | null;
   density?: "light" | "normal" | "dense" | null;
   formule?: "ECONOMIQUE" | "STANDARD" | "PREMIUM" | null;
