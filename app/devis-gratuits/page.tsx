@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, Suspense, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createLead, ensureLinkingToken, updateLead } from "@/lib/api/client";
 import {
@@ -243,6 +243,47 @@ function DevisGratuitsPageInner() {
     () => (pricingByFormule ? pricingByFormule[form.formule] : null),
     [pricingByFormule, form.formule]
   );
+
+  // Restauration session (évite toute perte de données en cas de refresh / fermeture onglet)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem("moverz_tunnel_form_state");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        form?: Partial<FormState>;
+        currentStep?: StepId;
+        leadId?: string | null;
+      };
+      if (!parsed || typeof parsed !== "object" || !parsed.form) return;
+
+      setForm((prev) => ({ ...prev, ...parsed.form }));
+      if (parsed.currentStep && parsed.currentStep >= 1 && parsed.currentStep <= 4) {
+        setCurrentStep(parsed.currentStep);
+      }
+      if (parsed.leadId) {
+        setLeadId(parsed.leadId);
+      }
+    } catch {
+      // Si le JSON est corrompu, on ignore et on repart sur l'état par défaut
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("moverz_tunnel_form_state");
+      }
+    }
+    // une seule fois au mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sauvegarde automatique (sans perte silencieuse de données)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const payload = JSON.stringify({
+      form,
+      currentStep,
+      leadId,
+    });
+    window.localStorage.setItem("moverz_tunnel_form_state", payload);
+  }, [form, currentStep, leadId]);
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
 
@@ -896,31 +937,67 @@ function DevisGratuitsPageInner() {
                       <p className="block text-xs font-medium text-slate-200">
                         Densité de mobilier
                       </p>
-                      <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-                        {(
-                          [
-                            ["light", "Sobre"],
-                            ["normal", "Normal"],
-                            ["dense", "Bien meublé"],
-                          ] as [DensityType, string][]
-                        ).map(([value, label]) => {
-                          const isActive = form.density === value;
-                          return (
-                            <button
-                              key={value}
-                              type="button"
-                              onClick={() => updateField("density", value)}
-                              className={[
-                                "rounded-xl border px-2 py-1",
-                                isActive
-                                  ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                                  : "border-slate-700 bg-slate-900/60 text-slate-200",
-                              ].join(" ")}
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
+                      <div className="grid grid-cols-3 gap-2 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => updateField("density", "light")}
+                          className={[
+                            "rounded-2xl border px-2 py-1.5 text-left transition",
+                            form.density === "light"
+                              ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                              : "border-slate-700 bg-slate-900/60 text-slate-200",
+                          ].join(" ")}
+                        >
+                          <span className="block font-medium">Sobre</span>
+                          <span className="mt-1 flex h-6 items-end gap-0.5">
+                            <span className="h-1.5 flex-1 rounded-full bg-slate-600" />
+                            <span className="h-2.5 flex-1 rounded-full bg-slate-600/70" />
+                            <span className="h-1 flex-1 rounded-full bg-slate-700/60" />
+                          </span>
+                          <span className="mt-1 block text-[10px] text-slate-400">
+                            Peu de meubles, intérieur épuré.
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateField("density", "normal")}
+                          className={[
+                            "rounded-2xl border px-2 py-1.5 text-left transition",
+                            form.density === "normal"
+                              ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                              : "border-slate-700 bg-slate-900/60 text-slate-200",
+                          ].join(" ")}
+                        >
+                          <span className="block font-medium">Normal</span>
+                          <span className="mt-1 flex h-6 items-end gap-0.5">
+                            <span className="h-2 flex-1 rounded-full bg-slate-600" />
+                            <span className="h-3 flex-1 rounded-full bg-slate-300" />
+                            <span className="h-2.5 flex-1 rounded-full bg-slate-600" />
+                          </span>
+                          <span className="mt-1 block text-[10px] text-slate-400">
+                            Mobilier standard, pièces bien remplies.
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateField("density", "dense")}
+                          className={[
+                            "rounded-2xl border px-2 py-1.5 text-left transition",
+                            form.density === "dense"
+                              ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                              : "border-slate-700 bg-slate-900/60 text-slate-200",
+                          ].join(" ")}
+                        >
+                          <span className="block font-medium">Bien meublé</span>
+                          <span className="mt-1 flex h-6 items-end gap-0.5">
+                            <span className="h-3 flex-1 rounded-full bg-slate-300" />
+                            <span className="h-4.5 flex-1 rounded-full bg-slate-200" />
+                            <span className="h-4 flex-1 rounded-full bg-slate-300" />
+                          </span>
+                          <span className="mt-1 block text-[10px] text-slate-400">
+                            Beaucoup de meubles / déco, intérieur chargé.
+                          </span>
+                        </button>
                       </div>
                     </div>
                   </div>
