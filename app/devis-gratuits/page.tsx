@@ -27,18 +27,52 @@ interface FormState {
   originPostalCode: string;
   originCity: string;
   originAddress: string;
+  originHousingType: HousingType;
   destinationPostalCode: string;
   destinationCity: string;
   destinationAddress: string;
   movingDate: string;
+  movingDateEnd: string;
+  dateFlexible: boolean;
   housingType: HousingType;
   surfaceM2: string;
   originFloor: string;
   originElevator: string;
+  originFurnitureLift: "unknown" | "no" | "yes";
+  originCarryDistance:
+    | "0-10"
+    | "10-20"
+    | "20-30"
+    | "30-40"
+    | "40-50"
+    | "50-60"
+    | "60-70"
+    | "70-80"
+    | "80-90"
+    | "90-100";
+  originParkingAuth: boolean;
+  destinationHousingType: HousingType;
   destinationFloor: string;
   destinationElevator: string;
+  destinationFurnitureLift: "unknown" | "no" | "yes";
+  destinationCarryDistance:
+    | "0-10"
+    | "10-20"
+    | "20-30"
+    | "30-40"
+    | "40-50"
+    | "50-60"
+    | "60-70"
+    | "70-80"
+    | "80-90"
+    | "90-100";
+  destinationParkingAuth: boolean;
+  destinationUnknown: boolean;
   density: DensityType;
   formule: FormuleType;
+  serviceMonteMeuble: boolean;
+  servicePiano: "none" | "droit" | "quart";
+  serviceDebarras: boolean;
   notes: string;
 }
 
@@ -50,18 +84,32 @@ const INITIAL_FORM_STATE: FormState = {
   originPostalCode: "33000",
   originCity: "Bordeaux",
   originAddress: "10 rue de la Paix, 3e étage",
+  originHousingType: "t3",
   destinationPostalCode: "75001",
   destinationCity: "Paris",
   destinationAddress: "20 avenue des Champs, 2e étage",
   movingDate: new Date().toISOString().slice(0, 10),
+  movingDateEnd: new Date().toISOString().slice(0, 10),
+  dateFlexible: true,
   housingType: "t3",
   surfaceM2: "65",
   originFloor: "3",
   originElevator: "none",
+  originFurnitureLift: "unknown",
+  originCarryDistance: "0-10",
+  originParkingAuth: false,
+  destinationHousingType: "t3",
   destinationFloor: "2",
   destinationElevator: "medium",
+  destinationFurnitureLift: "unknown",
+  destinationCarryDistance: "0-10",
+  destinationParkingAuth: false,
+  destinationUnknown: false,
   density: "normal",
   formule: "STANDARD",
+  serviceMonteMeuble: false,
+  servicePiano: "none",
+  serviceDebarras: false,
   notes: "Test local – veuillez ignorer ce dossier.",
 };
 
@@ -125,10 +173,15 @@ function DevisGratuitsPageInner() {
           ? ("partial" as const)
           : ("yes" as const),
       services: {
-        monteMeuble: false,
-        piano: null,
-        debarras: false,
-      } as const,
+        monteMeuble: form.serviceMonteMeuble,
+        piano:
+          form.servicePiano === "none"
+            ? null
+            : form.servicePiano === "droit"
+            ? ("droit" as const)
+            : ("quart" as const),
+        debarras: form.serviceDebarras,
+      },
     };
 
     const formules: FormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
@@ -494,6 +547,60 @@ function DevisGratuitsPageInner() {
                   placeholder="N°, rue, bâtiment, étage…"
                 />
               </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-slate-200">
+                    Type de logement
+                  </label>
+                  <select
+                    value={form.originHousingType}
+                    onChange={(e) =>
+                      updateField(
+                        "originHousingType",
+                        e.target.value as HousingType
+                      )
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  >
+                    <option value="studio">Studio</option>
+                    <option value="t1">T1</option>
+                    <option value="t2">T2</option>
+                    <option value="t3">T3</option>
+                    <option value="t4">T4</option>
+                    <option value="t5">T5</option>
+                    <option value="house">Maison plain-pied</option>
+                    <option value="house_1floor">Maison +1 étage</option>
+                    <option value="house_2floors">Maison +2 étages</option>
+                    <option value="house_3floors">Maison 3 étages ou +</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-slate-200">
+                    Distance de portage (m)
+                  </label>
+                  <select
+                    value={form.originCarryDistance}
+                    onChange={(e) =>
+                      updateField(
+                        "originCarryDistance",
+                        e.target.value as FormState["originCarryDistance"]
+                      )
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  >
+                    <option value="0-10">0–10 m</option>
+                    <option value="10-20">10–20 m</option>
+                    <option value="20-30">20–30 m</option>
+                    <option value="30-40">30–40 m</option>
+                    <option value="40-50">40–50 m</option>
+                    <option value="50-60">50–60 m</option>
+                    <option value="60-70">60–70 m</option>
+                    <option value="70-80">70–80 m</option>
+                    <option value="80-90">80–90 m</option>
+                    <option value="90-100">90–100 m</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             {/* Bloc arrivée */}
@@ -550,21 +657,98 @@ function DevisGratuitsPageInner() {
                   placeholder="N°, rue, bâtiment, étage…"
                 />
               </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-slate-200">
+                    Type de logement
+                  </label>
+                  <select
+                    value={form.destinationHousingType}
+                    onChange={(e) =>
+                      updateField(
+                        "destinationHousingType",
+                        e.target.value as HousingType
+                      )
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  >
+                    <option value="studio">Studio</option>
+                    <option value="t1">T1</option>
+                    <option value="t2">T2</option>
+                    <option value="t3">T3</option>
+                    <option value="t4">T4</option>
+                    <option value="t5">T5</option>
+                    <option value="house">Maison plain-pied</option>
+                    <option value="house_1floor">Maison +1 étage</option>
+                    <option value="house_2floors">Maison +2 étages</option>
+                    <option value="house_3floors">Maison 3 étages ou +</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-slate-200">
+                    Distance de portage (m)
+                  </label>
+                  <select
+                    value={form.destinationCarryDistance}
+                    onChange={(e) =>
+                      updateField(
+                        "destinationCarryDistance",
+                        e.target.value as FormState["destinationCarryDistance"]
+                      )
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  >
+                    <option value="0-10">0–10 m</option>
+                    <option value="10-20">10–20 m</option>
+                    <option value="20-30">20–30 m</option>
+                    <option value="30-40">30–40 m</option>
+                    <option value="40-50">40–50 m</option>
+                    <option value="50-60">50–60 m</option>
+                    <option value="60-70">60–70 m</option>
+                    <option value="70-80">70–80 m</option>
+                    <option value="80-90">80–90 m</option>
+                    <option value="90-100">90–100 m</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-100">
-                Date souhaitée
-              </label>
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr),minmax(0,1.1fr)]">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-slate-100">
+                  Date souhaitée
+                </label>
+                <input
+                  type="date"
+                  value={form.movingDate}
+                  onChange={(e) => updateField("movingDate", e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-slate-100">
+                  Fin de période (optionnel)
+                </label>
+                <input
+                  type="date"
+                  value={form.movingDateEnd}
+                  onChange={(e) => updateField("movingDateEnd", e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                />
+              </div>
+            </div>
+
+            <label className="inline-flex items-center gap-2 text-xs text-slate-300">
               <input
-                type="date"
-                value={form.movingDate}
-                onChange={(e) => updateField("movingDate", e.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                type="checkbox"
+                checked={form.dateFlexible}
+                onChange={(e) => updateField("dateFlexible", e.target.checked)}
+                className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
               />
-            </div>
+              <span>Je peux être flexible de quelques jours autour de cette date</span>
+            </label>
 
-            {/* Logement & accès (MVP simplifié: étage + ascenseur) */}
+            {/* Logement & accès */}
             <div className="space-y-3 rounded-2xl bg-slate-950/40 p-3 ring-1 ring-slate-800">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
                 Logement & accès
@@ -645,6 +829,72 @@ function DevisGratuitsPageInner() {
                     <option value="large">Grand (&gt; 6 pers)</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-slate-200">
+                    Monte‑meuble possible ?
+                  </label>
+                  <select
+                    value={form.originFurnitureLift}
+                    onChange={(e) =>
+                      updateField(
+                        "originFurnitureLift",
+                        e.target.value as FormState["originFurnitureLift"]
+                      )
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  >
+                    <option value="unknown">Je ne sais pas</option>
+                    <option value="no">A priori non</option>
+                    <option value="yes">Oui, probablement</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-slate-200">
+                    Monte‑meuble à l&apos;arrivée ?
+                  </label>
+                  <select
+                    value={form.destinationFurnitureLift}
+                    onChange={(e) =>
+                      updateField(
+                        "destinationFurnitureLift",
+                        e.target.value as FormState["destinationFurnitureLift"]
+                      )
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  >
+                    <option value="unknown">Je ne sais pas</option>
+                    <option value="no">A priori non</option>
+                    <option value="yes">Oui, probablement</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="inline-flex items-center gap-2 text-xs text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={form.originParkingAuth}
+                    onChange={(e) =>
+                      updateField("originParkingAuth", e.target.checked)
+                    }
+                    className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
+                  />
+                  <span>Autorisation de stationnement demandée au départ</span>
+                </label>
+                <label className="inline-flex items-center gap-2 text-xs text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={form.destinationParkingAuth}
+                    onChange={(e) =>
+                      updateField("destinationParkingAuth", e.target.checked)
+                    }
+                    className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
+                  />
+                  <span>Autorisation de stationnement demandée à l&apos;arrivée</span>
+                </label>
               </div>
             </div>
 
@@ -882,6 +1132,73 @@ function DevisGratuitsPageInner() {
                   }
                 )}
               </div>
+
+              {/* Services supplémentaires */}
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <label className="inline-flex items-start gap-2 text-[11px] text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={form.serviceMonteMeuble}
+                    onChange={(e) =>
+                      updateField("serviceMonteMeuble", e.target.checked)
+                    }
+                    className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
+                  />
+                  <span>
+                    Monte‑meuble à prévoir
+                    <span className="block text-[10px] text-slate-500">
+                      Utile pour les étages élevés ou rues très étroites.
+                    </span>
+                  </span>
+                </label>
+                <div className="space-y-1 text-[11px] text-slate-300">
+                  <span className="block text-xs font-medium text-slate-200">
+                    Piano
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      ["none", "Pas de piano"],
+                      ["droit", "Piano droit"],
+                      ["quart", "Quart de queue"],
+                    ].map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "servicePiano",
+                            value as FormState["servicePiano"]
+                          )
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1",
+                          form.servicePiano === value
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <label className="inline-flex items-start gap-2 text-[11px] text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={form.serviceDebarras}
+                    onChange={(e) =>
+                      updateField("serviceDebarras", e.target.checked)
+                    }
+                    className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
+                  />
+                  <span>
+                    Besoin de débarras
+                    <span className="block text-[10px] text-slate-500">
+                      Si vous souhaitez que l&apos;on évacue certains objets.
+                    </span>
+                  </span>
+                </label>
+              </div>
             </div>
 
             {/* Récapitulatif synthétique */}
@@ -930,6 +1247,18 @@ function DevisGratuitsPageInner() {
                     {new Date(form.movingDate).toLocaleDateString("fr-FR")}
                   </p>
                 )}
+                {form.movingDateEnd && form.movingDateEnd !== form.movingDate && (
+                  <p className="text-xs text-slate-300">
+                    <span className="text-slate-500">Jusqu&apos;au :</span>{" "}
+                    {new Date(form.movingDateEnd).toLocaleDateString("fr-FR")}
+                  </p>
+                )}
+                <p className="text-xs text-slate-300">
+                  <span className="text-slate-500">Flexibilité :</span>{" "}
+                  {form.dateFlexible
+                    ? "quelques jours autour de la date"
+                    : "date plutôt fixe"}
+                </p>
                 <p className="mt-1 text-xs text-slate-300">
                   <span className="text-slate-500">Accès départ :</span>{" "}
                   {form.originFloor === "0" ? "RDC" : `${form.originFloor}e`} ·{" "}

@@ -6,6 +6,10 @@ export const TYPE_COEFFICIENTS = {
   t4: 0.4,
   t5: 0.4,
   house: 0.45,
+  // Variantes maison étagée, alignées sur moverz_main (moverz-constants)
+  house_1floor: 0.45,
+  house_2floors: 0.45,
+  house_3floors: 0.45,
 } as const;
 
 export const DENSITY_COEFFICIENTS = {
