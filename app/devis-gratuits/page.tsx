@@ -1640,7 +1640,7 @@ function DevisGratuitsPageInner() {
                 <input
                   type="file"
                   multiple
-                  accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.mp4,.mov"
+                  accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
                   className="absolute inset-0 cursor-pointer opacity-0"
                   onChange={(e) => {
                     if (e.target.files?.length) {

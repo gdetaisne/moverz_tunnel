@@ -2,20 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { nanoid } from "nanoid";
+import sharp from "sharp";
 import { prisma } from "@/lib/db";
 
+// Images uniquement (plus de vidéos)
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/heic",
   "image/heif",
-  "video/mp4",
-  "video/quicktime", // mov
 ] as const;
 
+// On garde une limite confortable d'upload brut, mais on compresse ensuite.
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 Mo
 
+// Dossier local pour les images normalisées
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 
 async function ensureUploadDir() {
@@ -91,14 +93,31 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const ext = getExtensionFromMime(mimeType as AllowedMimeType);
-      const key = path.join(leadId, `${Date.now()}-${nanoid(8)}.${ext}`);
+      // Normalisation : image JPEG, long côté max 2048px, qualité ~80
+      const key = path.join(leadId, `${Date.now()}-${nanoid(8)}.jpg`);
       const diskPath = path.join(UPLOAD_DIR, key);
 
       try {
         await fs.mkdir(path.dirname(diskPath), { recursive: true });
+
         const buffer = Buffer.from(await file.arrayBuffer());
-        await fs.writeFile(diskPath, buffer);
+
+        // sharp prend en charge la rotation EXIF et la réduction de taille
+        const normalized = await sharp(buffer, { failOnError: false })
+          .rotate()
+          .resize({
+            width: 2048,
+            height: 2048,
+            fit: "inside",
+            withoutEnlargement: true,
+          })
+          .jpeg({
+            quality: 80,
+            mozjpeg: true,
+          })
+          .toBuffer();
+
+        await fs.writeFile(diskPath, normalized);
 
         const record = await prisma.leadPhoto.create({
           data: {
@@ -106,8 +125,8 @@ export async function POST(req: NextRequest) {
             storageKey: key,
             url: null,
             originalFilename,
-            mimeType,
-            sizeBytes,
+            mimeType: "image/jpeg",
+            sizeBytes: normalized.length,
             analysisStatus: "NONE",
           },
         });
