@@ -453,16 +453,18 @@ function DevisGratuitsPageInner() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      {/* En-tête tunnel */}
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold leading-snug text-slate-50 sm:text-3xl">
-          Demande de devis déménagement
-        </h1>
-        <p className="max-w-prose text-sm text-slate-300 sm:text-base">
-          Obtenez plusieurs devis personnalisés de déménageurs vérifiés en
-          quelques minutes, sur mobile.
-        </p>
-      </header>
+      {/* En-tête tunnel – uniquement sur l'étape 1 pour alléger les suivantes */}
+      {currentStep === 1 && (
+        <header className="space-y-2">
+          <h1 className="text-2xl font-semibold leading-snug text-slate-50 sm:text-3xl">
+            Demande de devis déménagement
+          </h1>
+          <p className="max-w-prose text-sm text-slate-300 sm:text-base">
+            Obtenez plusieurs devis personnalisés de déménageurs vérifiés en
+            quelques minutes, sur mobile.
+          </p>
+        </header>
+      )}
 
       {/* Stepper simple, mobile first */}
       <nav
