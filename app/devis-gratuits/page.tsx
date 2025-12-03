@@ -2189,11 +2189,27 @@ function DevisGratuitsPageInner() {
                   Aperçu de votre inventaire par pièce
                 </p>
                 {analysisStartedAt && (
-                  <p className="text-[11px] text-slate-400">
-                    Temps d’analyse (≈ 3 s / photo){" "}
-                    {isUploadingPhotos || isAnalyzing ? "en cours" : "total"} :{" "}
-                    {(analysisElapsedMs / 1000).toFixed(1)} s
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-slate-400">
+                      Temps d’analyse (≈ 3 s / photo){" "}
+                      {isUploadingPhotos || isAnalyzing ? "en cours" : "total"} :{" "}
+                      {(analysisElapsedMs / 1000).toFixed(1)} s
+                    </p>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-400 transition-all"
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            analysisTargetSeconds && analysisTargetSeconds > 0
+                              ? (analysisElapsedMs / 1000 / analysisTargetSeconds) *
+                                  100
+                              : 0
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
                 )}
                 {analysisProcesses && (
                   <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr),minmax(0,1.1fr)]">
