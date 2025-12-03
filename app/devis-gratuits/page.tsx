@@ -935,104 +935,153 @@ function DevisGratuitsPageInner() {
                     </div>
                     <div className="space-y-1">
                       <p className="block text-xs font-medium text-slate-200">
-                        Densité de mobilier
+                        Quantité de meubles et affaires
                       </p>
-                      <div className="grid grid-cols-3 gap-2 text-[11px]">
+                      <p className="text-[11px] text-slate-400">
+                        Cela nous aide à estimer le volume à déménager.
+                      </p>
+                      <div className="space-y-2 sm:grid sm:grid-cols-3 sm:gap-2 sm:space-y-0">
                         <button
                           type="button"
                           onClick={() => updateField("density", "light")}
                           className={[
-                            "rounded-2xl border px-2 py-1.5 text-left transition",
+                            "flex w-full items-center gap-2 rounded-2xl border px-3 py-2 text-left text-[11px] transition",
                             form.density === "light"
-                              ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                              : "border-slate-700 bg-slate-900/60 text-slate-200",
+                              ? "border-emerald-400 bg-emerald-500/10 text-emerald-100"
+                              : "border-slate-700 bg-slate-950/60 text-slate-200",
                           ].join(" ")}
                         >
-                          <span className="block font-medium">Sobre</span>
-                          <span className="mt-1 flex h-6 items-end gap-0.5">
-                            <span className="h-1.5 flex-1 rounded-full bg-slate-600" />
-                            <span className="h-2.5 flex-1 rounded-full bg-slate-600/70" />
-                            <span className="h-1 flex-1 rounded-full bg-slate-700/60" />
-                          </span>
-                          <span className="mt-1 block text-[10px] text-slate-400">
-                            Peu de meubles, intérieur épuré.
-                          </span>
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-300/60 bg-emerald-500/10">
+                            <div className="grid grid-cols-3 gap-[1px]">
+                              {[
+                                true,
+                                false,
+                                false,
+                                false,
+                                true,
+                                false,
+                                false,
+                                false,
+                                true,
+                              ].map((filled, idx) => (
+                                <span
+                                  // eslint-disable-next-line react/no-array-index-key
+                                  key={idx}
+                                  className={[
+                                    "h-2 w-2 rounded-[2px]",
+                                    filled
+                                      ? "bg-emerald-300"
+                                      : "bg-emerald-900/30",
+                                  ].join(" ")}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold">Minimaliste</div>
+                            <div className="text-[10px] text-slate-400">
+                              Peu de meubles · cartons limités
+                            </div>
+                            <div className="mt-1 inline-flex items-center rounded-full border border-emerald-300/70 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-100">
+                              -10% volume
+                            </div>
+                          </div>
                         </button>
                         <button
                           type="button"
                           onClick={() => updateField("density", "normal")}
                           className={[
-                            "rounded-2xl border px-2 py-1.5 text-left transition",
+                            "flex w-full items-center gap-2 rounded-2xl border px-3 py-2 text-left text-[11px] transition",
                             form.density === "normal"
-                              ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                              : "border-slate-700 bg-slate-900/60 text-slate-200",
+                              ? "border-sky-400 bg-sky-500/10 text-sky-100"
+                              : "border-slate-700 bg-slate-950/60 text-slate-200",
                           ].join(" ")}
                         >
-                          <span className="block font-medium">Normal</span>
-                          <span className="mt-1 flex h-6 items-end gap-0.5">
-                            <span className="h-2 flex-1 rounded-full bg-slate-600" />
-                            <span className="h-3 flex-1 rounded-full bg-slate-300" />
-                            <span className="h-2.5 flex-1 rounded-full bg-slate-600" />
-                          </span>
-                          <span className="mt-1 block text-[10px] text-slate-400">
-                            Mobilier standard, pièces bien remplies.
-                          </span>
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-sky-300/60 bg-sky-500/10">
+                            <div className="grid grid-cols-3 gap-[1px]">
+                              {[
+                                true,
+                                false,
+                                true,
+                                false,
+                                true,
+                                false,
+                                true,
+                                false,
+                                true,
+                              ].map((filled, idx) => (
+                                <span
+                                  // eslint-disable-next-line react/no-array-index-key
+                                  key={idx}
+                                  className={[
+                                    "h-2 w-2 rounded-[2px]",
+                                    filled ? "bg-sky-300" : "bg-sky-900/30",
+                                  ].join(" ")}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold">Standard</div>
+                            <div className="text-[10px] text-slate-400">
+                              Meubles classiques · affaires normales
+                            </div>
+                            <div className="mt-1 inline-flex items-center rounded-full border border-sky-300/70 bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold text-sky-100">
+                              Volume normal
+                            </div>
+                          </div>
                         </button>
                         <button
                           type="button"
                           onClick={() => updateField("density", "dense")}
                           className={[
-                            "rounded-2xl border px-2 py-1.5 text-left transition",
+                            "flex w-full items-center gap-2 rounded-2xl border px-3 py-2 text-left text-[11px] transition",
                             form.density === "dense"
-                              ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                              : "border-slate-700 bg-slate-900/60 text-slate-200",
+                              ? "border-amber-400 bg-amber-500/10 text-amber-100"
+                              : "border-slate-700 bg-slate-950/60 text-slate-200",
                           ].join(" ")}
                         >
-                          <span className="block font-medium">Bien meublé</span>
-                          <span className="mt-1 flex h-6 items-end gap-0.5">
-                            <span className="h-3 flex-1 rounded-full bg-slate-300" />
-                            <span className="h-4.5 flex-1 rounded-full bg-slate-200" />
-                            <span className="h-4 flex-1 rounded-full bg-slate-300" />
-                          </span>
-                          <span className="mt-1 block text-[10px] text-slate-400">
-                            Beaucoup de meubles / déco, intérieur chargé.
-                          </span>
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-amber-300/60 bg-amber-500/10">
+                            <div className="grid grid-cols-3 gap-[1px]">
+                              {[
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                              ].map((filled, idx) => (
+                                <span
+                                  // eslint-disable-next-line react/no-array-index-key
+                                  key={idx}
+                                  className={[
+                                    "h-2 w-2 rounded-[2px]",
+                                    filled ? "bg-amber-300" : "bg-amber-900/30",
+                                  ].join(" ")}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold">Bien rempli</div>
+                            <div className="text-[10px] text-slate-400">
+                              Beaucoup de meubles / déco · intérieur chargé
+                            </div>
+                            <div className="mt-1 inline-flex items-center rounded-full border border-amber-300/70 bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-100">
+                              +10% volume
+                            </div>
+                          </div>
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Résumé volume & distance */}
-                <div className="space-y-2 rounded-xl bg-slate-950/80 p-3 text-xs text-slate-200">
-                  <p className="font-medium text-slate-100">
-                    Résumé estimation
-                  </p>
-                  <p>
-                    <span className="text-slate-400">Trajet :</span>{" "}
-                    {[form.originCity, form.destinationCity].filter(Boolean).join(" → ") ||
-                      "À préciser"}
-                  </p>
-                  <p>
-                    <span className="text-slate-400">Distance estimée :</span>{" "}
-                    {Number.isFinite(distanceKm) ? `${Math.round(distanceKm)} km` : "—"}
-                  </p>
-                  <p>
-                    <span className="text-slate-400">Formule sélectionnée :</span>{" "}
-                    {form.formule === "ECONOMIQUE"
-                      ? "Économique"
-                      : form.formule === "STANDARD"
-                      ? "Standard"
-                      : "Premium"}
-                  </p>
-                  {pricingByFormule && pricingByFormule[form.formule] && (
-                    <p>
-                      <span className="text-slate-400">Fourchette estimée :</span>{" "}
-                      {formatPrice(pricingByFormule[form.formule].prixMin)} –{" "}
-                      {formatPrice(pricingByFormule[form.formule].prixMax)}
-                    </p>
-                  )}
-                </div>
+                {/* Colonne droite libre pour extensions futures (prix détaillé, etc.) */}
+                <div className="hidden text-xs text-slate-300 sm:block" />
               </div>
 
               {/* Choix niveau de confort (swipe horizontal sur mobile) */}
