@@ -1106,8 +1106,9 @@ function DevisGratuitsPageInner() {
     null
   );
   const [photoFlowChoice, setPhotoFlowChoice] = useState<
-    "none" | "photos_now" | "whatsapp_later"
+    "none" | "photos_now"
   >("none");
+  const [hasPhotosAnswer, setHasPhotosAnswer] = useState<"pending" | "yes" | "no">("pending");
   const [isDestinationForeign, setIsDestinationForeign] = useState(false);
 
   const goToStep = (next: StepId) => {
@@ -3053,6 +3054,117 @@ function DevisGratuitsPageInner() {
       {currentStep === 4 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <div className="space-y-6">
+            {/* Question initiale : Avez-vous des photos ? */}
+            {hasPhotosAnswer === "pending" && (
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-50">
+                  Avez-vous des photos de votre logement ?
+                </h2>
+                <p className="text-sm text-slate-300">
+                  Les photos nous permettent de générer automatiquement un inventaire détaillé et une déclaration de valeur.
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHasPhotosAnswer("yes");
+                      setPhotoFlowChoice("photos_now");
+                    }}
+                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300"
+                  >
+                    Oui, j'ai des photos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHasPhotosAnswer("no")}
+                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-400"
+                  >
+                    Non, pas pour le moment
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Si l'utilisateur a répondu "non", on lui explique pourquoi c'est important */}
+            {hasPhotosAnswer === "no" && photoFlowChoice === "none" && (
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-50">
+                  Pourquoi les photos sont importantes
+                </h2>
+                <div className="space-y-3 rounded-2xl bg-emerald-500/10 p-4 ring-1 ring-emerald-400/30">
+                  <p className="text-sm font-medium text-emerald-200">
+                    ✓ Devis plus précis et fiables
+                  </p>
+                  <p className="text-sm text-slate-300">
+                    Sans photos, les déménageurs donneront des devis approximatifs avec des marges importantes. Vous risquez des suppléments le jour J.
+                  </p>
+                </div>
+                <div className="space-y-3 rounded-2xl bg-amber-500/10 p-4 ring-1 ring-amber-400/30">
+                  <p className="text-sm font-medium text-amber-200">
+                    ⚠️ Inventaire et déclaration de valeur obligatoires
+                  </p>
+                  <p className="text-sm text-slate-300">
+                    Les déménageurs vous demanderont systématiquement un inventaire et une déclaration de valeur. Avec nos photos + IA, c'est fait automatiquement.
+                  </p>
+                </div>
+                <div className="space-y-3 rounded-2xl bg-sky-500/10 p-4 ring-1 ring-sky-400/30">
+                  <p className="text-sm font-medium text-sky-200">
+                    📧 Solution : finalisez plus tard par email
+                  </p>
+                  <p className="text-sm text-slate-300">
+                    Vous n'avez pas vos photos maintenant ? On vous envoie un email récapitulatif avec un lien pour finaliser votre demande plus tard.
+                  </p>
+                </div>
+                
+                <div className="flex flex-col gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHasPhotosAnswer("yes");
+                      setPhotoFlowChoice("photos_now");
+                    }}
+                    className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300"
+                  >
+                    Finalement, j'ai des photos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!leadId) {
+                        setError("Lead introuvable. Revenez à l'étape précédente puis réessayez.");
+                        return;
+                      }
+                      setError(null);
+                      try {
+                        setIsSubmitting(true);
+                        await updateLead(leadId, { photosStatus: "PENDING" });
+                        router.push("/devis-gratuits/merci");
+                      } catch (err: unknown) {
+                        const message = err instanceof Error ? err.message : "Erreur lors de l'envoi de l'email.";
+                        setError(message);
+                      } finally {
+                        setIsSubmitting(false);
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="inline-flex items-center justify-center rounded-xl border border-sky-400/70 bg-sky-950/30 px-4 py-3 text-sm font-semibold text-sky-100 hover:bg-sky-950/50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSubmitting ? "Envoi en cours..." : "Recevoir un email pour finaliser plus tard"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNoInventory}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-300 hover:border-slate-400"
+                  >
+                    Continuer sans photos (devis approximatifs)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Contenu existant : seulement si l'utilisateur a dit "oui" ou a choisi un flow */}
+            {(hasPhotosAnswer === "yes" || photoFlowChoice !== "none") && (
+              <>
             {photoFlowChoice !== "photos_now" && (
               <div className="space-y-3">
                 <h2 className="text-lg font-semibold text-slate-50">
@@ -3160,72 +3272,6 @@ function DevisGratuitsPageInner() {
               </div>
             )}
 
-            {/* Choix initial du mode de complétion */}
-            {photoFlowChoice === "none" && (
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setPhotoFlowChoice("photos_now")}
-                  className="w-full rounded-2xl bg-sky-500/90 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-400"
-                >
-                  J’ai les photos (ou je peux les prendre maintenant)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPhotoFlowChoice("whatsapp_later")}
-                  className="w-full rounded-2xl border border-sky-400/70 bg-slate-950/70 px-4 py-3 text-sm font-semibold text-sky-100 hover:border-sky-300"
-                >
-                  Je ne peux pas le faire maintenant, continuer plus tard sur WhatsApp
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNoInventory}
-                  className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-500"
-                >
-                  Je ne souhaite pas d’inventaire détaillé ni de déclaration de valeur
-                  (devis approximatifs sans photos)
-                </button>
-              </div>
-            )}
-
-            {/* Mode WhatsApp plus tard : petite confirmation puis déclenchement du lien */}
-            {photoFlowChoice === "whatsapp_later" && (
-              <div className="space-y-4 rounded-2xl bg-slate-950/70 p-4 ring-1 ring-slate-800">
-                <p className="text-sm font-semibold text-slate-50">
-                  Continuer plus tard sur WhatsApp
-                </p>
-                <p className="text-xs text-slate-300">
-                  Nous allons préparer une conversation WhatsApp avec votre dossier.
-                  Vous pourrez nous envoyer vos photos plus tard, en toute
-                  tranquillité.
-                </p>
-                <div className="space-y-1 text-xs text-slate-300">
-                  <p className="text-[11px] text-slate-400">
-                  Vous pourrez partager votre numéro directement dans la
-                  conversation WhatsApp si vous le souhaitez.
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={handleWhatsappLater}
-                    disabled={isSubmitting}
-                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {isSubmitting
-                      ? "Ouverture de WhatsApp…"
-                      : "Ouvrir WhatsApp et continuer plus tard"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPhotoFlowChoice("none")}
-                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-200 hover:border-slate-400"
-                  >
-                    Retour
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* Mode photos maintenant : zone d'upload + analyse */}
             {photoFlowChoice === "photos_now" && (
@@ -3494,6 +3540,8 @@ function DevisGratuitsPageInner() {
 
             {/* Les actions finales se font désormais via les 3 boutons du haut.
                 On retire les anciens boutons "Analyser mes photos" / "Je les enverrai plus tard". */}
+            </>
+            )}
           </div>
         </section>
       )}
