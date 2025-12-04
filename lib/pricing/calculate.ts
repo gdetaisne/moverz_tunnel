@@ -78,11 +78,8 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   // que de sommer les deux (logique proche des grilles pro).
   const volumePart = volumeM3 * COEF_VOLUME;
   const distancePart = input.distanceKm * COEF_DISTANCE;
-
-  const prixBaseBrut = Math.max(volumePart, distancePart, PRIX_MIN_SOCLE);
-
-  // 2.b. Coefficient saison (haute / basse saison)
-  const prixBase = prixBaseBrut * input.seasonFactor;
+  const baseNoSeason = Math.max(volumePart, distancePart, PRIX_MIN_SOCLE);
+  const baseSeasoned = baseNoSeason * input.seasonFactor;
 
   // 3. Coefficient étages (pire des deux accès)
   const coeffOrigin = getEtageCoefficient(
@@ -98,8 +95,11 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   // 4. Multiplicateur formule
   const formuleMultiplier = FORMULE_MULTIPLIERS[input.formule];
 
-  // 5. Prix avec formule + accès
-  const prixAvecFormule = Math.round(prixBase * formuleMultiplier * coeffEtage);
+  // 5. Prix centres sans / avec saison (hors services)
+  const centreNoSeasonSansServices =
+    baseNoSeason * formuleMultiplier * coeffEtage;
+  const centreSeasonedSansServices =
+    baseSeasoned * formuleMultiplier * coeffEtage;
 
   // 6. Services additionnels
   let servicesTotal = 0;
@@ -109,19 +109,23 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   if (input.services.debarras) servicesTotal += SERVICES_PRIX.debarras;
 
   // 7. Prix final
-  const prixFinal = prixAvecFormule + servicesTotal;
+  const centreNoSeason = centreNoSeasonSansServices + servicesTotal;
+  const centreSeasoned = centreSeasonedSansServices + servicesTotal;
+  const prixFinal = Math.round(centreSeasoned);
 
-  // 8. Fourchette ±10 %
-  const prixMin = Math.round(prixFinal * 0.9);
-  const prixMax = Math.round(prixFinal * 1.1);
+  // 8. Fourchette :
+  // - min ancré sur le prix "hors saison"
+  // - max sur le prix saisonné
+  const prixMin = Math.round(centreNoSeason * 0.9);
+  const prixMax = Math.round(centreSeasoned * 1.1);
 
   return {
     volumeM3,
     distanceKm: input.distanceKm,
-    prixBase: Math.round(prixBase),
+    prixBase: Math.round(baseNoSeason),
     formuleMultiplier,
     coeffEtage,
-    prixAvecFormule,
+    prixAvecFormule: Math.round(centreSeasonedSansServices),
     servicesTotal,
     prixFinal,
     prixMin,
