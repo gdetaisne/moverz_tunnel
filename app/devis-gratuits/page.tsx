@@ -15,6 +15,7 @@ import {
   type FormuleType,
   type HousingType,
 } from "@/lib/pricing/calculate";
+import { COEF_VOLUME, FORMULE_MULTIPLIERS } from "@/lib/pricing/constants";
 
 const STEPS = [
   { id: 1, label: "Contact" },
@@ -1088,6 +1089,7 @@ function DevisGratuitsPageInner() {
     "none" | "photos_now" | "whatsapp_later"
   >("none");
   const [isDestinationForeign, setIsDestinationForeign] = useState(false);
+  const [showPricingDetails, setShowPricingDetails] = useState(false);
 
   const goToStep = (next: StepId) => {
     setCurrentStep(next);
@@ -1127,6 +1129,15 @@ function DevisGratuitsPageInner() {
   const seasonFactor = useMemo(
     () => getSeasonFactor(form.movingDate),
     [form.movingDate]
+  );
+
+  const pricePerM3NoSeason = useMemo(() => {
+    return COEF_VOLUME * FORMULE_MULTIPLIERS[form.formule];
+  }, [form.formule]);
+
+  const pricePerM3Seasoned = useMemo(
+    () => Math.round(pricePerM3NoSeason * seasonFactor),
+    [pricePerM3NoSeason, seasonFactor]
   );
 
   const pricingByFormule = useMemo(() => {
@@ -2343,9 +2354,18 @@ function DevisGratuitsPageInner() {
       {currentStep === 3 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep3}>
-            <h2 className="text-lg font-semibold text-slate-50">
-              Volume estimé & formules
-            </h2>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+              <h2 className="text-lg font-semibold text-slate-50">
+                Volume estimé & formules
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowPricingDetails((prev) => !prev)}
+                className="inline-flex items-center justify-center rounded-full border border-slate-600 px-3 py-1 text-[11px] font-medium text-slate-200 hover:border-sky-400 hover:text-sky-200"
+              >
+                Comment sont estimés les prix ?
+              </button>
+            </div>
 
             {/* Bloc estimation volume + formules */}
             <div className="space-y-4 rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
@@ -2353,7 +2373,37 @@ function DevisGratuitsPageInner() {
                 Estimation rapide
               </p>
 
-              <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr),minmax(0,1.3fr)]">
+            {showPricingDetails && (
+              <div className="space-y-1 rounded-2xl bg-slate-950/70 p-3 text-[11px] text-slate-300 ring-1 ring-slate-800">
+                <p className="font-semibold text-slate-100">
+                  Comment sont estimés les prix ?
+                </p>
+                <p>
+                  On commence par estimer un volume à partir de la surface de
+                  votre logement et de la quantité de meubles (minimaliste /
+                  standard / bien rempli). Ensuite, on calcule un prix lié au
+                  volume et un prix lié à la distance, et on garde le plus
+                  élevé, avec un socle minimum.
+                </p>
+                <p>
+                  La période de l&apos;année peut ensuite majorer ou réduire ce
+                  prix de base (l&apos;été et décembre coûtent généralement plus
+                  cher que le reste de l&apos;année), puis on applique la
+                  formule choisie (Éco / Standard / Premium) et les options
+                  éventuelles (piano, débarras…).
+                </p>
+                <p className="text-slate-200">
+                  À titre indicatif, dans votre configuration actuelle,{" "}
+                  <strong>1&nbsp;m³ supplémentaire</strong> fait varier la
+                  partie &quot;volume&quot; du prix d&apos;environ{" "}
+                  <strong>{pricePerM3Seasoned} €</strong> pour cette période (
+                  soit ~
+                  {Math.round(pricePerM3NoSeason)} € hors effet saison).
+                </p>
+              </div>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr),minmax(0,1.3fr)]">
                 {/* Colonne gauche : densité + surface/volume */}
                 <div className="space-y-4">
                   {/* 1. Densité en premier */}
