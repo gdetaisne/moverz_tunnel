@@ -60,10 +60,14 @@ interface FormState {
   originPostalCode: string;
   originCity: string;
   originAddress: string;
+  originLat: number | null;
+  originLon: number | null;
   originHousingType: HousingType;
   destinationPostalCode: string;
   destinationCity: string;
   destinationAddress: string;
+  destinationLat: number | null;
+  destinationLon: number | null;
   movingDate: string;
   movingDateEnd: string;
   dateFlexible: boolean;
@@ -170,14 +174,18 @@ const INITIAL_FORM_STATE: FormState = {
   firstName: "Guillaume",
   lastName: "",
   email: "test@moverz.dev",
-  phone: "0612345678",
+  phone: "",
   originPostalCode: "33000",
   originCity: "Bordeaux",
   originAddress: "10 rue de la Paix, 3e étage",
+  originLat: null,
+  originLon: null,
   originHousingType: "t3",
   destinationPostalCode: "75001",
   destinationCity: "Paris",
   destinationAddress: "20 avenue des Champs, 2e étage",
+  destinationLat: null,
+  destinationLon: null,
   movingDate: new Date().toISOString().slice(0, 10),
   movingDateEnd: new Date().toISOString().slice(0, 10),
   dateFlexible: true,
@@ -208,14 +216,45 @@ const INITIAL_FORM_STATE: FormState = {
   notes: "Test local – veuillez ignorer ce dossier.",
 };
 
-function estimateDistanceKm(originPostalCode: string, destinationPostalCode: string) {
+function estimateDistanceKm(
+  originPostalCode: string,
+  destinationPostalCode: string,
+  originLat: number | null,
+  originLon: number | null,
+  destinationLat: number | null,
+  destinationLon: number | null
+) {
+  // Si on dispose de coordonnées précises (BAN / Nominatim), on calcule une distance haversine.
+  if (
+    originLat != null &&
+    originLon != null &&
+    destinationLat != null &&
+    destinationLon != null
+  ) {
+    const R = 6371; // rayon moyen de la Terre en km
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const dLat = toRad(destinationLat - originLat);
+    const dLon = toRad(destinationLon - originLon);
+    const la1 = toRad(originLat);
+    const la2 = toRad(destinationLat);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const dist = R * c;
+    if (Number.isFinite(dist) && dist > 0) {
+      return Math.min(1200, Math.round(dist));
+    }
+  }
+
+  // Fallback heuristique par codes postaux (approx département à département).
   if (!originPostalCode || !destinationPostalCode) return 50;
   if (originPostalCode === destinationPostalCode) return 10;
   const o = parseInt(originPostalCode.slice(0, 2), 10);
   const d = parseInt(destinationPostalCode.slice(0, 2), 10);
   if (Number.isNaN(o) || Number.isNaN(d)) return 50;
   const diff = Math.abs(o - d);
-  return Math.min(800, 30 + diff * 70); // heuristique simple, bornée
+  return Math.min(1000, 40 + diff * 40);
 }
 
 function formatPrice(price: number | null | undefined) {
@@ -226,6 +265,778 @@ function formatPrice(price: number | null | undefined) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price);
+}
+
+function formatMovingDateRange(form: FormState): string {
+  const { movingDate, movingDateEnd, dateFlexible } = form;
+
+  const format = (value: string | null | undefined) => {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "long",
+    });
+  };
+
+  let main = "";
+
+  if (movingDate && movingDateEnd && movingDateEnd !== movingDate) {
+    main = `du ${format(movingDate)} au ${format(movingDateEnd)}`;
+  } else if (movingDate) {
+    main = `le ${format(movingDate)}`;
+  }
+
+  if (dateFlexible) {
+    main = main ? `${main} (flexible)` : "Date flexible";
+  }
+
+  return main || "Date à préciser";
+}
+
+function formatDistanceLabel(straightKm: number): string {
+  // straightKm est la distance "à vol d'oiseau" (Haversine).
+  if (!Number.isFinite(straightKm) || straightKm <= 0) return "";
+
+  const vol = Math.round(straightKm);
+
+  // Facteur d'approximation pour la route :
+  // - petits trajets : peu d'écart
+  // - longs trajets : autoroutes qui allongent le chemin
+  const factor =
+    vol <= 50 ? 1.25 : vol <= 200 ? 1.4 : 1.5;
+
+  const road = Math.round(vol * factor);
+  const isLocal = road <= 80;
+
+  if (isLocal) {
+    return `Déménagement local · ~${road} km par la route (${vol} km à vol d’oiseau)`;
+  }
+
+  return `Environ ~${road} km par la route (${vol} km à vol d’oiseau)`;
+}
+
+function formatHousingCard(
+  type: HousingType,
+  floor: string | undefined
+): { icon: string; title: string; subtitle: string } {
+  const baseLabel = HOUSING_LABELS[type];
+
+  const nFloor = Number.parseInt(floor || "", 10);
+  const floorLabel =
+    Number.isFinite(nFloor) && nFloor > 0 ? `${nFloor}e étage` : "Étage à préciser";
+
+  if (type.startsWith("house")) {
+    return {
+      icon: "🏠",
+      title: baseLabel,
+      subtitle: "Maison individuelle",
+    };
+  }
+
+  return {
+    icon: "🏢",
+    title: `Appartement ${baseLabel}`,
+    subtitle: floorLabel,
+  };
+}
+
+function MovingTruckIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 32"
+      aria-hidden="true"
+      className="h-4 w-7 text-slate-950"
+    >
+      {/* Traits de vitesse */}
+      <g
+        className="truck-speed-lines"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      >
+        <line x1="4" y1="12" x2="14" y2="12" />
+        <line x1="4" y1="17" x2="12" y2="17" />
+        <line x1="4" y1="22" x2="10" y2="22" />
+      </g>
+
+      {/* Corps du camion */}
+      <rect
+        x="16"
+        y="8"
+        width="28"
+        height="16"
+        rx="2"
+        fill="currentColor"
+      />
+
+      {/* Cabine à droite */}
+      <path
+        d="M44 12h10a2 2 0 0 1 2 2v10h-12z"
+        fill="currentColor"
+      />
+      {/* Fenêtre cabine */}
+      <rect x="47" y="14" width="6" height="5" rx="1" fill="rgba(15,23,42,0.9)" />
+
+      {/* Roues */}
+      <g fill="currentColor">
+        <circle cx="24" cy="26" r="3.3" />
+        <circle cx="48" cy="26" r="3.3" />
+      </g>
+      <g fill="#0f172a">
+        <circle cx="24" cy="26" r="1.6" />
+        <circle cx="48" cy="26" r="1.6" />
+      </g>
+
+      <style jsx>{`
+        .truck-speed-lines {
+          animation: truck-speed 0.7s ease-out infinite;
+        }
+        @keyframes truck-speed {
+          0% {
+            opacity: 0;
+            transform: translateX(0);
+          }
+          40% {
+            opacity: 1;
+            transform: translateX(-1px);
+          }
+          100% {
+            opacity: 0;
+            transform: translateX(-3px);
+          }
+        }
+      `}</style>
+    </svg>
+  );
+}
+
+type AddressSuggestion = {
+  label: string;
+  addressLine?: string;
+  city?: string;
+  postalCode?: string;
+  countryCode?: string;
+  lat?: number;
+  lon?: number;
+};
+
+interface AddressAutocompleteProps {
+  label: string;
+  placeholder: string;
+  helperText?: string;
+  mode: "fr" | "world";
+  initialValue?: string;
+  onSelect: (value: AddressSuggestion) => void;
+}
+
+function AddressAutocomplete({
+  label,
+  placeholder,
+  helperText,
+  mode,
+  initialValue,
+  onSelect,
+}: AddressAutocompleteProps) {
+  const [input, setInput] = useState(initialValue ?? "");
+  const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<AddressSuggestion[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const debounceRef = useRef<number | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
+  const cacheRef = useRef<Record<string, AddressSuggestion[]>>({});
+
+  useEffect(() => {
+    setInput(initialValue ?? "");
+  }, [initialValue]);
+
+  const fetchSuggestionsFr = async (query: string): Promise<AddressSuggestion[]> => {
+    const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
+      query
+    )}&limit=5`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      features: {
+        properties: {
+          label: string;
+          city?: string;
+          postcode?: string;
+        };
+        geometry?: { coordinates?: [number, number] };
+      }[];
+    };
+    return data.features.map((f) => ({
+      label: f.properties.label,
+      addressLine: f.properties.label,
+      city: f.properties.city,
+      postalCode: f.properties.postcode,
+      countryCode: "fr",
+      lon: f.geometry?.coordinates?.[0],
+      lat: f.geometry?.coordinates?.[1],
+    }));
+  };
+
+  const fetchSuggestionsWorld = async (query: string): Promise<AddressSuggestion[]> => {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+      query
+    )}&format=json&addressdetails=1&limit=5`;
+    const res = await fetch(url, {
+      headers: {
+        // Nominatim conseille de mettre un User-Agent ou un email, mais côté browser on est limité.
+      },
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      display_name: string;
+      lat: string;
+      lon: string;
+      address?: {
+        city?: string;
+        town?: string;
+        village?: string;
+        hamlet?: string;
+        postcode?: string;
+        country_code?: string;
+      };
+    }[];
+    return data.map((item) => {
+      const addr = item.address ?? {};
+      const city =
+        addr.city || addr.town || addr.village || addr.hamlet || undefined;
+      return {
+        label: item.display_name,
+        addressLine: item.display_name,
+        city,
+        postalCode: addr.postcode,
+        countryCode: addr.country_code,
+        lat: Number.parseFloat(item.lat),
+        lon: Number.parseFloat(item.lon),
+      };
+    });
+  };
+
+  const runSearch = async (query: string) => {
+    const trimmed = query.trim();
+    if (trimmed.length < 3) {
+      setResults([]);
+      return;
+    }
+    if (cacheRef.current[trimmed]) {
+      setResults(cacheRef.current[trimmed]);
+      return;
+    }
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    const ctrl = new AbortController();
+    controllerRef.current = ctrl;
+    setIsLoading(true);
+    try {
+      const suggestions =
+        mode === "fr"
+          ? await fetchSuggestionsFr(trimmed)
+          : await fetchSuggestionsWorld(trimmed);
+      cacheRef.current[trimmed] = suggestions;
+      if (!ctrl.signal.aborted) {
+        setResults(suggestions);
+      }
+    } catch {
+      if (!ctrl.signal.aborted) {
+        setResults([]);
+      }
+    } finally {
+      if (!ctrl.signal.aborted) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleChange = (value: string) => {
+    setInput(value);
+    setShowDropdown(true);
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = window.setTimeout(() => {
+      runSearch(value).catch(() => {});
+    }, 300);
+  };
+
+  const handleSelect = (s: AddressSuggestion) => {
+    setInput(s.label);
+    setShowDropdown(false);
+    setResults([]);
+    onSelect(s);
+  };
+
+  return (
+    <div className="relative space-y-1">
+      <label className="block text-xs font-medium text-slate-200">{label}</label>
+      {helperText && (
+        <p className="text-[11px] text-slate-400">{helperText}</p>
+      )}
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => handleChange(e.target.value)}
+        onFocus={() => {
+          if (results.length > 0) setShowDropdown(true);
+        }}
+        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+        placeholder={placeholder}
+        autoComplete="off"
+      />
+      {isLoading && (
+        <p className="mt-1 text-[11px] text-slate-500">Recherche…</p>
+      )}
+      {showDropdown && results.length > 0 && (
+        <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-slate-700 bg-slate-950/95 text-xs shadow-lg shadow-black/40">
+          {results.map((s, idx) => (
+            <button
+              key={`${s.label}-${idx}`}
+              type="button"
+              className="w-full px-3 py-2 text-left text-slate-100 hover:bg-slate-800/80"
+              onClick={() => handleSelect(s)}
+            >
+              <div className="line-clamp-2">{s.label}</div>
+              {s.postalCode && s.city && (
+                <div className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-400">
+                  {s.postalCode} {s.city}{" "}
+                  {s.countryCode && s.countryCode.toUpperCase() !== "FR"
+                    ? `· ${s.countryCode.toUpperCase()}`
+                    : ""}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BoxesStack({
+  className,
+  box1Class,
+  box2Class,
+  box3Class,
+}: {
+  className?: string;
+  box1Class?: string;
+  box2Class?: string;
+  box3Class?: string;
+}) {
+  return (
+    <div className={["relative h-8 w-16 overflow-visible", className].filter(Boolean).join(" ")}>
+      {/* Carton 1 – au sol, à droite */}
+      <div
+        className={[
+          "absolute left-4 top-[-0.75rem] text-lg",
+          box1Class,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        📦
+      </div>
+      {/* Carton 2 – au sol, légèrement à gauche */}
+      <div
+        className={[
+          "absolute left-0 top-[-1rem] text-base",
+          box2Class,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        📦
+      </div>
+      {/* Carton 3 – empilé au-dessus, centré */}
+      <div
+        className={[
+          "absolute left-2.5 top-[-0.8rem] text-base",
+          box3Class,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        📦
+      </div>
+    </div>
+  );
+}
+
+function Step3MovingDayIntro({
+  form,
+  distanceKm,
+  onComplete,
+}: {
+  form: FormState;
+  distanceKm: number;
+  onComplete: () => void;
+}) {
+  const [phase, setPhase] = useState<"calendar" | "load" | "drive">("calendar");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [showDestinationBoxes, setShowDestinationBoxes] = useState(false);
+
+  const baseDate = useMemo(() => {
+    const d = new Date(form.movingDate || new Date().toISOString().slice(0, 10));
+    if (Number.isNaN(d.getTime())) return new Date();
+    return d;
+  }, [form.movingDate]);
+
+  const days = useMemo(() => {
+    const arr: { label: string; isMain: boolean; weekday: string }[] = [];
+    for (let offset = -2; offset <= 2; offset += 1) {
+      const d = new Date(baseDate);
+      d.setDate(d.getDate() + offset);
+      const day = d.getDate().toString().padStart(2, "0");
+      const weekdayRaw = d
+        .toLocaleDateString("fr-FR", { weekday: "short" })
+        .replace(".", "");
+      const weekday = weekdayRaw.slice(0, 2).toUpperCase();
+      arr.push({ label: day, isMain: offset === 0, weekday });
+    }
+    return arr;
+  }, [baseDate]);
+
+  useEffect(() => {
+    let timeouts: number[] = [];
+
+    const stepDuration = 500; // 0,5 s par date pour laisser le temps de lire
+
+    // Phase 1: calendrier qui défile jour par jour
+    days.forEach((_, index) => {
+      const id = window.setTimeout(() => {
+        setActiveIndex(index);
+      }, index * stepDuration);
+      timeouts.push(id);
+    });
+
+    // Phase 2: cartons qui tombent
+    const loadTimeout = window.setTimeout(() => {
+      setPhase("load");
+    }, days.length * stepDuration + 600);
+    timeouts.push(loadTimeout);
+
+    // Phase 3: camion qui part vers l'arrivée
+    const driveTimeout = window.setTimeout(() => {
+      setPhase("drive");
+    }, days.length * stepDuration + 1800);
+    timeouts.push(driveTimeout);
+
+    // Apparition des cartons à l'arrivée, une fois le camion presque arrivé
+    const destBoxesTimeout = window.setTimeout(() => {
+      setShowDestinationBoxes(true);
+    }, days.length * stepDuration + 3600);
+    timeouts.push(destBoxesTimeout);
+
+    // Fin: on laisse l’animation camion se jouer avant le callback (optionnel)
+    const doneTimeout = window.setTimeout(() => {
+      onComplete();
+    }, days.length * stepDuration + 5200);
+    timeouts.push(doneTimeout);
+
+    return () => {
+      timeouts.forEach((id) => window.clearTimeout(id));
+    };
+  }, [days.length, onComplete]);
+
+  const departureBoxStage = useMemo(() => {
+    // 1er jour: 1 carton, 2e: 2 cartons, 3e et suivants: 3 cartons empilés
+    if (activeIndex === 0) return 1;
+    if (activeIndex === 1) return 2;
+    if (activeIndex >= 2) return 3;
+    return 3;
+  }, [activeIndex]);
+
+  const originCityLabel = form.originCity || "Ville de départ";
+  const destinationCityLabel = form.destinationCity || "Ville d’arrivée";
+
+  const distanceLabel = formatDistanceLabel(distanceKm);
+
+  const originHousing = formatHousingCard(form.originHousingType, form.originFloor);
+  const destinationHousing = formatHousingCard(
+    form.destinationHousingType,
+    form.destinationFloor
+  );
+
+  return (
+    <div className="flex min-h-[260px] flex-col justify-between rounded-2xl bg-slate-950/80 p-4 ring-1 ring-slate-800/70">
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-300">
+          Votre jour J
+        </p>
+        <p className="text-sm font-semibold text-slate-50">
+          On retient votre départ, votre arrivée et surtout cette date.
+        </p>
+        <p className="text-[11px] text-slate-400">
+          Tout ce qu’on va faire ensuite sert à sécuriser ce jour‑là, sans
+          mauvaises surprises.
+        </p>
+      </div>
+
+      {/* Calendrier animé façon agenda */}
+      <div className="mt-3 flex flex-col items-center justify-center gap-1">
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
+          Calendrier
+        </p>
+        <div className="flex items-end gap-1 rounded-2xl bg-slate-900/80 px-3 py-2">
+          {days.map((day, index) => {
+            const isActive = index === activeIndex;
+            const isMain = day.isMain;
+            return (
+              <div
+                key={day.label + index}
+                className={[
+                  "flex h-10 w-8 flex-col items-center justify-between rounded-md border px-1 py-1 text-[11px] transition-all duration-300",
+                  isActive
+                    ? "border-amber-400 bg-amber-500/20 text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.45)] scale-110"
+                    : "border-slate-700 bg-slate-900 text-slate-400 scale-95",
+                  isMain && "font-semibold",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <span className="text-[9px] uppercase tracking-wide text-slate-400">
+                  {day.weekday}
+                </span>
+                <span className="text-[11px]">{day.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Ligne départ / arrivée + animations cartons + camion */}
+      {/* Cartes logement (schéma par type) */}
+      <div className="mt-4 mb-2 flex justify-between gap-4 text-[11px] text-slate-200">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900/90 text-lg">
+            {originHousing.icon}
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-50">
+              {originHousing.title}
+            </p>
+            <p className="text-[10px] text-slate-400">{originHousing.subtitle}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-right">
+          <div>
+            <p className="text-xs font-semibold text-slate-50">
+              {destinationHousing.title}
+            </p>
+            <p className="text-[10px] text-slate-400">
+              {destinationHousing.subtitle}
+            </p>
+          </div>
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900/90 text-lg">
+            {destinationHousing.icon}
+          </div>
+        </div>
+      </div>
+
+      {/* Ligne 2 : villes */}
+      <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-50">
+        <span>{originCityLabel}</span>
+        <span>{destinationCityLabel}</span>
+      </div>
+
+      {/* Ligne 3 : animation cartons + camion */}
+      <div className="space-y-3 text-xs text-slate-200">
+        <div className="relative flex items-center justify-between gap-4">
+          {/* Pile de cartons au départ (gauche) */}
+          <BoxesStack
+            className="mt-1"
+            box1Class={[
+              "transition-opacity duration-300",
+              phase === "drive" || departureBoxStage < 1
+                ? "opacity-0"
+                : "opacity-100 box-fall-1",
+              phase === "load" && departureBoxStage >= 1
+                ? "box-into-truck-1"
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            box2Class={[
+              "transition-opacity duration-300",
+              phase === "drive" || departureBoxStage < 2
+                ? "opacity-0"
+                : "opacity-100 box-fall-2",
+              phase === "load" && departureBoxStage >= 2
+                ? "box-into-truck-2"
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            box3Class={[
+              "transition-opacity duration-300",
+              phase === "drive" || departureBoxStage < 3
+                ? "opacity-0"
+                : "opacity-100 box-fall-3",
+              phase === "load" && departureBoxStage >= 3
+                ? "box-into-truck-3"
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          />
+
+          <div className="relative h-1 flex-1 rounded-full bg-slate-800/80">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_0,_rgba(56,189,248,0.5),transparent_55%),radial-gradient(circle_at_100%,rgba(16,185,129,0.5),transparent_55%)] opacity-40" />
+            {/* Camion qui part quand la date principale est atteinte */}
+            <div
+              className={[
+                "truck-on-line absolute -top-3 left-0 flex h-7 w-9 items-center justify-center rounded-lg bg-sky-400 text-xs font-semibold text-slate-950 shadow-md shadow-sky-500/40",
+                phase === "calendar" && "opacity-0",
+                phase === "load" && "opacity-100",
+                phase === "drive" && "truck-drive",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <MovingTruckIcon />
+            </div>
+          </div>
+
+          {/* Pile de cartons à l'arrivée (droite), réutilise exactement la même pile */}
+          <BoxesStack
+            className="ml-auto mt-1"
+            box1Class={showDestinationBoxes ? "dest-box-1" : "opacity-0"}
+            box2Class={showDestinationBoxes ? "dest-box-2" : "opacity-0"}
+            box3Class={showDestinationBoxes ? "dest-box-3" : "opacity-0"}
+          />
+        </div>
+
+        <div className="flex items-center justify-between text-[11px] text-slate-400">
+          <span>{distanceLabel}</span>
+          <span>On s’occupe de tout le chemin.</span>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .box-fall-1 {
+          animation: box-fall-1 800ms ease-out forwards;
+        }
+        .box-fall-2 {
+          animation: box-fall-2 900ms ease-out forwards;
+        }
+        .box-fall-3 {
+          animation: box-fall-3 950ms ease-out forwards;
+        }
+        @keyframes box-fall-1 {
+          0% {
+            transform: translateY(0) rotate(-6deg);
+            opacity: 0;
+          }
+          100% {
+            transform: translateY(14px) rotate(0deg);
+            opacity: 1;
+          }
+        }
+        @keyframes box-fall-2 {
+          0% {
+            transform: translateY(0) rotate(4deg);
+            opacity: 0;
+          }
+          100% {
+            transform: translateY(18px) rotate(0deg);
+            opacity: 1;
+          }
+        }
+        @keyframes box-fall-3 {
+          0% {
+            transform: translateY(-10px) rotate(2deg);
+            opacity: 0;
+          }
+          100% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+          }
+        }
+        .box-into-truck-1 {
+          animation: box-into-truck-1 900ms ease-in forwards;
+        }
+        .box-into-truck-2 {
+          animation: box-into-truck-2 950ms ease-in forwards;
+        }
+        .box-into-truck-3 {
+          animation: box-into-truck-3 1000ms ease-in forwards;
+        }
+        @keyframes box-into-truck-1 {
+          0% {
+            transform: translateY(14px) translateX(0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-6px) translateX(28px) scale(0.4);
+            opacity: 0;
+          }
+        }
+        @keyframes box-into-truck-2 {
+          0% {
+            transform: translateY(18px) translateX(0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-4px) translateX(24px) scale(0.4);
+            opacity: 0;
+          }
+        }
+        @keyframes box-into-truck-3 {
+          0% {
+            transform: translateY(0) translateX(0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-10px) translateX(26px) scale(0.4);
+            opacity: 0;
+          }
+        }
+        .truck-drive {
+          animation: truck-drive 3.2s ease-in-out forwards;
+        }
+        @keyframes truck-drive {
+          0% {
+            left: 0;
+            opacity: 1;
+          }
+          100% {
+            left: calc(100% - 2.25rem); /* largeur approx. du camion */
+            opacity: 1;
+          }
+        }
+        .dest-box-1 {
+          animation: dest-box-pop 750ms ease-out forwards;
+        }
+        .dest-box-2 {
+          animation: dest-box-pop 850ms ease-out forwards;
+          animation-delay: 80ms;
+        }
+        .dest-box-3 {
+          animation: dest-box-pop 900ms ease-out forwards;
+          animation-delay: 140ms;
+        }
+        @keyframes dest-box-pop {
+          0% {
+            transform: translateY(10px) scale(0.5);
+            opacity: 0;
+          }
+          60% {
+            transform: translateY(-2px) scale(1.05);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
+    </div>
+  );
 }
 
 function DevisGratuitsPageInner() {
@@ -259,6 +1070,7 @@ function DevisGratuitsPageInner() {
   const [photoFlowChoice, setPhotoFlowChoice] = useState<
     "none" | "photos_now" | "whatsapp_later"
   >("none");
+  const [isDestinationForeign, setIsDestinationForeign] = useState(false);
 
   const goToStep = (next: StepId) => {
     setCurrentStep(next);
@@ -266,8 +1078,23 @@ function DevisGratuitsPageInner() {
   };
 
   const distanceKm = useMemo(
-    () => estimateDistanceKm(form.originPostalCode, form.destinationPostalCode),
-    [form.originPostalCode, form.destinationPostalCode]
+    () =>
+      estimateDistanceKm(
+        form.originPostalCode,
+        form.destinationPostalCode,
+        form.originLat,
+        form.originLon,
+        form.destinationLat,
+        form.destinationLon
+      ),
+    [
+      form.originPostalCode,
+      form.destinationPostalCode,
+      form.originLat,
+      form.originLon,
+      form.destinationLat,
+      form.destinationLon,
+    ]
   );
 
   const pricingByFormule = useMemo(() => {
@@ -906,8 +1733,8 @@ function DevisGratuitsPageInner() {
             Demande de devis déménagement
           </h1>
           <p className="max-w-prose text-sm text-slate-300 sm:text-base">
-            Obtenez plusieurs devis personnalisés de déménageurs vérifiés en
-            quelques minutes, sur mobile.
+            Un seul dossier complet, plusieurs déménageurs vérifiés vous
+            contactent. Plus vous êtes précis, plus les devis seront pertinents.
           </p>
         </header>
       )}
@@ -1019,10 +1846,9 @@ function DevisGratuitsPageInner() {
                 Email de contact
               </label>
               <p className="text-xs text-slate-400">
-                Nous l’utilisons uniquement pour suivre votre dossier et vous
-                envoyer vos devis, et nous vérifierons cette adresse avec un
-                lien de confirmation. Pas de newsletter, pas de prospection
-                commerciale, pas de revente de votre email.
+                Usage strictement interne pour vous tenir informé de l’évolution
+                de votre dossier et vous envoyer vos devis. Jamais partagé ni
+                revendu.
               </p>
               <input
                 type="email"
@@ -1031,23 +1857,6 @@ function DevisGratuitsPageInner() {
                 className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                 placeholder="vous@email.fr"
                 autoComplete="email"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-100">
-                Téléphone (optionnel)
-              </label>
-              <p className="text-xs text-slate-400">
-                Utile si nous devons clarifier quelques détails rapidement.
-              </p>
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={(e) => updateField("phone", e.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                placeholder="06 12 34 56 78"
-                autoComplete="tel"
               />
             </div>
 
@@ -1114,55 +1923,30 @@ function DevisGratuitsPageInner() {
               </button>
               {isOriginOpen && (
                 <div className="space-y-3 border-t border-slate-800 bg-slate-950/70 p-3">
-                  <div className="grid gap-3 sm:grid-cols-[110px,minmax(0,1fr)]">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Code postal
-                      </label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={5}
-                        value={form.originPostalCode}
-                        onChange={(e) =>
-                          updateField(
-                            "originPostalCode",
-                            e.target.value.replace(/\D/g, "").slice(0, 5)
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                        placeholder="33000"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Ville
-                      </label>
-                      <input
-                        type="text"
-                        value={form.originCity}
-                        onChange={(e) =>
-                          updateField("originCity", e.target.value)
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                        placeholder="Bordeaux"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-medium text-slate-200">
-                      Adresse complète (optionnel)
-                    </label>
-                    <input
-                      type="text"
-                      value={form.originAddress}
-                      onChange={(e) =>
-                        updateField("originAddress", e.target.value)
-                      }
-                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      placeholder="N°, rue, bâtiment, étage…"
-                    />
-                  </div>
+                  <AddressAutocomplete
+                    label="Adresse de départ"
+                    placeholder="10 rue de la Paix, 33000 Bordeaux"
+                    helperText="Vous pouvez saisir une adresse complète, une ville ou un code postal."
+                    mode="fr"
+                    initialValue={
+                      form.originAddress ||
+                      [form.originPostalCode, form.originCity]
+                        .filter(Boolean)
+                        .join(" ")
+                    }
+                    onSelect={(s) => {
+                      updateField("originAddress", s.addressLine ?? s.label);
+                      updateField("originPostalCode", s.postalCode ?? "");
+                      updateField("originCity", s.city ?? "");
+                      updateField("originLat", s.lat ?? null);
+                      updateField("originLon", s.lon ?? null);
+                    }}
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    {form.originPostalCode && form.originCity
+                      ? `${form.originPostalCode} ${form.originCity}`
+                      : "Code postal et ville seront remplis automatiquement."}
+                  </p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
                       <label className="block text-xs font-medium text-slate-200">
@@ -1259,55 +2043,55 @@ function DevisGratuitsPageInner() {
               </button>
               {isDestinationOpen && (
                 <div className="space-y-3 border-t border-slate-800 bg-slate-950/70 p-3">
-                  <div className="grid gap-3 sm:grid-cols-[110px,minmax(0,1fr)]">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Code postal
-                      </label>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-medium text-slate-200">
+                      Adresse d’arrivée
+                    </p>
+                    <label className="flex items-center gap-2 text-[11px] text-slate-300">
                       <input
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={5}
-                        value={form.destinationPostalCode}
-                        onChange={(e) =>
-                          updateField(
-                            "destinationPostalCode",
-                            e.target.value.replace(/\D/g, "").slice(0, 5)
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                        placeholder="75001"
+                        type="checkbox"
+                        className="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500"
+                        checked={isDestinationForeign}
+                        onChange={(e) => setIsDestinationForeign(e.target.checked)}
                       />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Ville
-                      </label>
-                      <input
-                        type="text"
-                        value={form.destinationCity}
-                        onChange={(e) =>
-                          updateField("destinationCity", e.target.value)
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                        placeholder="Paris"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-medium text-slate-200">
-                      Adresse complète (optionnel)
+                      Adresse à l’étranger
                     </label>
-                    <input
-                      type="text"
-                      value={form.destinationAddress}
-                      onChange={(e) =>
-                        updateField("destinationAddress", e.target.value)
-                      }
-                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      placeholder="N°, rue, bâtiment, étage…"
-                    />
                   </div>
+
+                  <AddressAutocomplete
+                    label=""
+                    placeholder={
+                      isDestinationForeign
+                        ? "10 Downing St, London, UK"
+                        : "20 avenue des Champs-Élysées, 75008 Paris"
+                    }
+                    helperText={
+                      isDestinationForeign
+                        ? "Incluez le pays (ex: Barcelone, Espagne)."
+                        : "Vous pouvez saisir une adresse complète, une ville ou un code postal."
+                    }
+                    mode={isDestinationForeign ? "world" : "fr"}
+                    initialValue={
+                      form.destinationAddress ||
+                      [form.destinationPostalCode, form.destinationCity]
+                        .filter(Boolean)
+                        .join(" ")
+                    }
+                    onSelect={(s) => {
+                      updateField("destinationAddress", s.addressLine ?? s.label);
+                      updateField("destinationPostalCode", s.postalCode ?? "");
+                      updateField("destinationCity", s.city ?? "");
+                      updateField("destinationLat", s.lat ?? null);
+                      updateField("destinationLon", s.lon ?? null);
+                    }}
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    {form.destinationPostalCode && form.destinationCity
+                      ? `${form.destinationPostalCode} ${form.destinationCity}`
+                      : isDestinationForeign
+                      ? "Ville, pays et code postal seront remplis automatiquement si possible."
+                      : "Code postal et ville seront remplis automatiquement."}
+                  </p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
                       <label className="block text-xs font-medium text-slate-200">
@@ -1367,6 +2151,13 @@ function DevisGratuitsPageInner() {
                 </div>
               )}
             </div>
+
+            {/* Distance estimée (information indicative) */}
+            {formatDistanceLabel(distanceKm) && (
+              <p className="text-[11px] text-slate-400">
+                {formatDistanceLabel(distanceKm)}
+              </p>
+            )}
 
             <div className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr),minmax(0,1.1fr)]">
               <div className="space-y-1">
@@ -1441,6 +2232,13 @@ function DevisGratuitsPageInner() {
       {/* Étape 3 – Volume & formules */}
       {currentStep === 3 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
+          <div className="mb-5">
+            <Step3MovingDayIntro
+              form={form}
+              distanceKm={distanceKm}
+              onComplete={() => {}}
+            />
+          </div>
           <form className="space-y-5" onSubmit={handleSubmitStep3}>
             <h2 className="text-lg font-semibold text-slate-50">
               Volume estimé & formules
@@ -2039,20 +2837,12 @@ function DevisGratuitsPageInner() {
                   Vous pourrez nous envoyer vos photos plus tard, en toute
                   tranquillité.
                 </p>
-                <div className="space-y-1 text-xs text-slate-300">
-                  <p className="font-medium text-slate-200">
-                    Numéro de téléphone indiqué :
-                  </p>
-                  <p className="rounded-xl bg-slate-900/70 px-3 py-2 text-sm">
-                    {form.phone && form.phone.trim().length > 0
-                      ? form.phone
-                      : "Non renseigné"}
-                  </p>
-                  <p className="text-[11px] text-slate-400">
-                    Si ce numéro est incorrect, vous pourrez le préciser directement
-                    dans la conversation WhatsApp.
-                  </p>
-                </div>
+              <div className="space-y-1 text-xs text-slate-300">
+                <p className="text-[11px] text-slate-400">
+                  Vous pourrez partager votre numéro directement dans la
+                  conversation WhatsApp si vous le souhaitez.
+                </p>
+              </div>
                 <div className="flex gap-3">
                   <button
                     type="button"
