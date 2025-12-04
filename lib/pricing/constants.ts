@@ -31,9 +31,9 @@ export const SERVICES_PRIX = {
   debarras: 100,
 } as const;
 
-// Coefficients de base (alignés sur le tunnel Marseille / La Poste)
-export const COEF_VOLUME = 80; // €/m3
-export const COEF_DISTANCE = 1.2; // €/km
+// Coefficients de base (calibrés pour que ~20 m³ sur ~200 km donne ~1 000–1 500 €)
+export const COEF_VOLUME = 50; // €/m3
+export const COEF_DISTANCE = 0.7; // €/km
 export const PRIX_MIN_SOCLE = 400; // Prix minimum
 
 
