@@ -2332,20 +2332,9 @@ function DevisGratuitsPageInner() {
               </p>
 
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr),minmax(0,1.3fr)]">
-                {/* Densité + surface (type de logement affiché en lecture seule depuis l'étape Projet) */}
+                {/* Colonne gauche : densité + surface/volume */}
                 <div className="space-y-4">
-                  <div className="space-y-1 text-xs text-slate-300">
-                    <p className="font-medium text-slate-200">
-                      Type de logement (départ)
-                    </p>
-                    <p className="text-[11px]">
-                      {HOUSING_LABELS[form.originHousingType]} —{" "}
-                      {HOUSING_SURFACE_DEFAULTS[form.originHousingType]} m²
-                      estimés.
-                    </p>
-                  </div>
-
-                  {/* 1. Densité d'abord */}
+                  {/* 1. Densité en premier */}
                   <div className="space-y-1">
                     <p className="block text-xs font-medium text-slate-200">
                       Quantité de meubles et affaires
@@ -2501,8 +2490,19 @@ function DevisGratuitsPageInner() {
                     </div>
                   </div>
 
-                  {/* 2. Surface ensuite + volume estimé */}
+                  {/* 2. Surface ensuite + volume estimé + rappel type logement */}
                   <div className="space-y-2">
+                    <div className="space-y-1 text-xs text-slate-300">
+                      <p className="font-medium text-slate-200">
+                        Type de logement (départ)
+                      </p>
+                      <p className="text-[11px]">
+                        {HOUSING_LABELS[form.originHousingType]} —{" "}
+                        {HOUSING_SURFACE_DEFAULTS[form.originHousingType]} m²
+                        estimés.
+                      </p>
+                    </div>
+
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <label className="block text-xs font-medium text-slate-200">
