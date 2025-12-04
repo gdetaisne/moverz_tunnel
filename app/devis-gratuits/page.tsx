@@ -1981,25 +1981,34 @@ function DevisGratuitsPageInner() {
         className="rounded-2xl bg-slate-900/60 p-3 shadow-sm ring-1 ring-slate-800"
       >
         {/* Mobile : barre de progression + libellé courant */}
-        <div className="space-y-2 sm:hidden">
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="text-xs font-medium text-slate-300">
-              Étape{" "}
-              <span className="font-semibold text-slate-50">
-                {currentStep}
-              </span>{" "}
-              sur {STEPS.length}
-            </p>
-            <p className="truncate text-xs font-semibold text-sky-300">
-              {STEPS.find((s) => s.id === currentStep)?.label}
-            </p>
-          </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
-            <div
-              className="h-full bg-gradient-to-r from-sky-400 to-cyan-400 transition-all"
-              style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
-            />
-          </div>
+        {/* Mobile : mini stepper scrollable et cliquable */}
+        <div className="flex gap-2 overflow-x-auto pb-2 sm:hidden">
+          {STEPS.map((step) => {
+            const isActive = step.id === currentStep;
+            const isCompleted = step.id < currentStep;
+            const canGoBack = step.id < currentStep;
+            
+            return (
+              <button
+                key={step.id}
+                type="button"
+                disabled={!canGoBack && !isActive}
+                onClick={canGoBack ? () => goToStep(step.id as StepId) : undefined}
+                className={[
+                  "flex h-10 min-w-[40px] items-center justify-center rounded-full border text-sm font-semibold transition-all",
+                  isActive
+                    ? "border-sky-400 bg-sky-400 text-slate-950 shadow-lg shadow-sky-500/40"
+                    : isCompleted
+                    ? "border-emerald-400/80 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30"
+                    : "border-slate-600/70 bg-slate-900 text-slate-400",
+                  canGoBack && !isActive ? "cursor-pointer" : "",
+                  !canGoBack && !isActive ? "cursor-default opacity-50" : "",
+                ].join(" ")}
+              >
+                {isCompleted ? "✓" : step.id}
+              </button>
+            );
+          })}
         </div>
 
         {/* Desktop : timeline complète */}
@@ -2212,7 +2221,7 @@ function DevisGratuitsPageInner() {
                             e.target.value as HousingType
                           )
                         }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                       >
                         <option value="studio">Studio</option>
                         <option value="t1">T1</option>
@@ -2240,7 +2249,7 @@ function DevisGratuitsPageInner() {
                             e.target.value as FormState["originCarryDistance"]
                           )
                         }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                       >
                         <option value="0-10">0–10 m</option>
                         <option value="10-20">10–20 m</option>
@@ -2357,7 +2366,7 @@ function DevisGratuitsPageInner() {
                             e.target.value as HousingType
                           )
                         }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                       >
                         <option value="studio">Studio</option>
                         <option value="t1">T1</option>
@@ -2385,7 +2394,7 @@ function DevisGratuitsPageInner() {
                             e.target.value as FormState["destinationCarryDistance"]
                           )
                         }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                       >
                         <option value="0-10">0–10 m</option>
                         <option value="10-20">10–20 m</option>
@@ -2420,7 +2429,19 @@ function DevisGratuitsPageInner() {
                   type="date"
                   value={form.movingDate}
                   onChange={(e) => updateField("movingDate", e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  onClick={(e) => {
+                    try {
+                      (e.target as HTMLInputElement).showPicker?.();
+                    } catch {}
+                  }}
+                  min={new Date().toISOString().split('T')[0]}
+                  max={(() => {
+                    const d = new Date();
+                    d.setFullYear(d.getFullYear() + 1);
+                    return d.toISOString().split('T')[0];
+                  })()}
+                  required
+                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
                 />
               </div>
               <div className="space-y-1">
