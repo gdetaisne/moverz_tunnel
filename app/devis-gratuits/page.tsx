@@ -1100,8 +1100,6 @@ function DevisGratuitsPageInner() {
     null
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isOriginOpen, setIsOriginOpen] = useState(true);
-  const [isDestinationOpen, setIsDestinationOpen] = useState(false);
   const [analysisStartedAt, setAnalysisStartedAt] = useState<number | null>(null);
   const [analysisElapsedMs, setAnalysisElapsedMs] = useState<number>(0);
   const [analysisTargetSeconds, setAnalysisTargetSeconds] = useState<number | null>(
@@ -1111,6 +1109,9 @@ function DevisGratuitsPageInner() {
   const [photoFlowChoice, setPhotoFlowChoice] = useState<
     "none" | "photos_now" | "email_later" | "email_sent" | "whatsapp_later"
   >("none");
+  const [hasPhotosAnswer, setHasPhotosAnswer] = useState<"pending" | "yes" | "no">(
+    "pending"
+  );
   const [isDestinationForeign, setIsDestinationForeign] = useState(false);
 
   const goToStep = (next: StepId) => {
@@ -2146,42 +2147,18 @@ function DevisGratuitsPageInner() {
               goToStep(3);
             }}
           >
-            {/* Bloc départ : accordéon avec résumé + statut de complétion */}
-            <div className="overflow-hidden rounded-2xl bg-slate-950/40 ring-1 ring-slate-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOriginOpen(true);
-                  setIsDestinationOpen(false);
-                }}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2.5"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-                    Départ
-                  </p>
-                  <p className="mt-1 truncate text-[11px] text-slate-400">
-                    {originSummary || "Code postal, ville, type de logement…"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={[
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                      isOriginComplete
-                        ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/60"
-                        : "bg-slate-800/80 text-slate-200 ring-1 ring-slate-600/80",
-                    ].join(" ")}
-                  >
-                    {isOriginComplete ? "✓ Validé" : "À compléter"}
-                  </span>
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-600/70 bg-slate-900 text-xs text-slate-200">
-                    {isOriginOpen ? "−" : "+"}
-                  </span>
-                </div>
-              </button>
-              {isOriginOpen && (
-                <div className="space-y-3 border-t border-slate-800 bg-slate-950/70 p-3">
+            {/* Bloc départ – toujours ouvert, sans badges */}
+            <div className="space-y-3 overflow-hidden rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">
+                  Départ
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  {originSummary || "Code postal, ville, type de logement…"}
+                </p>
+              </div>
+
+              <div className="space-y-3">
                   <AddressAutocomplete
                     label="Adresse de départ"
                     placeholder="10 rue de la Paix, 33000 Bordeaux"
@@ -2201,214 +2178,179 @@ function DevisGratuitsPageInner() {
                       updateField("originLon", s.lon ?? null);
                     }}
                   />
-                  <p className="text-[11px] text-slate-500">
-                    {form.originPostalCode && form.originCity
-                      ? `${form.originPostalCode} ${form.originCity}`
-                      : "Code postal et ville seront remplis automatiquement."}
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Type de logement
-                      </label>
-                      <select
-                        value={form.originHousingType}
-                        onChange={(e) =>
-                          updateField(
-                            "originHousingType",
-                            e.target.value as HousingType
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="studio">Studio</option>
-                        <option value="t1">T1</option>
-                        <option value="t2">T2</option>
-                        <option value="t3">T3</option>
-                        <option value="t4">T4</option>
-                        <option value="t5">T5</option>
-                        <option value="house">Maison plain-pied</option>
-                        <option value="house_1floor">Maison +1 étage</option>
-                        <option value="house_2floors">Maison +2 étages</option>
-                        <option value="house_3floors">
-                          Maison 3 étages ou +
-                        </option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Distance de portage (m)
-                      </label>
-                      <select
-                        value={form.originCarryDistance}
-                        onChange={(e) =>
-                          updateField(
-                            "originCarryDistance",
-                            e.target.value as FormState["originCarryDistance"]
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="0-10">0–10 m</option>
-                        <option value="10-20">10–20 m</option>
-                        <option value="20-30">20–30 m</option>
-                        <option value="30-40">30–40 m</option>
-                        <option value="40-50">40–50 m</option>
-                        <option value="50-60">50–60 m</option>
-                        <option value="60-70">60–70 m</option>
-                        <option value="70-80">70–80 m</option>
-                        <option value="80-90">80–90 m</option>
-                        <option value="90-100">90–100 m</option>
-                      </select>
-                    </div>
+                <p className="text-[11px] text-slate-500">
+                  {form.originPostalCode && form.originCity
+                    ? `${form.originPostalCode} ${form.originCity}`
+                    : "Code postal et ville seront remplis automatiquement."}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Type de logement
+                    </label>
+                    <select
+                      value={form.originHousingType}
+                      onChange={(e) =>
+                        updateField(
+                          "originHousingType",
+                          e.target.value as HousingType
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="studio">Studio</option>
+                      <option value="t1">T1</option>
+                      <option value="t2">T2</option>
+                      <option value="t3">T3</option>
+                      <option value="t4">T4</option>
+                      <option value="t5">T5</option>
+                      <option value="house">Maison plain-pied</option>
+                      <option value="house_1floor">Maison +1 étage</option>
+                      <option value="house_2floors">Maison +2 étages</option>
+                      <option value="house_3floors">
+                        Maison 3 étages ou +
+                      </option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Distance de portage (m)
+                    </label>
+                    <select
+                      value={form.originCarryDistance}
+                      onChange={(e) =>
+                        updateField(
+                          "originCarryDistance",
+                          e.target.value as FormState["originCarryDistance"]
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="0-10">0–10 m</option>
+                      <option value="10-20">10–20 m</option>
+                      <option value="20-30">20–30 m</option>
+                      <option value="30-40">30–40 m</option>
+                      <option value="40-50">40–50 m</option>
+                      <option value="50-60">50–60 m</option>
+                      <option value="60-70">60–70 m</option>
+                      <option value="70-80">70–80 m</option>
+                      <option value="80-90">80–90 m</option>
+                      <option value="90-100">90–100 m</option>
+                    </select>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* Bloc arrivée : accordéon avec résumé + statut de complétion */}
-            <div className="overflow-hidden rounded-2xl bg-slate-950/40 ring-1 ring-slate-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDestinationOpen(true);
-                  setIsOriginOpen(false);
-                }}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2.5"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-                    Arrivée
-                  </p>
-                  <p className="mt-1 truncate text-[11px] text-slate-400">
-                    {destinationSummary || "Code postal, ville, type de logement…"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={[
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                      isDestinationComplete
-                        ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/60"
-                        : "bg-slate-800/80 text-slate-200 ring-1 ring-slate-600/80",
-                    ].join(" ")}
-                  >
-                    {isDestinationComplete ? "✓ Validé" : "À compléter"}
-                  </span>
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-600/70 bg-slate-900 text-xs text-slate-200">
-                    {isDestinationOpen ? "−" : "+"}
-                  </span>
-                </div>
-              </button>
-              {isDestinationOpen && (
-                <div className="space-y-3 border-t border-slate-800 bg-slate-950/70 p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-medium text-slate-200">
-                      Adresse d’arrivée
-                    </p>
-                    <label className="flex items-center gap-2 text-[11px] text-slate-300">
-                      <input
-                        type="checkbox"
-                        className="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500"
-                        checked={isDestinationForeign}
-                        onChange={(e) => setIsDestinationForeign(e.target.checked)}
-                      />
-                      Adresse à l’étranger
-                      </label>
-                    </div>
-
-                  <AddressAutocomplete
-                    label=""
-                    placeholder={
-                      isDestinationForeign
-                        ? "10 Downing St, London, UK"
-                        : "20 avenue des Champs-Élysées, 75008 Paris"
-                    }
-                    helperText={
-                      isDestinationForeign
-                        ? "Incluez le pays (ex: Barcelone, Espagne)."
-                        : "Vous pouvez saisir une adresse complète, une ville ou un code postal."
-                    }
-                    mode={isDestinationForeign ? "world" : "fr"}
-                    initialValue={
-                      form.destinationAddress ||
-                      [form.destinationPostalCode, form.destinationCity]
-                        .filter(Boolean)
-                        .join(" ")
-                    }
-                    onSelect={(s) => {
-                      updateField("destinationAddress", s.addressLine ?? s.label);
-                      updateField("destinationPostalCode", s.postalCode ?? "");
-                      updateField("destinationCity", s.city ?? "");
-                      updateField("destinationLat", s.lat ?? null);
-                      updateField("destinationLon", s.lon ?? null);
-                    }}
+            {/* Bloc arrivée – toujours ouvert, sans badges */}
+            <div className="space-y-3 overflow-hidden rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">
+                  Arrivée
+                </p>
+                <label className="flex items-center gap-2 text-[11px] text-slate-300">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500"
+                    checked={isDestinationForeign}
+                    onChange={(e) => setIsDestinationForeign(e.target.checked)}
                   />
-                  <p className="text-[11px] text-slate-500">
-                    {form.destinationPostalCode && form.destinationCity
-                      ? `${form.destinationPostalCode} ${form.destinationCity}`
-                      : isDestinationForeign
-                      ? "Ville, pays et code postal seront remplis automatiquement si possible."
-                      : "Code postal et ville seront remplis automatiquement."}
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Type de logement
-                      </label>
-                      <select
-                        value={form.destinationHousingType}
-                        onChange={(e) =>
-                          updateField(
-                            "destinationHousingType",
-                            e.target.value as HousingType
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="studio">Studio</option>
-                        <option value="t1">T1</option>
-                        <option value="t2">T2</option>
-                        <option value="t3">T3</option>
-                        <option value="t4">T4</option>
-                        <option value="t5">T5</option>
-                        <option value="house">Maison plain-pied</option>
-                        <option value="house_1floor">Maison +1 étage</option>
-                        <option value="house_2floors">Maison +2 étages</option>
-                        <option value="house_3floors">
-                          Maison 3 étages ou +
-                        </option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Distance de portage (m)
-                      </label>
-                      <select
-                        value={form.destinationCarryDistance}
-                        onChange={(e) =>
-                          updateField(
-                            "destinationCarryDistance",
-                            e.target.value as FormState["destinationCarryDistance"]
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="0-10">0–10 m</option>
-                        <option value="10-20">10–20 m</option>
-                        <option value="20-30">20–30 m</option>
-                        <option value="30-40">30–40 m</option>
-                        <option value="40-50">40–50 m</option>
-                        <option value="50-60">50–60 m</option>
-                        <option value="60-70">60–70 m</option>
-                        <option value="70-80">70–80 m</option>
-                        <option value="80-90">80–90 m</option>
-                        <option value="90-100">90–100 m</option>
-                      </select>
-                    </div>
+                  Adresse à l’étranger
+                </label>
+              </div>
+
+              <div className="space-y-3">
+                <AddressAutocomplete
+                  label="Adresse d’arrivée"
+                  placeholder={
+                    isDestinationForeign
+                      ? "10 Downing St, London, UK"
+                      : "20 avenue des Champs-Élysées, 75008 Paris"
+                  }
+                  helperText={
+                    isDestinationForeign
+                      ? "Incluez le pays (ex: Barcelone, Espagne)."
+                      : "Vous pouvez saisir une adresse complète, une ville ou un code postal."
+                  }
+                  mode={isDestinationForeign ? "world" : "fr"}
+                  initialValue={
+                    form.destinationAddress ||
+                    [form.destinationPostalCode, form.destinationCity]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
+                  onSelect={(s) => {
+                    updateField("destinationAddress", s.addressLine ?? s.label);
+                    updateField("destinationPostalCode", s.postalCode ?? "");
+                    updateField("destinationCity", s.city ?? "");
+                    updateField("destinationLat", s.lat ?? null);
+                    updateField("destinationLon", s.lon ?? null);
+                  }}
+                />
+                <p className="text-[11px] text-slate-500">
+                  {form.destinationPostalCode && form.destinationCity
+                    ? `${form.destinationPostalCode} ${form.destinationCity}`
+                    : isDestinationForeign
+                    ? "Ville, pays et code postal seront remplis automatiquement si possible."
+                    : "Code postal et ville seront remplis automatiquement."}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Type de logement
+                    </label>
+                    <select
+                      value={form.destinationHousingType}
+                      onChange={(e) =>
+                        updateField(
+                          "destinationHousingType",
+                          e.target.value as HousingType
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="studio">Studio</option>
+                      <option value="t1">T1</option>
+                      <option value="t2">T2</option>
+                      <option value="t3">T3</option>
+                      <option value="t4">T4</option>
+                      <option value="t5">T5</option>
+                      <option value="house">Maison plain-pied</option>
+                      <option value="house_1floor">Maison +1 étage</option>
+                      <option value="house_2floors">Maison +2 étages</option>
+                      <option value="house_3floors">
+                        Maison 3 étages ou +
+                      </option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Distance de portage (m)
+                    </label>
+                    <select
+                      value={form.destinationCarryDistance}
+                      onChange={(e) =>
+                        updateField(
+                          "destinationCarryDistance",
+                          e.target.value as FormState["destinationCarryDistance"]
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="0-10">0–10 m</option>
+                      <option value="10-20">10–20 m</option>
+                      <option value="20-30">20–30 m</option>
+                      <option value="30-40">30–40 m</option>
+                      <option value="40-50">40–50 m</option>
+                      <option value="50-60">50–60 m</option>
+                      <option value="60-70">60–70 m</option>
+                      <option value="70-80">70–80 m</option>
+                      <option value="80-90">80–90 m</option>
+                      <option value="90-100">90–100 m</option>
+                    </select>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Distance estimée (information indicative) */}
@@ -2419,28 +2361,31 @@ function DevisGratuitsPageInner() {
             )}
 
             <div className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr),minmax(0,1.1fr)]">
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-100">
-                  Date souhaitée
-                </label>
-                <input
-                  type="date"
-                  value={form.movingDate}
-                  onChange={(e) => updateField("movingDate", e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-100">
-                  Fin de période (optionnel)
-                </label>
-                <input
-                  type="date"
-                  value={form.movingDateEnd}
-                  onChange={(e) => updateField("movingDateEnd", e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                />
-              </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-100">
+                Date souhaitée
+              </label>
+              <input
+                type="date"
+                value={form.movingDate}
+                onChange={(e) => updateField("movingDate", e.target.value)}
+                onClick={(e) => {
+                  try {
+                    (e.target as HTMLInputElement).showPicker?.();
+                  } catch {
+                    // showPicker non supporté : fallback silencieux
+                  }
+                }}
+                min={new Date().toISOString().split("T")[0]}
+                max={(() => {
+                  const d = new Date();
+                  d.setFullYear(d.getFullYear() + 1);
+                  return d.toISOString().split("T")[0];
+                })()}
+                required
+                className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
+              />
+            </div>
             </div>
 
             <label className="inline-flex items-center gap-2 text-xs text-slate-300">
@@ -3039,268 +2984,374 @@ function DevisGratuitsPageInner() {
       {currentStep === 4 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <div className="space-y-6">
-            {photoFlowChoice !== "photos_now" && (
-              <div className="space-y-3">
+            {/* Question initiale : Avez-vous des photos ? */}
+            {hasPhotosAnswer === "pending" && (
+              <div className="space-y-4">
                 <h2 className="text-lg font-semibold text-slate-50">
-                  Pourquoi ajouter des photos ?
+                  Avez-vous des photos de votre logement ?
                 </h2>
-                {/* Schéma visuel simple : photos → IA → inventaire + déclaration */}
-                <div className="space-y-1 rounded-2xl bg-slate-950/80 p-3 ring-1 ring-slate-800/70">
-                <p className="text-[11px] font-medium text-slate-300">
-                  Ce qui se passe derrière en 2 minutes :
-                </p>
-                <div className="flex flex-col items-stretch gap-2 text-[11px] text-slate-100 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-1 items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/20 text-[12px]">
-                      📷
-                    </div>
-                    <span className="font-medium">Vos photos du logement</span>
-                  </div>
-                  <div className="hidden items-center text-slate-500 sm:flex">
-                    ➜
-                  </div>
-                  <div className="flex flex-1 items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 text-[12px]">
-                      🤖
-                    </div>
-                    <span className="font-medium">Traitement intelligent Moverz</span>
-                  </div>
-                  <div className="hidden items-center text-slate-500 sm:flex">
-                    ➜
-                  </div>
-                  <div className="flex flex-1 items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/20 text-[12px]">
-                      📋
-                    </div>
-                    <span className="font-medium">
-                      Inventaire détaillé + déclaration de valeur prête
-                    </span>
-                  </div>
-                </div>
-                </div>
-                <p className="text-xs text-slate-300">
-                  En 2 minutes, vos photos nous donnent tout ce qu’il faut :
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-[11px] font-semibold text-emerald-300">
-                    V
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <p className="font-semibold text-slate-50">
-                      Volume ultra‑précis
-                    </p>
-                    <p className="text-slate-400">
-                      Estimation calibrée, moins de suppléments et de mauvaises
-                      surprises.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/15 text-[11px] font-semibold text-sky-300">
-                    i
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <p className="font-semibold text-slate-50">
-                      Inventaire automatique
-                    </p>
-                    <p className="text-slate-400">
-                      Plus besoin de tout lister pièce par pièce, on le fait pour
-                      vous et le déménageur.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/15 text-[11px] font-semibold text-amber-300">
-                    €
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <p className="font-semibold text-slate-50">
-                      Déclaration de valeur prête
-                    </p>
-                    <p className="text-slate-400">
-                      Document obligatoire pour être bien couvert en cas de casse,
-                      pré‑rempli pour vous.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-fuchsia-500/15 text-[11px] font-semibold text-fuchsia-300">
-                    ⚡
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <p className="font-semibold text-slate-50">
-                      Zéro stress, moins d’échanges
-                    </p>
-                    <p className="text-slate-400">
-                      Le déménageur comprend tout de suite votre logement, sans
-                      visite ni appels.
-                    </p>
-                  </div>
-                </div>
-                </div>
-                <p className="text-[11px] font-medium text-emerald-300">
-                  → 4 photos par pièce suffisent (vue générale + deux angles +
-                  détails si besoin).
-                </p>
-              </div>
-            )}
-
-            {/* Choix initial du mode de complétion */}
-            {photoFlowChoice === "none" && (
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setPhotoFlowChoice("photos_now")}
-                  className="w-full rounded-2xl bg-sky-500/90 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-400"
-                >
-                  J'ai les photos (ou je peux les prendre maintenant)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPhotoFlowChoice("email_later")}
-                  className="w-full rounded-2xl border border-sky-400/70 bg-slate-950/70 px-4 py-3 text-sm font-semibold text-sky-100 hover:border-sky-300"
-                >
-                  Recevoir un email pour finaliser plus tard
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNoInventory}
-                  className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-500"
-                >
-                  Continuer sans photos (devis approximatifs)
-                </button>
-              </div>
-            )}
-
-            {/* Mode Email plus tard : envoyer email de relance photos */}
-            {photoFlowChoice === "email_later" && (
-              <div className="space-y-4 rounded-2xl bg-slate-950/70 p-4 ring-1 ring-slate-800">
-                <p className="text-sm font-semibold text-slate-50">
-                  Recevoir un email pour ajouter vos photos
-                </p>
-                <p className="text-xs text-slate-300">
-                  Nous allons vous envoyer un email avec un lien pour ajouter vos
-                  photos plus tard. Vous pourrez le faire quand vous aurez le temps,
-                  depuis votre téléphone ou ordinateur.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!backofficeLeadId) {
-                        setError("Votre demande n'a pas encore été enregistrée.");
-                        return;
-                      }
-                      setIsSubmitting(true);
-                      setError(null);
-                      try {
-                        await sendBackofficePhotoReminder(backofficeLeadId);
-                        // Aussi demander la confirmation normale
-                        await requestBackofficeConfirmation(backofficeLeadId);
-                        setPhotoFlowChoice("email_sent");
-                      } catch (err) {
-                        const message = err instanceof Error ? err.message : "Erreur lors de l'envoi de l'email.";
-                        setError(message);
-                      } finally {
-                        setIsSubmitting(false);
-                      }
-                    }}
-                    disabled={isSubmitting}
-                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {isSubmitting ? "Envoi en cours…" : "Envoyer l'email"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPhotoFlowChoice("none")}
-                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-200 hover:border-slate-400"
-                  >
-                    Retour
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Confirmation email envoyé */}
-            {photoFlowChoice === "email_sent" && (
-              <div className="space-y-4 rounded-2xl bg-emerald-950/50 p-6 ring-1 ring-emerald-800/50">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20">
-                    <span className="text-2xl">✉️</span>
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold text-emerald-100">
-                      Emails envoyés !
-                    </p>
-                    <p className="text-sm text-emerald-300">
-                      Vérifiez votre boîte de réception
-                    </p>
-                  </div>
-                </div>
                 <p className="text-sm text-slate-300">
-                  Nous vous avons envoyé deux emails :
+                  Les photos nous permettent de générer automatiquement un inventaire détaillé et une déclaration de valeur.
                 </p>
-                <ul className="space-y-2 text-sm text-slate-300">
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400">✓</span>
-                    <span><strong>Confirmation</strong> : cliquez sur le lien pour valider votre demande de devis</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400">✓</span>
-                    <span><strong>Relance photos</strong> : un lien pour ajouter vos photos quand vous serez prêt</span>
-                  </li>
-                </ul>
-                <p className="text-xs text-slate-400">
-                  Pensez à vérifier vos spams si vous ne trouvez pas nos emails.
-                </p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHasPhotosAnswer("yes");
+                      setPhotoFlowChoice("photos_now");
+                    }}
+                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300"
+                  >
+                    Oui, j'ai des photos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHasPhotosAnswer("no")}
+                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-400"
+                  >
+                    Non, pas pour le moment
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* Legacy: Mode WhatsApp plus tard (caché maintenant) */}
-            {photoFlowChoice === "whatsapp_later" && (
-              <div className="space-y-4 rounded-2xl bg-slate-950/70 p-4 ring-1 ring-slate-800">
-                <p className="text-sm font-semibold text-slate-50">
-                  Continuer plus tard sur WhatsApp
-                </p>
-                <p className="text-xs text-slate-300">
-                  Nous allons préparer une conversation WhatsApp avec votre dossier.
-                  Vous pourrez nous envoyer vos photos plus tard, en toute
-                  tranquillité.
-                </p>
-                <div className="space-y-1 text-xs text-slate-300">
-                  <p className="text-[11px] text-slate-400">
-                  Vous pourrez partager votre numéro directement dans la
-                  conversation WhatsApp si vous le souhaitez.
+            {/* Si l'utilisateur a répondu "non", on lui explique pourquoi c'est important */}
+            {hasPhotosAnswer === "no" && photoFlowChoice === "none" && (
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-50">
+                  Pourquoi les photos sont importantes
+                </h2>
+                <div className="space-y-3 rounded-2xl bg-emerald-500/10 p-4 ring-1 ring-emerald-400/30">
+                  <p className="text-sm font-medium text-emerald-200">
+                    ✓ Devis plus précis et fiables
+                  </p>
+                  <p className="text-sm text-slate-300">
+                    Sans photos, les déménageurs donneront des devis approximatifs avec des marges importantes. Vous risquez des suppléments le jour J.
                   </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="space-y-3 rounded-2xl bg-amber-500/10 p-4 ring-1 ring-amber-400/30">
+                  <p className="text-sm font-medium text-amber-200">
+                    ⚠️ Inventaire et déclaration de valeur obligatoires
+                  </p>
+                  <p className="text-sm text-slate-300">
+                    Les déménageurs vous demanderont systématiquement un inventaire et une déclaration de valeur. Avec nos photos + IA, c'est fait automatiquement.
+                  </p>
+                </div>
+                <div className="space-y-3 rounded-2xl bg-sky-500/10 p-4 ring-1 ring-sky-400/30">
+                  <p className="text-sm font-medium text-sky-200">
+                    📧 Solution : finalisez plus tard par email
+                  </p>
+                  <p className="text-sm text-slate-300">
+                    Vous n'avez pas vos photos maintenant ? On vous envoie un email récapitulatif avec un lien pour finaliser votre demande plus tard.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={handleWhatsappLater}
-                    disabled={isSubmitting}
-                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-70"
+                    onClick={() => {
+                      setHasPhotosAnswer("yes");
+                      setPhotoFlowChoice("photos_now");
+                    }}
+                    className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300"
                   >
-                    {isSubmitting
-                      ? "Ouverture de WhatsApp…"
-                      : "Ouvrir WhatsApp et continuer plus tard"}
+                    Finalement, j'ai des photos
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPhotoFlowChoice("none")}
-                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-200 hover:border-slate-400"
+                    onClick={() => setPhotoFlowChoice("email_later")}
+                    disabled={isSubmitting}
+                    className="inline-flex items-center justify-center rounded-xl border border-sky-400/70 bg-sky-950/30 px-4 py-3 text-sm font-semibold text-sky-100 hover:bg-sky-950/50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Retour
+                    {isSubmitting
+                      ? "Envoi en cours..."
+                      : "Recevoir un email pour finaliser plus tard"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNoInventory}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-300 hover:border-slate-400"
+                  >
+                    Continuer sans photos (devis approximatifs)
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Mode photos maintenant : zone d'upload + analyse */}
-            {photoFlowChoice === "photos_now" && (
+            {/* Contenu principal : seulement si l'utilisateur a dit "oui" ou a choisi un flow */}
+            {(hasPhotosAnswer === "yes" || photoFlowChoice !== "none") && (
               <>
-                {/* Zone d'upload */}
-                <div className="space-y-3">
+                {photoFlowChoice !== "photos_now" && (
+                  <div className="space-y-3">
+                    <h2 className="text-lg font-semibold text-slate-50">
+                      Pourquoi ajouter des photos ?
+                    </h2>
+                    {/* Schéma visuel simple : photos → IA → inventaire + déclaration */}
+                    <div className="space-y-1 rounded-2xl bg-slate-950/80 p-3 ring-1 ring-slate-800/70">
+                      <p className="text-[11px] font-medium text-slate-300">
+                        Ce qui se passe derrière en 2 minutes :
+                      </p>
+                      <div className="flex flex-col items-stretch gap-2 text-[11px] text-slate-100 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-1 items-center gap-2">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/20 text-[12px]">
+                            📷
+                          </div>
+                          <span className="font-medium">Vos photos du logement</span>
+                        </div>
+                        <div className="hidden items-center text-slate-500 sm:flex">
+                          ➜
+                        </div>
+                        <div className="flex flex-1 items-center gap-2">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 text-[12px]">
+                            🤖
+                          </div>
+                          <span className="font-medium">Traitement intelligent Moverz</span>
+                        </div>
+                        <div className="hidden items-center text-slate-500 sm:flex">
+                          ➜
+                        </div>
+                        <div className="flex flex-1 items-center gap-2">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/20 text-[12px]">
+                            📋
+                          </div>
+                          <span className="font-medium">
+                            Inventaire détaillé + déclaration de valeur prête
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-300">
+                      En 2 minutes, vos photos nous donnent tout ce qu’il faut :
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-[11px] font-semibold text-emerald-300">
+                          V
+                        </div>
+                        <div className="space-y-1 text-xs">
+                          <p className="font-semibold text-slate-50">
+                            Volume ultra‑précis
+                          </p>
+                          <p className="text-slate-400">
+                            Estimation calibrée, moins de suppléments et de mauvaises
+                            surprises.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/15 text-[11px] font-semibold text-sky-300">
+                          i
+                        </div>
+                        <div className="space-y-1 text-xs">
+                          <p className="font-semibold text-slate-50">
+                            Inventaire automatique
+                          </p>
+                          <p className="text-slate-400">
+                            Plus besoin de tout lister pièce par pièce, on le fait pour
+                            vous et le déménageur.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/15 text-[11px] font-semibold text-amber-300">
+                          €
+                        </div>
+                        <div className="space-y-1 text-xs">
+                          <p className="font-semibold text-slate-50">
+                            Déclaration de valeur prête
+                          </p>
+                          <p className="text-slate-400">
+                            Document obligatoire pour être bien couvert en cas de casse,
+                            pré‑rempli pour vous.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-fuchsia-500/15 text-[11px] font-semibold text-fuchsia-300">
+                          ⚡
+                        </div>
+                        <div className="space-y-1 text-xs">
+                          <p className="font-semibold text-slate-50">
+                            Zéro stress, moins d’échanges
+                          </p>
+                          <p className="text-slate-400">
+                            Le déménageur comprend tout de suite votre logement, sans
+                            visite ni appels.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-[11px] font-medium text-emerald-300">
+                      → 4 photos par pièce suffisent (vue générale + deux angles +
+                      détails si besoin).
+                    </p>
+                  </div>
+                )}
+
+                {/* Choix initial du mode de complétion */}
+                {photoFlowChoice === "none" && hasPhotosAnswer === "yes" && (
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => setPhotoFlowChoice("photos_now")}
+                      className="w-full rounded-2xl bg-sky-500/90 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-400"
+                    >
+                      J'ai les photos (ou je peux les prendre maintenant)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPhotoFlowChoice("email_later")}
+                      className="w-full rounded-2xl border border-sky-400/70 bg-slate-950/70 px-4 py-3 text-sm font-semibold text-sky-100 hover:border-sky-300"
+                    >
+                      Recevoir un email pour finaliser plus tard
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNoInventory}
+                      className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-500"
+                    >
+                      Continuer sans photos (devis approximatifs)
+                    </button>
+                  </div>
+                )}
+
+                {/* Mode Email plus tard : envoyer email de relance photos */}
+                {photoFlowChoice === "email_later" && (
+                  <div className="space-y-4 rounded-2xl bg-slate-950/70 p-4 ring-1 ring-slate-800">
+                    <p className="text-sm font-semibold text-slate-50">
+                      Recevoir un email pour ajouter vos photos
+                    </p>
+                    <p className="text-xs text-slate-300">
+                      Nous allons vous envoyer un email avec un lien pour ajouter vos
+                      photos plus tard. Vous pourrez le faire quand vous aurez le temps,
+                      depuis votre téléphone ou ordinateur.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!backofficeLeadId) {
+                            setError("Votre demande n'a pas encore été enregistrée.");
+                            return;
+                          }
+                          setIsSubmitting(true);
+                          setError(null);
+                          try {
+                            await sendBackofficePhotoReminder(backofficeLeadId);
+                            // Aussi demander la confirmation normale
+                            await requestBackofficeConfirmation(backofficeLeadId);
+                            setPhotoFlowChoice("email_sent");
+                          } catch (err) {
+                            const message =
+                              err instanceof Error
+                                ? err.message
+                                : "Erreur lors de l'envoi de l'email.";
+                            setError(message);
+                          } finally {
+                            setIsSubmitting(false);
+                          }
+                        }}
+                        disabled={isSubmitting}
+                        className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isSubmitting ? "Envoi en cours…" : "Envoyer l'email"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPhotoFlowChoice("none")}
+                        className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-200 hover:border-slate-400"
+                      >
+                        Retour
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Confirmation email envoyé */}
+                {photoFlowChoice === "email_sent" && (
+                  <div className="space-y-4 rounded-2xl bg-emerald-950/50 p-6 ring-1 ring-emerald-800/50">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20">
+                        <span className="text-2xl">✉️</span>
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-emerald-100">
+                          Emails envoyés !
+                        </p>
+                        <p className="text-sm text-emerald-300">
+                          Vérifiez votre boîte de réception
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-300">
+                      Nous vous avons envoyé deux emails :
+                    </p>
+                    <ul className="space-y-2 text-sm text-slate-300">
+                      <li className="flex items-start gap-2">
+                        <span className="text-emerald-400">✓</span>
+                        <span>
+                          <strong>Confirmation</strong> : cliquez sur le lien pour valider
+                          votre demande de devis
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-emerald-400">✓</span>
+                        <span>
+                          <strong>Relance photos</strong> : un lien pour ajouter vos
+                          photos quand vous serez prêt
+                        </span>
+                      </li>
+                    </ul>
+                    <p className="text-xs text-slate-400">
+                      Pensez à vérifier vos spams si vous ne trouvez pas nos emails.
+                    </p>
+                  </div>
+                )}
+
+                {/* Legacy: Mode WhatsApp plus tard (caché maintenant) */}
+                {photoFlowChoice === "whatsapp_later" && (
+                  <div className="space-y-4 rounded-2xl bg-slate-950/70 p-4 ring-1 ring-slate-800">
+                    <p className="text-sm font-semibold text-slate-50">
+                      Continuer plus tard sur WhatsApp
+                    </p>
+                    <p className="text-xs text-slate-300">
+                      Nous allons préparer une conversation WhatsApp avec votre dossier.
+                      Vous pourrez nous envoyer vos photos plus tard, en toute
+                      tranquillité.
+                    </p>
+                    <div className="space-y-1 text-xs text-slate-300">
+                      <p className="text-[11px] text-slate-400">
+                        Vous pourrez partager votre numéro directement dans la
+                        conversation WhatsApp si vous le souhaitez.
+                      </p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={handleWhatsappLater}
+                        disabled={isSubmitting}
+                        className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isSubmitting
+                          ? "Ouverture de WhatsApp…"
+                          : "Ouvrir WhatsApp et continuer plus tard"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPhotoFlowChoice("none")}
+                        className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-200 hover:border-slate-400"
+                      >
+                        Retour
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mode photos maintenant : zone d'upload + analyse */}
+                {photoFlowChoice === "photos_now" && (
+                  <>
+                    {/* Zone d'upload */}
+                    <div className="space-y-3">
                   <div
                     className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
                     onDragOver={(e) => {
