@@ -54,5 +54,14 @@ Format recommandé:
 - **Décision**: l’état du formulaire (`FormState`, `currentStep`, `leadId`, `maxReachedStep`) est **sauvegardé dans `localStorage`** sous la clé `moverz_tunnel_form_state`, et le stepper autorise le retour à toute étape déjà atteinte.
 - **Détail**: cela répond à la contrainte “ne jamais perdre des données sans validation formelle” et permet à l’utilisateur de corriger librement les étapes précédentes (notamment Projet et Volume) sans recréer de lead.
 
+### 2025-12-04 – Logique de pricing (volume, distance, saison)
+
+- **Décision**: le calcul de prix du tunnel reste **inspiré de La Poste / grands déménageurs**, avec une base `max(volume, distance, socle)` et un coefficient de saison.
+- **Détail**:
+  - Volume estimé à partir de la surface et de la densité (peu meublé / standard / bien rempli) selon les coefficients de marché (0,4 / 0,5 / 0,6), déjà implémentés dans `calculateVolume`.
+  - Le prix de base n’additionne plus `volumeM3 * COEF_VOLUME` et `distanceKm * COEF_DISTANCE`, mais prend le **maximum** entre ces deux composantes et un socle mini (`PRIX_MIN_SOCLE`), pour éviter de sur‑facturer les cas extrêmes (petit volume très long trajet / gros volume très court trajet).
+  - Un facteur de **saison** est appliqué sur ce prix de base : `~0,85` en basse saison (janv/févr/nov.), `1,3` en haute saison (été + décembre), `1,0` sinon, conformément aux hausses de 20–40 % observées chez les déménageurs.
+  - Les multiplicateurs de formule (ÉCO / STANDARD / PREMIUM) restent ceux définis dans `FORMULE_MULTIPLIERS`, appliqués après la saison et le coefficient d’accès (étages/ascenseur).
+
 
 

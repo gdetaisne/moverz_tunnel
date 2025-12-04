@@ -23,6 +23,7 @@ export interface PricingInput {
   housingType: HousingType;
   density: DensityType;
   distanceKm: number;
+  seasonFactor: number;
   originFloor: number;
   originElevator: "yes" | "no" | "partial";
   destinationFloor: number;
@@ -73,11 +74,15 @@ export function calculatePricing(input: PricingInput): PricingOutput {
     input.density
   );
 
-  // 2. Prix base volume + distance, borné par un socle mini
-  const prixBase = Math.max(
-    volumeM3 * COEF_VOLUME + input.distanceKm * COEF_DISTANCE,
-    PRIX_MIN_SOCLE
-  );
+  // 2. Prix base volume / distance : on prend la composante dominante plutôt
+  // que de sommer les deux (logique proche des grilles pro).
+  const volumePart = volumeM3 * COEF_VOLUME;
+  const distancePart = input.distanceKm * COEF_DISTANCE;
+
+  const prixBaseBrut = Math.max(volumePart, distancePart, PRIX_MIN_SOCLE);
+
+  // 2.b. Coefficient saison (haute / basse saison)
+  const prixBase = prixBaseBrut * input.seasonFactor;
 
   // 3. Coefficient étages (pire des deux accès)
   const coeffOrigin = getEtageCoefficient(

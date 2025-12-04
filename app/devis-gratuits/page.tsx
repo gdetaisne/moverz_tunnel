@@ -318,6 +318,22 @@ function formatDistanceLabel(straightKm: number): string {
   return `Environ ~${road} km par la route (${vol} km à vol d’oiseau)`;
 }
 
+function getSeasonFactor(dateStr: string | null | undefined): number {
+  if (!dateStr) return 1;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return 1;
+  const month = d.getMonth() + 1; // 1-12
+
+  // Haute saison : été (juin–septembre) + fin d'année
+  if ((month >= 6 && month <= 9) || month === 12) return 1.3;
+
+  // Basse saison : janvier-février + novembre
+  if (month === 1 || month === 2 || month === 11) return 0.85;
+
+  // Saison "normale"
+  return 1.0;
+}
+
 function formatHousingCard(
   type: HousingType,
   floor: string | undefined
@@ -1108,6 +1124,11 @@ function DevisGratuitsPageInner() {
     }
   }, [form.surfaceM2, form.housingType, form.density]);
 
+  const seasonFactor = useMemo(
+    () => getSeasonFactor(form.movingDate),
+    [form.movingDate]
+  );
+
   const pricingByFormule = useMemo(() => {
     const surface = Number(form.surfaceM2.replace(",", "."));
     if (!surface || !Number.isFinite(surface)) return null;
@@ -1117,6 +1138,7 @@ function DevisGratuitsPageInner() {
       housingType: form.housingType,
       density: form.density,
       distanceKm,
+      seasonFactor,
       originFloor: parseInt(form.originFloor || "0", 10) || 0,
       originElevator:
         form.originElevator === "none"
