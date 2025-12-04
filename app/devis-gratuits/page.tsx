@@ -10,6 +10,7 @@ import {
 } from "@/lib/api/client";
 import {
   calculatePricing,
+  calculateVolume,
   type DensityType,
   type FormuleType,
   type HousingType,
@@ -1097,6 +1098,16 @@ function DevisGratuitsPageInner() {
     ]
   );
 
+  const estimatedVolumeM3 = useMemo(() => {
+    const surface = Number(form.surfaceM2.replace(",", "."));
+    if (!surface || !Number.isFinite(surface)) return null;
+    try {
+      return calculateVolume(surface, form.housingType, form.density);
+    } catch {
+      return null;
+    }
+  }, [form.surfaceM2, form.housingType, form.density]);
+
   const pricingByFormule = useMemo(() => {
     const surface = Number(form.surfaceM2.replace(",", "."));
     if (!surface || !Number.isFinite(surface)) return null;
@@ -1489,6 +1500,83 @@ function DevisGratuitsPageInner() {
       return next;
     });
   };
+
+  // Assurer des coordonnées même si l'utilisateur n'a pas cliqué sur une suggestion
+  // (par ex. CP/ville pré-remplis ou saisis manuellement).
+  useEffect(() => {
+    if (form.originLat != null && form.originLon != null) return;
+    if (!form.originPostalCode || !form.originCity) return;
+
+    const controller = new AbortController();
+
+    const run = async () => {
+      try {
+        const q = `${form.originPostalCode} ${form.originCity}`;
+        const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
+          q
+        )}&limit=1`;
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          features?: { geometry?: { coordinates?: [number, number] } }[];
+        };
+        const coords = data.features?.[0]?.geometry?.coordinates;
+        if (!coords) return;
+        const [lon, lat] = coords;
+        if (typeof lat === "number" && typeof lon === "number") {
+          updateField("originLat", lat);
+          updateField("originLon", lon);
+        }
+      } catch {
+        // ignore erreurs réseau / abort
+      }
+    };
+
+    void run();
+
+    return () => controller.abort();
+  }, [form.originPostalCode, form.originCity, form.originLat, form.originLon]);
+
+  useEffect(() => {
+    if (form.destinationLat != null && form.destinationLon != null) return;
+    if (!form.destinationPostalCode || !form.destinationCity) return;
+    if (isDestinationForeign) return; // pour l'étranger, on compte sur Nominatim
+
+    const controller = new AbortController();
+
+    const run = async () => {
+      try {
+        const q = `${form.destinationPostalCode} ${form.destinationCity}`;
+        const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
+          q
+        )}&limit=1`;
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          features?: { geometry?: { coordinates?: [number, number] } }[];
+        };
+        const coords = data.features?.[0]?.geometry?.coordinates;
+        if (!coords) return;
+        const [lon, lat] = coords;
+        if (typeof lat === "number" && typeof lon === "number") {
+          updateField("destinationLat", lat);
+          updateField("destinationLon", lon);
+        }
+      } catch {
+        // ignore erreurs réseau / abort
+      }
+    };
+
+    void run();
+
+    return () => controller.abort();
+  }, [
+    form.destinationPostalCode,
+    form.destinationCity,
+    form.destinationLat,
+    form.destinationLon,
+    isDestinationForeign,
+  ]);
 
   const addLocalFiles = (files: FileList | File[]) => {
     const array = Array.from(files);
@@ -2251,8 +2339,8 @@ function DevisGratuitsPageInner() {
               </p>
 
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr),minmax(0,1.3fr)]">
-                {/* Surface + densité (type de logement affiché en lecture seule depuis l'étape Projet) */}
-                <div className="space-y-3">
+                {/* Densité + surface (type de logement affiché en lecture seule depuis l'étape Projet) */}
+                <div className="space-y-4">
                   <div className="space-y-1 text-xs text-slate-300">
                     <p className="font-medium text-slate-200">
                       Type de logement (départ)
@@ -2260,32 +2348,18 @@ function DevisGratuitsPageInner() {
                     <p className="text-[11px]">
                       {HOUSING_LABELS[form.originHousingType]} —{" "}
                       {HOUSING_SURFACE_DEFAULTS[form.originHousingType]} m²
-                      estimés (ajustables ci‑dessous).
+                      estimés.
                     </p>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Surface approximative (m²)
-                      </label>
-                      <input
-                        type="number"
-                        min={10}
-                        max={300}
-                        value={form.surfaceM2}
-                        onChange={(e) => updateField("surfaceM2", e.target.value)}
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-3 space-y-1">
+                  {/* 1. Densité d'abord */}
+                  <div className="space-y-1">
                     <p className="block text-xs font-medium text-slate-200">
                       Quantité de meubles et affaires
                     </p>
                     <p className="text-[11px] text-slate-400">
-                      Cela nous aide à estimer le volume à déménager.
+                      Commencez par choisir si votre logement est plutôt
+                      minimaliste, standard ou bien rempli.
                     </p>
                     <div className="grid gap-3 sm:grid-cols-3 lg:gap-4">
                         <button
@@ -2432,6 +2506,42 @@ function DevisGratuitsPageInner() {
                         </button>
                       </div>
                     </div>
+                  </div>
+
+                  {/* 2. Surface ensuite + volume estimé */}
+                  <div className="space-y-2">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <label className="block text-xs font-medium text-slate-200">
+                          Surface approximative (m²)
+                        </label>
+                        <input
+                          type="number"
+                          min={10}
+                          max={300}
+                          value={form.surfaceM2}
+                          onChange={(e) => updateField("surfaceM2", e.target.value)}
+                          className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="block text-xs font-medium text-slate-200">
+                          Volume estimé
+                        </p>
+                        <p className="mt-1 inline-flex min-h-[32px] items-center rounded-xl bg-slate-900/80 px-3 py-1 text-xs font-semibold text-slate-50">
+                          {estimatedVolumeM3 != null
+                            ? `${estimatedVolumeM3.toLocaleString("fr-FR", {
+                                maximumFractionDigits: 1,
+                              })} m³`
+                            : "—"}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Calculé automatiquement à partir de la surface et de la
+                      quantité de meubles.
+                    </p>
                   </div>
                 </div>
 
