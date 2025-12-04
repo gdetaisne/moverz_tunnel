@@ -434,4 +434,120 @@ export async function requestBackofficeConfirmation(
   };
 }
 
+// ============================================
+// UPLOAD PHOTOS TO BACKOFFICE
+// ============================================
+
+export interface BackofficeUploadedPhoto {
+  id: string;
+  url: string;
+  originalFilename: string;
+}
+
+export interface BackofficeUploadPhotosResult {
+  success: boolean;
+  data: {
+    uploaded: BackofficeUploadedPhoto[];
+    errors: { originalFilename: string; reason: string }[];
+    totalPhotos: number;
+  };
+}
+
+export async function uploadBackofficePhotos(
+  backofficeLeadId: string,
+  files: File[]
+): Promise<BackofficeUploadPhotosResult> {
+  const API_BASE_URL = getApiBaseUrl();
+
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("photos", file);
+  });
+
+  const response = await fetch(
+    `${API_BASE_URL}/public/leads/${backofficeLeadId}/photos`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    let errorData: any = {};
+    try {
+      errorData = await response.json();
+    } catch {
+      // ignore
+    }
+
+    console.error("❌ Erreur upload photos:", {
+      status: response.status,
+      errorData,
+    });
+
+    if (response.status === 404) {
+      throw new Error("LEAD_NOT_FOUND");
+    }
+
+    throw new Error(errorData.error || errorData.message || "Failed to upload photos");
+  }
+
+  const result = await response.json();
+  return {
+    success: result.success ?? true,
+    data: {
+      uploaded: result.data?.uploaded ?? [],
+      errors: result.data?.errors ?? [],
+      totalPhotos: result.data?.totalPhotos ?? 0,
+    },
+  };
+}
+
+// ============================================
+// SEND PHOTO REMINDER EMAIL
+// ============================================
+
+export async function sendBackofficePhotoReminder(
+  backofficeLeadId: string
+): Promise<{ success: boolean; message: string }> {
+  const API_BASE_URL = getApiBaseUrl();
+
+  const response = await fetch(
+    `${API_BASE_URL}/public/leads/${backofficeLeadId}/send-photo-reminder`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    }
+  );
+
+  if (!response.ok) {
+    let errorData: any = {};
+    try {
+      errorData = await response.json();
+    } catch {
+      // ignore
+    }
+
+    console.error("❌ Erreur envoi relance photos:", {
+      status: response.status,
+      errorData,
+    });
+
+    if (response.status === 404) {
+      throw new Error("LEAD_NOT_FOUND");
+    }
+
+    throw new Error(errorData.error || errorData.message || "Failed to send photo reminder");
+  }
+
+  const result = await response.json();
+  return {
+    success: result.success ?? true,
+    message: result.message ?? "Email de relance photos envoyé",
+  };
+}
+
 
