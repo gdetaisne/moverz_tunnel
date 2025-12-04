@@ -12,7 +12,10 @@ model LeadTunnel {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  // Canal principal d’entrée
+  // Lien vers le Back Office (Lead.id côté PostgreSQL)
+  backofficeLeadId  String?  @unique
+
+  // Canal principal d'entrée
   primaryChannel    String   // 'web' | 'whatsapp'
 
   // Données contact

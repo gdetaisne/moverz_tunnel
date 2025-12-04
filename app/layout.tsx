@@ -4,9 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Moverz – Tunnel de demande de devis",
   description:
-    "Tunnel centralisé de demande de devis déménagement Moverz, pensé mobile first avec option d’envoi de photos par WhatsApp.",
+    "Tunnel centralisé de demande de devis déménagement Moverz, pensé mobile first avec option d'envoi de photos par WhatsApp.",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/favicon.png",
+    apple: "/apple-touch-icon.png",
   },
 };
 

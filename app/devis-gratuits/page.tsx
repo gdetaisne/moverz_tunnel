@@ -7,6 +7,9 @@ import {
   updateLead,
   uploadLeadPhotos,
   ensureLinkingToken,
+  createBackofficeLead,
+  updateBackofficeLead,
+  requestBackofficeConfirmation,
 } from "@/lib/api/client";
 import {
   calculatePricing,
@@ -173,40 +176,54 @@ function compactModelName(model?: string): string {
 }
 
 const INITIAL_FORM_STATE: FormState = {
-  firstName: "Guillaume",
+  // Contact - vide par défaut (obligatoire à remplir par l'utilisateur)
+  firstName: "",
   lastName: "",
-  email: "test@moverz.dev",
+  email: "",
   phone: "",
-  originPostalCode: "33000",
-  originCity: "Bordeaux",
-  originAddress: "10 rue de la Paix, 3e étage",
+
+  // Adresse origine - vide par défaut (obligatoire)
+  originPostalCode: "",
+  originCity: "",
+  originAddress: "",
   originLat: null,
   originLon: null,
-  originHousingType: "t3",
-  destinationPostalCode: "75001",
-  destinationCity: "Paris",
-  destinationAddress: "20 avenue des Champs, 2e étage",
+  originHousingType: "t2", // Valeur par défaut raisonnable
+
+  // Adresse destination - vide par défaut (obligatoire)
+  destinationPostalCode: "",
+  destinationCity: "",
+  destinationAddress: "",
   destinationLat: null,
   destinationLon: null,
-  movingDate: new Date().toISOString().slice(0, 10),
-  movingDateEnd: new Date().toISOString().slice(0, 10),
-  dateFlexible: true,
-  housingType: "t3",
-  surfaceM2: "65",
-  originFloor: "3",
-  originElevator: "none",
+
+  // Date - vide par défaut (obligatoire à sélectionner)
+  movingDate: "", // Vide = l'utilisateur doit choisir
+  movingDateEnd: "",
+  dateFlexible: false, // Par défaut non flexible (l'utilisateur doit cocher si oui)
+
+  // Logement - valeurs par défaut raisonnables
+  housingType: "t2",
+  surfaceM2: "", // Vide = calculé selon housingType ou saisi par l'utilisateur
+  originFloor: "0", // RDC par défaut
+  originElevator: "none", // Pas d'ascenseur par défaut
   originFurnitureLift: "unknown",
   originCarryDistance: "0-10",
   originParkingAuth: false,
-  destinationHousingType: "t3",
-  destinationFloor: "2",
-  destinationElevator: "medium",
+
+  destinationHousingType: "t2",
+  destinationFloor: "0",
+  destinationElevator: "none",
   destinationFurnitureLift: "unknown",
   destinationCarryDistance: "0-10",
   destinationParkingAuth: false,
   destinationUnknown: false,
-  density: "normal",
-  formule: "STANDARD",
+
+  // Estimation - valeurs par défaut
+  density: "normal", // Standard par défaut
+  formule: "STANDARD", // Formule standard par défaut
+
+  // Options - toutes désactivées par défaut
   serviceMonteMeuble: false,
   servicePiano: "none",
   serviceDebarras: false,
@@ -215,7 +232,9 @@ const INITIAL_FORM_STATE: FormState = {
   optionPackingMaterials: false,
   optionDismantlingFull: false,
   optionDifficultAccess: false,
-  notes: "Test local – veuillez ignorer ce dossier.",
+
+  // Notes - vide
+  notes: "",
 };
 
 function estimateDistanceKm(
@@ -1066,6 +1085,7 @@ function DevisGratuitsPageInner() {
   const [maxReachedStep, setMaxReachedStep] = useState<StepId>(1);
   const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE);
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [backofficeLeadId, setBackofficeLeadId] = useState<string | null>(null);
   const [linkingToken, setLinkingToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1219,6 +1239,7 @@ function DevisGratuitsPageInner() {
         form?: Partial<FormState>;
         currentStep?: StepId;
         leadId?: string | null;
+        backofficeLeadId?: string | null;
       };
       if (!parsed || typeof parsed !== "object" || !parsed.form) return;
 
@@ -1229,6 +1250,9 @@ function DevisGratuitsPageInner() {
       }
       if (parsed.leadId) {
         setLeadId(parsed.leadId);
+      }
+      if (parsed.backofficeLeadId) {
+        setBackofficeLeadId(parsed.backofficeLeadId);
       }
     } catch {
       // Si le JSON est corrompu, on ignore et on repart sur l'état par défaut
@@ -1247,9 +1271,10 @@ function DevisGratuitsPageInner() {
       form,
       currentStep,
       leadId,
+      backofficeLeadId,
     });
     window.localStorage.setItem("moverz_tunnel_form_state", payload);
-  }, [form, currentStep, leadId]);
+  }, [form, currentStep, leadId, backofficeLeadId]);
 
   // Centrer la formule active dans le swiper mobile (Standard par défaut)
   useEffect(() => {
@@ -1711,8 +1736,28 @@ function DevisGratuitsPageInner() {
         source: src ?? null,
       };
 
+      // 1. Créer le lead local (SQLite)
       const { id } = await createLead(payload);
       setLeadId(id);
+
+      // 2. Synchroniser avec le Back Office (PostgreSQL)
+      try {
+        const backofficePayload = {
+          firstName: trimmedFirstName,
+          email: trimmedEmail,
+          lastName: form.lastName.trim() || undefined,
+          phone: form.phone.trim() || undefined,
+          source: src ?? undefined,
+          estimationMethod: "FORM" as const,
+        };
+        const { id: boLeadId } = await createBackofficeLead(backofficePayload);
+        setBackofficeLeadId(boLeadId);
+        console.log("✅ Lead créé dans le Back Office:", boLeadId);
+      } catch (boErr) {
+        // On ne bloque pas le tunnel si le back-office est indisponible
+        console.warn("⚠️ Impossible de synchroniser avec le Back Office:", boErr);
+      }
+
       goToStep(2);
     } catch (err: unknown) {
       const message =
@@ -1836,6 +1881,69 @@ function DevisGratuitsPageInner() {
           }
         } else {
           throw err;
+        }
+      }
+
+      // 3. Synchroniser avec le Back Office (PATCH + request-confirmation)
+      if (backofficeLeadId) {
+        try {
+          // Mapper les valeurs du formulaire vers le format back-office
+          const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" =>
+            d === "light" ? "LIGHT" : d === "dense" ? "HEAVY" : "MEDIUM";
+
+          const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" =>
+            e === "none" ? "NON" : e === "small" ? "PARTIEL" : "OUI";
+
+          // Champs non remplis = vraiment vides (null/undefined)
+          // On n'envoie que ce que l'utilisateur a explicitement rempli
+          const boUpdatePayload = {
+            // Adresses - vide si non rempli
+            originAddress: form.originAddress || null,
+            originCity: form.originCity || null,
+            originPostalCode: form.originPostalCode || null,
+            destAddress: form.destinationUnknown ? null : (form.destinationAddress || null),
+            destCity: form.destinationUnknown ? null : (form.destinationCity || null),
+            destPostalCode: form.destinationUnknown ? null : (form.destinationPostalCode || null),
+
+            // Date - vide si non sélectionnée
+            movingDate: form.movingDate || null,
+            dateFlexible: form.dateFlexible,
+
+            // Volume & Surface - null si non calculé
+            surfaceM2: Number.isFinite(surface) && surface > 0 ? surface : null,
+            estimatedVolume: pricing ? pricing.volumeM3 : null,
+            density: form.density ? mapDensity(form.density) : null,
+
+            // Formule & Prix - null si non sélectionné/calculé
+            formule: form.formule || null,
+            estimatedPriceMin: pricing ? pricing.prixMin : null,
+            estimatedPriceMax: pricing ? pricing.prixMax : null,
+
+            // Détails logement origine - null si non rempli
+            originHousingType: form.originHousingType || null,
+            originFloor: form.originFloor ? parseInt(form.originFloor, 10) : null,
+            originElevator: form.originElevator ? mapElevator(form.originElevator) : null,
+            originParkingAuth: form.originParkingAuth,
+
+            // Détails logement destination - null si destination inconnue ou non rempli
+            destHousingType: form.destinationUnknown ? null : (form.destinationHousingType || null),
+            destFloor: form.destinationUnknown ? null : (form.destinationFloor ? parseInt(form.destinationFloor, 10) : null),
+            destElevator: form.destinationUnknown ? null : (form.destinationElevator ? mapElevator(form.destinationElevator) : null),
+            destParkingAuth: form.destinationUnknown ? null : form.destinationParkingAuth,
+          };
+
+          await updateBackofficeLead(backofficeLeadId, boUpdatePayload);
+          console.log("✅ Lead mis à jour dans le Back Office");
+
+          // Demander l'envoi de l'email de confirmation
+          try {
+            await requestBackofficeConfirmation(backofficeLeadId);
+            console.log("✅ Email de confirmation demandé");
+          } catch (confirmErr) {
+            console.warn("⚠️ Email de confirmation non envoyé:", confirmErr);
+          }
+        } catch (boErr) {
+          console.warn("⚠️ Impossible de synchroniser avec le Back Office:", boErr);
         }
       }
 
@@ -2012,6 +2120,22 @@ function DevisGratuitsPageInner() {
             className="space-y-5"
             onSubmit={(e) => {
               e.preventDefault();
+              setError(null);
+              
+              // Validation étape 2 : champs obligatoires
+              if (!form.originPostalCode || !form.originCity) {
+                setError("Merci de renseigner l'adresse de départ (code postal et ville).");
+                return;
+              }
+              if (!form.destinationUnknown && (!form.destinationPostalCode || !form.destinationCity)) {
+                setError("Merci de renseigner l'adresse d'arrivée (code postal et ville), ou cochez 'Destination pas encore définie'.");
+                return;
+              }
+              if (!form.movingDate) {
+                setError("Merci de renseigner la date souhaitée de déménagement.");
+                return;
+              }
+              
               goToStep(3);
             }}
           >
@@ -2337,6 +2461,13 @@ function DevisGratuitsPageInner() {
                 placeholder="Ex: T3 au 3e sans ascenseur, monte‑meuble possible côté cour…"
               />
             </div>
+
+            {/* Message d'erreur étape 2 */}
+            {error && currentStep === 2 && (
+              <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300">
+                {error}
+              </p>
+            )}
 
             <div className="flex gap-3">
               <button

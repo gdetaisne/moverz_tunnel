@@ -255,4 +255,183 @@ export async function createBackofficeLead(
   throw new Error("Invalid response format from backend");
 }
 
+// ============================================
+// UPDATE BACKOFFICE LEAD (PATCH)
+// ============================================
+
+export interface UpdateBackofficeLeadPayload {
+  // Contact
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+
+  // Source & Status
+  source?: string;
+  estimationMethod?: "AI_PHOTO" | "FORM" | "MANUAL_ADMIN";
+  status?: "NEW" | "CONTACTED" | "CONVERTED" | "ABANDONED";
+
+  // Adresses (noms Prisma back-office)
+  originAddress?: string;
+  originCity?: string;
+  originPostalCode?: string;
+  destAddress?: string;
+  destCity?: string;
+  destPostalCode?: string;
+  destCountryCode?: string;
+
+  // Dates
+  movingDate?: string; // ISO date
+  dateFlexible?: boolean;
+
+  // Volume & Surface
+  surfaceM2?: number;
+  estimatedVolume?: number;
+  density?: "LIGHT" | "MEDIUM" | "HEAVY";
+
+  // Formule & Prix
+  formule?: "ECONOMIQUE" | "STANDARD" | "PREMIUM";
+  estimatedPriceMin?: number;
+  estimatedPriceAvg?: number;
+  estimatedPriceMax?: number;
+
+  // Détails logement origine
+  originHousingType?: string;
+  originFloor?: number;
+  originElevator?: "OUI" | "NON" | "PARTIEL";
+  originFurnitureLift?: string;
+  originCarryDistance?: string;
+  originParkingAuth?: boolean;
+
+  // Détails logement destination
+  destHousingType?: string;
+  destFloor?: number;
+  destElevator?: "OUI" | "NON" | "PARTIEL";
+  destFurnitureLift?: string;
+  destCarryDistance?: string;
+  destParkingAuth?: boolean;
+
+  // Photos
+  photosUrls?: string;
+  aiEstimationConfidence?: number;
+}
+
+export async function updateBackofficeLead(
+  backofficeLeadId: string,
+  payload: UpdateBackofficeLeadPayload
+): Promise<{ id: string }> {
+  const API_BASE_URL = getApiBaseUrl();
+
+  // Filtrer les valeurs null/undefined - on n'envoie que ce qui est défini
+  // Cela évite d'écraser des données existantes avec des valeurs vides
+  const filteredPayload = Object.fromEntries(
+    Object.entries(payload).filter(([, value]) => value !== null && value !== undefined)
+  );
+
+  const response = await fetch(`${API_BASE_URL}/public/leads/${backofficeLeadId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(filteredPayload),
+  });
+
+  if (!response.ok) {
+    let errorData: any = {};
+    const contentType = response.headers.get("content-type");
+
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        errorData = await response.json();
+      } catch {
+        const text = await response.text();
+        errorData = { rawResponse: text };
+      }
+    } else {
+      const text = await response.text();
+      errorData = { rawResponse: text };
+    }
+
+    console.error("❌ Erreur mise à jour lead:", {
+      status: response.status,
+      statusText: response.statusText,
+      errorData,
+    });
+
+    // Si lead non trouvé, on peut avoir besoin de recréer
+    if (response.status === 404) {
+      throw new Error("LEAD_NOT_FOUND");
+    }
+
+    let errorMessage =
+      errorData.error ||
+      errorData.message ||
+      errorData.rawResponse ||
+      `Failed to update lead (${response.status})`;
+
+    throw new Error(errorMessage);
+  }
+
+  const result = await response.json();
+
+  if (result?.success && result.data?.id) {
+    return { id: result.data.id };
+  }
+  if (result?.id) {
+    return { id: result.id };
+  }
+
+  throw new Error("Invalid response format from backend");
+}
+
+// ============================================
+// REQUEST CONFIRMATION EMAIL
+// ============================================
+
+export async function requestBackofficeConfirmation(
+  backofficeLeadId: string
+): Promise<{ success: boolean; message: string }> {
+  const API_BASE_URL = getApiBaseUrl();
+
+  const response = await fetch(
+    `${API_BASE_URL}/public/leads/${backofficeLeadId}/request-confirmation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    }
+  );
+
+  if (!response.ok) {
+    let errorData: any = {};
+    try {
+      errorData = await response.json();
+    } catch {
+      // ignore
+    }
+
+    console.error("❌ Erreur demande confirmation:", {
+      status: response.status,
+      errorData,
+    });
+
+    if (response.status === 404) {
+      throw new Error("LEAD_NOT_FOUND");
+    }
+    if (response.status === 400 && errorData.error === "Lead email is missing") {
+      throw new Error("EMAIL_MISSING");
+    }
+
+    throw new Error(errorData.error || errorData.message || "Failed to request confirmation");
+  }
+
+  const result = await response.json();
+  return {
+    success: result.success ?? true,
+    message: result.message ?? "Email de confirmation envoyé",
+  };
+}
+
 
