@@ -1098,8 +1098,6 @@ function DevisGratuitsPageInner() {
     null
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isOriginOpen, setIsOriginOpen] = useState(true);
-  const [isDestinationOpen, setIsDestinationOpen] = useState(false);
   const [analysisStartedAt, setAnalysisStartedAt] = useState<number | null>(null);
   const [analysisElapsedMs, setAnalysisElapsedMs] = useState<number>(0);
   const [analysisTargetSeconds, setAnalysisTargetSeconds] = useState<number | null>(
@@ -2149,269 +2147,204 @@ function DevisGratuitsPageInner() {
               goToStep(3);
             }}
           >
-            {/* Bloc départ : accordéon avec résumé + statut de complétion */}
-            <div className="overflow-hidden rounded-2xl bg-slate-950/40 ring-1 ring-slate-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOriginOpen(true);
-                  setIsDestinationOpen(false);
-                }}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2.5"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-                    Départ
-                  </p>
-                  <p className="mt-1 truncate text-[11px] text-slate-400">
-                    {originSummary || "Code postal, ville, type de logement…"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={[
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                      isOriginComplete
-                        ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/60"
-                        : "bg-slate-800/80 text-slate-200 ring-1 ring-slate-600/80",
-                    ].join(" ")}
-                  >
-                    {isOriginComplete ? "✓ Validé" : "À compléter"}
-                  </span>
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-600/70 bg-slate-900 text-xs text-slate-200">
-                    {isOriginOpen ? "−" : "+"}
-                  </span>
-                </div>
-              </button>
-              {isOriginOpen && (
-                <div className="space-y-3 border-t border-slate-800 bg-slate-950/70 p-3">
-                  <AddressAutocomplete
-                    label="Adresse de départ"
-                    placeholder="10 rue de la Paix, 33000 Bordeaux"
-                    helperText="Vous pouvez saisir une adresse complète, une ville ou un code postal."
-                    mode="fr"
-                    initialValue={
-                      form.originAddress ||
-                      [form.originPostalCode, form.originCity]
-                        .filter(Boolean)
-                        .join(" ")
-                    }
-                    onSelect={(s) => {
-                      updateField("originAddress", s.addressLine ?? s.label);
-                      updateField("originPostalCode", s.postalCode ?? "");
-                      updateField("originCity", s.city ?? "");
-                      updateField("originLat", s.lat ?? null);
-                      updateField("originLon", s.lon ?? null);
-                    }}
-                  />
-                  <p className="text-[11px] text-slate-500">
-                    {form.originPostalCode && form.originCity
-                      ? `${form.originPostalCode} ${form.originCity}`
-                      : "Code postal et ville seront remplis automatiquement."}
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Type de logement
-                      </label>
-                      <select
-                        value={form.originHousingType}
-                        onChange={(e) =>
-                          updateField(
-                            "originHousingType",
-                            e.target.value as HousingType
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="studio">Studio</option>
-                        <option value="t1">T1</option>
-                        <option value="t2">T2</option>
-                        <option value="t3">T3</option>
-                        <option value="t4">T4</option>
-                        <option value="t5">T5</option>
-                        <option value="house">Maison plain-pied</option>
-                        <option value="house_1floor">Maison +1 étage</option>
-                        <option value="house_2floors">Maison +2 étages</option>
-                        <option value="house_3floors">
-                          Maison 3 étages ou +
-                        </option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Distance de portage (m)
-                      </label>
-                      <select
-                        value={form.originCarryDistance}
-                        onChange={(e) =>
-                          updateField(
-                            "originCarryDistance",
-                            e.target.value as FormState["originCarryDistance"]
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="0-10">0–10 m</option>
-                        <option value="10-20">10–20 m</option>
-                        <option value="20-30">20–30 m</option>
-                        <option value="30-40">30–40 m</option>
-                        <option value="40-50">40–50 m</option>
-                        <option value="50-60">50–60 m</option>
-                        <option value="60-70">60–70 m</option>
-                        <option value="70-80">70–80 m</option>
-                        <option value="80-90">80–90 m</option>
-                        <option value="90-100">90–100 m</option>
-                      </select>
-                    </div>
+            {/* Bloc départ – toujours ouvert, sans badges */}
+            <div className="space-y-3 overflow-hidden rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">
+                Départ
+              </p>
+              <div className="space-y-3">
+                <AddressAutocomplete
+                  label="Adresse de départ"
+                  placeholder="10 rue de la Paix, 33000 Bordeaux"
+                  helperText="Vous pouvez saisir une adresse complète, une ville ou un code postal."
+                  mode="fr"
+                  initialValue={
+                    form.originAddress ||
+                    [form.originPostalCode, form.originCity]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
+                  onSelect={(s) => {
+                    updateField("originAddress", s.addressLine ?? s.label);
+                    updateField("originPostalCode", s.postalCode ?? "");
+                    updateField("originCity", s.city ?? "");
+                    updateField("originLat", s.lat ?? null);
+                    updateField("originLon", s.lon ?? null);
+                  }}
+                />
+                <p className="text-[11px] text-slate-500">
+                  {form.originPostalCode && form.originCity
+                    ? `${form.originPostalCode} ${form.originCity}`
+                    : "Code postal et ville seront remplis automatiquement."}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Type de logement
+                    </label>
+                    <select
+                      value={form.originHousingType}
+                      onChange={(e) =>
+                        updateField(
+                          "originHousingType",
+                          e.target.value as HousingType
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="studio">Studio</option>
+                      <option value="t1">T1</option>
+                      <option value="t2">T2</option>
+                      <option value="t3">T3</option>
+                      <option value="t4">T4</option>
+                      <option value="t5">T5</option>
+                      <option value="house">Maison plain-pied</option>
+                      <option value="house_1floor">Maison +1 étage</option>
+                      <option value="house_2floors">Maison +2 étages</option>
+                      <option value="house_3floors">
+                        Maison 3 étages ou +
+                      </option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Distance de portage (m)
+                    </label>
+                    <select
+                      value={form.originCarryDistance}
+                      onChange={(e) =>
+                        updateField(
+                          "originCarryDistance",
+                          e.target.value as FormState["originCarryDistance"]
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="0-10">0–10 m</option>
+                      <option value="10-20">10–20 m</option>
+                      <option value="20-30">20–30 m</option>
+                      <option value="30-40">30–40 m</option>
+                      <option value="40-50">40–50 m</option>
+                      <option value="50-60">50–60 m</option>
+                      <option value="60-70">60–70 m</option>
+                      <option value="70-80">70–80 m</option>
+                      <option value="80-90">80–90 m</option>
+                      <option value="90-100">90–100 m</option>
+                    </select>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* Bloc arrivée : accordéon avec résumé + statut de complétion */}
-            <div className="overflow-hidden rounded-2xl bg-slate-950/40 ring-1 ring-slate-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDestinationOpen(true);
-                  setIsOriginOpen(false);
-                }}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2.5"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-                    Arrivée
-                  </p>
-                  <p className="mt-1 truncate text-[11px] text-slate-400">
-                    {destinationSummary || "Code postal, ville, type de logement…"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={[
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                      isDestinationComplete
-                        ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/60"
-                        : "bg-slate-800/80 text-slate-200 ring-1 ring-slate-600/80",
-                    ].join(" ")}
-                  >
-                    {isDestinationComplete ? "✓ Validé" : "À compléter"}
-                  </span>
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-600/70 bg-slate-900 text-xs text-slate-200">
-                    {isDestinationOpen ? "−" : "+"}
-                  </span>
-                </div>
-              </button>
-              {isDestinationOpen && (
-                <div className="space-y-3 border-t border-slate-800 bg-slate-950/70 p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-medium text-slate-200">
-                      Adresse d’arrivée
-                    </p>
-                    <label className="flex items-center gap-2 text-[11px] text-slate-300">
-                      <input
-                        type="checkbox"
-                        className="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500"
-                        checked={isDestinationForeign}
-                        onChange={(e) => setIsDestinationForeign(e.target.checked)}
-                      />
-                      Adresse à l’étranger
-                      </label>
-                    </div>
-
-                  <AddressAutocomplete
-                    label=""
-                    placeholder={
-                      isDestinationForeign
-                        ? "10 Downing St, London, UK"
-                        : "20 avenue des Champs-Élysées, 75008 Paris"
-                    }
-                    helperText={
-                      isDestinationForeign
-                        ? "Incluez le pays (ex: Barcelone, Espagne)."
-                        : "Vous pouvez saisir une adresse complète, une ville ou un code postal."
-                    }
-                    mode={isDestinationForeign ? "world" : "fr"}
-                    initialValue={
-                      form.destinationAddress ||
-                      [form.destinationPostalCode, form.destinationCity]
-                        .filter(Boolean)
-                        .join(" ")
-                    }
-                    onSelect={(s) => {
-                      updateField("destinationAddress", s.addressLine ?? s.label);
-                      updateField("destinationPostalCode", s.postalCode ?? "");
-                      updateField("destinationCity", s.city ?? "");
-                      updateField("destinationLat", s.lat ?? null);
-                      updateField("destinationLon", s.lon ?? null);
-                    }}
+            {/* Bloc arrivée – toujours ouvert, sans badges */}
+            <div className="space-y-3 overflow-hidden rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">
+                  Arrivée
+                </p>
+                <label className="flex items-center gap-2 text-[11px] text-slate-300">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500"
+                    checked={isDestinationForeign}
+                    onChange={(e) => setIsDestinationForeign(e.target.checked)}
                   />
-                  <p className="text-[11px] text-slate-500">
-                    {form.destinationPostalCode && form.destinationCity
-                      ? `${form.destinationPostalCode} ${form.destinationCity}`
-                      : isDestinationForeign
-                      ? "Ville, pays et code postal seront remplis automatiquement si possible."
-                      : "Code postal et ville seront remplis automatiquement."}
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Type de logement
-                      </label>
-                      <select
-                        value={form.destinationHousingType}
-                        onChange={(e) =>
-                          updateField(
-                            "destinationHousingType",
-                            e.target.value as HousingType
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="studio">Studio</option>
-                        <option value="t1">T1</option>
-                        <option value="t2">T2</option>
-                        <option value="t3">T3</option>
-                        <option value="t4">T4</option>
-                        <option value="t5">T5</option>
-                        <option value="house">Maison plain-pied</option>
-                        <option value="house_1floor">Maison +1 étage</option>
-                        <option value="house_2floors">Maison +2 étages</option>
-                        <option value="house_3floors">
-                          Maison 3 étages ou +
-                        </option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Distance de portage (m)
-                      </label>
-                      <select
-                        value={form.destinationCarryDistance}
-                        onChange={(e) =>
-                          updateField(
-                            "destinationCarryDistance",
-                            e.target.value as FormState["destinationCarryDistance"]
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="0-10">0–10 m</option>
-                        <option value="10-20">10–20 m</option>
-                        <option value="20-30">20–30 m</option>
-                        <option value="30-40">30–40 m</option>
-                        <option value="40-50">40–50 m</option>
-                        <option value="50-60">50–60 m</option>
-                        <option value="60-70">60–70 m</option>
-                        <option value="70-80">70–80 m</option>
-                        <option value="80-90">80–90 m</option>
-                        <option value="90-100">90–100 m</option>
-                      </select>
-                    </div>
+                  Adresse à l’étranger
+                </label>
+              </div>
+
+              <div className="space-y-3">
+                <AddressAutocomplete
+                  label="Adresse d’arrivée"
+                  placeholder={
+                    isDestinationForeign
+                      ? "10 Downing St, London, UK"
+                      : "20 avenue des Champs-Élysées, 75008 Paris"
+                  }
+                  helperText={
+                    isDestinationForeign
+                      ? "Incluez le pays (ex: Barcelone, Espagne)."
+                      : "Vous pouvez saisir une adresse complète, une ville ou un code postal."
+                  }
+                  mode={isDestinationForeign ? "world" : "fr"}
+                  initialValue={
+                    form.destinationAddress ||
+                    [form.destinationPostalCode, form.destinationCity]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
+                  onSelect={(s) => {
+                    updateField("destinationAddress", s.addressLine ?? s.label);
+                    updateField("destinationPostalCode", s.postalCode ?? "");
+                    updateField("destinationCity", s.city ?? "");
+                    updateField("destinationLat", s.lat ?? null);
+                    updateField("destinationLon", s.lon ?? null);
+                  }}
+                />
+                <p className="text-[11px] text-slate-500">
+                  {form.destinationPostalCode && form.destinationCity
+                    ? `${form.destinationPostalCode} ${form.destinationCity}`
+                    : isDestinationForeign
+                    ? "Ville, pays et code postal seront remplis automatiquement si possible."
+                    : "Code postal et ville seront remplis automatiquement."}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Type de logement
+                    </label>
+                    <select
+                      value={form.destinationHousingType}
+                      onChange={(e) =>
+                        updateField(
+                          "destinationHousingType",
+                          e.target.value as HousingType
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="studio">Studio</option>
+                      <option value="t1">T1</option>
+                      <option value="t2">T2</option>
+                      <option value="t3">T3</option>
+                      <option value="t4">T4</option>
+                      <option value="t5">T5</option>
+                      <option value="house">Maison plain-pied</option>
+                      <option value="house_1floor">Maison +1 étage</option>
+                      <option value="house_2floors">Maison +2 étages</option>
+                      <option value="house_3floors">
+                        Maison 3 étages ou +
+                      </option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Distance de portage (m)
+                    </label>
+                    <select
+                      value={form.destinationCarryDistance}
+                      onChange={(e) =>
+                        updateField(
+                          "destinationCarryDistance",
+                          e.target.value as FormState["destinationCarryDistance"]
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="0-10">0–10 m</option>
+                      <option value="10-20">10–20 m</option>
+                      <option value="20-30">20–30 m</option>
+                      <option value="30-40">30–40 m</option>
+                      <option value="40-50">40–50 m</option>
+                      <option value="50-60">50–60 m</option>
+                      <option value="60-70">60–70 m</option>
+                      <option value="70-80">70–80 m</option>
+                      <option value="80-90">80–90 m</option>
+                      <option value="90-100">90–100 m</option>
+                    </select>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Distance estimée (information indicative) */}
@@ -2421,41 +2354,28 @@ function DevisGratuitsPageInner() {
               </p>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr),minmax(0,1.1fr)]">
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-100">
-                  Date souhaitée
-                </label>
-                <input
-                  type="date"
-                  value={form.movingDate}
-                  onChange={(e) => updateField("movingDate", e.target.value)}
-                  onClick={(e) => {
-                    try {
-                      (e.target as HTMLInputElement).showPicker?.();
-                    } catch {}
-                  }}
-                  min={new Date().toISOString().split('T')[0]}
-                  max={(() => {
-                    const d = new Date();
-                    d.setFullYear(d.getFullYear() + 1);
-                    return d.toISOString().split('T')[0];
-                  })()}
-                  required
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-100">
-                  Fin de période (optionnel)
-                </label>
-                <input
-                  type="date"
-                  value={form.movingDateEnd}
-                  onChange={(e) => updateField("movingDateEnd", e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                />
-              </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-100">
+                Date souhaitée
+              </label>
+              <input
+                type="date"
+                value={form.movingDate}
+                onChange={(e) => updateField("movingDate", e.target.value)}
+                onClick={(e) => {
+                  try {
+                    (e.target as HTMLInputElement).showPicker?.();
+                  } catch {}
+                }}
+                min={new Date().toISOString().split("T")[0]}
+                max={(() => {
+                  const d = new Date();
+                  d.setFullYear(d.getFullYear() + 1);
+                  return d.toISOString().split("T")[0];
+                })()}
+                required
+                className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
+              />
             </div>
 
             <label className="inline-flex items-center gap-2 text-xs text-slate-300">
