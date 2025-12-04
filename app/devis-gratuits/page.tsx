@@ -1089,7 +1089,6 @@ function DevisGratuitsPageInner() {
     "none" | "photos_now" | "whatsapp_later"
   >("none");
   const [isDestinationForeign, setIsDestinationForeign] = useState(false);
-  const [showPricingDetails, setShowPricingDetails] = useState(false);
 
   const goToStep = (next: StepId) => {
     setCurrentStep(next);
@@ -1131,12 +1130,13 @@ function DevisGratuitsPageInner() {
     [form.movingDate]
   );
 
-  const pricePerM3NoSeason = useMemo(() => {
-    return COEF_VOLUME * FORMULE_MULTIPLIERS[form.formule];
-  }, [form.formule]);
+  const pricePerM3NoSeason = useMemo(
+    () => COEF_VOLUME * FORMULE_MULTIPLIERS[form.formule],
+    [form.formule]
+  );
 
   const pricePerM3Seasoned = useMemo(
-    () => Math.round(pricePerM3NoSeason * seasonFactor),
+    () => pricePerM3NoSeason * seasonFactor,
     [pricePerM3NoSeason, seasonFactor]
   );
 
@@ -1199,6 +1199,13 @@ function DevisGratuitsPageInner() {
     () => (pricingByFormule ? pricingByFormule[form.formule] : null),
     [pricingByFormule, form.formule]
   );
+
+  const volumePriceApprox = useMemo(() => {
+    if (estimatedVolumeM3 == null || !Number.isFinite(estimatedVolumeM3)) {
+      return null;
+    }
+    return Math.round(estimatedVolumeM3 * pricePerM3Seasoned);
+  }, [estimatedVolumeM3, pricePerM3Seasoned]);
 
   const comfortScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -1945,21 +1952,21 @@ function DevisGratuitsPageInner() {
       {currentStep === 1 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep1}>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-100">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-slate-100">
                 Comment voulez-vous qu’on vous appelle ?
-              </label>
+                </label>
               <p className="text-xs text-slate-400">
                 Juste pour personnaliser nos échanges, vous pouvez mettre un prénom ou un surnom.
               </p>
-              <input
-                type="text"
-                value={form.firstName}
-                onChange={(e) => updateField("firstName", e.target.value)}
+                <input
+                  type="text"
+                  value={form.firstName}
+                  onChange={(e) => updateField("firstName", e.target.value)}
                 className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                 placeholder="Prénom ou surnom"
-                autoComplete="given-name"
-              />
+                  autoComplete="given-name"
+                />
             </div>
 
             <div className="space-y-1">
@@ -2176,8 +2183,8 @@ function DevisGratuitsPageInner() {
                         onChange={(e) => setIsDestinationForeign(e.target.checked)}
                       />
                       Adresse à l’étranger
-                    </label>
-                  </div>
+                      </label>
+                    </div>
 
                   <AddressAutocomplete
                     label=""
@@ -2355,16 +2362,9 @@ function DevisGratuitsPageInner() {
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep3}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-              <h2 className="text-lg font-semibold text-slate-50">
-                Volume estimé & formules
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowPricingDetails((prev) => !prev)}
-                className="inline-flex items-center justify-center rounded-full border border-slate-600 px-3 py-1 text-[11px] font-medium text-slate-200 hover:border-sky-400 hover:text-sky-200"
-              >
-                Comment sont estimés les prix ?
-              </button>
+            <h2 className="text-lg font-semibold text-slate-50">
+              Volume estimé & formules
+            </h2>
             </div>
 
             {/* Bloc estimation volume + formules */}
@@ -2373,41 +2373,11 @@ function DevisGratuitsPageInner() {
                 Estimation rapide
               </p>
 
-            {showPricingDetails && (
-              <div className="space-y-1 rounded-2xl bg-slate-950/70 p-3 text-[11px] text-slate-300 ring-1 ring-slate-800">
-                <p className="font-semibold text-slate-100">
-                  Comment sont estimés les prix ?
-                </p>
-                <p>
-                  On commence par estimer un volume à partir de la surface de
-                  votre logement et de la quantité de meubles (minimaliste /
-                  standard / bien rempli). Ensuite, on calcule un prix lié au
-                  volume et un prix lié à la distance, et on garde le plus
-                  élevé, avec un socle minimum.
-                </p>
-                <p>
-                  La période de l&apos;année peut ensuite majorer ou réduire ce
-                  prix de base (l&apos;été et décembre coûtent généralement plus
-                  cher que le reste de l&apos;année), puis on applique la
-                  formule choisie (Éco / Standard / Premium) et les options
-                  éventuelles (piano, débarras…).
-                </p>
-                <p className="text-slate-200">
-                  À titre indicatif, dans votre configuration actuelle,{" "}
-                  <strong>1&nbsp;m³ supplémentaire</strong> fait varier la
-                  partie &quot;volume&quot; du prix d&apos;environ{" "}
-                  <strong>{pricePerM3Seasoned} €</strong> pour cette période (
-                  soit ~
-                  {Math.round(pricePerM3NoSeason)} € hors effet saison).
-                </p>
-              </div>
-            )}
-
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr),minmax(0,1.3fr)]">
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr),minmax(0,1.3fr)]">
                 {/* Colonne gauche : densité + surface/volume */}
                 <div className="space-y-4">
                   {/* 1. Densité en premier */}
-                  <div className="space-y-1">
+                    <div className="space-y-1">
                     <p className="block text-xs font-medium text-slate-200">
                       Quantité de meubles et affaires
                     </p>
@@ -2690,6 +2660,71 @@ function DevisGratuitsPageInner() {
                   }
                 )}
               </div>
+
+              {activePricing &&
+                estimatedVolumeM3 != null &&
+                Number.isFinite(distanceKm) && (
+                  <div className="mt-3 space-y-1 rounded-2xl bg-slate-950/70 p-3 text-[11px] text-slate-300 ring-1 ring-slate-800">
+                    <p className="font-semibold text-slate-100">
+                      Comment sont estimés les prix ?
+                    </p>
+                    <p>
+                      Le prix de votre déménagement dépend de nombreux critères
+                      dont principalement :
+                    </p>
+                    <ul className="ml-4 list-disc space-y-1">
+                      <li>
+                        <span className="font-semibold">Volume :</span>{" "}
+                        dans votre cas,{" "}
+                        {estimatedVolumeM3.toLocaleString("fr-FR", {
+                          maximumFractionDigits: 1,
+                        })}{" "}
+                        m³ correspondent à environ{" "}
+                        <span className="font-semibold">
+                          {volumePriceApprox != null
+                            ? formatPrice(volumePriceApprox)
+                            : "—"}
+                        </span>
+                        .
+                      </li>
+                      <li>
+                        <span className="font-semibold">Distance :</span>{" "}
+                        {distanceKm < 30
+                          ? "dans votre cas, déménagement local, donc pas de sur‑coût significatif lié à la distance."
+                          : `dans votre cas, environ ${Math.round(
+                              distanceKm
+                            )} km à parcourir, ce qui pèse aussi dans le prix.`}
+                      </li>
+                      <li>
+                        <span className="font-semibold">
+                          Période de l&apos;année :
+                        </span>{" "}
+                        {seasonFactor > 1.01
+                          ? `dans votre cas, vous risquez une majoration d’environ ${formatPrice(
+                              Math.max(
+                                0,
+                                activePricing.prixFinal -
+                                  Math.round(
+                                    activePricing.prixFinal / seasonFactor
+                                  )
+                              )
+                            )}.`
+                          : seasonFactor < 0.99
+                          ? `dans votre cas, vous bénéficiez d’une légère réduction par rapport à la haute saison.`
+                          : "dans votre cas, pas de majoration particulière liée à la période."}
+                      </li>
+                    </ul>
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      NB : Un m³ supplémentaire vous coûterait dans ces
+                      conditions environ{" "}
+                      <span className="font-semibold">
+                        {Math.round(pricePerM3Seasoned).toLocaleString("fr-FR")}{" "}
+                        €
+                      </span>
+                      .
+                    </p>
+                  </div>
+                )}
 
               {/* Autres besoins éventuels (tous les services optionnels regroupés) */}
               <div className="mt-4 space-y-2 rounded-2xl bg-slate-950/60 p-3 text-[11px] text-slate-300">
@@ -3012,12 +3047,12 @@ function DevisGratuitsPageInner() {
                   Vous pourrez nous envoyer vos photos plus tard, en toute
                   tranquillité.
                 </p>
-              <div className="space-y-1 text-xs text-slate-300">
-                <p className="text-[11px] text-slate-400">
+                <div className="space-y-1 text-xs text-slate-300">
+                  <p className="text-[11px] text-slate-400">
                   Vous pourrez partager votre numéro directement dans la
                   conversation WhatsApp si vous le souhaitez.
-                </p>
-              </div>
+                  </p>
+                </div>
                 <div className="flex gap-3">
                   <button
                     type="button"
