@@ -322,10 +322,10 @@ export async function updateBackofficeLead(
 ): Promise<{ id: string }> {
   const API_BASE_URL = getApiBaseUrl();
 
-  // Filtrer les valeurs null/undefined - on n'envoie que ce qui est défini
+  // Filtrer les valeurs undefined - on n'envoie que ce qui est défini
   // Cela évite d'écraser des données existantes avec des valeurs vides
   const filteredPayload = Object.fromEntries(
-    Object.entries(payload).filter(([, value]) => value !== null && value !== undefined)
+    Object.entries(payload).filter(([, value]) => value !== undefined)
   );
 
   const response = await fetch(`${API_BASE_URL}/public/leads/${backofficeLeadId}`, {

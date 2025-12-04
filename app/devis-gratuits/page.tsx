@@ -1894,42 +1894,42 @@ function DevisGratuitsPageInner() {
           const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" =>
             e === "none" ? "NON" : e === "small" ? "PARTIEL" : "OUI";
 
-          // Champs non remplis = vraiment vides (null/undefined)
-          // On n'envoie que ce que l'utilisateur a explicitement rempli
+          // Champs non remplis = undefined (pas envoyés au back-office)
+          // Le filtrage dans updateBackofficeLead enlève les undefined
           const boUpdatePayload = {
-            // Adresses - vide si non rempli
-            originAddress: form.originAddress || null,
-            originCity: form.originCity || null,
-            originPostalCode: form.originPostalCode || null,
-            destAddress: form.destinationUnknown ? null : (form.destinationAddress || null),
-            destCity: form.destinationUnknown ? null : (form.destinationCity || null),
-            destPostalCode: form.destinationUnknown ? null : (form.destinationPostalCode || null),
+            // Adresses - undefined si non rempli
+            originAddress: form.originAddress || undefined,
+            originCity: form.originCity || undefined,
+            originPostalCode: form.originPostalCode || undefined,
+            destAddress: form.destinationUnknown ? undefined : (form.destinationAddress || undefined),
+            destCity: form.destinationUnknown ? undefined : (form.destinationCity || undefined),
+            destPostalCode: form.destinationUnknown ? undefined : (form.destinationPostalCode || undefined),
 
-            // Date - vide si non sélectionnée
-            movingDate: form.movingDate || null,
+            // Date - undefined si non sélectionnée
+            movingDate: form.movingDate || undefined,
             dateFlexible: form.dateFlexible,
 
-            // Volume & Surface - null si non calculé
-            surfaceM2: Number.isFinite(surface) && surface > 0 ? surface : null,
-            estimatedVolume: pricing ? pricing.volumeM3 : null,
-            density: form.density ? mapDensity(form.density) : null,
+            // Volume & Surface - undefined si non calculé
+            surfaceM2: Number.isFinite(surface) && surface > 0 ? surface : undefined,
+            estimatedVolume: pricing ? pricing.volumeM3 : undefined,
+            density: form.density ? mapDensity(form.density) : undefined,
 
-            // Formule & Prix - null si non sélectionné/calculé
-            formule: form.formule || null,
-            estimatedPriceMin: pricing ? pricing.prixMin : null,
-            estimatedPriceMax: pricing ? pricing.prixMax : null,
+            // Formule & Prix - undefined si non sélectionné/calculé
+            formule: form.formule || undefined,
+            estimatedPriceMin: pricing ? pricing.prixMin : undefined,
+            estimatedPriceMax: pricing ? pricing.prixMax : undefined,
 
-            // Détails logement origine - null si non rempli
-            originHousingType: form.originHousingType || null,
-            originFloor: form.originFloor ? parseInt(form.originFloor, 10) : null,
-            originElevator: form.originElevator ? mapElevator(form.originElevator) : null,
+            // Détails logement origine - undefined si non rempli
+            originHousingType: form.originHousingType || undefined,
+            originFloor: form.originFloor ? parseInt(form.originFloor, 10) : undefined,
+            originElevator: form.originElevator ? mapElevator(form.originElevator) : undefined,
             originParkingAuth: form.originParkingAuth,
 
-            // Détails logement destination - null si destination inconnue ou non rempli
-            destHousingType: form.destinationUnknown ? null : (form.destinationHousingType || null),
-            destFloor: form.destinationUnknown ? null : (form.destinationFloor ? parseInt(form.destinationFloor, 10) : null),
-            destElevator: form.destinationUnknown ? null : (form.destinationElevator ? mapElevator(form.destinationElevator) : null),
-            destParkingAuth: form.destinationUnknown ? null : form.destinationParkingAuth,
+            // Détails logement destination - undefined si destination inconnue ou non rempli
+            destHousingType: form.destinationUnknown ? undefined : (form.destinationHousingType || undefined),
+            destFloor: form.destinationUnknown ? undefined : (form.destinationFloor ? parseInt(form.destinationFloor, 10) : undefined),
+            destElevator: form.destinationUnknown ? undefined : (form.destinationElevator ? mapElevator(form.destinationElevator) : undefined),
+            destParkingAuth: form.destinationUnknown ? undefined : form.destinationParkingAuth,
           };
 
           await updateBackofficeLead(backofficeLeadId, boUpdatePayload);
