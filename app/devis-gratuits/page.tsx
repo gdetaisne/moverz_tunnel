@@ -3559,6 +3559,22 @@ function DevisGratuitsPageInner() {
                   )}
                 </div>
               )}
+
+              {/* CTA final après analyse des photos */}
+              {!isUploadingPhotos &&
+                !isAnalyzing &&
+                analysisProcesses &&
+                process2Inventory &&
+                process2Inventory.length > 0 && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-xl bg-emerald-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/40 transition hover:bg-emerald-300"
+                    >
+                      Envoyer mon dossier et recevoir mon inventaire
+                    </button>
+                  </div>
+                )}
             </div>
           )}
 
