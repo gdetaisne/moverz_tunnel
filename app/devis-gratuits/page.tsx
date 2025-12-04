@@ -2320,13 +2320,6 @@ function DevisGratuitsPageInner() {
       {/* Étape 3 – Volume & formules */}
       {currentStep === 3 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
-          <div className="mb-5">
-            <Step3MovingDayIntro
-              form={form}
-              distanceKm={distanceKm}
-              onComplete={() => {}}
-            />
-          </div>
           <form className="space-y-5" onSubmit={handleSubmitStep3}>
             <h2 className="text-lg font-semibold text-slate-50">
               Volume estimé & formules
