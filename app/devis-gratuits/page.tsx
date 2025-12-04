@@ -1107,6 +1107,7 @@ function DevisGratuitsPageInner() {
   const [analysisTargetSeconds, setAnalysisTargetSeconds] = useState<number | null>(
     null
   );
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const [photoFlowChoice, setPhotoFlowChoice] = useState<
     "none" | "photos_now" | "email_later" | "email_sent" | "whatsapp_later"
   >("none");
@@ -1898,7 +1899,7 @@ function DevisGratuitsPageInner() {
         }
       }
 
-      // 3. Synchroniser avec le Back Office (PATCH + request-confirmation)
+      // 3. Synchroniser avec le Back Office (PATCH)
       if (backofficeLeadId) {
         try {
           // Mapper les valeurs du formulaire vers le format back-office
@@ -1948,14 +1949,6 @@ function DevisGratuitsPageInner() {
 
           await updateBackofficeLead(backofficeLeadId, boUpdatePayload);
           console.log("✅ Lead mis à jour dans le Back Office");
-
-          // Demander l'envoi de l'email de confirmation
-          try {
-            await requestBackofficeConfirmation(backofficeLeadId);
-            console.log("✅ Email de confirmation demandé");
-          } catch (confirmErr) {
-            console.warn("⚠️ Email de confirmation non envoyé:", confirmErr);
-          }
         } catch (boErr) {
           console.warn("⚠️ Impossible de synchroniser avec le Back Office:", boErr);
         }
@@ -3569,9 +3562,36 @@ function DevisGratuitsPageInner() {
                   <div className="mt-4 flex justify-center">
                     <button
                       type="button"
-                      className="inline-flex items-center justify-center rounded-xl bg-emerald-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/40 transition hover:bg-emerald-300"
+                      onClick={async () => {
+                        if (!backofficeLeadId) {
+                          setError(
+                            "Une erreur est survenue : identifiant dossier introuvable. Merci de réessayer plus tard."
+                          );
+                          return;
+                        }
+                        setIsFinalizing(true);
+                        setError(null);
+                        try {
+                          await requestBackofficeConfirmation(backofficeLeadId);
+                          console.log(
+                            "✅ Email de confirmation demandé via le CTA final photos."
+                          );
+                        } catch (err: unknown) {
+                          const message =
+                            err instanceof Error
+                              ? err.message
+                              : "Erreur lors de l'envoi de l'email de confirmation.";
+                          setError(message);
+                        } finally {
+                          setIsFinalizing(false);
+                        }
+                      }}
+                      disabled={isFinalizing}
+                      className="inline-flex items-center justify-center rounded-xl bg-emerald-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/40 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      Envoyer mon dossier et recevoir mon inventaire
+                      {isFinalizing
+                        ? "Envoi en cours…"
+                        : "Envoyer mon dossier et recevoir mon inventaire"}
                     </button>
                   </div>
                 )}
