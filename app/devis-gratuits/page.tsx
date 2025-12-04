@@ -3647,7 +3647,6 @@ function DevisGratuitsPageInner() {
                   </div>
                 )}
             </div>
-          )}
 
             {error && (
               <p className="text-sm text-rose-400" role="alert">
