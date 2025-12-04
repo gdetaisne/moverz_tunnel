@@ -34,6 +34,7 @@ COPY --from=builder /usr/src/app/public ./public
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Rendre la DB SQLite accessible en écriture et démarrer
+CMD ["/bin/sh", "-c", "chmod 666 ./prisma/dev.db 2>/dev/null || true && npm start"]
 
 
