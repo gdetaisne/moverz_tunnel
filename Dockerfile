@@ -29,6 +29,9 @@ COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/.next ./.next
 COPY --from=builder /usr/src/app/next.config.* ./
 COPY --from=builder /usr/src/app/prisma ./prisma
+COPY --from=builder /usr/src/app/public ./public
+# Base SQLite créée pendant le build
+COPY --from=builder /usr/src/app/dev.db ./dev.db
 
 EXPOSE 3000
 
