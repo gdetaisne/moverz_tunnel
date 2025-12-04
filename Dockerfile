@@ -11,7 +11,7 @@ COPY . .
 
 # 3) Générer Prisma Client, appliquer les migrations SQLite et builder Next
 RUN npx prisma generate \
-  && DATABASE_URL="file:./dev.db" npx prisma migrate deploy \
+  && DATABASE_URL="file:./prisma/dev.db" npx prisma migrate deploy \
   && npm run build \
   && npm prune --omit=dev
 
@@ -30,8 +30,7 @@ COPY --from=builder /usr/src/app/.next ./.next
 COPY --from=builder /usr/src/app/next.config.* ./
 COPY --from=builder /usr/src/app/prisma ./prisma
 COPY --from=builder /usr/src/app/public ./public
-# Base SQLite créée pendant le build
-COPY --from=builder /usr/src/app/dev.db ./dev.db
+# Note: dev.db est dans prisma/ (copié avec le dossier prisma)
 
 EXPOSE 3000
 
