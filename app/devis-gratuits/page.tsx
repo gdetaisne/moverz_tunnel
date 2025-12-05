@@ -3227,7 +3227,16 @@ function DevisGratuitsPageInner() {
                     Vous n'avez pas vos photos maintenant ? On vous envoie un email récapitulatif avec un lien pour finaliser votre demande plus tard.
                   </p>
                 </div>
-                
+                <p className="text-xs text-slate-300">
+                  Dans tous les cas, vous recevrez aussi un{" "}
+                  <span className="font-semibold">email de confirmation</span>{" "}
+                  sur{" "}
+                  <span className="font-semibold">
+                    {form.email || "votre adresse email"}
+                  </span>
+                  . Vous pourrez y vérifier vos informations et corriger
+                  l’adresse si besoin.
+                </p>
                 <div className="flex flex-col gap-3 pt-2">
                   <button
                     type="button"
@@ -3639,6 +3648,58 @@ function DevisGratuitsPageInner() {
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+            {photoFlowChoice === "photos_now" &&
+              process2Inventory &&
+              process2Inventory.length > 0 && (
+                <div className="mt-4 space-y-2 rounded-2xl bg-emerald-500/10 p-3 text-xs text-emerald-50 ring-1 ring-emerald-400/40">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                    Votre dossier est prêt
+                  </p>
+                  <p>
+                    Nous avons généré automatiquement{" "}
+                    <span className="font-semibold">
+                      l’inventaire détaillé, la déclaration de valeur et un
+                      dossier complet
+                    </span>{" "}
+                    à partir de vos photos.
+                  </p>
+                  <p>
+                    Un email de confirmation va vous être envoyé à{" "}
+                    <span className="font-semibold">
+                      {form.email || "votre adresse email"}
+                    </span>
+                    . Dès que vous l’aurez validé, nous pourrons transmettre
+                    votre demande aux déménageurs.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-[11px] text-emerald-100">
+                      Adresse incorrecte&nbsp;? Vous pouvez revenir corriger vos
+                      coordonnées.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => goToStep(1)}
+                      className="inline-flex items-center rounded-full border border-emerald-400/60 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-500/20"
+                    >
+                      Corriger mon adresse email
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] text-emerald-100">
+                      Quand tout vous semble bon, vous pouvez terminer : votre
+                      dossier partira vers les déménageurs une fois l’email
+                      confirmé.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/devis-gratuits/merci")}
+                      className="inline-flex items-center rounded-full bg-emerald-400 px-4 py-1.5 text-[11px] font-semibold text-slate-950 shadow-sm shadow-emerald-500/40 hover:bg-emerald-300"
+                    >
+                      Terminer et envoyer mon dossier
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
