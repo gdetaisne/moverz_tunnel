@@ -1245,6 +1245,10 @@ function DevisGratuitsPageInner() {
     form.destinationFloor,
     form.destinationElevator,
     distanceKm,
+    combinedSeasonFactor,
+    form.serviceMonteMeuble,
+    form.servicePiano,
+    form.serviceDebarras,
   ]);
 
   const activePricing = useMemo(
@@ -2833,6 +2837,10 @@ function DevisGratuitsPageInner() {
                             multFormuleEtage
                           : 0;
 
+                      const ecoPricing = pricingByFormule?.ECONOMIQUE;
+                      const standardPricing = pricingByFormule?.STANDARD;
+                      const premiumPricing = pricingByFormule?.PREMIUM;
+
                       return (
                         <>
                           <p className="font-semibold text-slate-100">
@@ -2910,10 +2918,32 @@ function DevisGratuitsPageInner() {
                             </li>
                             <li>
                               <span className="font-semibold">
-                                Effet niveau de service :
+                                Effet niveau de formule (Éco / Standard / Premium) :
+                              </span>{" "}
+                              {standardPricing
+                                ? form.formule === "ECONOMIQUE" && ecoPricing
+                                  ? `en choisissant la formule Éco, vous économisez environ ${formatPrice(
+                                      Math.round(
+                                        standardPricing.prixAvecFormule -
+                                          ecoPricing.prixAvecFormule
+                                      )
+                                    )} par rapport à la formule Standard.`
+                                  : form.formule === "PREMIUM" && premiumPricing
+                                  ? `la formule Premium ajoute environ ${formatPrice(
+                                      Math.round(
+                                        premiumPricing.prixAvecFormule -
+                                          standardPricing.prixAvecFormule
+                                      )
+                                    )} par rapport à la formule Standard.`
+                                  : "la formule Standard sert de référence : pas de surcoût ni de remise spécifique sur le niveau de service."
+                                : "les niveaux de formule (Éco / Standard / Premium) ajustent le nombre de services inclus (emballage, démontage, confort de l’équipe)."}
+                            </li>
+                            <li>
+                              <span className="font-semibold">
+                                Effet services additionnels :
                               </span>{" "}
                               {effetServices > 0
-                                ? `les options choisies (monte‑meuble, piano, débarras…) représentent environ ${formatPrice(
+                                ? `les options cochées (monte‑meuble, piano, débarras…) représentent environ ${formatPrice(
                                     Math.round(effetServices)
                                   )}.`
                                 : "aucun service additionnel sélectionné pour l’instant (monte‑meuble, piano, débarras…)."}
