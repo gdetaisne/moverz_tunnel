@@ -18,7 +18,12 @@ import {
   type FormuleType,
   type HousingType,
 } from "@/lib/pricing/calculate";
-import { COEF_VOLUME, FORMULE_MULTIPLIERS } from "@/lib/pricing/constants";
+import {
+  COEF_DISTANCE,
+  COEF_VOLUME,
+  FORMULE_MULTIPLIERS,
+  PRIX_MIN_SOCLE,
+} from "@/lib/pricing/constants";
 
 const STEPS = [
   { id: 1, label: "Contact" },
@@ -352,6 +357,24 @@ function getSeasonFactor(dateStr: string | null | undefined): number {
 
   // Saison "normale"
   return 1.0;
+}
+
+function getUrgencyFactor(dateStr: string | null | undefined): number {
+  if (!dateStr) return 1;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return 1;
+
+  const now = new Date();
+  const diffMs = d.getTime() - now.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  // Déménagement déjà passé ou très lointain : pas de surcoût d'urgence
+  if (diffDays <= 0 || diffDays > 365) return 1;
+
+  // +15 % si départ dans moins de 30 jours
+  if (diffDays <= 30) return 1.15;
+
+  return 1;
 }
 
 function formatHousingCard(
@@ -1098,8 +1121,6 @@ function DevisGratuitsPageInner() {
     null
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isOriginOpen, setIsOriginOpen] = useState(true);
-  const [isDestinationOpen, setIsDestinationOpen] = useState(false);
   const [analysisStartedAt, setAnalysisStartedAt] = useState<number | null>(null);
   const [analysisElapsedMs, setAnalysisElapsedMs] = useState<number>(0);
   const [analysisTargetSeconds, setAnalysisTargetSeconds] = useState<number | null>(
@@ -1151,14 +1172,24 @@ function DevisGratuitsPageInner() {
     [form.movingDate]
   );
 
+  const urgencyFactor = useMemo(
+    () => getUrgencyFactor(form.movingDate),
+    [form.movingDate]
+  );
+
+  const combinedSeasonFactor = useMemo(
+    () => seasonFactor * urgencyFactor,
+    [seasonFactor, urgencyFactor]
+  );
+
   const pricePerM3NoSeason = useMemo(
     () => COEF_VOLUME * FORMULE_MULTIPLIERS[form.formule],
     [form.formule]
   );
 
   const pricePerM3Seasoned = useMemo(
-    () => pricePerM3NoSeason * seasonFactor,
-    [pricePerM3NoSeason, seasonFactor]
+    () => pricePerM3NoSeason * combinedSeasonFactor,
+    [pricePerM3NoSeason, combinedSeasonFactor]
   );
 
   const pricingByFormule = useMemo(() => {
@@ -1170,7 +1201,7 @@ function DevisGratuitsPageInner() {
       housingType: form.housingType,
       density: form.density,
       distanceKm,
-      seasonFactor,
+      seasonFactor: combinedSeasonFactor,
       originFloor: parseInt(form.originFloor || "0", 10) || 0,
       originElevator:
         form.originElevator === "none"
@@ -2123,7 +2154,7 @@ function DevisGratuitsPageInner() {
         </section>
       )}
 
-      {/* Étape 2 – Projet (départ / arrivée sous forme d'accordéons) */}
+      {/* Étape 2 – Projet (départ / arrivée en blocs ouverts) */}
       {currentStep === 2 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <form
@@ -2149,269 +2180,219 @@ function DevisGratuitsPageInner() {
               goToStep(3);
             }}
           >
-            {/* Bloc départ : accordéon avec résumé + statut de complétion */}
-            <div className="overflow-hidden rounded-2xl bg-slate-950/40 ring-1 ring-slate-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOriginOpen(true);
-                  setIsDestinationOpen(false);
-                }}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2.5"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-                    Départ
-                  </p>
-                  <p className="mt-1 truncate text-[11px] text-slate-400">
-                    {originSummary || "Code postal, ville, type de logement…"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={[
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                      isOriginComplete
-                        ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/60"
-                        : "bg-slate-800/80 text-slate-200 ring-1 ring-slate-600/80",
-                    ].join(" ")}
-                  >
-                    {isOriginComplete ? "✓ Validé" : "À compléter"}
-                  </span>
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-600/70 bg-slate-900 text-xs text-slate-200">
-                    {isOriginOpen ? "−" : "+"}
-                  </span>
-                </div>
-              </button>
-              {isOriginOpen && (
-                <div className="space-y-3 border-t border-slate-800 bg-slate-950/70 p-3">
-                  <AddressAutocomplete
-                    label="Adresse de départ"
-                    placeholder="10 rue de la Paix, 33000 Bordeaux"
-                    helperText="Vous pouvez saisir une adresse complète, une ville ou un code postal."
-                    mode="fr"
-                    initialValue={
-                      form.originAddress ||
-                      [form.originPostalCode, form.originCity]
-                        .filter(Boolean)
-                        .join(" ")
-                    }
-                    onSelect={(s) => {
-                      updateField("originAddress", s.addressLine ?? s.label);
-                      updateField("originPostalCode", s.postalCode ?? "");
-                      updateField("originCity", s.city ?? "");
-                      updateField("originLat", s.lat ?? null);
-                      updateField("originLon", s.lon ?? null);
-                    }}
-                  />
-                  <p className="text-[11px] text-slate-500">
-                    {form.originPostalCode && form.originCity
-                      ? `${form.originPostalCode} ${form.originCity}`
-                      : "Code postal et ville seront remplis automatiquement."}
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Type de logement
-                      </label>
-                      <select
-                        value={form.originHousingType}
-                        onChange={(e) =>
-                          updateField(
-                            "originHousingType",
-                            e.target.value as HousingType
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="studio">Studio</option>
-                        <option value="t1">T1</option>
-                        <option value="t2">T2</option>
-                        <option value="t3">T3</option>
-                        <option value="t4">T4</option>
-                        <option value="t5">T5</option>
-                        <option value="house">Maison plain-pied</option>
-                        <option value="house_1floor">Maison +1 étage</option>
-                        <option value="house_2floors">Maison +2 étages</option>
-                        <option value="house_3floors">
-                          Maison 3 étages ou +
-                        </option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Distance de portage (m)
-                      </label>
-                      <select
-                        value={form.originCarryDistance}
-                        onChange={(e) =>
-                          updateField(
-                            "originCarryDistance",
-                            e.target.value as FormState["originCarryDistance"]
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="0-10">0–10 m</option>
-                        <option value="10-20">10–20 m</option>
-                        <option value="20-30">20–30 m</option>
-                        <option value="30-40">30–40 m</option>
-                        <option value="40-50">40–50 m</option>
-                        <option value="50-60">50–60 m</option>
-                        <option value="60-70">60–70 m</option>
-                        <option value="70-80">70–80 m</option>
-                        <option value="80-90">80–90 m</option>
-                        <option value="90-100">90–100 m</option>
-                      </select>
-                    </div>
+            {/* Bloc départ – toujours ouvert, sans badges */}
+            <div className="space-y-3 overflow-hidden rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">
+                  Départ
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  {originSummary || "Code postal, ville, type de logement…"}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <AddressAutocomplete
+                  label="Adresse de départ"
+                  placeholder="10 rue de la Paix, 33000 Bordeaux"
+                  helperText="Vous pouvez saisir une adresse complète, une ville ou un code postal."
+                  mode="fr"
+                  initialValue={
+                    form.originAddress ||
+                    [form.originPostalCode, form.originCity]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
+                  onSelect={(s) => {
+                    updateField("originAddress", s.addressLine ?? s.label);
+                    updateField("originPostalCode", s.postalCode ?? "");
+                    updateField("originCity", s.city ?? "");
+                    updateField("originLat", s.lat ?? null);
+                    updateField("originLon", s.lon ?? null);
+                  }}
+                />
+                <p className="text-[11px] text-slate-500">
+                  {form.originPostalCode && form.originCity
+                    ? `${form.originPostalCode} ${form.originCity}`
+                    : "Code postal et ville seront remplis automatiquement."}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Type de logement
+                    </label>
+                    <select
+                      value={form.originHousingType}
+                      onChange={(e) =>
+                        updateField(
+                          "originHousingType",
+                          e.target.value as HousingType
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="studio">Studio</option>
+                      <option value="t1">T1</option>
+                      <option value="t2">T2</option>
+                      <option value="t3">T3</option>
+                      <option value="t4">T4</option>
+                      <option value="t5">T5</option>
+                      <option value="house">Maison plain-pied</option>
+                      <option value="house_1floor">Maison +1 étage</option>
+                      <option value="house_2floors">Maison +2 étages</option>
+                      <option value="house_3floors">
+                        Maison 3 étages ou +
+                      </option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Distance de portage (m)
+                    </label>
+                    <select
+                      value={form.originCarryDistance}
+                      onChange={(e) =>
+                        updateField(
+                          "originCarryDistance",
+                          e.target.value as FormState["originCarryDistance"]
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="0-10">0–10 m</option>
+                      <option value="10-20">10–20 m</option>
+                      <option value="20-30">20–30 m</option>
+                      <option value="30-40">30–40 m</option>
+                      <option value="40-50">40–50 m</option>
+                      <option value="50-60">50–60 m</option>
+                      <option value="60-70">60–70 m</option>
+                      <option value="70-80">70–80 m</option>
+                      <option value="80-90">80–90 m</option>
+                      <option value="90-100">90–100 m</option>
+                    </select>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* Bloc arrivée : accordéon avec résumé + statut de complétion */}
-            <div className="overflow-hidden rounded-2xl bg-slate-950/40 ring-1 ring-slate-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDestinationOpen(true);
-                  setIsOriginOpen(false);
-                }}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2.5"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-                    Arrivée
-                  </p>
-                  <p className="mt-1 truncate text-[11px] text-slate-400">
-                    {destinationSummary || "Code postal, ville, type de logement…"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={[
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                      isDestinationComplete
-                        ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/60"
-                        : "bg-slate-800/80 text-slate-200 ring-1 ring-slate-600/80",
-                    ].join(" ")}
-                  >
-                    {isDestinationComplete ? "✓ Validé" : "À compléter"}
-                  </span>
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-600/70 bg-slate-900 text-xs text-slate-200">
-                    {isDestinationOpen ? "−" : "+"}
-                  </span>
-                </div>
-              </button>
-              {isDestinationOpen && (
-                <div className="space-y-3 border-t border-slate-800 bg-slate-950/70 p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-medium text-slate-200">
-                      Adresse d’arrivée
-                    </p>
-                    <label className="flex items-center gap-2 text-[11px] text-slate-300">
-                      <input
-                        type="checkbox"
-                        className="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500"
-                        checked={isDestinationForeign}
-                        onChange={(e) => setIsDestinationForeign(e.target.checked)}
-                      />
-                      Adresse à l’étranger
-                      </label>
-                    </div>
+            {/* Bloc arrivée – toujours ouvert, sans badges */}
+            <div className="space-y-3 overflow-hidden rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">
+                  Arrivée
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  {destinationSummary || "Code postal, ville, type de logement…"}
+                </p>
+              </div>
 
-                  <AddressAutocomplete
-                    label=""
-                    placeholder={
-                      isDestinationForeign
-                        ? "10 Downing St, London, UK"
-                        : "20 avenue des Champs-Élysées, 75008 Paris"
-                    }
-                    helperText={
-                      isDestinationForeign
-                        ? "Incluez le pays (ex: Barcelone, Espagne)."
-                        : "Vous pouvez saisir une adresse complète, une ville ou un code postal."
-                    }
-                    mode={isDestinationForeign ? "world" : "fr"}
-                    initialValue={
-                      form.destinationAddress ||
-                      [form.destinationPostalCode, form.destinationCity]
-                        .filter(Boolean)
-                        .join(" ")
-                    }
-                    onSelect={(s) => {
-                      updateField("destinationAddress", s.addressLine ?? s.label);
-                      updateField("destinationPostalCode", s.postalCode ?? "");
-                      updateField("destinationCity", s.city ?? "");
-                      updateField("destinationLat", s.lat ?? null);
-                      updateField("destinationLon", s.lon ?? null);
-                    }}
-                  />
-                  <p className="text-[11px] text-slate-500">
-                    {form.destinationPostalCode && form.destinationCity
-                      ? `${form.destinationPostalCode} ${form.destinationCity}`
-                      : isDestinationForeign
-                      ? "Ville, pays et code postal seront remplis automatiquement si possible."
-                      : "Code postal et ville seront remplis automatiquement."}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-medium text-slate-200">
+                    Adresse d’arrivée
                   </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Type de logement
-                      </label>
-                      <select
-                        value={form.destinationHousingType}
-                        onChange={(e) =>
-                          updateField(
-                            "destinationHousingType",
-                            e.target.value as HousingType
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="studio">Studio</option>
-                        <option value="t1">T1</option>
-                        <option value="t2">T2</option>
-                        <option value="t3">T3</option>
-                        <option value="t4">T4</option>
-                        <option value="t5">T5</option>
-                        <option value="house">Maison plain-pied</option>
-                        <option value="house_1floor">Maison +1 étage</option>
-                        <option value="house_2floors">Maison +2 étages</option>
-                        <option value="house_3floors">
-                          Maison 3 étages ou +
-                        </option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
-                        Distance de portage (m)
-                      </label>
-                      <select
-                        value={form.destinationCarryDistance}
-                        onChange={(e) =>
-                          updateField(
-                            "destinationCarryDistance",
-                            e.target.value as FormState["destinationCarryDistance"]
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                        <option value="0-10">0–10 m</option>
-                        <option value="10-20">10–20 m</option>
-                        <option value="20-30">20–30 m</option>
-                        <option value="30-40">30–40 m</option>
-                        <option value="40-50">40–50 m</option>
-                        <option value="50-60">50–60 m</option>
-                        <option value="60-70">60–70 m</option>
-                        <option value="70-80">70–80 m</option>
-                        <option value="80-90">80–90 m</option>
-                        <option value="90-100">90–100 m</option>
-                      </select>
-                    </div>
+                  <label className="flex items-center gap-2 text-[11px] text-slate-300">
+                    <input
+                      type="checkbox"
+                      className="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500"
+                      checked={isDestinationForeign}
+                      onChange={(e) => setIsDestinationForeign(e.target.checked)}
+                    />
+                    Adresse à l’étranger
+                  </label>
+                </div>
+
+                <AddressAutocomplete
+                  label=""
+                  placeholder={
+                    isDestinationForeign
+                      ? "10 Downing St, London, UK"
+                      : "20 avenue des Champs-Élysées, 75008 Paris"
+                  }
+                  helperText={
+                    isDestinationForeign
+                      ? "Incluez le pays (ex: Barcelone, Espagne)."
+                      : "Vous pouvez saisir une adresse complète, une ville ou un code postal."
+                  }
+                  mode={isDestinationForeign ? "world" : "fr"}
+                  initialValue={
+                    form.destinationAddress ||
+                    [form.destinationPostalCode, form.destinationCity]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
+                  onSelect={(s) => {
+                    updateField("destinationAddress", s.addressLine ?? s.label);
+                    updateField("destinationPostalCode", s.postalCode ?? "");
+                    updateField("destinationCity", s.city ?? "");
+                    updateField("destinationLat", s.lat ?? null);
+                    updateField("destinationLon", s.lon ?? null);
+                  }}
+                />
+                <p className="text-[11px] text-slate-500">
+                  {form.destinationPostalCode && form.destinationCity
+                    ? `${form.destinationPostalCode} ${form.destinationCity}`
+                    : isDestinationForeign
+                    ? "Ville, pays et code postal seront remplis automatiquement si possible."
+                    : "Code postal et ville seront remplis automatiquement."}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Type de logement
+                    </label>
+                    <select
+                      value={form.destinationHousingType}
+                      onChange={(e) =>
+                        updateField(
+                          "destinationHousingType",
+                          e.target.value as HousingType
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="studio">Studio</option>
+                      <option value="t1">T1</option>
+                      <option value="t2">T2</option>
+                      <option value="t3">T3</option>
+                      <option value="t4">T4</option>
+                      <option value="t5">T5</option>
+                      <option value="house">Maison plain-pied</option>
+                      <option value="house_1floor">Maison +1 étage</option>
+                      <option value="house_2floors">Maison +2 étages</option>
+                      <option value="house_3floors">
+                        Maison 3 étages ou +
+                      </option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Distance de portage (m)
+                    </label>
+                    <select
+                      value={form.destinationCarryDistance}
+                      onChange={(e) =>
+                        updateField(
+                          "destinationCarryDistance",
+                          e.target.value as FormState["destinationCarryDistance"]
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    >
+                      <option value="0-10">0–10 m</option>
+                      <option value="10-20">10–20 m</option>
+                      <option value="20-30">20–30 m</option>
+                      <option value="30-40">30–40 m</option>
+                      <option value="40-50">40–50 m</option>
+                      <option value="50-60">50–60 m</option>
+                      <option value="60-70">60–70 m</option>
+                      <option value="70-80">70–80 m</option>
+                      <option value="80-90">80–90 m</option>
+                      <option value="90-100">90–100 m</option>
+                    </select>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Distance estimée (information indicative) */}
@@ -2421,41 +2402,30 @@ function DevisGratuitsPageInner() {
               </p>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr),minmax(0,1.1fr)]">
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-100">
-                  Date souhaitée
-                </label>
-                <input
-                  type="date"
-                  value={form.movingDate}
-                  onChange={(e) => updateField("movingDate", e.target.value)}
-                  onClick={(e) => {
-                    try {
-                      (e.target as HTMLInputElement).showPicker?.();
-                    } catch {}
-                  }}
-                  min={new Date().toISOString().split('T')[0]}
-                  max={(() => {
-                    const d = new Date();
-                    d.setFullYear(d.getFullYear() + 1);
-                    return d.toISOString().split('T')[0];
-                  })()}
-                  required
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-100">
-                  Fin de période (optionnel)
-                </label>
-                <input
-                  type="date"
-                  value={form.movingDateEnd}
-                  onChange={(e) => updateField("movingDateEnd", e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                />
-              </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-100">
+                Date souhaitée
+              </label>
+              <input
+                type="date"
+                value={form.movingDate}
+                onChange={(e) => updateField("movingDate", e.target.value)}
+                onClick={(e) => {
+                  try {
+                    (e.target as HTMLInputElement).showPicker?.();
+                  } catch {
+                    // showPicker non supporté : fallback silencieux
+                  }
+                }}
+                min={new Date().toISOString().split("T")[0]}
+                max={(() => {
+                  const d = new Date();
+                  d.setFullYear(d.getFullYear() + 1);
+                  return d.toISOString().split("T")[0];
+                })()}
+                required
+                className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
+              />
             </div>
 
             <label className="inline-flex items-center gap-2 text-xs text-slate-300">
@@ -2818,64 +2788,160 @@ function DevisGratuitsPageInner() {
                 estimatedVolumeM3 != null &&
                 Number.isFinite(distanceKm) && (
                   <div className="mt-3 space-y-1 rounded-2xl bg-slate-950/70 p-3 text-[11px] text-slate-300 ring-1 ring-slate-800">
-                    <p className="font-semibold text-slate-100">
-                      Comment sont estimés les prix ?
-                    </p>
-                    <p>
-                      Le prix de votre déménagement dépend de nombreux critères
-                      dont principalement :
-                    </p>
-                    <ul className="ml-4 list-disc space-y-1">
-                      <li>
-                        <span className="font-semibold">Volume :</span>{" "}
-                        dans votre cas,{" "}
-                        {estimatedVolumeM3.toLocaleString("fr-FR", {
-                          maximumFractionDigits: 1,
-                        })}{" "}
-                        m³ correspondent à environ{" "}
-                        <span className="font-semibold">
-                          {volumePriceApprox != null
-                            ? formatPrice(volumePriceApprox)
-                            : "—"}
-                        </span>
-                        .
-                      </li>
-                      <li>
-                        <span className="font-semibold">Distance :</span>{" "}
-                        {distanceKm < 30
-                          ? "dans votre cas, déménagement local, donc pas de sur‑coût significatif lié à la distance."
-                          : `dans votre cas, environ ${Math.round(
-                              distanceKm
-                            )} km à parcourir, ce qui pèse aussi dans le prix.`}
-                      </li>
-                      <li>
-                        <span className="font-semibold">
-                          Période de l&apos;année :
-                        </span>{" "}
-                        {seasonFactor > 1.01
-                          ? `dans votre cas, vous risquez une majoration d’environ ${formatPrice(
-                              Math.max(
-                                0,
-                                activePricing.prixFinal -
-                                  Math.round(
-                                    activePricing.prixFinal / seasonFactor
-                                  )
-                              )
-                            )}.`
-                          : seasonFactor < 0.99
-                          ? `dans votre cas, vous bénéficiez d’une légère réduction par rapport à la haute saison.`
-                          : "dans votre cas, pas de majoration particulière liée à la période."}
-                      </li>
-                    </ul>
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      NB : Un m³ supplémentaire vous coûterait dans ces
-                      conditions environ{" "}
-                      <span className="font-semibold">
-                        {Math.round(pricePerM3Seasoned).toLocaleString("fr-FR")}{" "}
-                        €
-                      </span>
-                      .
-                    </p>
+                    {(() => {
+                      const volumePart = estimatedVolumeM3 * COEF_VOLUME;
+                      const distancePart = distanceKm * COEF_DISTANCE;
+                      const baseNoSeason = Math.max(
+                        volumePart,
+                        distancePart,
+                        PRIX_MIN_SOCLE
+                      );
+                      const B = baseNoSeason;
+                      const multSeason = seasonFactor;
+                      const multUrgency = urgencyFactor;
+                      const multFormuleEtage =
+                        activePricing.formuleMultiplier * activePricing.coeffEtage;
+                      const effetVolumeDistance = B;
+                      const effetSaison = B * (multSeason - 1);
+                      const effetUrgence =
+                        B * multSeason * (multUrgency - 1);
+                      const effetFormuleEtage =
+                        B *
+                        multSeason *
+                        multUrgency *
+                        (multFormuleEtage - 1);
+                      const effetServices = activePricing.servicesTotal;
+                      const centre =
+                        effetVolumeDistance +
+                        effetSaison +
+                        effetUrgence +
+                        effetFormuleEtage +
+                        effetServices;
+
+                      const prixParM3Min =
+                        activePricing.prixMin /
+                        Math.max(estimatedVolumeM3, 1);
+                      const prixParM3Max =
+                        activePricing.prixMax /
+                        Math.max(estimatedVolumeM3, 1);
+
+                      const distanceImpact =
+                        distancePart > volumePart
+                          ? (distancePart - volumePart) *
+                            multSeason *
+                            multUrgency *
+                            multFormuleEtage
+                          : 0;
+
+                      return (
+                        <>
+                          <p className="font-semibold text-slate-100">
+                            Comment sont estimés les prix ?
+                          </p>
+                          <p>
+                            On décompose votre estimation en plusieurs{" "}
+                            <span className="font-semibold">effets</span> qui
+                            s’additionnent pour atteindre environ{" "}
+                            <span className="font-semibold">
+                              {formatPrice(Math.round(centre))}
+                            </span>{" "}
+                            (avant marge de ±20 % pour obtenir la fourchette).
+                          </p>
+                          <ul className="ml-4 list-disc space-y-1">
+                            <li>
+                              <span className="font-semibold">
+                                Effet volume :
+                              </span>{" "}
+                              vos{" "}
+                              {estimatedVolumeM3.toLocaleString("fr-FR", {
+                                maximumFractionDigits: 1,
+                              })}{" "}
+                              m³ représentent le socle principal du prix. Sur
+                              cette distance, il faut compter entre{" "}
+                              <span className="font-semibold">
+                                {Math.round(prixParM3Min).toLocaleString(
+                                  "fr-FR"
+                                )}{" "}
+                                € et{" "}
+                                {Math.round(prixParM3Max).toLocaleString(
+                                  "fr-FR"
+                                )}{" "}
+                                €
+                              </span>{" "}
+                              par m³.
+                            </li>
+                            <li>
+                              <span className="font-semibold">
+                                Effet distance :
+                              </span>{" "}
+                              {distanceKm < 30
+                                ? "déménagement local, la distance ne rajoute quasiment rien par rapport au volume."
+                                : `dans votre cas, environ ${Math.round(
+                                    distanceKm
+                                  )} km à parcourir. Par rapport à un trajet très court de même volume, cela représente environ ${formatPrice(
+                                    Math.round(
+                                      Math.max(0, distanceImpact)
+                                    )
+                                  )} supplémentaires.`}
+                            </li>
+                            <li>
+                              <span className="font-semibold">
+                                Effet saison :
+                              </span>{" "}
+                              {seasonFactor > 1.01
+                                ? `période chargée : la saison ajoute environ ${formatPrice(
+                                    Math.round(effetSaison)
+                                  )} par rapport à une période calme.`
+                                : seasonFactor < 0.99
+                                ? `période calme : vous bénéficiez d’une réduction d’environ ${formatPrice(
+                                    Math.round(Math.abs(effetSaison))
+                                  )} par rapport à la haute saison.`
+                                : "période neutre : pas de majoration particulière liée à la saison."}
+                            </li>
+                            <li>
+                              <span className="font-semibold">
+                                Effet urgence :
+                              </span>{" "}
+                              {urgencyFactor > 1.01
+                                ? `déménagement dans moins d’un mois : cela ajoute environ ${formatPrice(
+                                    Math.round(effetUrgence)
+                                  )} de majoration.`
+                                : "déménagement prévu à plus d’un mois : pas de surcoût d’urgence."}
+                            </li>
+                            <li>
+                              <span className="font-semibold">
+                                Effet niveau de service :
+                              </span>{" "}
+                              {effetServices > 0
+                                ? `les options choisies (monte‑meuble, piano, débarras…) représentent environ ${formatPrice(
+                                    Math.round(effetServices)
+                                  )}.`
+                                : "aucun service additionnel sélectionné pour l’instant (monte‑meuble, piano, débarras…)."}
+                            </li>
+                          </ul>
+                          <div className="mt-1 space-y-0.5 text-[10px] text-slate-400">
+                            <p className="font-semibold text-slate-300">NB :</p>
+                            <ul className="ml-4 list-disc space-y-0.5">
+                              <li>
+                                Un m³ supplémentaire vous coûterait dans ces
+                                conditions environ{" "}
+                                <span className="font-semibold">
+                                  {Math.round(
+                                    pricePerM3Seasoned
+                                  ).toLocaleString("fr-FR")}{" "}
+                                  €
+                                </span>
+                                .
+                              </li>
+                              <li>
+                                Un frigo 1 porte représente environ un demi m³ et
+                                dix cartons standards de déménagement environ 1 m³.
+                              </li>
+                            </ul>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
 

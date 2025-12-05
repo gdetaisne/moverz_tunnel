@@ -1,15 +1,16 @@
 export const TYPE_COEFFICIENTS = {
+  // 0,35 pour T1/T2/T3 ; 0,3 pour le reste
   studio: 0.3,
-  t1: 0.3,
+  t1: 0.35,
   t2: 0.35,
   t3: 0.35,
-  t4: 0.4,
-  t5: 0.4,
-  house: 0.45,
-  // Variantes maison étagée, alignées sur moverz_main (moverz-constants)
-  house_1floor: 0.45,
-  house_2floors: 0.45,
-  house_3floors: 0.45,
+  t4: 0.3,
+  t5: 0.3,
+  house: 0.3,
+  // Variantes maison étagée
+  house_1floor: 0.3,
+  house_2floors: 0.3,
+  house_3floors: 0.3,
 } as const;
 
 export const DENSITY_COEFFICIENTS = {
@@ -19,9 +20,10 @@ export const DENSITY_COEFFICIENTS = {
 } as const;
 
 export const FORMULE_MULTIPLIERS = {
-  ECONOMIQUE: 1.1,
-  STANDARD: 1.25,
-  PREMIUM: 1.4,
+  // ÉCO : 0,75 ; STANDARD : 1 ; PREMIUM : 1,25
+  ECONOMIQUE: 0.75,
+  STANDARD: 1.0,
+  PREMIUM: 1.25,
 } as const;
 
 export const SERVICES_PRIX = {

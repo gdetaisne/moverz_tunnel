@@ -114,10 +114,10 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   const prixFinal = Math.round(centreSeasoned);
 
   // 8. Fourchette :
-  // - min ancré sur le prix "hors saison"
-  // - max sur le prix saisonné
-  const prixMin = Math.round(centreNoSeason * 0.9);
-  const prixMax = Math.round(centreSeasoned * 1.1);
+  // - min ancré sur le prix "hors saison" avec -20 %
+  // - max sur le prix saisonné avec +20 %
+  const prixMin = Math.round(centreNoSeason * 0.8);
+  const prixMax = Math.round(centreSeasoned * 1.2);
 
   return {
     volumeM3,
