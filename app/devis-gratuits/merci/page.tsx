@@ -11,12 +11,20 @@ export default function MerciPage() {
           Merci pour votre demande !
         </h1>
         <p className="text-sm text-slate-300 sm:text-base">
-          Votre dossier de déménagement a bien été créé. Vous allez recevoir un
-          email pour confirmer votre adresse – sans cette étape, nous ne
-          pourrons pas lancer la recherche de devis.
+          Votre dossier de déménagement a bien été créé. Si vous avez déjà
+          envoyé des photos, nous venons de produire pour vous un inventaire
+          détaillé, une déclaration de valeur et un dossier complet prêt pour
+          les déménageurs.
         </p>
-        <p className="text-xs text-slate-400 sm:text-sm">
-          Vous pouvez fermer cette page une fois la confirmation effectuée.
+        <p className="text-xs text-slate-300 sm:text-sm">
+          Un email de confirmation vient de vous être envoyé. Il vous suffit de
+          cliquer sur le lien dans cet email pour valider votre adresse et
+          lancer la recherche de devis.
+        </p>
+        <p className="text-[11px] text-slate-400 sm:text-xs">
+          Si l’adresse email indiquée n’est pas la bonne ou si vous ne recevez
+          rien, répondez simplement à l’email de bienvenue ou contactez‑nous
+          pour la corriger : nous mettrons votre dossier à jour.
         </p>
       </div>
     </div>

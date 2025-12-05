@@ -66,7 +66,7 @@ export default function HomePage() {
             <div className="space-y-1">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-slate-50 sm:text-base">
-                  +10 minutes de photos (facultatif mais recommandé)
+                  Analyse et traitement de vos photos (facultatif)
                 </h2>
                 <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-200 ring-1 ring-emerald-400/40">
                   Inventaire automatique
