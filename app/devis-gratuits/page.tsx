@@ -2829,6 +2829,9 @@ function DevisGratuitsPageInner() {
                             multUrgency *
                             multFormuleEtage
                           : 0;
+                      const distanceImpactRounded = Math.round(
+                        Math.max(0, distanceImpact)
+                      );
 
                       const ecoPricing = pricingByFormule?.ECONOMIQUE;
                       const standardPricing = pricingByFormule?.STANDARD;
@@ -2898,14 +2901,14 @@ function DevisGratuitsPageInner() {
                                 Effet distance :
                               </span>{" "}
                               {distanceKm < 30
-                                ? "déménagement local, la distance ne rajoute quasiment rien par rapport au volume."
-                                : `dans votre cas, environ ${Math.round(
+                                ? "déménagement local : la distance ne rajoute quasiment rien par rapport au volume."
+                                : distanceImpactRounded > 0
+                                ? `dans votre cas, environ ${Math.round(
                                     distanceKm
-                                  )} km à parcourir. Par rapport à un trajet très court de même volume, cela représente environ ${formatPrice(
-                                    Math.round(
-                                      Math.max(0, distanceImpact)
-                                    )
-                                  )} supplémentaires.`}
+                                  )} km à parcourir. Par rapport à un trajet très court de même volume, cela ajoute environ ${formatPrice(
+                                    distanceImpactRounded
+                                  )}.`
+                                : `dans votre cas, la distance reste modérée : pas de surcoût particulier par rapport au volume.`}
                             </li>
                             <li>
                               <span className="font-semibold">
@@ -2937,31 +2940,29 @@ function DevisGratuitsPageInner() {
                               </span>{" "}
                               {standardPricing
                                 ? form.formule === "ECONOMIQUE" && ecoPricing
-                                  ? `en choisissant la formule Éco, vous économisez environ ${formatPrice(
-                                      Math.round(
+                                  ? (() => {
+                                      const delta =
                                         standardPricing.prixAvecFormule -
-                                          ecoPricing.prixAvecFormule
-                                      )
-                                    )} par rapport à la formule Standard.`
+                                        ecoPricing.prixAvecFormule;
+                                      return delta > 1
+                                        ? `en choisissant la formule Éco, vous économisez environ ${formatPrice(
+                                            Math.round(delta)
+                                          )} par rapport à la formule Standard.`
+                                        : "dans votre cas, la formule Éco est très proche de la Standard en prix : peu de différence sur ce dossier.";
+                                    })()
                                   : form.formule === "PREMIUM" && premiumPricing
-                                  ? `la formule Premium ajoute environ ${formatPrice(
-                                      Math.round(
+                                  ? (() => {
+                                      const delta =
                                         premiumPricing.prixAvecFormule -
-                                          standardPricing.prixAvecFormule
-                                      )
-                                    )} par rapport à la formule Standard.`
-                                  : "la formule Standard sert de référence : pas de surcoût ni de remise spécifique sur le niveau de service."
-                                : "les niveaux de formule (Éco / Standard / Premium) ajustent le nombre de services inclus (emballage, démontage, confort de l’équipe)."}
-                            </li>
-                            <li>
-                              <span className="font-semibold">
-                                Effet services additionnels :
-                              </span>{" "}
-                              {effetServices > 0
-                                ? `les options cochées (monte‑meuble, piano, débarras…) représentent environ ${formatPrice(
-                                    Math.round(effetServices)
-                                  )}.`
-                                : "aucun service additionnel sélectionné pour l’instant (monte‑meuble, piano, débarras…)."}
+                                        standardPricing.prixAvecFormule;
+                                      return delta > 1
+                                        ? `la formule Premium ajoute environ ${formatPrice(
+                                            Math.round(delta)
+                                          )} par rapport à la formule Standard, pour plus de confort (emballage, démontage, équipe renforcée).`
+                                        : "dans votre cas, la formule Premium est très proche de la Standard en prix : le surcoût reste limité.";
+                                    })()
+                                  : "la formule Standard sert de référence dans votre cas : équilibre entre budget et niveau de service."
+                                : "les trois formules (Éco, Standard, Premium) ajustent le niveau de service inclus (emballage, démontage, confort de l’équipe)."}
                             </li>
                           </ul>
                           <div className="mt-1 space-y-0.5 text-[10px] text-slate-400">
