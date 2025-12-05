@@ -1,9 +1,29 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
+  const router = useRouter();
+
+  const startTunnel = () => {
+    router.push("/devis-gratuits?src=landing");
+  };
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-2xl space-y-8 rounded-3xl bg-slate-900/90 p-6 shadow-xl ring-1 ring-slate-800 sm:p-8">
+      <div
+        className="w-full max-w-2xl space-y-8 rounded-3xl bg-slate-900/90 p-6 shadow-xl ring-1 ring-slate-800 sm:p-8 cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onClick={startTunnel}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            startTunnel();
+          }
+        }}
+      >
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-300">
             Tunnel Moverz
@@ -85,12 +105,16 @@ export default function HomePage() {
             Prêt ? On commence par la constitution de votre dossier en{" "}
             <span className="font-semibold text-slate-100">2 à 3 minutes</span>.
           </p>
-          <Link
-            href="/devis-gratuits?src=landing"
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              startTunnel();
+            }}
             className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300"
           >
             Commencer mon dossier de déménagement
-          </Link>
+          </button>
         </div>
       </div>
     </main>
