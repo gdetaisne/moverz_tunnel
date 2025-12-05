@@ -2822,13 +2822,6 @@ function DevisGratuitsPageInner() {
                         effetFormuleEtage +
                         effetServices;
 
-                      const prixParM3Min =
-                        activePricing.prixMin /
-                        Math.max(estimatedVolumeM3, 1);
-                      const prixParM3Max =
-                        activePricing.prixMax /
-                        Math.max(estimatedVolumeM3, 1);
-
                       const distanceImpact =
                         distancePart > volumePart
                           ? (distancePart - volumePart) *
@@ -2840,6 +2833,30 @@ function DevisGratuitsPageInner() {
                       const ecoPricing = pricingByFormule?.ECONOMIQUE;
                       const standardPricing = pricingByFormule?.STANDARD;
                       const premiumPricing = pricingByFormule?.PREMIUM;
+
+                      let volumeEffectPerM3: number | null = null;
+                      if (standardPricing && estimatedVolumeM3 > 0) {
+                        const standardCentre = standardPricing.prixFinal;
+                        const multFormuleEtageStd =
+                          standardPricing.formuleMultiplier *
+                          standardPricing.coeffEtage;
+                        const distanceImpactStd =
+                          distancePart > volumePart
+                            ? (distancePart - volumePart) *
+                              multSeason *
+                              multUrgency *
+                              multFormuleEtageStd
+                            : 0;
+                        const effetServicesStd = standardPricing.servicesTotal;
+                        const autresEffetsStd =
+                          effetSaison +
+                          effetUrgence +
+                          distanceImpactStd +
+                          effetServicesStd;
+                        const volumePartStd = standardCentre - autresEffetsStd;
+                        volumeEffectPerM3 =
+                          volumePartStd / Math.max(estimatedVolumeM3, 1);
+                      }
 
                       return (
                         <>
@@ -2864,19 +2881,17 @@ function DevisGratuitsPageInner() {
                               {estimatedVolumeM3.toLocaleString("fr-FR", {
                                 maximumFractionDigits: 1,
                               })}{" "}
-                              m³ représentent le socle principal du prix. Sur
-                              cette distance, il faut compter entre{" "}
+                              m³ représentent le socle principal du prix. Dans
+                              la formule Standard, la partie purement "volume"
+                              correspond à environ{" "}
                               <span className="font-semibold">
-                                {Math.round(prixParM3Min).toLocaleString(
-                                  "fr-FR"
-                                )}{" "}
-                                € et{" "}
-                                {Math.round(prixParM3Max).toLocaleString(
-                                  "fr-FR"
-                                )}{" "}
-                                €
-                              </span>{" "}
-                              par m³.
+                                {volumeEffectPerM3 != null
+                                  ? `${Math.round(
+                                      volumeEffectPerM3
+                                    ).toLocaleString("fr-FR")} € / m³`
+                                  : "—"}
+                              </span>
+                              .
                             </li>
                             <li>
                               <span className="font-semibold">
