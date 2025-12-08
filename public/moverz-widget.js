@@ -52,43 +52,47 @@
     var style = document.createElement("style");
     style.textContent = [
       ".mzw-root { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; color: #0f172a; }",
-      ".mzw-card { background: radial-gradient(circle at top left, #0f172a, #020617); border-radius: 24px; padding: 20px 20px 16px; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.65); color: #e5f4ff; max-width: 420px; min-height: 420px; display: flex; flex-direction: column; }",
+      ".mzw-card { background: #f9fafb; border-radius: 24px; padding: 20px 16px 16px; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18); color: #0f172a; max-width: 420px; min-height: 420px; display: flex; flex-direction: column; }",
       ".mzw-header { margin-bottom: 16px; }",
-      ".mzw-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(15, 118, 110, 0.1); color: #a5f3fc; font-size: 11px; font-weight: 500; }",
+      ".mzw-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(16, 185, 129, 0.08); color: #047857; font-size: 11px; font-weight: 500; }",
       ".mzw-badge-dot { width: 6px; height: 6px; border-radius: 999px; background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25); }",
       ".mzw-title { margin-top: 10px; font-size: 18px; font-weight: 600; }",
-      ".mzw-subtitle { margin-top: 4px; font-size: 13px; color: #cbd5f5; }",
-      ".mzw-dropzone { margin-top: 16px; border-radius: 18px; border: 1px dashed rgba(148, 163, 184, 0.6); background: rgba(15, 23, 42, 0.8); padding: 18px 14px; text-align: center; transition: border-color 0.15s ease, background 0.15s ease; }",
-      ".mzw-dropzone.mzw-dropzone--active { border-color: #22c55e; background: rgba(15, 23, 42, 0.95); }",
-      ".mzw-drop-icon { width: 32px; height: 32px; border-radius: 999px; background: rgba(15, 118, 110, 0.18); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px; }",
+      ".mzw-subtitle { margin-top: 4px; font-size: 13px; color: #4b5563; }",
+      ".mzw-dropzone { margin-top: 16px; border-radius: 18px; border: 1px dashed rgba(148, 163, 184, 0.8); background: #f1f5f9; padding: 18px 14px; text-align: center; transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; }",
+      ".mzw-dropzone.mzw-dropzone--active { border-color: #22c55e; background: #e0f2fe; box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.15); }",
+      ".mzw-drop-icon { width: 32px; height: 32px; border-radius: 999px; background: rgba(59, 130, 246, 0.08); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px; }",
       ".mzw-drop-icon-inner { width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid #22c55e; display: flex; align-items: center; justify-content: center; font-size: 13px; }",
       ".mzw-drop-title { font-size: 14px; font-weight: 500; }",
-      ".mzw-drop-helper { margin-top: 4px; font-size: 12px; color: #9ca3af; }",
-      ".mzw-drop-limit { margin-top: 2px; font-size: 11px; color: #6b7280; }",
+      ".mzw-drop-helper { margin-top: 4px; font-size: 12px; color: #6b7280; }",
+      ".mzw-drop-limit { margin-top: 2px; font-size: 11px; color: #9ca3af; }",
       ".mzw-photos-row { margin-top: 10px; display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }",
-      ".mzw-photo-pill { border-radius: 999px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(148, 163, 184, 0.7); padding: 4px 9px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }",
-      ".mzw-photo-pill-count { width: 18px; height: 18px; border-radius: 999px; background: rgba(15, 118, 110, 0.3); display: flex; align-items: center; justify-content: center; font-size: 11px; }",
+      ".mzw-photo-pill { border-radius: 999px; background: #e5f0ff; border: 1px solid rgba(148, 163, 184, 0.8); padding: 4px 9px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: #111827; }",
+      ".mzw-photo-pill-count { width: 18px; height: 18px; border-radius: 999px; background: rgba(59, 130, 246, 0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; }",
       ".mzw-photo-pill-remove { cursor: pointer; opacity: 0.65; }",
+      ".mzw-summary { margin-top: 10px; display: flex; justify-content: flex-end; }",
+      ".mzw-summary-pill { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: rgba(191, 219, 254, 0.9); color: #1d4ed8; font-weight: 500; }",
       ".mzw-footer { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }",
-      ".mzw-primary-btn { border: none; border-radius: 999px; padding: 11px 14px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(120deg, #22c55e, #06b6d4); color: #0f172a; box-shadow: 0 12px 25px rgba(34, 197, 94, 0.35); transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease; }",
-      ".mzw-primary-btn[disabled] { opacity: 0.45; cursor: default; box-shadow: none; }",
+      ".mzw-primary-btn { position: relative; overflow: hidden; border: none; border-radius: 999px; padding: 11px 14px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(120deg, #22c55e, #06b6d4); color: #0f172a; box-shadow: 0 12px 25px rgba(34, 197, 94, 0.35); transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease; }",
+      ".mzw-primary-btn[disabled] { opacity: 1; cursor: default; box-shadow: 0 12px 25px rgba(34, 197, 94, 0.35); }",
+      ".mzw-primary-btn-inner { position: relative; z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }",
+      ".mzw-progress-mask { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.12); pointer-events: none; border-radius: inherit; transform: translateZ(0); width: 0%; opacity: 0; }",
       ".mzw-primary-btn:not([disabled]):hover { transform: translateY(-1px); box-shadow: 0 16px 30px rgba(34, 197, 94, 0.45); }",
       ".mzw-primary-btn-chevron { font-size: 13px; }",
-      ".mzw-small-text { font-size: 11px; color: #9ca3af; text-align: center; }",
-      ".mzw-error { margin-top: 8px; font-size: 12px; color: #fecaca; }",
-      ".mzw-results { margin-top: 10px; border-radius: 16px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(148, 163, 184, 0.6); padding: 10px 10px 8px; max-height: 260px; overflow: auto; }",
+      ".mzw-small-text { font-size: 11px; color: #94a3b8; text-align: center; }",
+      ".mzw-error { margin-top: 8px; font-size: 12px; color: #b91c1c; }",
+      ".mzw-results { margin-top: 10px; border-radius: 16px; background: #f1f5f9; border: 1px solid rgba(148, 163, 184, 0.8); padding: 8px 6px 6px; max-height: 260px; overflow: auto; color: #0f172a; }",
       ".mzw-results-header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }",
-      ".mzw-results-title { font-size: 13px; font-weight: 500; }",
-      ".mzw-results-pill { font-size: 11px; color: #a5f3fc; background: rgba(8, 47, 73, 0.9); border-radius: 999px; padding: 2px 8px; }",
+      ".mzw-results-title { font-size: 13px; font-weight: 500; color: #0f172a; }",
+      ".mzw-results-pill { font-size: 11px; color: #1d4ed8; background: rgba(191, 219, 254, 0.9); border-radius: 999px; padding: 2px 8px; }",
       ".mzw-results-list { display: flex; flex-direction: column; gap: 6px; }",
-      ".mzw-item { border-radius: 12px; background: rgba(15, 23, 42, 0.88); padding: 8px 9px; border: 1px solid rgba(51, 65, 85, 0.9); }",
+      ".mzw-item { border-radius: 12px; background: #ffffff; padding: 8px 9px; border: 1px solid rgba(148, 163, 184, 0.8); }",
       ".mzw-item-header { display: flex; justify-content: space-between; gap: 8px; align-items: center; }",
-      ".mzw-item-label { font-size: 12px; font-weight: 500; color: #f9fafb; }",
+      ".mzw-item-label { font-size: 12px; font-weight: 500; color: #0f172a; }",
       ".mzw-item-badges { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }",
-      ".mzw-chip { border-radius: 999px; background: rgba(15, 118, 110, 0.25); padding: 1px 6px; font-size: 10px; color: #a5f3fc; }",
-      ".mzw-chip-outline { border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.7); padding: 1px 6px; font-size: 10px; color: #e5e7eb; }",
-      ".mzw-item-body { margin-top: 4px; font-size: 11px; color: #cbd5f5; display: flex; flex-direction: column; gap: 2px; }",
-      ".mzw-item-subdetails { margin-top: 3px; font-size: 10px; color: #9ca3af; }",
+      ".mzw-chip { border-radius: 999px; background: rgba(59, 130, 246, 0.08); padding: 1px 6px; font-size: 10px; color: #1d4ed8; }",
+      ".mzw-chip-outline { border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.8); padding: 1px 6px; font-size: 10px; color: #111827; background: #f9fafb; }",
+      ".mzw-item-body { margin-top: 4px; font-size: 11px; color: #4b5563; display: flex; flex-direction: column; gap: 2px; }",
+      ".mzw-item-subdetails { margin-top: 3px; font-size: 10px; color: #6b7280; }",
       ".mzw-loading { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #e5f4ff; }",
       ".mzw-spinner { width: 14px; height: 14px; border-radius: 999px; border: 2px solid rgba(148, 163, 184, 0.6); border-top-color: #22c55e; animation: mzw-spin 0.7s linear infinite; }",
       "@keyframes mzw-spin { to { transform: rotate(360deg); } }",
@@ -101,11 +105,11 @@
       '<div class="mzw-card">' +
       '  <div class="mzw-header">' +
       '    <div class="mzw-badge"><span class="mzw-badge-dot"></span><span>IA Moverz · Volume estimé</span></div>' +
-      '    <div class="mzw-title">Glissez vos photos, on génère votre inventaire</div>' +
-      '    <div class="mzw-subtitle">Ajoutez jusqu’à 3 photos de votre logement. L’IA estime les volumes et la valeur des principaux objets.</div>' +
+      '    <div class="mzw-title">Vos photos, notre IA fait le reste</div>' +
+      '    <div class="mzw-subtitle">Testez avec jusqu’à 3 photos, on estime le volume et la valeur de vos meubles.</div>' +
       "  </div>" +
+      '  <div class="mzw-summary" id="mzw-summary" style="display:none"></div>' +
       '  <div class="mzw-dropzone" id="mzw-dropzone">' +
-      '    <div class="mzw-drop-icon"><div class="mzw-drop-icon-inner">📷</div></div>' +
       '    <div class="mzw-drop-title">Glissez vos photos ici</div>' +
       '    <div class="mzw-drop-helper">ou cliquez pour choisir dans votre galerie</div>' +
       '    <div class="mzw-drop-limit">Jusqu’à 3 photos • JPEG ou PNG</div>' +
@@ -113,12 +117,6 @@
       '  <input type="file" id="mzw-file-input" accept="image/*" multiple style="display:none" />' +
       '  <div class="mzw-photos-row" id="mzw-photos-row" style="display:none"></div>' +
       '  <div class="mzw-footer">' +
-      '    <button class="mzw-primary-btn" id="mzw-analyze-btn" disabled>' +
-      '      <span id="mzw-analyze-label">Lancer l’analyse</span>' +
-      '      <span class="mzw-primary-btn-chevron">→</span>' +
-      "    </button>" +
-      '    <div class="mzw-small-text">Gratuit · Sans inscription · Résultat en &lt; 60 secondes</div>' +
-      '    <div class="mzw-error" id="mzw-error" style="display:none"></div>' +
       '    <div class="mzw-results" id="mzw-results" style="display:none">' +
       '      <div class="mzw-results-header">' +
       '        <div class="mzw-results-title" id="mzw-results-title">Inventaire estimé</div>' +
@@ -126,12 +124,22 @@
       "      </div>" +
       '      <div class="mzw-results-list" id="mzw-results-list"></div>' +
       "    </div>" +
+      '    <button class="mzw-primary-btn" id="mzw-analyze-btn" disabled>' +
+      '      <div class="mzw-progress-mask" id="mzw-progress-mask"></div>' +
+      '      <div class="mzw-primary-btn-inner">' +
+      '        <span id="mzw-analyze-label">Lancer l’analyse</span>' +
+      '        <span class="mzw-primary-btn-chevron">→</span>' +
+      "      </div>" +
+      "    </button>" +
+      '    <div class="mzw-small-text">Gratuit · Sans inscription · Résultat en &lt; 60 secondes</div>' +
+      '    <div class="mzw-error" id="mzw-error" style="display:none"></div>' +
       "  </div>" +
       "</div>";
 
     root.appendChild(style);
     root.appendChild(wrapper);
 
+    var headerEl = root.querySelector(".mzw-header");
     var dropzone = root.getElementById("mzw-dropzone");
     var fileInput = root.getElementById("mzw-file-input");
     var photosRow = root.getElementById("mzw-photos-row");
@@ -141,6 +149,7 @@
     var resultsEl = root.getElementById("mzw-results");
     var resultsListEl = root.getElementById("mzw-results-list");
     var resultsPillEl = root.getElementById("mzw-results-pill");
+    var progressMaskEl = root.getElementById("mzw-progress-mask");
 
     /** @type {File[]} */
     var selectedFiles = [];
@@ -173,11 +182,13 @@
           count.textContent = String(index + 1);
 
           var name = document.createElement("span");
-          name.textContent = file.name || "Photo " + (index + 1);
+          // On n'affiche plus le nom complet du fichier (trop long sur mobile),
+          // juste un label générique compact.
+          name.textContent = "Photo " + (index + 1);
 
           var remove = document.createElement("span");
           remove.className = "mzw-photo-pill-remove";
-          remove.textContent = "✕";
+          remove.textContent = "x";
           remove.addEventListener("click", function () {
             selectedFiles.splice(index, 1);
             updatePhotosUI();
@@ -432,8 +443,30 @@
       resultsListEl.innerHTML = "";
 
       var originalLabel = analyzeLabel.textContent;
-      analyzeLabel.innerHTML =
-        '<span class="mzw-loading"><span class="mzw-spinner"></span>Analyse en cours…</span>';
+      analyzeLabel.textContent = "Analyse en cours…";
+
+      // Progression visuelle : durée en fonction du nombre de photos
+      // 1 photo = 7 s, 2 photos = 12 s, 3 photos = 15 s
+      var photoCount = selectedFiles.length || 1;
+      var expectedMs;
+      if (photoCount <= 1) {
+        expectedMs = 7000;
+      } else if (photoCount === 2) {
+        expectedMs = 12000;
+      } else {
+        expectedMs = 15000;
+      }
+
+      if (progressMaskEl) {
+        progressMaskEl.style.transition = "none";
+        progressMaskEl.style.width = "0%";
+        progressMaskEl.style.opacity = "1";
+        // forcer un reflow pour que la transition reparte bien de 0%
+        void progressMaskEl.offsetWidth;
+        progressMaskEl.style.transition =
+          "width " + expectedMs + "ms linear";
+        progressMaskEl.style.width = "100%";
+      }
 
       try {
         var formData = new FormData();
@@ -474,9 +507,10 @@
         renderResults(items);
         hasResults = true;
 
-        // Step 2 : on garde seulement le bloc "Inventaire estimé" + CTA
+        // Step 2 : on garde seulement l'inventaire + CTA bas de carte
         dropzone.style.display = "none";
         photosRow.style.display = "none";
+        if (headerEl) headerEl.style.display = "none";
         analyzeLabel.textContent = "Obtenir des devis gratuits";
       } catch (e) {
         console.error("[MoverzWidget] Erreur d’analyse:", e);
@@ -487,6 +521,10 @@
         isAnalyzing = false;
         if (!hasResults) {
           analyzeLabel.textContent = originalLabel;
+        }
+        if (progressMaskEl) {
+          progressMaskEl.style.transition = "opacity 300ms ease-out";
+          progressMaskEl.style.opacity = "0";
         }
         updateAnalyzeDisabled();
       }
