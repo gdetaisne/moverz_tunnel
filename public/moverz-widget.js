@@ -446,15 +446,13 @@
       analyzeLabel.textContent = "Analyse en cours…";
 
       // Progression visuelle : durée en fonction du nombre de photos
-      // 1 photo = 7 s, 2 photos = 12 s, 3 photos = 15 s
+      // 1 photo = 9 s, 2 ou 3 photos = 11 s
       var photoCount = selectedFiles.length || 1;
       var expectedMs;
       if (photoCount <= 1) {
-        expectedMs = 7000;
-      } else if (photoCount === 2) {
-        expectedMs = 12000;
+        expectedMs = 9000;
       } else {
-        expectedMs = 15000;
+        expectedMs = 11000;
       }
 
       if (progressMaskEl) {
