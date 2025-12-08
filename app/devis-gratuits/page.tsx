@@ -6,11 +6,11 @@ import {
   createLead,
   updateLead,
   uploadLeadPhotos,
-  uploadBackofficeLeadPhotos,
   ensureLinkingToken,
   createBackofficeLead,
   updateBackofficeLead,
   requestBackofficeConfirmation,
+  uploadBackofficePhotos,
 } from "@/lib/api/client";
 import {
   calculatePricing,
@@ -1558,7 +1558,7 @@ function DevisGratuitsPageInner() {
 
       if (effectiveBackofficeLeadId) {
         try {
-          await uploadBackofficeLeadPhotos(effectiveBackofficeLeadId, pendingFiles);
+          await uploadBackofficePhotos(effectiveBackofficeLeadId, pendingFiles);
         } catch (err) {
           console.warn(
             "⚠️ Upload des photos vers le Back Office échoué, les photos restent disponibles côté tunnel uniquement:",
