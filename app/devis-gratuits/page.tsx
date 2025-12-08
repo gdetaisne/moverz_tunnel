@@ -6,6 +6,7 @@ import {
   createLead,
   updateLead,
   uploadLeadPhotos,
+  uploadBackofficeLeadPhotos,
   ensureLinkingToken,
   createBackofficeLead,
   updateBackofficeLead,
@@ -511,11 +512,14 @@ function AddressAutocomplete({
     setInput(initialValue ?? "");
   }, [initialValue]);
 
-  const fetchSuggestionsFr = async (query: string): Promise<AddressSuggestion[]> => {
+  const fetchSuggestionsFr = async (
+    query: string,
+    signal?: AbortSignal
+  ): Promise<AddressSuggestion[]> => {
     const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
       query
     )}&limit=5`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal });
     if (!res.ok) return [];
     const data = (await res.json()) as {
       features: {
@@ -538,7 +542,10 @@ function AddressAutocomplete({
     }));
   };
 
-  const fetchSuggestionsWorld = async (query: string): Promise<AddressSuggestion[]> => {
+  const fetchSuggestionsWorld = async (
+    query: string,
+    signal?: AbortSignal
+  ): Promise<AddressSuggestion[]> => {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
       query
     )}&format=json&addressdetails=1&limit=5`;
@@ -546,6 +553,7 @@ function AddressAutocomplete({
       headers: {
         // Nominatim conseille de mettre un User-Agent ou un email, mais côté browser on est limité.
       },
+      signal,
     });
     if (!res.ok) return [];
     const data = (await res.json()) as {
@@ -593,11 +601,16 @@ function AddressAutocomplete({
     const ctrl = new AbortController();
     controllerRef.current = ctrl;
     setIsLoading(true);
+    const timeoutId = window.setTimeout(() => {
+      if (!ctrl.signal.aborted) {
+        ctrl.abort();
+      }
+    }, 4000);
     try {
       const suggestions =
         mode === "fr"
-          ? await fetchSuggestionsFr(trimmed)
-          : await fetchSuggestionsWorld(trimmed);
+          ? await fetchSuggestionsFr(trimmed, ctrl.signal)
+          : await fetchSuggestionsWorld(trimmed, ctrl.signal);
       cacheRef.current[trimmed] = suggestions;
       if (!ctrl.signal.aborted) {
         setResults(suggestions);
@@ -607,6 +620,7 @@ function AddressAutocomplete({
         setResults([]);
       }
     } finally {
+      window.clearTimeout(timeoutId);
       if (!ctrl.signal.aborted) {
         setIsLoading(false);
       }
@@ -1104,6 +1118,37 @@ function DevisGratuitsPageInner() {
   const searchParams = useSearchParams();
   const src = searchParams.get("src") ?? undefined;
 
+  // Pré-chauffer l'API d'adresses dès l'arrivée sur le tunnel pour éviter
+  // que la toute première requête d'autocomplétion prenne 5-10s.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      if (!controller.signal.aborted) {
+        controller.abort();
+      }
+    }, 3000);
+
+    (async () => {
+      try {
+        await fetch(
+          "https://api-adresse.data.gouv.fr/search/?q=75001&limit=1",
+          { signal: controller.signal }
+        );
+      } catch {
+        // On ignore complètement les erreurs : c'est un pré-chauffage best-effort.
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+    })();
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
   const [currentStep, setCurrentStep] = useState<StepId>(1);
   const [maxReachedStep, setMaxReachedStep] = useState<StepId>(1);
   const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE);
@@ -1131,6 +1176,43 @@ function DevisGratuitsPageInner() {
   >("none");
   const [hasPhotosAnswer, setHasPhotosAnswer] = useState<"pending" | "yes" | "no">("pending");
   const [isDestinationForeign, setIsDestinationForeign] = useState(false);
+
+  // S'assure qu'un lead existe bien dans le Back Office et retourne son id.
+  // Utilisé à la fois à l'étape 1 (création) et plus tard (étape 4) pour éviter
+  // les cas où l'utilisateur reprend un tunnel ancien qui n'avait pas encore
+  // été synchronisé côté Back Office.
+  const ensureBackofficeLeadId = async (): Promise<string | null> => {
+    if (backofficeLeadId) return backofficeLeadId;
+
+    const trimmedFirstName = form.firstName.trim();
+    const trimmedEmail = form.email.trim().toLowerCase();
+
+    if (!trimmedFirstName || !trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
+      // On ne tente pas de créer un lead BO si les infos de base sont manquantes.
+      return null;
+    }
+
+    try {
+      const backofficePayload = {
+        firstName: trimmedFirstName,
+        email: trimmedEmail,
+        lastName: form.lastName.trim() || undefined,
+        phone: form.phone.trim() || undefined,
+        source: src ?? undefined,
+        estimationMethod: "FORM" as const,
+      };
+      const { id: boLeadId } = await createBackofficeLead(backofficePayload);
+      setBackofficeLeadId(boLeadId);
+      console.log("✅ Lead créé/synchronisé dans le Back Office:", boLeadId);
+      return boLeadId;
+    } catch (boErr) {
+      console.warn(
+        "⚠️ Impossible de synchroniser avec le Back Office (ensureBackofficeLeadId):",
+        boErr
+      );
+      return null;
+    }
+  };
 
   const goToStep = (next: StepId) => {
     setCurrentStep(next);
@@ -1338,6 +1420,30 @@ function DevisGratuitsPageInner() {
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
 
+  const isLeadNotFoundError = (err: unknown): boolean => {
+    const msg =
+      err instanceof Error
+        ? err.message.toLowerCase()
+        : String(err ?? "").toLowerCase();
+    return msg.includes("leadtunnel introuvable");
+  };
+
+  const handleLeadNotFound = (context: string) => {
+    console.warn(
+      `LeadTunnel introuvable (${context}). Réinitialisation de l'état local (dev).`
+    );
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem("moverz_tunnel_form_state");
+      } catch (storageErr) {
+        console.warn(
+          "Impossible de nettoyer moverz_tunnel_form_state dans le localStorage:",
+          storageErr
+        );
+      }
+    }
+  };
+
   const deepLinkWhatsapp = useMemo(() => {
     if (!whatsappNumber || !linkingToken) return null;
     const message = `Bonjour, je veux compléter mon inventaire avec des photos. Mon code dossier est : ${linkingToken}`;
@@ -1371,6 +1477,11 @@ function DevisGratuitsPageInner() {
       await updateLead(leadId, { photosStatus: "PENDING" });
       router.push("/devis-gratuits/merci");
     } catch (err: unknown) {
+      if (isLeadNotFoundError(err)) {
+        handleLeadNotFound("whatsapp_later");
+        router.push("/devis-gratuits/merci");
+        return;
+      }
       const message =
         err instanceof Error
           ? err.message
@@ -1392,6 +1503,11 @@ function DevisGratuitsPageInner() {
       await updateLead(leadId, { photosStatus: "NONE" });
       router.push("/devis-gratuits/merci");
     } catch (err: unknown) {
+      if (isLeadNotFoundError(err)) {
+        handleLeadNotFound("no_inventory");
+        router.push("/devis-gratuits/merci");
+        return;
+      }
       const message =
         err instanceof Error
           ? err.message
@@ -1434,6 +1550,22 @@ function DevisGratuitsPageInner() {
       }
 
       const result = await uploadLeadPhotos(leadId, pendingFiles);
+
+      let effectiveBackofficeLeadId = backofficeLeadId;
+      if (!effectiveBackofficeLeadId) {
+        effectiveBackofficeLeadId = await ensureBackofficeLeadId();
+      }
+
+      if (effectiveBackofficeLeadId) {
+        try {
+          await uploadBackofficeLeadPhotos(effectiveBackofficeLeadId, pendingFiles);
+        } catch (err) {
+          console.warn(
+            "⚠️ Upload des photos vers le Back Office échoué, les photos restent disponibles côté tunnel uniquement:",
+            err
+          );
+        }
+      }
 
       const totalForTimer = result.success.length || pendingFiles.length || 1;
       setAnalysisTargetSeconds(totalForTimer * 3);
@@ -1555,15 +1687,11 @@ function DevisGratuitsPageInner() {
 
         try {
           await updateLead(leadId, { photosStatus: "UPLOADED" });
-        } catch (e: unknown) {
-          const msg =
-            e instanceof Error ? e.message.toLowerCase() : String(e ?? "");
-          if (msg.includes("leadtunnel introuvable")) {
-            console.warn(
-              "Lead introuvable lors de la mise à jour photosStatus (UPLOADED)."
-            );
+        } catch (err: unknown) {
+          if (isLeadNotFoundError(err)) {
+            handleLeadNotFound("photos_status_uploaded");
           } else {
-            throw e;
+            throw err;
           }
         }
       } else if (result.errors.length > 0) {
@@ -1776,23 +1904,8 @@ function DevisGratuitsPageInner() {
       const { id } = await createLead(payload);
       setLeadId(id);
 
-      // 2. Synchroniser avec le Back Office (PostgreSQL)
-      try {
-        const backofficePayload = {
-          firstName: trimmedFirstName,
-          email: trimmedEmail,
-          lastName: form.lastName.trim() || undefined,
-          phone: form.phone.trim() || undefined,
-          source: src ?? undefined,
-          estimationMethod: "FORM" as const,
-        };
-        const { id: boLeadId } = await createBackofficeLead(backofficePayload);
-        setBackofficeLeadId(boLeadId);
-        console.log("✅ Lead créé dans le Back Office:", boLeadId);
-      } catch (boErr) {
-        // On ne bloque pas le tunnel si le back-office est indisponible
-        console.warn("⚠️ Impossible de synchroniser avec le Back Office:", boErr);
-      }
+      // 2. S'assurer qu'un lead existe côté Back Office (idempotent)
+      await ensureBackofficeLeadId();
 
       goToStep(2);
     } catch (err: unknown) {

@@ -170,7 +170,8 @@ async function callClaudeForRooms(
       },
       body: JSON.stringify({
         model,
-        max_tokens: 900,
+        // On laisse plus de marge pour les champs de dimensions / valeur
+        max_tokens: 1500,
         temperature: 0.2,
         messages: [
           {
@@ -205,6 +206,8 @@ async function callClaudeForRooms(
 
     let parsed: any;
     try {
+      // Version simple (celle qui tourne en prod) :
+      // on suppose que Claude renvoie un JSON pur dans `text`.
       parsed = JSON.parse(text);
     } catch {
       console.error(
@@ -238,6 +241,8 @@ Tu es un assistant qui aide à préparer un inventaire de déménagement.
 On te donne une liste de photos (sans le contenu visuel, uniquement les noms de fichiers) et tu dois :
 1) Regrouper les photos par pièce logique (salon, cuisine, chambres, etc.).
 2) Pour chaque pièce, proposer un inventaire d'objets plausibles, sans doublons.
+3) Pour chaque objet, si possible, estimer des dimensions (largeur/profondeur/hauteur en centimètres),
+   calculer un volume approximatif en m3 et proposer une estimation de valeur en euros avec une courte justification.
 
 Tu n'as PAS accès aux images, uniquement aux noms de fichiers. Fais de ton mieux pour proposer
 un inventaire raisonnable à partir de cette info minimale.
@@ -258,6 +263,12 @@ IMPORTANT :
           "category": "LIT|CANAPE|TABLE|CHAISE|ARMOIRE|ELECTROMENAGER|TV|BIBLIOTHEQUE|DECORATION|RANGEMENT|AUTRE",
           "quantity": 1,
           "confidence": 0.0,
+          "widthCm": 0,          // largeur approximative en cm (nombre)
+          "depthCm": 0,          // profondeur approximative en cm (nombre)
+          "heightCm": 0,         // hauteur approximative en cm (nombre)
+          "volumeM3": 0.0,       // volume approximatif en m3 (nombre)
+          "valueEstimateEur": 0, // estimation de valeur en euros (nombre)
+          "valueJustification": "courte phrase expliquant l'estimation (ex: canapé 3 places milieu de gamme, env. 800€ neuf)",
           "flags": {
             "fragile": boolean,
             "highValue": boolean,

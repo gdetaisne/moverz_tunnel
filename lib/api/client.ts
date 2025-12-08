@@ -158,6 +158,78 @@ export async function uploadLeadPhotos(
   };
 }
 
+// ============================================
+// UPLOAD PHOTOS VERS LE BACK OFFICE
+// ============================================
+
+interface BackofficeUploadedPhoto {
+  id: string;
+  url: string;
+  originalFilename: string;
+}
+
+interface BackofficeUploadPhotosResponse {
+  success: boolean;
+  data?: {
+    uploaded: BackofficeUploadedPhoto[];
+    errors: { originalFilename: string; reason: string }[];
+    totalPhotos: number;
+  };
+  error?: string;
+}
+
+export async function uploadBackofficeLeadPhotos(
+  backofficeLeadId: string,
+  files: File[]
+): Promise<BackofficeUploadPhotosResponse | null> {
+  if (!backofficeLeadId || files.length === 0) {
+    return null;
+  }
+
+  const API_BASE_URL = getApiBaseUrl();
+  const formData = new FormData();
+
+  files.forEach((file) => {
+    formData.append("photos", file);
+  });
+
+  const response = await fetch(
+    `${API_BASE_URL}/public/leads/${backofficeLeadId}/photos`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  let parsed: BackofficeUploadPhotosResponse;
+
+  try {
+    parsed = (await response.json()) as BackofficeUploadPhotosResponse;
+  } catch {
+    if (!response.ok) {
+      console.error(
+        "❌ Erreur upload photos back-office (réponse non JSON):",
+        response.status,
+        response.statusText
+      );
+      throw new Error(
+        `Erreur lors de l'upload des photos vers le Back Office (${response.status})`
+      );
+    }
+    // Réponse 2xx sans JSON exploitable : on considère que ça a (probablement) marché.
+    return null;
+  }
+
+  if (!response.ok || parsed.success === false) {
+    const errorMessage =
+      parsed.error ||
+      `Erreur lors de l'upload des photos vers le Back Office (${response.status})`;
+    throw new Error(errorMessage);
+  }
+
+  return parsed;
+}
+
 // Client HTTP pour communiquer avec le Back Office (routes /public/leads)
 
 const getApiBaseUrl = () => {
