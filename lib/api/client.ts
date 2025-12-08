@@ -550,4 +550,54 @@ export async function sendBackofficePhotoReminder(
   };
 }
 
+// ============================================
+// SAVE INVENTORY TO BACKOFFICE
+// ============================================
+
+export async function saveBackofficeInventory(
+  backofficeLeadId: string,
+  payload: { items: any[]; excludedInventoryIds: string[] }
+): Promise<{ success: boolean }> {
+  const API_BASE_URL = getApiBaseUrl();
+
+  const response = await fetch(
+    `${API_BASE_URL}/public/leads/${backofficeLeadId}/inventory`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!response.ok) {
+    let errorData: any = {};
+    try {
+      errorData = await response.json();
+    } catch {
+      // ignore
+    }
+
+    console.error("❌ Erreur enregistrement inventaire:", {
+      status: response.status,
+      errorData,
+    });
+
+    if (response.status === 404) {
+      throw new Error("LEAD_NOT_FOUND");
+    }
+
+    throw new Error(
+      errorData.error || errorData.message || "Failed to save inventory"
+    );
+  }
+
+  const result = await response.json();
+  return {
+    success: result.success ?? true,
+  };
+}
+
+
 

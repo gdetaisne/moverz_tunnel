@@ -113,6 +113,8 @@ model LeadRoom {
 
   photos  LeadPhoto[]
   items   LeadRoomItem[]
+
+  @@unique([leadId, roomType, label])
 }
 
 model LeadRoomItem {
@@ -120,18 +122,49 @@ model LeadRoomItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  roomId LeadRoom @relation(fields: [roomIdId], references: [id], onDelete: Cascade)
-  roomIdId String
+  room       LeadRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId     String
 
-  label    String
-  category String
-  quantity Int
+  // Valeurs "finales" utilisées pour le dossier (après règles métier + éventuels ajustements client)
+  label      String
+  category   String
+  quantity   Int
   confidence Float
 
-  notes               String?
+  widthCm        Float?
+  depthCm        Float?
+  heightCm       Float?
+
+  // Volumes et valeur utilisés pour le calcul logistique / devis
+  volumeM3Nu       Float?
+  volumeM3Emballé  Float?
+  valueEstimateEur Float?
+
+  // Informations de packaging (issues des règles métier)
+  packagingFactor  Float?
+  packagingReason  String?
+
+  // Drapeaux d'objet
   isFragile           Boolean @default(false)
   isHighValue         Boolean @default(false)
   requiresDisassembly Boolean @default(false)
+
+  // Lien hiérarchique (lit -> matelas, sommier ; cartons -> contenu, etc.)
+  parentItemId String?
+  parentItem   LeadRoomItem? @relation("LeadRoomItemChildren", fields: [parentItemId], references: [id])
+  children     LeadRoomItem[] @relation("LeadRoomItemChildren")
+
+  // Type de dérivé (ex: 'LIT_MATELAS', 'LIT_SOMMIER', 'ARMOIRE_CONTENU', 'CARTON_ITEM'…)
+  derivedKind String?
+
+  // Origine de la ligne (ai, manual, carton_aggregate, etc.)
+  source     String? // 'ai' | 'manual' | 'carton'
+
+  // Si l'utilisateur a explicitement retiré cet item de son inventaire
+  isExcluded Boolean  @default(false)
+
+  // Notes libres (debug, explications, etc.)
+  notes      String?
 }
 
 model LeadAnalysisRun {
