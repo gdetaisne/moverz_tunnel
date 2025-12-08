@@ -601,11 +601,6 @@ function AddressAutocomplete({
     const ctrl = new AbortController();
     controllerRef.current = ctrl;
     setIsLoading(true);
-    const timeoutId = window.setTimeout(() => {
-      if (!ctrl.signal.aborted) {
-        ctrl.abort();
-      }
-    }, 4000);
     try {
       const suggestions =
         mode === "fr"
@@ -620,7 +615,6 @@ function AddressAutocomplete({
         setResults([]);
       }
     } finally {
-      window.clearTimeout(timeoutId);
       if (!ctrl.signal.aborted) {
         setIsLoading(false);
       }
