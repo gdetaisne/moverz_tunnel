@@ -33,6 +33,12 @@ interface RoomInventoryItem {
   category: string;
   quantity: number;
   confidence: number;
+  widthCm?: number | null;
+  depthCm?: number | null;
+  heightCm?: number | null;
+  volumeM3?: number | null;
+  valueEstimateEur?: number | null;
+  valueJustification?: string | null;
   flags?: {
     fragile?: boolean;
     highValue?: boolean;
@@ -45,6 +51,12 @@ interface InventoryRow {
   roomLabel: string;
   itemLabel: string;
   quantity: number;
+  widthCm?: number | null;
+  depthCm?: number | null;
+  heightCm?: number | null;
+  volumeM3?: number | null;
+  valueEstimateEur?: number | null;
+  valueJustification?: string | null;
 }
 
 // --- Constantes ---
@@ -248,6 +260,12 @@ export async function POST(req: NextRequest) {
             roomLabel: label,
             itemLabel: item.label,
             quantity: item.quantity,
+            widthCm: item.widthCm ?? null,
+            depthCm: item.depthCm ?? null,
+            heightCm: item.heightCm ?? null,
+            volumeM3: item.volumeM3 ?? null,
+            valueEstimateEur: item.valueEstimateEur ?? null,
+            valueJustification: item.valueJustification ?? null,
           });
         }
 
@@ -383,6 +401,11 @@ Tu es un assistant expert en déménagement.
 On te montre plusieurs photos d'une même pièce : "${roomLabel}" (type ${roomType}).
 À partir de ces images, tu dois produire un inventaire des objets principaux à déménager.
 
+Pour chaque objet, tu dois essayer de donner :
+- des dimensions approximatives (largeur, profondeur, hauteur en cm),
+- un volume approximatif en m3,
+- une estimation de valeur en euros, avec une courte justification.
+
 Réponds STRICTEMENT en JSON, sans texte avant ou après, avec la forme :
 {
   "items": [
@@ -391,10 +414,16 @@ Réponds STRICTEMENT en JSON, sans texte avant ou après, avec la forme :
       "category": "LIT|CANAPE|TABLE|CHAISE|ARMOIRE|ELECTROMENAGER|TV|BIBLIOTHEQUE|DECORATION|RANGEMENT|AUTRE",
       "quantity": 1,
       "confidence": 0.9,
+      "widthCm": 160,
+      "depthCm": 200,
+      "heightCm": 100,
+      "volumeM3": 3.2,
+      "valueEstimateEur": 800,
+      "valueJustification": "Lit double 160x200 cm milieu de gamme, env. 800€ neuf",
       "flags": {
         "fragile": false,
         "highValue": false,
-        "requiresDisassembly": false
+        "requiresDisassembly": true
       }
     }
   ]

@@ -16,21 +16,23 @@ interface AnalyzeRequestBody {
 interface AnalysisProcessPayload {
   model: string;
   rooms: any[];
+  totalMs?: number;
 }
 
 const CLAUDE_MODEL_PRIMARY =
   process.env.CLAUDE_MODEL ?? "claude-3-5-haiku-20241022";
-
-// Modèle alternatif pour comparaison (process 2)
-const CLAUDE_MODEL_SECONDARY =
-  process.env.CLAUDE_MODEL_ALT ?? "claude-3-5-sonnet-20241022";
+// Process 2 utilise le même modèle, mais avec une stratégie chunkée.
+const CLAUDE_MODEL_CHUNKED = CLAUDE_MODEL_PRIMARY;
 
 // Même dossier que pour la route d'upload
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 
-// Pour garder la requête IA rapide et légère, on limite le nombre
-// d'images envoyées à Claude (les autres restent utilisables côté humain).
+// Process 1 : limite le nombre d'images envoyées en un seul appel.
 const MAX_PHOTOS_FOR_AI = Number(process.env.AI_MAX_PHOTOS ?? "6");
+// Process 2 : taille maximale d'un chunk d'images (analyse chunkée).
+const MAX_PHOTOS_PER_CHUNK = Number(
+  process.env.AI_MAX_PHOTOS_PER_CHUNK ?? "10"
+);
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,12 +60,12 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // On ne prend que les premières photos pour l'IA (limite dure côté serveur)
-    const photosForAi = json.photos.slice(0, MAX_PHOTOS_FOR_AI);
+    // Process 1 : on ne prend que les premières photos pour l'IA
+    const photosForProcess1 = json.photos.slice(0, MAX_PHOTOS_FOR_AI);
 
-    // Charger les images normalisées depuis le disque
-    const loadedImages = await Promise.all(
-      photosForAi.map(async (photo, index) => {
+    // Charger les images normalisées depuis le disque pour le process 1
+    const loadedImagesProcess1 = await Promise.all(
+      photosForProcess1.map(async (photo, index) => {
         const fullPath = path.join(UPLOAD_DIR, photo.storageKey);
         try {
           const buffer = await fs.readFile(fullPath);
@@ -80,12 +82,12 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    const validImages = loadedImages.filter(
+    const validImagesProcess1 = loadedImagesProcess1.filter(
       (img): img is { photo: AnalyzePhotoInput; base64: string; index: number } =>
         img !== null
     );
 
-    if (validImages.length === 0) {
+    if (validImagesProcess1.length === 0) {
       console.warn(
         "[AI] Aucune image exploitable pour l'analyse – fallback local utilisé."
       );
@@ -97,20 +99,49 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const prompt = buildPrompt(validImages.map((i) => i.photo));
+    const promptProcess1 = buildPrompt(
+      validImagesProcess1.map((i) => i.photo)
+    );
 
-    // On lance deux processus d'analyse en parallèle pour comparer 2 modèles / stratégies.
+    // Process 2 : on souhaite couvrir toutes les photos (avec chunking)
+    const loadedImagesAll = await Promise.all(
+      json.photos.map(async (photo, index) => {
+        const fullPath = path.join(UPLOAD_DIR, photo.storageKey);
+        try {
+          const buffer = await fs.readFile(fullPath);
+          const base64 = buffer.toString("base64");
+          return { photo, base64, index };
+        } catch (error) {
+          console.error(
+            "❌ Impossible de lire le fichier pour l'analyse IA (process 2):",
+            {
+              storageKey: photo.storageKey,
+              fullPath,
+              error,
+            }
+          );
+          return null;
+        }
+      })
+    );
+
+    const validImagesAll = loadedImagesAll.filter(
+      (img): img is { photo: AnalyzePhotoInput; base64: string; index: number } =>
+        img !== null
+    );
+
+    // Process 1 : appel global (limité à MAX_PHOTOS_FOR_AI)
+    // Process 2 : appels chunkés pour couvrir toutes les photos
     const [primaryResult, secondaryResult] = await Promise.allSettled([
       callClaudeForRooms(
         CLAUDE_MODEL_PRIMARY,
-        validImages,
-        prompt,
+        validImagesProcess1,
+        promptProcess1,
         json.photos
       ),
-      callClaudeForRooms(
-        CLAUDE_MODEL_SECONDARY,
-        validImages,
-        prompt,
+      callClaudeChunkedForRooms(
+        CLAUDE_MODEL_CHUNKED,
+        validImagesAll,
         json.photos
       ),
     ]);
@@ -128,7 +159,7 @@ export async function POST(req: NextRequest) {
       if (secondaryResult.status === "fulfilled" && secondaryResult.value) {
         return secondaryResult.value;
       }
-      return { model: CLAUDE_MODEL_SECONDARY, rooms: fallbackRooms };
+      return { model: CLAUDE_MODEL_CHUNKED, rooms: fallbackRooms };
     })();
 
     // Pour compatibilité, on garde `rooms` = résultat du process 1
@@ -143,7 +174,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       rooms: fallbackRooms,
       process1: { model: CLAUDE_MODEL_PRIMARY, rooms: fallbackRooms },
-      process2: { model: CLAUDE_MODEL_SECONDARY, rooms: fallbackRooms },
+      process2: { model: CLAUDE_MODEL_CHUNKED, rooms: fallbackRooms },
       error: "Erreur interne lors de l'analyse.",
     });
   }
@@ -156,6 +187,7 @@ async function callClaudeForRooms(
   allPhotos: AnalyzePhotoInput[]
 ): Promise<AnalysisProcessPayload | null> {
   try {
+    const startedAt = Date.now();
     console.log("[AI] Appel Claude", {
       processModel: model,
       photos: validImages.length,
@@ -224,11 +256,66 @@ async function callClaudeForRooms(
       return null;
     }
 
-    return { model, rooms: parsed.rooms };
+    const totalMs = Date.now() - startedAt;
+    return { model, rooms: parsed.rooms, totalMs };
   } catch (error) {
     console.error(`❌ Exception lors de l'appel Claude (${model}):`, error);
     return null;
   }
+}
+
+// Process 2 : appels chunkés pour couvrir toutes les photos (max 10 images par appel)
+async function callClaudeChunkedForRooms(
+  model: string,
+  validImages: { photo: AnalyzePhotoInput; base64: string; index: number }[],
+  allPhotos: AnalyzePhotoInput[]
+): Promise<AnalysisProcessPayload | null> {
+  const CHUNK_SIZE = MAX_PHOTOS_PER_CHUNK;
+  if (validImages.length === 0) return null;
+  const startedAt = Date.now();
+
+  const chunks: {
+    photos: AnalyzePhotoInput[];
+    images: { photo: AnalyzePhotoInput; base64: string; index: number }[];
+  }[] = [];
+
+  for (let i = 0; i < validImages.length; i += CHUNK_SIZE) {
+    const imagesChunk = validImages.slice(i, i + CHUNK_SIZE);
+    const photosChunk = imagesChunk.map((img) => img.photo);
+    chunks.push({ photos: photosChunk, images: imagesChunk });
+  }
+
+  const results = await Promise.allSettled(
+    chunks.map(async (chunk, idx) => {
+      const chunkPrompt = buildPrompt(chunk.photos);
+      console.log("[AI][Process2] Appel chunk", {
+        model,
+        chunkIndex: idx,
+        photos: chunk.photos.length,
+      });
+      return callClaudeForRooms(
+        model,
+        chunk.images,
+        chunkPrompt,
+        allPhotos
+      );
+    })
+  );
+
+  const allRooms: any[] = [];
+  for (const r of results) {
+    if (r.status === "fulfilled" && r.value && Array.isArray(r.value.rooms)) {
+      allRooms.push(...r.value.rooms);
+    }
+  }
+
+  if (allRooms.length === 0) {
+    console.warn("[AI][Process2] Aucun chunk exploitable – retour null.");
+    return null;
+  }
+
+  const totalMs = Date.now() - startedAt;
+  return { model, rooms: allRooms, totalMs };
 }
 
 function buildPrompt(photos: AnalyzePhotoInput[]): string {

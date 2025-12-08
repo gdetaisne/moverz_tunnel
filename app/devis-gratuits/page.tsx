@@ -25,6 +25,11 @@ import {
   FORMULE_MULTIPLIERS,
   PRIX_MIN_SOCLE,
 } from "@/lib/pricing/constants";
+import {
+  enrichItemsWithBusinessRules,
+  type RoomLike,
+  type ItemLike,
+} from "@/lib/inventory/businessRules";
 
 const STEPS = [
   { id: 1, label: "Contact" },
@@ -168,11 +173,47 @@ interface AnalysisProcess {
 }
 
 interface Process2InventoryRow {
+  id: string;
   roomType: string;
   roomLabel: string;
   itemLabel: string;
   quantity: number;
+  widthCm?: number | null;
+  depthCm?: number | null;
+  heightCm?: number | null;
+  volumeM3?: number | null;
+  valueEstimateEur?: number | null;
+  valueJustification?: string | null;
 }
+
+interface LabProcess2Response {
+  model: string;
+  rooms: AnalyzedRoom[];
+  totalMs?: number;
+  classifyMs?: number;
+  inventoryMs?: number;
+}
+
+const KNOWN_ITEMS: { label: string; volumeM3?: number }[] = [
+  { label: "Canapé 2 places", volumeM3: 2 },
+  { label: "Canapé 3 places", volumeM3: 2.5 },
+  { label: "Canapé d’angle", volumeM3: 3 },
+  { label: "Fauteuil", volumeM3: 0.8 },
+  { label: "Table basse", volumeM3: 0.5 },
+  { label: "Table à manger 4 personnes", volumeM3: 1.2 },
+  { label: "Table à manger 6 personnes", volumeM3: 1.5 },
+  { label: "Chaise", volumeM3: 0.15 },
+  { label: "Lit simple complet", volumeM3: 1 },
+  { label: "Lit double complet 140", volumeM3: 1.5 },
+  { label: "Lit double complet 160", volumeM3: 1.8 },
+  { label: "Lit double complet 180", volumeM3: 2 },
+  { label: "Armoire 2 portes", volumeM3: 1.5 },
+  { label: "Armoire 3 portes", volumeM3: 2 },
+  { label: "Commode 3 tiroirs", volumeM3: 0.5 },
+  { label: "Bibliothèque", volumeM3: 1 },
+  { label: "Meuble TV", volumeM3: 0.8 },
+  { label: "Téléviseur", volumeM3: 0.1 },
+];
 
 function compactModelName(model?: string): string {
   if (!model) return "modèle IA";
@@ -481,6 +522,7 @@ type AddressSuggestion = {
   countryCode?: string;
   lat?: number;
   lon?: number;
+  placeId?: string;
 };
 
 interface AddressAutocompleteProps {
@@ -516,6 +558,34 @@ function AddressAutocomplete({
     query: string,
     signal?: AbortSignal
   ): Promise<AddressSuggestion[]> => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+
+    // Si une clé Google Places est configurée, on passe par Google.
+    if (apiKey) {
+      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+        query
+      )}&types=geocode&language=fr&components=country:fr&key=${apiKey}`;
+
+      const res = await fetch(url, { signal });
+      if (!res.ok) return [];
+
+      const data = (await res.json()) as {
+        predictions?: {
+          description: string;
+          place_id: string;
+        }[];
+      };
+
+      const predictions = data.predictions ?? [];
+      return predictions.map((p) => ({
+        label: p.description,
+        addressLine: p.description,
+        countryCode: "fr",
+        placeId: p.place_id,
+      }));
+    }
+
+    // Fallback: BAN si pas de clé Google.
     const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
       query
     )}&limit=5`;
@@ -632,10 +702,75 @@ function AddressAutocomplete({
     }, 300);
   };
 
-  const handleSelect = (s: AddressSuggestion) => {
+  const handleSelect = async (s: AddressSuggestion) => {
     setInput(s.label);
     setShowDropdown(false);
     setResults([]);
+
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+
+    if (apiKey && s.placeId) {
+      try {
+        setIsLoading(true);
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(
+          s.placeId
+        )}&fields=address_component,geometry,formatted_address&language=fr&key=${apiKey}`;
+
+        const res = await fetch(detailsUrl);
+        if (res.ok) {
+          const data = (await res.json()) as {
+            result?: {
+              formatted_address?: string;
+              geometry?: { location?: { lat: number; lng: number } };
+              address_components?: {
+                long_name: string;
+                short_name: string;
+                types: string[];
+              }[];
+            };
+          };
+
+          const result = data.result;
+          if (result) {
+            let city: string | undefined;
+            let postalCode: string | undefined;
+
+            for (const comp of result.address_components ?? []) {
+              if (comp.types.includes("postal_code")) {
+                postalCode = comp.long_name;
+              }
+              if (
+                comp.types.includes("locality") ||
+                comp.types.includes("postal_town")
+              ) {
+                city = comp.long_name;
+              }
+            }
+
+            const location = result.geometry?.location;
+
+            const enhanced: AddressSuggestion = {
+              ...s,
+              label: result.formatted_address ?? s.label,
+              addressLine: result.formatted_address ?? s.addressLine,
+              city: city ?? s.city,
+              postalCode: postalCode ?? s.postalCode,
+              lat: location?.lat ?? s.lat,
+              lon: location?.lng ?? s.lon,
+            };
+
+            setIsLoading(false);
+            onSelect(enhanced);
+            return;
+          }
+        }
+      } catch {
+        // en cas d'erreur Google, on retombe sur la version de base
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
     onSelect(s);
   };
 
@@ -1170,6 +1305,42 @@ function DevisGratuitsPageInner() {
   >("none");
   const [hasPhotosAnswer, setHasPhotosAnswer] = useState<"pending" | "yes" | "no">("pending");
   const [isDestinationForeign, setIsDestinationForeign] = useState(false);
+  const [excludedInventoryIds, setExcludedInventoryIds] = useState<string[]>([]);
+  const [newItemDrafts, setNewItemDrafts] = useState<
+    Record<string, { query: string; quantity: string }>
+  >({});
+  const [editingInventoryId, setEditingInventoryId] = useState<string | null>(
+    null
+  );
+  const [editingInventoryDraft, setEditingInventoryDraft] = useState<{
+    itemLabel: string;
+    quantity: string;
+    volumeM3: string;
+    valueEstimateEur: string;
+  } | null>(null);
+
+  const inventoryVolume = useMemo(() => {
+    if (!process2Inventory || process2Inventory.length === 0) {
+      return { total: null as number | null, byRoom: {} as Record<string, number> };
+    }
+
+    const byRoom: Record<string, number> = {};
+    let total = 0;
+
+    for (const row of process2Inventory) {
+      if (excludedInventoryIds.includes(row.id)) continue;
+      if (typeof row.volumeM3 !== "number") continue;
+      const rowTotal = row.volumeM3 * (row.quantity || 1);
+      total += rowTotal;
+      const key = row.roomLabel || row.roomType;
+      byRoom[key] = (byRoom[key] || 0) + rowTotal;
+    }
+
+    if (!Number.isFinite(total) || total <= 0) {
+      return { total: null as number | null, byRoom };
+    }
+    return { total, byRoom };
+  }, [process2Inventory, excludedInventoryIds]);
 
   // S'assure qu'un lead existe bien dans le Back Office et retourne son id.
   // Utilisé à la fois à l'étape 1 (création) et plus tard (étape 4) pour éviter
@@ -1352,6 +1523,7 @@ function DevisGratuitsPageInner() {
         currentStep?: StepId;
         leadId?: string | null;
         backofficeLeadId?: string | null;
+        inventoryExclusions?: string[];
       };
       if (!parsed || typeof parsed !== "object" || !parsed.form) return;
 
@@ -1365,6 +1537,9 @@ function DevisGratuitsPageInner() {
       }
       if (parsed.backofficeLeadId) {
         setBackofficeLeadId(parsed.backofficeLeadId);
+      }
+      if (Array.isArray(parsed.inventoryExclusions)) {
+        setExcludedInventoryIds(parsed.inventoryExclusions);
       }
     } catch {
       // Si le JSON est corrompu, on ignore et on repart sur l'état par défaut
@@ -1384,9 +1559,10 @@ function DevisGratuitsPageInner() {
       currentStep,
       leadId,
       backofficeLeadId,
+      inventoryExclusions: excludedInventoryIds,
     });
     window.localStorage.setItem("moverz_tunnel_form_state", payload);
-  }, [form, currentStep, leadId, backofficeLeadId]);
+  }, [form, currentStep, leadId, backofficeLeadId, excludedInventoryIds]);
 
   // Centrer la formule active dans le swiper mobile (Standard par défaut)
   useEffect(() => {
@@ -1594,11 +1770,10 @@ function DevisGratuitsPageInner() {
       if (result.success.length > 0) {
         const processes: AnalysisProcess[] = [];
         try {
-          const classifyRes = await fetch("/api/ai/process2-classify", {
+          const labRes = await fetch("/api/ai/lab-process2", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              leadId,
               photos: result.success.map((p) => ({
                 id: p.id,
                 storageKey: p.storageKey,
@@ -1607,71 +1782,105 @@ function DevisGratuitsPageInner() {
             }),
           });
 
-          if (classifyRes.ok) {
-            const classifyData = (await classifyRes.json()) as {
-              results?: {
-                photoId: string;
-                roomGuessPrimary: string | null;
-                roomGuessConfidence: number | null;
-              }[];
-              inventory?: Process2InventoryRow[];
-            };
+          if (labRes.ok) {
+            const labData = (await labRes.json()) as LabProcess2Response;
 
-            const results = classifyData.results ?? [];
-            const inventory = classifyData.inventory ?? [];
-
-            const byRoomType = new Map<string, string[]>();
-            for (const r of results) {
-              const type = r.roomGuessPrimary ?? "INCONNU";
-              const list = byRoomType.get(type) ?? [];
-              list.push(r.photoId);
-              byRoomType.set(type, list);
-            }
-
-            const roomTypeLabels: Record<string, string> = {
-              SALON: "Salon",
-              CUISINE: "Cuisine",
-              CHAMBRE: "Chambre",
-              SALLE_DE_BAIN: "Salle de bain",
-              WC: "WC",
-              COULOIR: "Couloir",
-              BUREAU: "Bureau",
-              BALCON: "Balcon",
-              CAVE: "Cave",
-              GARAGE: "Garage",
-              ENTREE: "Entrée",
-              AUTRE: "Autre pièce",
-              INCONNU: "À classer / incertain",
-            };
-
-            const process2Rooms: AnalyzedRoom[] = Array.from(
-              byRoomType.entries()
-            ).map(([roomType, photoIds], index) => ({
-              roomId: `process2-${roomType}-${index}`,
-              roomType,
-              label: roomTypeLabels[roomType] ?? roomType,
-              photoIds,
-              items: [
-                {
-                  label: `${photoIds.length} photo(s)`,
-                  category: "AUTRE",
-                  quantity: photoIds.length,
-                  confidence: 1,
-                  flags: {},
-                },
-              ],
+            // Normalisation minimale pour appliquer les règles métier partagées
+            const roomsForRules: RoomLike[] = labData.rooms.map((room) => ({
+              roomId: room.roomId,
+              roomType: room.roomType,
+              roomLabel: room.label,
             }));
 
+            const itemsForRules: ItemLike[] = [];
+            labData.rooms.forEach((room) => {
+              room.items.forEach((item, idx) => {
+                const anyItem = item as any;
+                itemsForRules.push({
+                  id: `${room.roomId}-${idx}`,
+                  roomId: room.roomId,
+                  roomLabel: room.label,
+                  label: item.label,
+                  category: item.category,
+                  quantity: item.quantity,
+                  confidence: item.confidence,
+                  widthCm:
+                    typeof anyItem.widthCm === "number"
+                      ? anyItem.widthCm
+                      : null,
+                  depthCm:
+                    typeof anyItem.depthCm === "number"
+                      ? anyItem.depthCm
+                      : null,
+                  heightCm:
+                    typeof anyItem.heightCm === "number"
+                      ? anyItem.heightCm
+                      : null,
+                  volumeM3Ai:
+                    typeof anyItem.volumeM3 === "number"
+                      ? anyItem.volumeM3
+                      : null,
+                  volumeM3Standard: null,
+                  volumeM3Final: null,
+                  volumeSource: "ai",
+                  valueEurTypicalAi:
+                    typeof anyItem.valueEstimateEur === "number"
+                      ? anyItem.valueEstimateEur
+                      : null,
+                  valueSource:
+                    typeof anyItem.valueEstimateEur === "number"
+                      ? "ai"
+                      : "none",
+                  parentId: null,
+                  derivedKind: null,
+                });
+              });
+            });
+
+            const enrichedItems = enrichItemsWithBusinessRules(
+              itemsForRules,
+              roomsForRules
+            );
+
+            // Process unique : rooms depuis lab-process2 (on garde les items IA bruts)
             processes.push({
               id: "process2",
-              label: "Process 2",
-              model: "Claude (1 requête par photo)",
-              rooms: process2Rooms,
+              label: "Analyse IA des photos",
+              model: compactModelName(labData.model),
+              rooms: labData.rooms,
             });
+
+            // Inventaire à plat Pièce / Article / Qté / mesures / volume / valeur,
+            // basé sur les items enrichis (meubles + dérivés)
+            const roomById = new Map<string, RoomLike>();
+            roomsForRules.forEach((r) => roomById.set(r.roomId, r));
+
+            const inventory: Process2InventoryRow[] = enrichedItems.map(
+              (item) => {
+                const room = roomById.get(item.roomId);
+                return {
+                  id: item.id,
+                  roomType: room?.roomType ?? item.roomId,
+                  roomLabel: room?.roomLabel ?? item.roomLabel,
+                  itemLabel: item.label,
+                  quantity: item.quantity,
+                  widthCm: item.widthCm ?? null,
+                  depthCm: item.depthCm ?? null,
+                  heightCm: item.heightCm ?? null,
+                  volumeM3:
+                    (item.volumeM3Final ??
+                      item.volumeM3Ai ??
+                      item.volumeM3Standard) ?? null,
+                  valueEstimateEur: item.valueEurTypicalAi ?? null,
+                  valueJustification: null,
+                };
+              }
+            );
+
             setProcess2Inventory(inventory);
           }
         } catch (err) {
-          console.error("Erreur Process 2 (classification par photo):", err);
+          console.error("Erreur Process 2 (lab-process2):", err);
         }
 
         setAnalysisProcesses(processes);
@@ -3639,9 +3848,15 @@ function DevisGratuitsPageInner() {
                     </div>
                   </div>
                 )}
+                {inventoryVolume.total != null && (
+                  <p className="text-[11px] text-slate-300">
+                    Volume estimé des objets (hors éléments retirés) :{" "}
+                    <span className="font-semibold text-sky-300">
+                      {inventoryVolume.total.toFixed(1)} m³
+                    </span>
+                  </p>
+                )}
                 {analysisProcesses && (
-                  <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr),minmax(0,1.1fr)]">
-                  {/* Colonne gauche : cartes Process 2 avec vignettes par pièce */}
                   <div className="space-y-3">
                     {analysisProcesses.map((proc) => (
                       <div
@@ -3670,93 +3885,316 @@ function DevisGratuitsPageInner() {
                             éléments
                           </span>
                         </div>
+
                         <div className="space-y-2">
-                          {proc.rooms.map((room) => (
-                            <div
-                              key={room.roomId}
-                              className="space-y-1 rounded-xl bg-slate-900/70 p-2"
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-[11px] font-semibold text-slate-50">
-                                  {room.label}
-                                </p>
-                                <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
-                                  {room.items.reduce(
+                          {proc.rooms.map((room) => {
+                            const inventoryForRoomRaw =
+                              process2Inventory?.filter(
+                                (row) =>
+                                  row.roomLabel === room.label &&
+                                  row.roomType === room.roomType
+                              ) ?? [];
+
+                            const inventoryForRoom = inventoryForRoomRaw;
+
+                            const visibleInventory = inventoryForRoom.filter(
+                              (row) => !excludedInventoryIds.includes(row.id)
+                            );
+
+                            const totalItems =
+                              visibleInventory.length > 0
+                                ? visibleInventory.reduce(
                                     (acc, it) => acc + it.quantity,
                                     0
-                                  )}{" "}
-                                  éléments
-                                </span>
-                              </div>
-                              {/* Pour le Process 2, on affiche un mini strip de vignettes par pièce */}
-                              {proc.id === "process2" && room.photoIds.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5">
-                                  {room.photoIds.slice(0, 6).map((pid) => {
-                                    const file = localUploadFiles.find(
-                                      (f) => f.photoId === pid
-                                    );
-                                    if (file) {
+                                  )
+                                : room.items.reduce(
+                                    (acc, it) => acc + it.quantity,
+                                    0
+                                  );
+
+                            return (
+                              <div
+                                key={room.roomId}
+                                className="space-y-2 rounded-xl bg-slate-900/70 p-2"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-[11px] font-semibold text-slate-50">
+                                    {room.label}
+                                  </p>
+                                  <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
+                                    {totalItems} éléments
+                                  </span>
+                                </div>
+
+                                {/* Vignettes des photos de la pièce */}
+                                {room.photoIds.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {room.photoIds.slice(0, 6).map((pid) => {
+                                      const file = localUploadFiles.find(
+                                        (f) => f.photoId === pid
+                                      );
+                                      if (file) {
+                                        return (
+                                          <div
+                                            key={pid}
+                                            className="h-8 w-8 overflow-hidden rounded-md border border-slate-700/80 bg-slate-800"
+                                          >
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                              src={file.previewUrl}
+                                              alt={file.file.name}
+                                              className="h-full w-full object-cover"
+                                            />
+                                          </div>
+                                        );
+                                      }
                                       return (
                                         <div
                                           key={pid}
-                                          className="h-8 w-8 overflow-hidden rounded-md border border-slate-700/80 bg-slate-800"
+                                          className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700/80 bg-slate-800 text-[9px] text-slate-300"
                                         >
-                                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                                          <img
-                                            src={file.previewUrl}
-                                            alt={file.file.name}
-                                            className="h-full w-full object-cover"
-                                          />
+                                          ?
                                         </div>
                                       );
-                                    }
-                                    return (
-                                      <div
-                                        key={pid}
-                                        className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700/80 bg-slate-800 text-[9px] text-slate-300"
-                                      >
-                                        ?
-                                      </div>
-                                    );
-                                  })}
+                                    })}
+                                  </div>
+                                )}
+
+                                {/* Inventaire détaillé pour la pièce */}
+                                {inventoryForRoom.length > 0 && (
+                                  <div className="mt-1 rounded-lg bg-slate-950/80 p-2">
+                                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                                      Inventaire détecté
+                                    </p>
+                                    <div className="max-h-32 space-y-0.5 overflow-y-auto pr-1">
+                                      {inventoryForRoom.map((row, idx) => {
+                                        const isExcluded =
+                                          excludedInventoryIds.includes(row.id);
+
+                                        return (
+                                        <div
+                                            key={row.id}
+                                            className={`space-y-0.5 text-[11px] ${
+                                              isExcluded
+                                                ? "text-slate-500 line-through opacity-60"
+                                                : "text-slate-200"
+                                            }`}
+                                          >
+                                            <div className="flex items-center justify-between gap-2">
+                                              <span className="truncate">
+                                                {row.itemLabel}
+                                              </span>
+                                              <div className="flex items-center gap-2">
+                                                <span className="shrink-0 text-right text-slate-300">
+                                                  × {row.quantity}
+                                                </span>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setEditingInventoryId(row.id);
+                                                    setEditingInventoryDraft({
+                                                      itemLabel: row.itemLabel,
+                                                      quantity: String(row.quantity ?? 1),
+                                                      volumeM3:
+                                                        typeof row.volumeM3 === "number"
+                                                          ? String(row.volumeM3)
+                                                          : "",
+                                                      valueEstimateEur:
+                                                        typeof row.valueEstimateEur ===
+                                                        "number"
+                                                          ? String(row.valueEstimateEur)
+                                                          : "",
+                                                    });
+                                                  }}
+                                                  className="rounded-full border border-slate-600 px-2 py-0.5 text-[9px] text-slate-300 hover:border-sky-400 hover:text-sky-200"
+                                                >
+                                                  Modifier
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    setExcludedInventoryIds(
+                                                      (prev) =>
+                                                        prev.includes(row.id)
+                                                          ? prev.filter(
+                                                              (id) =>
+                                                                id !== row.id
+                                                            )
+                                                          : [...prev, row.id]
+                                                    )
+                                                  }
+                                                  className="rounded-full border border-slate-600 px-2 py-0.5 text-[9px] text-slate-300 hover:border-rose-400 hover:text-rose-300"
+                                                >
+                                                  {isExcluded
+                                                    ? "Rétablir"
+                                                    : "Retirer"}
+                                                </button>
+                                              </div>
+                                            </div>
+                                          <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-400">
+                                            <span className="truncate">
+                                              {typeof row.widthCm === "number" &&
+                                              typeof row.depthCm === "number" &&
+                                              typeof row.heightCm === "number"
+                                                ? `${Math.round(
+                                                    row.widthCm
+                                                  )}×${Math.round(
+                                                    row.depthCm
+                                                  )}×${Math.round(
+                                                    row.heightCm
+                                                  )} cm`
+                                                : "Mesures : —"}
+                                            </span>
+                                            <span className="truncate text-right">
+                                              {typeof row.volumeM3 === "number"
+                                                ? `Volume : ${row.volumeM3.toFixed(
+                                                    2
+                                                  )} m³`
+                                                : "Volume : —"}
+                                              {typeof row.valueEstimateEur ===
+                                              "number"
+                                                ? ` • Valeur : ${Math.round(
+                                                    row.valueEstimateEur
+                                                  )} €`
+                                                : ""}
+                                            </span>
+                                          </div>
+                                          {row.valueJustification && (
+                                            <p className="text-[9px] text-slate-500">
+                                              {row.valueJustification}
+                                            </p>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Ajout manuel d'un meuble */}
+                                <div className="mt-2 space-y-1 rounded-lg bg-slate-950/60 p-2">
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                                    Ajouter un meuble
+                                  </p>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <input
+                                      type="text"
+                                      value={newItemDrafts[room.roomId]?.query ?? ""}
+                                      onChange={(e) =>
+                                        setNewItemDrafts((prev) => ({
+                                          ...prev,
+                                          [room.roomId]: {
+                                            query: e.target.value,
+                                            quantity:
+                                              prev[room.roomId]?.quantity ?? "1",
+                                          },
+                                        }))
+                                      }
+                                      placeholder="Ex: canapé, armoire..."
+                                      className="w-40 flex-1 min-w-[120px] rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500/40"
+                                    />
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      value={newItemDrafts[room.roomId]?.quantity ?? "1"}
+                                      onChange={(e) =>
+                                        setNewItemDrafts((prev) => ({
+                                          ...prev,
+                                          [room.roomId]: {
+                                            query: prev[room.roomId]?.query ?? "",
+                                            quantity: e.target.value,
+                                          },
+                                        }))
+                                      }
+                                      className="w-14 rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500/40"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const draft = newItemDrafts[room.roomId];
+                                        const query = draft?.query?.trim();
+                                        if (!query) return;
+                                        const quantity = Math.max(
+                                          1,
+                                          Number(draft.quantity || "1") || 1
+                                        );
+                                        const lowerQuery = query.toLowerCase();
+                                        const template = KNOWN_ITEMS.find((it) =>
+                                          it.label.toLowerCase().includes(lowerQuery)
+                                        );
+                                        const id = `user-${room.roomId}-${Date.now()}-${Math.random()
+                                          .toString(36)
+                                          .slice(2)}`;
+                                        setProcess2Inventory((prev) => {
+                                          const base = prev ?? [];
+                                          return [
+                                            ...base,
+                                            {
+                                              id,
+                                              roomType: room.roomType,
+                                              roomLabel: room.label,
+                                              itemLabel:
+                                                template?.label ?? query,
+                                              quantity,
+                                              widthCm: null,
+                                              depthCm: null,
+                                              heightCm: null,
+                                              volumeM3: template?.volumeM3 ?? null,
+                                              valueEstimateEur: null,
+                                              valueJustification: null,
+                                            },
+                                          ];
+                                        });
+                                        setNewItemDrafts((prev) => ({
+                                          ...prev,
+                                          [room.roomId]: { query: "", quantity: "1" },
+                                        }));
+                                      }}
+                                      className="rounded-md bg-sky-500 px-3 py-1 text-[11px] font-semibold text-slate-950 hover:bg-sky-400"
+                                    >
+                                      Ajouter
+                                    </button>
+                                  </div>
+                                  {newItemDrafts[room.roomId]?.query && (
+                                    <div className="mt-1 space-y-0.5 text-[10px] text-slate-400">
+                                      {KNOWN_ITEMS.filter((it) =>
+                                        it.label
+                                          .toLowerCase()
+                                          .includes(
+                                            newItemDrafts[room.roomId].query.toLowerCase()
+                                          )
+                                      )
+                                        .slice(0, 5)
+                                        .map((it) => (
+                                          <button
+                                            key={it.label}
+                                            type="button"
+                                            onClick={() =>
+                                              setNewItemDrafts((prev) => ({
+                                                ...prev,
+                                                [room.roomId]: {
+                                                  query: it.label,
+                                                  quantity:
+                                                    prev[room.roomId]?.quantity ?? "1",
+                                                },
+                                              }))
+                                            }
+                                            className="block w-full truncate rounded-md px-2 py-0.5 text-left hover:bg-slate-800"
+                                          >
+                                            {it.label}
+                                          </button>
+                                        ))}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                          ))}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
                   </div>
-
-                  {/* Colonne droite : tableau synthétique Pièce / Article / Qté */}
-                  {process2Inventory && process2Inventory.length > 0 && (
-                    <div className="space-y-2 rounded-2xl bg-slate-950/90 p-3 ring-1 ring-slate-800/80">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                        Détail des objets détectés
-                      </p>
-                      <div className="overflow-hidden rounded-xl border border-slate-800/80 bg-slate-950">
-                        <div className="grid grid-cols-[minmax(0,1.2fr),minmax(0,1.6fr),auto] border-b border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] font-semibold text-slate-200">
-                          <span>Pièce</span>
-                          <span>Article</span>
-                          <span className="text-right">Qté</span>
-                        </div>
-                        <div className="max-h-52 space-y-[1px] overflow-y-auto bg-slate-950">
-                          {process2Inventory.map((row, idx) => (
-                            <div
-                              key={`${row.roomLabel}-${row.itemLabel}-${idx}`}
-                              className="grid grid-cols-[minmax(0,1.2fr),minmax(0,1.6fr),auto] px-3 py-1.5 text-[11px] text-slate-200 odd:bg-slate-950 even:bg-slate-900/50"
-                            >
-                              <span className="truncate">{row.roomLabel}</span>
-                              <span className="truncate">{row.itemLabel}</span>
-                              <span className="text-right">{row.quantity}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                )}
             {photoFlowChoice === "photos_now" &&
               process2Inventory &&
               process2Inventory.length > 0 && (
