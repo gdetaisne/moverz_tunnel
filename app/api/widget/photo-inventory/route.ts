@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  enrichItemsWithBusinessRules,
+  type ItemLike,
+  type RoomLike,
+} from "@/lib/inventory/businessRules";
 
 interface AnalyzePhotoInput {
   id: string;
@@ -161,6 +166,70 @@ export async function POST(req: NextRequest) {
       photosMeta
     );
 
+    // --- Application des règles métier (lit, armoires, etc.) ---
+    const roomForRules: RoomLike = {
+      roomId: "widget-main-room",
+      roomType,
+      roomLabel,
+    };
+
+    const itemsForRules: ItemLike[] = [];
+    items.forEach((item, idx) => {
+      const anyItem = item as any;
+      itemsForRules.push({
+        id: `${roomForRules.roomId}-${idx}`,
+        roomId: roomForRules.roomId,
+        roomLabel: roomForRules.roomLabel,
+        label: item.label,
+        category: item.category,
+        quantity: item.quantity,
+        confidence: item.confidence,
+        widthCm:
+          typeof anyItem.widthCm === "number" ? anyItem.widthCm : null,
+        depthCm:
+          typeof anyItem.depthCm === "number" ? anyItem.depthCm : null,
+        heightCm:
+          typeof anyItem.heightCm === "number" ? anyItem.heightCm : null,
+        volumeM3Ai:
+          typeof anyItem.volumeM3 === "number" ? anyItem.volumeM3 : null,
+        volumeM3Standard: null,
+        volumeM3Final: null,
+        volumeSource: "ai",
+        valueEurTypicalAi:
+          typeof anyItem.valueEstimateEur === "number"
+            ? anyItem.valueEstimateEur
+            : null,
+        valueSource:
+          typeof anyItem.valueEstimateEur === "number" ? "ai" : "none",
+        parentId: null,
+        derivedKind: null,
+      });
+    });
+
+    const enriched = enrichItemsWithBusinessRules(itemsForRules, [
+      roomForRules,
+    ]);
+
+    const enrichedRoomItems: RoomInventoryItem[] = enriched.map((item) => {
+      const volumeM3 =
+        (item.volumeM3Final ??
+          item.volumeM3Ai ??
+          item.volumeM3Standard) ?? null;
+
+      return {
+        label: item.label,
+        category: item.category,
+        quantity: item.quantity,
+        confidence: item.confidence,
+        widthCm: item.widthCm ?? null,
+        depthCm: item.depthCm ?? null,
+        heightCm: item.heightCm ?? null,
+        volumeM3,
+        valueEstimateEur: item.valueEurTypicalAi ?? null,
+        valueJustification: null,
+      };
+    });
+
     const end = Date.now();
     const totalMs = end - startedAt;
 
@@ -169,7 +238,7 @@ export async function POST(req: NextRequest) {
       roomType,
       label: roomLabel,
       photoIds: photosMeta.map((p) => p.id),
-      items,
+      items: enrichedRoomItems,
     };
 
     return withCors(
