@@ -1,10 +1,10 @@
-'use client';
+`use client`;
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { trackTunnelEvent } from "@/lib/api/client";
 
-export default function MerciPage() {
+function MerciPageInner() {
   const searchParams = useSearchParams();
   const src = searchParams.get("src") ?? undefined;
   const email = searchParams.get("email") ?? undefined;
@@ -46,6 +46,14 @@ export default function MerciPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function MerciPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-slate-200">Chargement…</div>}>
+      <MerciPageInner />
+    </Suspense>
   );
 }
 
