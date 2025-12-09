@@ -38,7 +38,7 @@ import {
 const STEPS = [
   { id: 1, label: "Contact" },
   { id: 2, label: "Projet" },
-  { id: 3, label: "Volume & formules" },
+  { id: 3, label: "Formules" },
   { id: 4, label: "Photos & inventaire" },
 ] as const;
 
@@ -1335,7 +1335,10 @@ function DevisGratuitsPageInner() {
 
   const [currentStep, setCurrentStep] = useState<StepId>(1);
   const [maxReachedStep, setMaxReachedStep] = useState<StepId>(1);
-  const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE);
+  const [form, setForm] = useState<FormState>({
+    ...INITIAL_FORM_STATE,
+    formule: "STANDARD",
+  });
   const [leadId, setLeadId] = useState<string | null>(null);
   const [backofficeLeadId, setBackofficeLeadId] = useState<string | null>(null);
   const [linkingToken, setLinkingToken] = useState<string | null>(null);
@@ -2764,9 +2767,11 @@ function DevisGratuitsPageInner() {
               <label className="block text-sm font-medium text-slate-100">
                 Email de contact
               </label>
-              <p className="text-xs text-slate-400">
-                Utilisé uniquement pour vous envoyer les devis et suivre votre dossier (jamais partagé ni revendu).
-              </p>
+              {hasTriedSubmitStep1 && !isEmailValid && (
+                <p className="text-xs text-slate-400">
+                  Utilisé uniquement pour vous envoyer les devis et suivre votre dossier (jamais partagé ni revendu).
+                </p>
+              )}
               <div className="relative mt-2">
                 <input
                   type="text"
@@ -3727,19 +3732,10 @@ function DevisGratuitsPageInner() {
                   <div className="relative mt-3 space-y-2 rounded-2xl bg-slate-950/70 p-3 pb-6 text-[11px] text-slate-300 ring-1 ring-slate-800">
                     {(() => {
                       const volumePart = estimatedVolumeM3 * COEF_VOLUME;
-
-                      // Même logique que dans calculatePricing : effet distance par paliers
-                      let distanceMultiplier = 1;
-                      if (distanceKm < 100) {
-                        distanceMultiplier = 0.5;
-                      } else if (distanceKm < 500) {
-                        distanceMultiplier = 95 / 80;
-                      } else {
-                        distanceMultiplier = 140 / 80;
-                      }
-
+                      const distancePart = distanceKm * COEF_DISTANCE;
                       const baseNoSeason = Math.max(
-                        volumePart * distanceMultiplier,
+                        volumePart,
+                        distancePart,
                         PRIX_MIN_SOCLE
                       );
                       const B = baseNoSeason;
@@ -3764,15 +3760,20 @@ function DevisGratuitsPageInner() {
                         effetFormuleEtage +
                         effetServices;
 
-                      // Effet distance : comparaison avec une courte distance (<100 km)
-                      const shortDistanceMultiplier = 0.5;
-                      const baseShort =
-                        volumePart * shortDistanceMultiplier * multSeason * multUrgency * multFormuleEtage;
-                      const baseWithDistance =
-                        volumePart * distanceMultiplier * multSeason * multUrgency * multFormuleEtage;
-                      const distanceImpactRounded = Math.round(
-                        Math.max(0, baseWithDistance - baseShort)
-                      );
+                      const prixParM3Min =
+                        activePricing.prixMin /
+                        Math.max(estimatedVolumeM3, 1);
+                      const prixParM3Max =
+                        activePricing.prixMax /
+                        Math.max(estimatedVolumeM3, 1);
+
+                      const distanceImpact =
+                        distancePart > volumePart
+                          ? (distancePart - volumePart) *
+                            multSeason *
+                            multUrgency *
+                            multFormuleEtage
+                          : 0;
 
                       const ecoPricing = pricingByFormule?.ECONOMIQUE;
                       const standardPricing = pricingByFormule?.STANDARD;
@@ -3834,31 +3835,33 @@ function DevisGratuitsPageInner() {
                               {estimatedVolumeM3.toLocaleString("fr-FR", {
                                 maximumFractionDigits: 1,
                               })}{" "}
-                              m³ représentent le socle principal du prix. Dans
-                              la formule Standard, la partie purement "volume"
-                              correspond à environ{" "}
+                              m³ représentent le socle principal du prix. Sur
+                              cette distance, il faut compter entre{" "}
                               <span className="font-semibold">
-                                {volumeEffectPerM3 != null
-                                  ? `${Math.round(
-                                      volumeEffectPerM3
-                                    ).toLocaleString("fr-FR")} € / m³`
-                                  : "—"}
-                              </span>
-                              .
+                                {Math.round(prixParM3Min).toLocaleString(
+                                  "fr-FR"
+                                )}{" "}
+                                € et{" "}
+                                {Math.round(prixParM3Max).toLocaleString(
+                                  "fr-FR"
+                                )}{" "}
+                                €
+                              </span>{" "}
+                              par m³.
                             </li>
                             <li>
                               <span className="font-semibold">
                                 Effet distance :
                               </span>{" "}
                               {distanceKm < 30
-                                ? "déménagement local : la distance ne rajoute quasiment rien par rapport au volume."
-                                : distanceImpactRounded > 0
-                                ? `dans votre cas, environ ${Math.round(
+                                ? "déménagement local, la distance ne rajoute quasiment rien par rapport au volume."
+                                : `dans votre cas, environ ${Math.round(
                                     distanceKm
-                                  )} km à parcourir. Par rapport à un trajet très court de même volume, cela ajoute environ ${formatPrice(
-                                    distanceImpactRounded
-                                  )}.`
-                                : `dans votre cas, la distance reste modérée : pas de surcoût particulier par rapport au volume.`}
+                                  )} km à parcourir. Par rapport à un trajet très court de même volume, cela représente environ ${formatPrice(
+                                    Math.round(
+                                      Math.max(0, distanceImpact)
+                                    )
+                                  )} supplémentaires.`}
                             </li>
                             <li>
                               <span className="font-semibold">
@@ -3886,33 +3889,13 @@ function DevisGratuitsPageInner() {
                             </li>
                             <li>
                               <span className="font-semibold">
-                                Effet niveau de formule (Éco / Standard / Premium) :
+                                Effet niveau de service :
                               </span>{" "}
-                              {standardPricing
-                                ? form.formule === "ECONOMIQUE" && ecoPricing
-                                  ? (() => {
-                                      const delta =
-                                        standardPricing.prixAvecFormule -
-                                        ecoPricing.prixAvecFormule;
-                                      return delta > 1
-                                        ? `en choisissant la formule Éco, vous économisez environ ${formatPrice(
-                                            Math.round(delta)
-                                          )} par rapport à la formule Standard.`
-                                        : "dans votre cas, la formule Éco est très proche de la Standard en prix : peu de différence sur ce dossier.";
-                                    })()
-                                  : form.formule === "PREMIUM" && premiumPricing
-                                  ? (() => {
-                                      const delta =
-                                        premiumPricing.prixAvecFormule -
-                                        standardPricing.prixAvecFormule;
-                                      return delta > 1
-                                        ? `la formule Premium ajoute environ ${formatPrice(
-                                            Math.round(delta)
-                                          )} par rapport à la formule Standard, pour plus de confort (emballage, démontage, équipe renforcée).`
-                                        : "dans votre cas, la formule Premium est très proche de la Standard en prix : le surcoût reste limité.";
-                                    })()
-                                  : "la formule Standard sert de référence dans votre cas : équilibre entre budget et niveau de service."
-                                : "les trois formules (Éco, Standard, Premium) ajustent le niveau de service inclus (emballage, démontage, confort de l’équipe)."}
+                              {effetServices > 0
+                                ? `les options choisies (monte‑meuble, piano, débarras…) représentent environ ${formatPrice(
+                                    Math.round(effetServices)
+                                  )}.`
+                                : "aucun service additionnel sélectionné pour l’instant (monte‑meuble, piano, débarras…)."}
                             </li>
                           </ul>
                           )}
