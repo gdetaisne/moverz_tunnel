@@ -1343,6 +1343,7 @@ function DevisGratuitsPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [hasTriedSubmitStep1, setHasTriedSubmitStep1] = useState(false);
   const [hasTriedSubmitStep2, setHasTriedSubmitStep2] = useState(false);
+  const [hasTriedSubmitStep3, setHasTriedSubmitStep3] = useState(false);
   const [firstNameTouched, setFirstNameTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const [originAddressTouched, setOriginAddressTouched] = useState(false);
@@ -1354,6 +1355,7 @@ function DevisGratuitsPageInner() {
     useState(false);
   const [destinationDistanceTouched, setDestinationDistanceTouched] =
     useState(false);
+  const [surfaceTouched, setSurfaceTouched] = useState(false);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [analysisProcesses, setAnalysisProcesses] = useState<AnalysisProcess[] | null>(
@@ -1420,6 +1422,11 @@ function DevisGratuitsPageInner() {
     isDestinationAddressFieldValid &&
     isDestinationHousingValid &&
     isDestinationDistanceValid;
+  const isSurfaceValid = (() => {
+    const raw = form.surfaceM2 ?? "";
+    const n = Number(String(raw).replace(",", "."));
+    return n > 0 && Number.isFinite(n);
+  })();
   const isMovingDateValid = Boolean(form.movingDate);
 
   const isDev =
@@ -2361,14 +2368,14 @@ function DevisGratuitsPageInner() {
 
   const originSummary = [
     [form.originPostalCode, form.originCity].filter(Boolean).join(" "),
-    HOUSING_LABELS[form.originHousingType],
+    form.originHousingType ? HOUSING_LABELS[form.originHousingType] : "",
   ]
     .filter(Boolean)
     .join(" · ");
 
   const destinationSummary = [
     [form.destinationPostalCode, form.destinationCity].filter(Boolean).join(" "),
-    HOUSING_LABELS[form.destinationHousingType],
+    form.destinationHousingType ? HOUSING_LABELS[form.destinationHousingType] : "",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -2444,7 +2451,13 @@ function DevisGratuitsPageInner() {
   const handleSubmitStep3 = async (e: FormEvent) => {
     e.preventDefault();
     if (!leadId) return;
+    setHasTriedSubmitStep3(true);
     setError(null);
+
+    if (!isSurfaceValid) {
+      setError("Merci de vérifier les champs en rouge.");
+      return;
+    }
 
     const rawSurface = form.surfaceM2 ?? "";
     const surface = Number(String(rawSurface).replace(",", "."));
@@ -3424,9 +3437,8 @@ function DevisGratuitsPageInner() {
                         Type de logement (départ)
                       </p>
                       <p className="text-[11px]">
-                        {HOUSING_LABELS[form.originHousingType]} —{" "}
-                        {HOUSING_SURFACE_DEFAULTS[form.originHousingType]} m²
-                        estimés.
+                        {HOUSING_LABELS[form.housingType]} —{" "}
+                        {HOUSING_SURFACE_DEFAULTS[form.housingType]} m² estimés.
                       </p>
                     </div>
 
@@ -3435,14 +3447,32 @@ function DevisGratuitsPageInner() {
                         <label className="block text-xs font-medium text-slate-200">
                           Surface approximative (m²)
                         </label>
-                        <input
-                          type="number"
-                          min={10}
-                          max={300}
-                          value={form.surfaceM2}
-                          onChange={(e) => updateField("surfaceM2", e.target.value)}
-                          className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                        />
+                        <div className="relative mt-1">
+                          <input
+                            type="number"
+                            min={10}
+                            max={300}
+                            value={form.surfaceM2}
+                            onChange={(e) => {
+                              setSurfaceTouched(true);
+                              updateField("surfaceM2", e.target.value);
+                            }}
+                            className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                          />
+                          {(hasTriedSubmitStep3 || surfaceTouched) && (
+                            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                              {isSurfaceValid ? (
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                                  ✓
+                                </span>
+                              ) : (
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                                  ✕
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="space-y-1">
