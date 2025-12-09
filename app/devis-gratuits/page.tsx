@@ -568,6 +568,8 @@ interface AddressAutocompleteProps {
   mode: "fr" | "world";
   initialValue?: string;
   onSelect: (value: AddressSuggestion) => void;
+  status?: "valid" | "invalid";
+  showStatus?: boolean;
 }
 
 function AddressAutocomplete({
@@ -577,6 +579,8 @@ function AddressAutocomplete({
   mode,
   initialValue,
   onSelect,
+  status,
+  showStatus,
 }: AddressAutocompleteProps) {
   const [input, setInput] = useState(initialValue ?? "");
   const [isLoading, setIsLoading] = useState(false);
@@ -816,17 +820,32 @@ function AddressAutocomplete({
       {helperText && (
         <p className="text-[11px] text-slate-400">{helperText}</p>
       )}
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => handleChange(e.target.value)}
-        onFocus={() => {
-          if (results.length > 0) setShowDropdown(true);
-        }}
-        className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-        placeholder={placeholder}
-        autoComplete="off"
-      />
+      <div className="relative mt-1">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => handleChange(e.target.value)}
+          onFocus={() => {
+            if (results.length > 0) setShowDropdown(true);
+          }}
+          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+          placeholder={placeholder}
+          autoComplete="off"
+        />
+        {showStatus && status && (
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+            {status === "valid" ? (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                ✓
+              </span>
+            ) : (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                ✕
+              </span>
+            )}
+          </span>
+        )}
+      </div>
       {isLoading && (
         <p className="mt-1 text-[11px] text-slate-500">Recherche…</p>
       )}
@@ -3021,12 +3040,19 @@ function DevisGratuitsPageInner() {
                       .join(" ")
                   }
                   onSelect={(s) => {
+                    setDestinationAddressTouched(true);
                     updateField("destinationAddress", s.addressLine ?? s.label);
                     updateField("destinationPostalCode", s.postalCode ?? "");
                     updateField("destinationCity", s.city ?? "");
                     updateField("destinationLat", s.lat ?? null);
                     updateField("destinationLon", s.lon ?? null);
                   }}
+                  showStatus={
+                    hasTriedSubmitStep2 || destinationAddressTouched
+                  }
+                  status={
+                    isDestinationAddressFieldValid ? "valid" : ("invalid" as const)
+                  }
                 />
                
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -3034,16 +3060,17 @@ function DevisGratuitsPageInner() {
                     <label className="block text-xs font-medium text-slate-200">
                       Type de logement
                     </label>
-                    <select
-                      value={form.destinationHousingType}
-                      onChange={(e) =>
-                        updateField(
-                          "destinationHousingType",
-                          e.target.value as HousingType | ""
-                        )
-                      }
-                      className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                    >
+                    <div className="relative mt-1">
+                      <select
+                        value={form.destinationHousingType}
+                        onChange={(e) =>
+                          updateField(
+                            "destinationHousingType",
+                            e.target.value as HousingType | ""
+                          )
+                        }
+                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                      >
                       <option value="">Choisir le type de logement</option>
                       <option value="studio">Studio (1 pièce)</option>
                       <option value="t1">T1 (chambre + cuisine)</option>
@@ -3057,22 +3084,37 @@ function DevisGratuitsPageInner() {
                       <option value="house_3floors">
                         Maison 3 étages ou +
                       </option>
-                    </select>
+                      </select>
+                      {(hasTriedSubmitStep2 || destinationHousingTouched) && !form.destinationUnknown && (
+                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                          {isDestinationHousingValid ? (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                              ✓
+                            </span>
+                          ) : (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                              ✕
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="block text-xs font-medium text-slate-200">
                       Distance de portage (m)
                     </label>
-                    <select
-                      value={form.destinationCarryDistance}
-                      onChange={(e) =>
-                        updateField(
-                          "destinationCarryDistance",
-                          e.target.value as FormState["destinationCarryDistance"]
-                        )
-                      }
-                      className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                    >
+                    <div className="relative mt-1">
+                      <select
+                        value={form.destinationCarryDistance}
+                        onChange={(e) =>
+                          updateField(
+                            "destinationCarryDistance",
+                            e.target.value as FormState["destinationCarryDistance"]
+                          )
+                        }
+                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                      >
                       <option value="">Choisir la distance</option>
                       <option value="0-10">0–10 m</option>
                       <option value="10-20">10–20 m</option>
@@ -3084,7 +3126,21 @@ function DevisGratuitsPageInner() {
                       <option value="70-80">70–80 m</option>
                       <option value="80-90">80–90 m</option>
                       <option value="90-100">90–100 m</option>
-                    </select>
+                      </select>
+                      {(hasTriedSubmitStep2 || destinationDistanceTouched) && !form.destinationUnknown && (
+                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                          {isDestinationDistanceValid ? (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                              ✓
+                            </span>
+                          ) : (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                              ✕
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
