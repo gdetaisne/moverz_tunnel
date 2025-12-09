@@ -74,11 +74,28 @@ export function calculatePricing(input: PricingInput): PricingOutput {
     input.density
   );
 
-  // 2. Prix base volume / distance : on prend la composante dominante plutôt
-  // que de sommer les deux (logique proche des grilles pro).
+  // 2. Prix base volume avec effet distance par paliers
   const volumePart = volumeM3 * COEF_VOLUME;
-  const distancePart = input.distanceKm * COEF_DISTANCE;
-  const baseNoSeason = Math.max(volumePart, distancePart, PRIX_MIN_SOCLE);
+
+  // Barème distance (référence Standard : 40 / 95 / 140 €/m³)
+  // On applique un multiplicateur sur la partie volume pour retrouver ces ordres de grandeur.
+  let distanceMultiplier = 1;
+  const d = input.distanceKm;
+  if (d < 100) {
+    // Courte distance : ~40 €/m³ (80 * 0.5)
+    distanceMultiplier = 0.5;
+  } else if (d < 500) {
+    // Distance moyenne : ~95 €/m³ (80 * 95/80)
+    distanceMultiplier = 95 / 80;
+  } else {
+    // Longue distance : ~140 €/m³ (80 * 140/80)
+    distanceMultiplier = 140 / 80;
+  }
+
+  const baseNoSeason = Math.max(
+    volumePart * distanceMultiplier,
+    PRIX_MIN_SOCLE
+  );
   const baseSeasoned = baseNoSeason * input.seasonFactor;
 
   // 3. Coefficient étages (pire des deux accès)

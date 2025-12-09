@@ -1356,6 +1356,7 @@ function DevisGratuitsPageInner() {
   const [destinationDistanceTouched, setDestinationDistanceTouched] =
     useState(false);
   const [surfaceTouched, setSurfaceTouched] = useState(false);
+  const [showPricingDetails, setShowPricingDetails] = useState(false);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [analysisProcesses, setAnalysisProcesses] = useState<AnalysisProcess[] | null>(
@@ -2837,6 +2838,10 @@ function DevisGratuitsPageInner() {
                 setError("Merci de vérifier les champs en rouge.");
                 return;
               }
+              if (!isSurfaceValid) {
+                setError("Merci de vérifier les champs en rouge.");
+                return;
+              }
               
               goToStep(3);
             }}
@@ -2982,6 +2987,41 @@ function DevisGratuitsPageInner() {
                       )}
                     </div>
                   </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1.3fr),minmax(0,1fr)]">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-slate-200">
+                      Surface approximative (m²)
+                    </label>
+                    <div className="relative mt-1">
+                      <input
+                        type="number"
+                        min={10}
+                        max={300}
+                        value={form.surfaceM2}
+                        onChange={(e) => {
+                          setSurfaceTouched(true);
+                          updateField("surfaceM2", e.target.value);
+                        }}
+                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                      />
+                      {(hasTriedSubmitStep2 || surfaceTouched) && (
+                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                          {isSurfaceValid ? (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                              ✓
+                            </span>
+                          ) : (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                              ✕
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div />
                 </div>
               </div>
             </div>
@@ -3217,16 +3257,148 @@ function DevisGratuitsPageInner() {
               <span>Je peux être flexible de quelques jours autour de cette date</span>
             </label>
 
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-100">
-                Détails utiles (optionnel)
-              </label>
-              <textarea
-                value={form.notes}
-                onChange={(e) => updateField("notes", e.target.value)}
-                className="mt-2 min-h-[96px] w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                placeholder="Ex: T3 au 3e sans ascenseur, accès parking compliqué…"
-              />
+            {/* Autres besoins éventuels (tous les services optionnels regroupés) */}
+            <div className="space-y-2 rounded-2xl bg-slate-950/60 p-3 text-[11px] text-slate-300">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Autres besoins éventuels
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "serviceMonteMeuble",
+                      !form.serviceMonteMeuble
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
+                    form.serviceMonteMeuble
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Monte‑meuble à prévoir
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField("serviceDebarras", !form.serviceDebarras)
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
+                    form.serviceDebarras
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Besoin de débarras
+                </button>
+                {[
+                  ["none", "Pas de piano"],
+                  ["droit", "Piano droit"],
+                  ["quart", "Piano quart de queue"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "servicePiano",
+                        value as FormState["servicePiano"]
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.servicePiano === value
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "optionPackingMaterials",
+                      !form.optionPackingMaterials
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
+                    form.optionPackingMaterials
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Cartons / protections fournis
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "optionDismantlingFull",
+                      !form.optionDismantlingFull
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
+                    form.optionDismantlingFull
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Beaucoup de meubles à démonter / remonter
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField("optionStorage", !form.optionStorage)
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
+                    form.optionStorage
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Besoin de stockage temporaire / garde‑meuble
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField("optionCleaning", !form.optionCleaning)
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
+                    form.optionCleaning
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Nettoyage de fin de déménagement
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "optionDifficultAccess",
+                      !form.optionDifficultAccess
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
+                    form.optionDifficultAccess
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Accès très contraint (rue étroite, centre‑ville difficile
+                  pour le camion)
+                </button>
+              </div>
             </div>
 
             {/* Message d'erreur étape 2 */}
@@ -3260,22 +3432,18 @@ function DevisGratuitsPageInner() {
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep3}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-            <h2 className="text-lg font-semibold text-slate-50">
-              Volume estimé & formules
-            </h2>
+              <h2 className="text-lg font-semibold text-slate-50">
+                Sélectionnez votre formule
+              </h2>
             </div>
 
             {/* Bloc estimation volume + formules */}
             <div className="space-y-4 rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-                Estimation rapide
-              </p>
-
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr),minmax(0,1.3fr)]">
                 {/* Colonne gauche : densité + surface/volume */}
                 <div className="space-y-4">
-                  {/* 1. Densité en premier */}
-                    <div className="space-y-1">
+                  {/* 1. Densité en premier (masquée) */}
+                    <div className="space-y-1 hidden">
                     <p className="block text-xs font-medium text-slate-200">
                       Quantité de meubles et affaires
                     </p>
@@ -3430,8 +3598,8 @@ function DevisGratuitsPageInner() {
                     </div>
                   </div>
 
-                  {/* 2. Surface ensuite + volume estimé + rappel type logement */}
-                  <div className="space-y-2">
+                  {/* 2. Surface ensuite + volume estimé + rappel type logement (masqué) */}
+                  <div className="space-y-2 hidden">
                     <div className="space-y-1 text-xs text-slate-300">
                       <p className="font-medium text-slate-200">
                         Type de logement (départ)
@@ -3444,35 +3612,12 @@ function DevisGratuitsPageInner() {
 
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <label className="block text-xs font-medium text-slate-200">
+                        <p className="block text-xs font-medium text-slate-200">
                           Surface approximative (m²)
-                        </label>
-                        <div className="relative mt-1">
-                          <input
-                            type="number"
-                            min={10}
-                            max={300}
-                            value={form.surfaceM2}
-                            onChange={(e) => {
-                              setSurfaceTouched(true);
-                              updateField("surfaceM2", e.target.value);
-                            }}
-                            className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                          />
-                          {(hasTriedSubmitStep3 || surfaceTouched) && (
-                            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                              {isSurfaceValid ? (
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
-                                  ✓
-                                </span>
-                              ) : (
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
-                                  ✕
-                                </span>
-                              )}
-                            </span>
-                          )}
-                        </div>
+                        </p>
+                        <p className="mt-1 inline-flex min-h-[32px] items-center rounded-xl bg-slate-900/80 px-3 py-1 text-xs font-semibold text-slate-50">
+                          {form.surfaceM2 || "—"}
+                        </p>
                       </div>
 
                       <div className="space-y-1">
@@ -3523,19 +3668,19 @@ function DevisGratuitsPageInner() {
                       formule === "ECONOMIQUE"
                         ? [
                             "Vous emballez vos cartons",
-                            "Nous gérons portage + transport",
+                            "Portage et transport inclus dans les devis",
                             "Démontage limité (lit principal)",
                           ]
                         : formule === "STANDARD"
                         ? [
-                            "Protection du mobilier et portage complet",
-                            "Démontage/remontage des meubles principaux",
+                            "Protection du mobilier incluse dans les devis",
+                            "Portage complet prévu par les déménageurs",
                             "Bon compromis budget / confort",
                           ]
                         : [
-                            "Emballage renforcé (fragiles, penderies…)",
+                            "Emballage renforcé prévu dans les devis (fragiles, penderies…)",
                             "Démontage/remontage étendu, repositionnement",
-                            "Planning plus souple et équipe dédiée",
+                            "Planning plus souple et équipe dédiée côté déménageur",
                           ];
                     return (
                       <button
@@ -3579,13 +3724,22 @@ function DevisGratuitsPageInner() {
               {activePricing &&
                 estimatedVolumeM3 != null &&
                 Number.isFinite(distanceKm) && (
-                  <div className="mt-3 space-y-1 rounded-2xl bg-slate-950/70 p-3 text-[11px] text-slate-300 ring-1 ring-slate-800">
+                  <div className="relative mt-3 space-y-2 rounded-2xl bg-slate-950/70 p-3 pb-6 text-[11px] text-slate-300 ring-1 ring-slate-800">
                     {(() => {
                       const volumePart = estimatedVolumeM3 * COEF_VOLUME;
-                      const distancePart = distanceKm * COEF_DISTANCE;
+
+                      // Même logique que dans calculatePricing : effet distance par paliers
+                      let distanceMultiplier = 1;
+                      if (distanceKm < 100) {
+                        distanceMultiplier = 0.5;
+                      } else if (distanceKm < 500) {
+                        distanceMultiplier = 95 / 80;
+                      } else {
+                        distanceMultiplier = 140 / 80;
+                      }
+
                       const baseNoSeason = Math.max(
-                        volumePart,
-                        distancePart,
+                        volumePart * distanceMultiplier,
                         PRIX_MIN_SOCLE
                       );
                       const B = baseNoSeason;
@@ -3610,15 +3764,14 @@ function DevisGratuitsPageInner() {
                         effetFormuleEtage +
                         effetServices;
 
-                      const distanceImpact =
-                        distancePart > volumePart
-                          ? (distancePart - volumePart) *
-                            multSeason *
-                            multUrgency *
-                            multFormuleEtage
-                          : 0;
+                      // Effet distance : comparaison avec une courte distance (<100 km)
+                      const shortDistanceMultiplier = 0.5;
+                      const baseShort =
+                        volumePart * shortDistanceMultiplier * multSeason * multUrgency * multFormuleEtage;
+                      const baseWithDistance =
+                        volumePart * distanceMultiplier * multSeason * multUrgency * multFormuleEtage;
                       const distanceImpactRounded = Math.round(
-                        Math.max(0, distanceImpact)
+                        Math.max(0, baseWithDistance - baseShort)
                       );
 
                       const ecoPricing = pricingByFormule?.ECONOMIQUE;
@@ -3631,19 +3784,9 @@ function DevisGratuitsPageInner() {
                         const multFormuleEtageStd =
                           standardPricing.formuleMultiplier *
                           standardPricing.coeffEtage;
-                        const distanceImpactStd =
-                          distancePart > volumePart
-                            ? (distancePart - volumePart) *
-                              multSeason *
-                              multUrgency *
-                              multFormuleEtageStd
-                            : 0;
                         const effetServicesStd = standardPricing.servicesTotal;
                         const autresEffetsStd =
-                          effetSaison +
-                          effetUrgence +
-                          distanceImpactStd +
-                          effetServicesStd;
+                          effetSaison + effetUrgence + effetServicesStd;
                         const volumePartStd = standardCentre - autresEffetsStd;
                         volumeEffectPerM3 =
                           volumePartStd / Math.max(estimatedVolumeM3, 1);
@@ -3651,19 +3794,38 @@ function DevisGratuitsPageInner() {
 
                       return (
                         <>
-                          <p className="font-semibold text-slate-100">
-                            Comment sont estimés les prix ?
-                          </p>
-                          <p>
-                            On décompose votre estimation en plusieurs{" "}
-                            <span className="font-semibold">effets</span> qui
-                            s’additionnent pour atteindre environ{" "}
-                            <span className="font-semibold">
-                              {formatPrice(Math.round(centre))}
-                            </span>{" "}
-                            (avant marge de ±20 % pour obtenir la fourchette).
-                          </p>
-                          <ul className="ml-4 list-disc space-y-1">
+                          <div className="space-y-1">
+                            <p className="font-semibold text-slate-100">
+                              Comment sont estimés les prix ?
+                            </p>
+                            <p>
+                              On décompose votre estimation en plusieurs{" "}
+                              <span className="font-semibold">effets</span> qui
+                              s’additionnent pour atteindre environ{" "}
+                              <span className="font-semibold">
+                                {formatPrice(Math.round(centre))}
+                              </span>{" "}
+                              (avant marge de ±20 % pour obtenir la fourchette).
+                            </p>
+                            <p className="text-[11px] text-slate-400">
+                              Cliquez pour voir le détail volume, distance, saison, etc.
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setShowPricingDetails((v) => !v)}
+                            className="absolute -bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center rounded-full border border-slate-600 bg-slate-950 px-3 py-1 text-[11px] font-medium text-slate-200 shadow-sm hover:border-slate-400"
+                          >
+                            <span className="mr-1">
+                              {showPricingDetails ? "Masquer" : "Voir plus"}
+                            </span>
+                            <span className="text-xs">
+                              {showPricingDetails ? "▲" : "▼"}
+                            </span>
+                          </button>
+                          {showPricingDetails && (
+                          <ul className="mt-2 ml-4 list-disc space-y-1">
                             <li>
                               <span className="font-semibold">
                                 Effet volume :
@@ -3753,6 +3915,7 @@ function DevisGratuitsPageInner() {
                                 : "les trois formules (Éco, Standard, Premium) ajustent le niveau de service inclus (emballage, démontage, confort de l’équipe)."}
                             </li>
                           </ul>
+                          )}
                           <div className="mt-1 space-y-0.5 text-[10px] text-slate-400">
                             <p className="font-semibold text-slate-300">NB :</p>
                             <ul className="ml-4 list-disc space-y-0.5">
@@ -3779,149 +3942,6 @@ function DevisGratuitsPageInner() {
                   </div>
                 )}
 
-              {/* Autres besoins éventuels (tous les services optionnels regroupés) */}
-              <div className="mt-4 space-y-2 rounded-2xl bg-slate-950/60 p-3 text-[11px] text-slate-300">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Autres besoins éventuels
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField(
-                        "serviceMonteMeuble",
-                        !form.serviceMonteMeuble
-                      )
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.serviceMonteMeuble
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Monte‑meuble à prévoir
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField("serviceDebarras", !form.serviceDebarras)
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.serviceDebarras
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Besoin de débarras
-                  </button>
-                  {[
-                    ["none", "Pas de piano"],
-                    ["droit", "Piano droit"],
-                    ["quart", "Piano quart de queue"],
-                  ].map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() =>
-                        updateField(
-                          "servicePiano",
-                          value as FormState["servicePiano"]
-                        )
-                      }
-                      className={[
-                        "rounded-full border px-3 py-1 text-left",
-                        form.servicePiano === value
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
-                      ].join(" ")}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField(
-                        "optionPackingMaterials",
-                        !form.optionPackingMaterials
-                      )
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.optionPackingMaterials
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Cartons / protections fournis
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField(
-                        "optionDismantlingFull",
-                        !form.optionDismantlingFull
-                      )
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.optionDismantlingFull
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Beaucoup de meubles à démonter / remonter
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField("optionStorage", !form.optionStorage)
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.optionStorage
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Besoin de stockage temporaire / garde‑meuble
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField("optionCleaning", !form.optionCleaning)
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.optionCleaning
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Nettoyage de fin de déménagement
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField(
-                        "optionDifficultAccess",
-                        !form.optionDifficultAccess
-                      )
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.optionDifficultAccess
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Accès très contraint (rue étroite, centre‑ville difficile
-                    pour le camion)
-                  </button>
-                </div>
-              </div>
             </div>
 
             {error && (
