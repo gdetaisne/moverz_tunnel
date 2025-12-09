@@ -158,9 +158,11 @@ export async function uploadLeadPhotos(
   };
 }
 
-// Client HTTP pour communiquer avec le Back Office (routes /public/leads)
+// ============================================
+// TUNNEL EVENTS TRACKING (Backoffice /public/tunnel-events)
+// ============================================
 
-const getApiBaseUrl = () => {
+function getApiBaseUrl() {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!baseUrl) {
     throw new Error(
@@ -168,7 +170,83 @@ const getApiBaseUrl = () => {
     );
   }
   return baseUrl.replace(/\/+$/, "");
-};
+}
+
+type LogicalStep = "ENTRY" | "CONTACT" | "PROJECT" | "RECAP" | "THANK_YOU" | "PHOTOS";
+
+export interface TrackTunnelEventInput {
+  eventType: string;
+  logicalStep?: LogicalStep;
+  screenId?: string;
+  leadTunnelId?: string;
+  backofficeLeadId?: string;
+  source?: string;
+  email?: string;
+  extra?: Record<string, unknown>;
+}
+
+function getOrCreateTunnelSessionId(): string {
+  if (typeof window === "undefined") {
+    return typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  const key = "moverz_tunnel_session_id";
+  let sessionId = window.localStorage.getItem(key);
+  if (!sessionId) {
+    sessionId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    window.localStorage.setItem(key, sessionId);
+  }
+  return sessionId;
+}
+
+export async function trackTunnelEvent(input: TrackTunnelEventInput): Promise<void> {
+  try {
+    const API_BASE_URL = getApiBaseUrl();
+    const sessionId = getOrCreateTunnelSessionId();
+
+    const payload: Record<string, unknown> = {
+      sessionId,
+      leadTunnelId: input.leadTunnelId,
+      leadId: input.backofficeLeadId,
+      source: input.source,
+      urlPath:
+        typeof window !== "undefined" && window.location
+          ? window.location.pathname
+          : "/devis-gratuits",
+      eventType: input.eventType,
+      logicalStep: input.logicalStep,
+      screenId: input.screenId,
+      timestamp: new Date().toISOString(),
+      email: input.email,
+      extra: input.extra,
+    };
+
+    await fetch(`${API_BASE_URL}/public/tunnel-events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      // Important pour les events envoyés juste avant unload
+      keepalive: true,
+    });
+  } catch (error) {
+    if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+      // En prod on ne casse jamais le tunnel pour un problème d'analytics
+      // eslint-disable-next-line no-console
+      console.warn("Failed to track tunnel event", error);
+    }
+  }
+}
+
+// Client HTTP pour communiquer avec le Back Office (routes /public/leads)
+
+// getApiBaseUrl est déjà défini plus haut (section tracking) et réutilisé ici.
 
 export interface CreateLeadPayload {
   // Champs requis (d’après createLeadSchema)

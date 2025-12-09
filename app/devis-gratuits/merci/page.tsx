@@ -1,6 +1,24 @@
 'use client';
 
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { trackTunnelEvent } from "@/lib/api/client";
+
 export default function MerciPage() {
+  const searchParams = useSearchParams();
+  const src = searchParams.get("src") ?? undefined;
+  const email = searchParams.get("email") ?? undefined;
+
+  useEffect(() => {
+    void trackTunnelEvent({
+      eventType: "TUNNEL_COMPLETED",
+      logicalStep: "THANK_YOU",
+      screenId: "thank_you_v1",
+      source: src,
+      email,
+    });
+  }, [src, email]);
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       <div className="w-full max-w-md space-y-5 rounded-3xl bg-slate-900/80 p-6 shadow-lg ring-1 ring-slate-800 sm:p-8">

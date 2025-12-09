@@ -12,6 +12,7 @@ import {
   requestBackofficeConfirmation,
   uploadBackofficePhotos,
   saveBackofficeInventory,
+  trackTunnelEvent,
   type LeadTunnelCreatePayload,
 } from "@/lib/api/client";
 import {
@@ -71,6 +72,20 @@ const HOUSING_LABELS: Record<HousingType, string> = {
 
 const COMFORT_FORMULAS: FormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
 
+function stepIdToLogicalStep(step: StepId): "CONTACT" | "PROJECT" | "RECAP" | "PHOTOS" {
+  switch (step) {
+    case 1:
+      return "CONTACT";
+    case 2:
+      return "PROJECT";
+    case 3:
+      return "RECAP";
+    case 4:
+    default:
+      return "PHOTOS";
+  }
+}
+
 interface FormState {
   firstName: string;
   lastName: string;
@@ -81,7 +96,7 @@ interface FormState {
   originAddress: string;
   originLat: number | null;
   originLon: number | null;
-  originHousingType: HousingType;
+  originHousingType: HousingType | "";
   destinationPostalCode: string;
   destinationCity: string;
   destinationAddress: string;
@@ -107,7 +122,7 @@ interface FormState {
     | "80-90"
     | "90-100";
   originParkingAuth: boolean;
-  destinationHousingType: HousingType;
+  destinationHousingType: HousingType | "";
   destinationFloor: string;
   destinationElevator: string;
   destinationFurnitureLift: "unknown" | "no" | "yes";
@@ -253,7 +268,7 @@ const INITIAL_FORM_STATE: FormState = {
   originAddress: "",
   originLat: null,
   originLon: null,
-  originHousingType: "t2", // Valeur par défaut raisonnable
+  originHousingType: "", // L'utilisateur doit choisir
 
   // Adresse destination - vide par défaut (obligatoire)
   destinationPostalCode: "",
@@ -276,7 +291,7 @@ const INITIAL_FORM_STATE: FormState = {
   originCarryDistance: "0-10",
   originParkingAuth: false,
 
-  destinationHousingType: "t2",
+  destinationHousingType: "",
   destinationFloor: "0",
   destinationElevator: "none",
   destinationFurnitureLift: "unknown",
@@ -438,16 +453,17 @@ function getUrgencyFactor(dateStr: string | null | undefined): number {
 }
 
 function formatHousingCard(
-  type: HousingType,
+  type: HousingType | "",
   floor: string | undefined
 ): { icon: string; title: string; subtitle: string } {
-  const baseLabel = HOUSING_LABELS[type];
+  const effectiveType: HousingType = (type || "t2") as HousingType;
+  const baseLabel = HOUSING_LABELS[effectiveType];
 
   const nFloor = Number.parseInt(floor || "", 10);
   const floorLabel =
     Number.isFinite(nFloor) && nFloor > 0 ? `${nFloor}e étage` : "Étage à préciser";
 
-  if (type.startsWith("house")) {
+  if (effectiveType.startsWith("house")) {
     return {
       icon: "🏠",
       title: baseLabel,
@@ -805,7 +821,7 @@ function AddressAutocomplete({
         onFocus={() => {
           if (results.length > 0) setShowDropdown(true);
         }}
-        className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+        className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
         placeholder={placeholder}
         autoComplete="off"
       />
@@ -1304,6 +1320,9 @@ function DevisGratuitsPageInner() {
   const [linkingToken, setLinkingToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasTriedSubmitStep1, setHasTriedSubmitStep1] = useState(false);
+  const [firstNameTouched, setFirstNameTouched] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [analysisProcesses, setAnalysisProcesses] = useState<AnalysisProcess[] | null>(
@@ -1336,6 +1355,20 @@ function DevisGratuitsPageInner() {
     volumeM3: string;
     valueEstimateEur: string;
   } | null>(null);
+
+  const trimmedFirstName = form.firstName.trim();
+  const trimmedEmail = form.email.trim().toLowerCase();
+  const isFirstNameValid = trimmedFirstName.length > 0;
+  const isEmailValid =
+    trimmedEmail.length > 0 &&
+    trimmedEmail.includes("@") &&
+    trimmedEmail.includes(".");
+
+  const isOriginAddressValid = Boolean(form.originPostalCode && form.originCity);
+  const isDestinationAddressValid = Boolean(
+    form.destinationUnknown || (form.destinationPostalCode && form.destinationCity)
+  );
+  const isMovingDateValid = Boolean(form.movingDate);
 
   const isDev =
     typeof process !== "undefined" && process.env.NODE_ENV !== "production";
@@ -1428,7 +1461,8 @@ function DevisGratuitsPageInner() {
   );
 
   const estimatedVolumeM3 = useMemo(() => {
-    const surface = Number(form.surfaceM2.replace(",", "."));
+    const rawSurface = form.surfaceM2 ?? "";
+    const surface = Number(String(rawSurface).replace(",", "."));
     if (!surface || !Number.isFinite(surface)) return null;
     try {
       return calculateVolume(surface, form.housingType, form.density);
@@ -2289,10 +2323,8 @@ function DevisGratuitsPageInner() {
 
   const handleSubmitStep1 = async (e: FormEvent) => {
     e.preventDefault();
+    setHasTriedSubmitStep1(true);
     setError(null);
-
-    const trimmedFirstName = form.firstName.trim();
-    const trimmedEmail = form.email.trim().toLowerCase();
 
     if (!trimmedFirstName) {
       setError("Merci de renseigner un prénom ou surnom.");
@@ -2530,19 +2562,6 @@ function DevisGratuitsPageInner() {
 
   return (
     <div className="relative flex flex-1 flex-col gap-6">
-      {/* En-tête tunnel – uniquement sur l'étape 1 pour alléger les suivantes */}
-      {currentStep === 1 && (
-        <header className="space-y-2">
-          <h1 className="text-2xl font-semibold leading-snug text-slate-50 sm:text-3xl">
-            Demande de devis déménagement
-          </h1>
-          <p className="max-w-prose text-sm text-slate-300 sm:text-base">
-            Un seul dossier complet, plusieurs déménageurs vérifiés vous
-            contactent. Plus vous êtes précis, plus les devis seront pertinents.
-          </p>
-        </header>
-      )}
-
       {/* Stepper simple, mobile first */}
       <nav
         aria-label="Étapes du tunnel"
@@ -2637,21 +2656,41 @@ function DevisGratuitsPageInner() {
       {currentStep === 1 && (
         <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep1}>
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-100">
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-100">
                 Comment voulez-vous qu’on vous appelle ?
-                </label>
-              <p className="text-xs text-slate-400">
-                Juste pour personnaliser nos échanges, vous pouvez mettre un prénom ou un surnom.
-              </p>
+              </label>
+              {error && !form.firstName && (
+                <p className="text-xs text-slate-400">
+                  Un prénom, un nom ou un surnom qui sera utilisé dans nos échanges.
+                </p>
+              )}
+              <div className="relative mt-2">
                 <input
                   type="text"
                   value={form.firstName}
-                  onChange={(e) => updateField("firstName", e.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                placeholder="Prénom ou surnom"
+                  onChange={(e) => {
+                    setFirstNameTouched(true);
+                    updateField("firstName", e.target.value);
+                  }}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  placeholder="Prénom ou surnom"
                   autoComplete="given-name"
                 />
+                {(hasTriedSubmitStep1 || firstNameTouched) && (
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                    {isFirstNameValid ? (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                        ✓
+                      </span>
+                    ) : (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                        ✕
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -2659,23 +2698,39 @@ function DevisGratuitsPageInner() {
                 Email de contact
               </label>
               <p className="text-xs text-slate-400">
-                Usage strictement interne pour vous tenir informé de l’évolution
-                de votre dossier et vous envoyer vos devis. Jamais partagé ni
-                revendu.
+                Utilisé uniquement pour vous envoyer les devis et suivre votre dossier (jamais partagé ni revendu).
               </p>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => updateField("email", e.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                placeholder="vous@email.fr"
-                autoComplete="email"
-              />
+              <div className="relative mt-2">
+                <input
+                  type="text"
+                  value={form.email}
+                  onChange={(e) => {
+                    setEmailTouched(true);
+                    updateField("email", e.target.value);
+                  }}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  placeholder="vous@email.fr"
+                  autoComplete="email"
+                />
+                {(hasTriedSubmitStep1 || emailTouched) && (
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                    {isEmailValid ? (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                        ✓
+                      </span>
+                    ) : (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                        ✕
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
 
-            {error && (
+            {error && (!isFirstNameValid || !isEmailValid) && (
               <p className="text-sm text-rose-400" role="alert">
-                {error}
+                Merci de vérifier les champs en rouge.
               </p>
             )}
 
@@ -2701,15 +2756,15 @@ function DevisGratuitsPageInner() {
               
               // Validation étape 2 : champs obligatoires
               if (!form.originPostalCode || !form.originCity) {
-                setError("Merci de renseigner l'adresse de départ (code postal et ville).");
+                setError("Merci de vérifier les champs en rouge.");
                 return;
               }
               if (!form.destinationUnknown && (!form.destinationPostalCode || !form.destinationCity)) {
-                setError("Merci de renseigner l'adresse d'arrivée (code postal et ville), ou cochez 'Destination pas encore définie'.");
+                setError("Merci de vérifier les champs en rouge.");
                 return;
               }
               if (!form.movingDate) {
-                setError("Merci de renseigner la date souhaitée de déménagement.");
+                setError("Merci de vérifier les champs en rouge.");
                 return;
               }
               
@@ -2722,16 +2777,30 @@ function DevisGratuitsPageInner() {
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">
                   Départ
                 </p>
-                <p className="text-[11px] text-slate-400">
-                  {originSummary || "Code postal, ville, type de logement…"}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[11px] text-slate-400">
+                    {originSummary || "Code postal, ville, type de logement…"}
+                  </p>
+                  {hasTriedSubmitStep1 && (
+                    <span className="pointer-events-none flex items-center">
+                      {isOriginAddressValid ? (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                          ✓
+                        </span>
+                      ) : (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                          ✕
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-3">
                 <AddressAutocomplete
                   label="Adresse de départ"
                   placeholder="10 rue de la Paix, 33000 Bordeaux"
-                  helperText="Vous pouvez saisir une adresse complète, une ville ou un code postal."
                   mode="fr"
                   initialValue={
                     form.originAddress ||
@@ -2747,11 +2816,6 @@ function DevisGratuitsPageInner() {
                     updateField("originLon", s.lon ?? null);
                   }}
                 />
-                <p className="text-[11px] text-slate-500">
-                  {form.originPostalCode && form.originCity
-                    ? `${form.originPostalCode} ${form.originCity}`
-                    : "Code postal et ville seront remplis automatiquement."}
-                </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
                     <label className="block text-xs font-medium text-slate-200">
@@ -2762,17 +2826,18 @@ function DevisGratuitsPageInner() {
                       onChange={(e) =>
                         updateField(
                           "originHousingType",
-                          e.target.value as HousingType
+                          e.target.value as HousingType | ""
                         )
                       }
-                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                      className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                     >
-                      <option value="studio">Studio</option>
-                      <option value="t1">T1</option>
-                      <option value="t2">T2</option>
-                      <option value="t3">T3</option>
-                      <option value="t4">T4</option>
-                      <option value="t5">T5</option>
+                      <option value="">Choisir le type de logement</option>
+                      <option value="studio">Studio (1 pièce)</option>
+                      <option value="t1">T1 (chambre + cuisine)</option>
+                      <option value="t2">T2 (chambre + salon + cuisine)</option>
+                      <option value="t3">T3 (2 chambres + salon + cuisine)</option>
+                      <option value="t4">T4 (3 chambres + salon + cuisine)</option>
+                      <option value="t5">T5 (4 chambres + salon + cuisine)</option>
                       <option value="house">Maison plain-pied</option>
                       <option value="house_1floor">Maison +1 étage</option>
                       <option value="house_2floors">Maison +2 étages</option>
@@ -2793,7 +2858,7 @@ function DevisGratuitsPageInner() {
                           e.target.value as FormState["originCarryDistance"]
                         )
                       }
-                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                      className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                     >
                       <option value="0-10">0–10 m</option>
                       <option value="10-20">10–20 m</option>
@@ -2817,9 +2882,24 @@ function DevisGratuitsPageInner() {
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">
                   Arrivée
                 </p>
-                <p className="text-[11px] text-slate-400">
-                  {destinationSummary || "Code postal, ville, type de logement…"}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[11px] text-slate-400">
+                    {destinationSummary || "Code postal, ville, type de logement…"}
+                  </p>
+                  {hasTriedSubmitStep1 && (
+                    <span className="pointer-events-none flex items-center">
+                      {isDestinationAddressValid ? (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                          ✓
+                        </span>
+                      ) : (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                          ✕
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -2847,8 +2927,8 @@ function DevisGratuitsPageInner() {
                   }
                   helperText={
                     isDestinationForeign
-                      ? "Incluez le pays (ex: Barcelone, Espagne)."
-                      : "Vous pouvez saisir une adresse complète, une ville ou un code postal."
+                      ? "Incluez aussi le pays (ex: Barcelone, Espagne)."
+                      : undefined
                   }
                   mode={isDestinationForeign ? "world" : "fr"}
                   initialValue={
@@ -2865,13 +2945,7 @@ function DevisGratuitsPageInner() {
                     updateField("destinationLon", s.lon ?? null);
                   }}
                 />
-                <p className="text-[11px] text-slate-500">
-                  {form.destinationPostalCode && form.destinationCity
-                    ? `${form.destinationPostalCode} ${form.destinationCity}`
-                    : isDestinationForeign
-                    ? "Ville, pays et code postal seront remplis automatiquement si possible."
-                    : "Code postal et ville seront remplis automatiquement."}
-                </p>
+               
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
                     <label className="block text-xs font-medium text-slate-200">
@@ -2882,17 +2956,18 @@ function DevisGratuitsPageInner() {
                       onChange={(e) =>
                         updateField(
                           "destinationHousingType",
-                          e.target.value as HousingType
+                          e.target.value as HousingType | ""
                         )
                       }
-                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                      className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                     >
-                      <option value="studio">Studio</option>
-                      <option value="t1">T1</option>
-                      <option value="t2">T2</option>
-                      <option value="t3">T3</option>
-                      <option value="t4">T4</option>
-                      <option value="t5">T5</option>
+                      <option value="">Choisir le type de logement</option>
+                      <option value="studio">Studio (1 pièce)</option>
+                      <option value="t1">T1 (chambre + cuisine)</option>
+                      <option value="t2">T2 (chambre + salon + cuisine)</option>
+                      <option value="t3">T3 (2 chambres + salon + cuisine)</option>
+                      <option value="t4">T4 (3 chambres + salon + cuisine)</option>
+                      <option value="t5">T5 (4 chambres + salon + cuisine)</option>
                       <option value="house">Maison plain-pied</option>
                       <option value="house_1floor">Maison +1 étage</option>
                       <option value="house_2floors">Maison +2 étages</option>
@@ -2913,7 +2988,7 @@ function DevisGratuitsPageInner() {
                           e.target.value as FormState["destinationCarryDistance"]
                         )
                       }
-                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                      className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                     >
                       <option value="0-10">0–10 m</option>
                       <option value="10-20">10–20 m</option>
@@ -2942,26 +3017,41 @@ function DevisGratuitsPageInner() {
               <label className="block text-sm font-medium text-slate-100">
                 Date souhaitée
               </label>
-              <input
-                type="date"
-                value={form.movingDate}
-                onChange={(e) => updateField("movingDate", e.target.value)}
-                onClick={(e) => {
-                  try {
-                    (e.target as HTMLInputElement).showPicker?.();
-                  } catch {
-                    // showPicker non supporté : fallback silencieux
-                  }
-                }}
-                min={new Date().toISOString().split("T")[0]}
-                max={(() => {
-                  const d = new Date();
-                  d.setFullYear(d.getFullYear() + 1);
-                  return d.toISOString().split("T")[0];
-                })()}
-                required
-                className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
-              />
+              <div className="relative mt-1">
+                <input
+                  type="date"
+                  value={form.movingDate}
+                  onChange={(e) => updateField("movingDate", e.target.value)}
+                  onClick={(e) => {
+                    try {
+                      (e.target as HTMLInputElement).showPicker?.();
+                    } catch {
+                      // showPicker non supporté : fallback silencieux
+                    }
+                  }}
+                  min={new Date().toISOString().split("T")[0]}
+                  max={(() => {
+                    const d = new Date();
+                    d.setFullYear(d.getFullYear() + 1);
+                    return d.toISOString().split("T")[0];
+                  })()}
+                  required
+                  className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100"
+                />
+                {hasTriedSubmitStep1 && (
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                    {isMovingDateValid ? (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                        ✓
+                      </span>
+                    ) : (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                        ✕
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
 
             <label className="inline-flex items-center gap-2 text-xs text-slate-300">
@@ -2978,20 +3068,16 @@ function DevisGratuitsPageInner() {
               <label className="block text-sm font-medium text-slate-100">
                 Détails utiles (optionnel)
               </label>
-              <p className="text-xs text-slate-400">
-                Étages, ascenseur, monte‑meuble, volume approximatif… ce qui
-                vous semble important.
-              </p>
               <textarea
                 value={form.notes}
                 onChange={(e) => updateField("notes", e.target.value)}
-                className="mt-2 min-h-[96px] w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                placeholder="Ex: T3 au 3e sans ascenseur, monte‑meuble possible côté cour…"
+                className="mt-2 min-h-[96px] w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                placeholder="Ex: T3 au 3e sans ascenseur, accès parking compliqué…"
               />
             </div>
 
             {/* Message d'erreur étape 2 */}
-            {error && currentStep === 2 && (
+            {error && currentStep === 2 && (!isOriginAddressValid || !isDestinationAddressValid || !isMovingDateValid) && (
               <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300">
                 {error}
               </p>
