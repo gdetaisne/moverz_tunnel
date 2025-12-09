@@ -111,6 +111,7 @@ interface FormState {
   originElevator: string;
   originFurnitureLift: "unknown" | "no" | "yes";
   originCarryDistance:
+    | ""
     | "0-10"
     | "10-20"
     | "20-30"
@@ -127,6 +128,7 @@ interface FormState {
   destinationElevator: string;
   destinationFurnitureLift: "unknown" | "no" | "yes";
   destinationCarryDistance:
+    | ""
     | "0-10"
     | "10-20"
     | "20-30"
@@ -288,14 +290,14 @@ const INITIAL_FORM_STATE: FormState = {
   originFloor: "0", // RDC par défaut
   originElevator: "none", // Pas d'ascenseur par défaut
   originFurnitureLift: "unknown",
-  originCarryDistance: "0-10",
+  originCarryDistance: "",
   originParkingAuth: false,
 
   destinationHousingType: "",
   destinationFloor: "0",
   destinationElevator: "none",
   destinationFurnitureLift: "unknown",
-  destinationCarryDistance: "0-10",
+  destinationCarryDistance: "",
   destinationParkingAuth: false,
   destinationUnknown: false,
 
@@ -1321,8 +1323,18 @@ function DevisGratuitsPageInner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasTriedSubmitStep1, setHasTriedSubmitStep1] = useState(false);
+  const [hasTriedSubmitStep2, setHasTriedSubmitStep2] = useState(false);
   const [firstNameTouched, setFirstNameTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
+  const [originAddressTouched, setOriginAddressTouched] = useState(false);
+  const [originHousingTouched, setOriginHousingTouched] = useState(false);
+  const [originDistanceTouched, setOriginDistanceTouched] = useState(false);
+  const [destinationAddressTouched, setDestinationAddressTouched] =
+    useState(false);
+  const [destinationHousingTouched, setDestinationHousingTouched] =
+    useState(false);
+  const [destinationDistanceTouched, setDestinationDistanceTouched] =
+    useState(false);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [analysisProcesses, setAnalysisProcesses] = useState<AnalysisProcess[] | null>(
@@ -1364,10 +1376,31 @@ function DevisGratuitsPageInner() {
     trimmedEmail.includes("@") &&
     trimmedEmail.includes(".");
 
-  const isOriginAddressValid = Boolean(form.originPostalCode && form.originCity);
-  const isDestinationAddressValid = Boolean(
-    form.destinationUnknown || (form.destinationPostalCode && form.destinationCity)
+  const isOriginAddressFieldValid = Boolean(
+    form.originPostalCode && form.originCity && form.originAddress
   );
+  const isOriginHousingValid = Boolean(form.originHousingType);
+  const isOriginDistanceValid = Boolean(form.originCarryDistance);
+
+  const isDestinationAddressFieldValid = Boolean(
+    form.destinationUnknown ||
+      (form.destinationPostalCode &&
+        form.destinationCity &&
+        form.destinationAddress)
+  );
+  const isDestinationHousingValid = Boolean(
+    form.destinationUnknown || form.destinationHousingType
+  );
+  const isDestinationDistanceValid = Boolean(
+    form.destinationUnknown || form.destinationCarryDistance
+  );
+
+  const isOriginAddressValid =
+    isOriginAddressFieldValid && isOriginHousingValid && isOriginDistanceValid;
+  const isDestinationAddressValid =
+    isDestinationAddressFieldValid &&
+    isDestinationHousingValid &&
+    isDestinationDistanceValid;
   const isMovingDateValid = Boolean(form.movingDate);
 
   const isDev =
@@ -2394,7 +2427,8 @@ function DevisGratuitsPageInner() {
     if (!leadId) return;
     setError(null);
 
-    const surface = Number(form.surfaceM2.replace(",", "."));
+    const rawSurface = form.surfaceM2 ?? "";
+    const surface = Number(String(rawSurface).replace(",", "."));
     const pricing =
       pricingByFormule && pricingByFormule[form.formule]
         ? pricingByFormule[form.formule]
@@ -2752,14 +2786,18 @@ function DevisGratuitsPageInner() {
             className="space-y-5"
             onSubmit={(e) => {
               e.preventDefault();
+              setHasTriedSubmitStep2(true);
               setError(null);
               
               // Validation étape 2 : champs obligatoires
-              if (!form.originPostalCode || !form.originCity) {
+              if (!form.originPostalCode || !form.originCity || !form.originCarryDistance) {
                 setError("Merci de vérifier les champs en rouge.");
                 return;
               }
-              if (!form.destinationUnknown && (!form.destinationPostalCode || !form.destinationCity)) {
+              if (
+                !form.destinationUnknown &&
+                (!form.destinationPostalCode || !form.destinationCity || !form.destinationCarryDistance)
+              ) {
                 setError("Merci de vérifier les champs en rouge.");
                 return;
               }
@@ -2781,7 +2819,11 @@ function DevisGratuitsPageInner() {
                   <p className="text-[11px] text-slate-400">
                     {originSummary || "Code postal, ville, type de logement…"}
                   </p>
-                  {hasTriedSubmitStep1 && (
+                  {(hasTriedSubmitStep2 ||
+                    form.originPostalCode ||
+                    form.originCity ||
+                    form.originHousingType ||
+                    form.originCarryDistance) && (
                     <span className="pointer-events-none flex items-center">
                       {isOriginAddressValid ? (
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
@@ -2809,28 +2851,34 @@ function DevisGratuitsPageInner() {
                       .join(" ")
                   }
                   onSelect={(s) => {
+                    setOriginAddressTouched(true);
                     updateField("originAddress", s.addressLine ?? s.label);
                     updateField("originPostalCode", s.postalCode ?? "");
                     updateField("originCity", s.city ?? "");
                     updateField("originLat", s.lat ?? null);
                     updateField("originLon", s.lon ?? null);
                   }}
+                  showStatus={hasTriedSubmitStep2 || originAddressTouched}
+                  status={
+                    isOriginAddressFieldValid ? "valid" : ("invalid" as const)
+                  }
                 />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
                     <label className="block text-xs font-medium text-slate-200">
                       Type de logement
                     </label>
-                    <select
-                      value={form.originHousingType}
-                      onChange={(e) =>
-                        updateField(
-                          "originHousingType",
-                          e.target.value as HousingType | ""
-                        )
-                      }
-                      className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                    >
+                    <div className="relative mt-1">
+                      <select
+                        value={form.originHousingType}
+                        onChange={(e) =>
+                          updateField(
+                            "originHousingType",
+                            e.target.value as HousingType | ""
+                          )
+                        }
+                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                      >
                       <option value="">Choisir le type de logement</option>
                       <option value="studio">Studio (1 pièce)</option>
                       <option value="t1">T1 (chambre + cuisine)</option>
@@ -2844,22 +2892,38 @@ function DevisGratuitsPageInner() {
                       <option value="house_3floors">
                         Maison 3 étages ou +
                       </option>
-                    </select>
+                      </select>
+                      {(hasTriedSubmitStep2 || originHousingTouched) && (
+                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                          {isOriginHousingValid ? (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                              ✓
+                            </span>
+                          ) : (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                              ✕
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="block text-xs font-medium text-slate-200">
                       Distance de portage (m)
                     </label>
-                    <select
-                      value={form.originCarryDistance}
-                      onChange={(e) =>
-                        updateField(
-                          "originCarryDistance",
-                          e.target.value as FormState["originCarryDistance"]
-                        )
-                      }
-                      className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                    >
+                    <div className="relative mt-1">
+                      <select
+                        value={form.originCarryDistance}
+                        onChange={(e) =>
+                          updateField(
+                            "originCarryDistance",
+                            e.target.value as FormState["originCarryDistance"]
+                          )
+                        }
+                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                      >
+                      <option value="">Choisir la distance</option>
                       <option value="0-10">0–10 m</option>
                       <option value="10-20">10–20 m</option>
                       <option value="20-30">20–30 m</option>
@@ -2870,7 +2934,21 @@ function DevisGratuitsPageInner() {
                       <option value="70-80">70–80 m</option>
                       <option value="80-90">80–90 m</option>
                       <option value="90-100">90–100 m</option>
-                    </select>
+                      </select>
+                      {(hasTriedSubmitStep2 || originDistanceTouched) && (
+                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                          {isOriginDistanceValid ? (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                              ✓
+                            </span>
+                          ) : (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
+                              ✕
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2886,7 +2964,12 @@ function DevisGratuitsPageInner() {
                   <p className="text-[11px] text-slate-400">
                     {destinationSummary || "Code postal, ville, type de logement…"}
                   </p>
-                  {hasTriedSubmitStep1 && (
+                  {(hasTriedSubmitStep2 ||
+                    form.destinationPostalCode ||
+                    form.destinationCity ||
+                    form.destinationHousingType ||
+                    form.destinationCarryDistance ||
+                    form.destinationUnknown) && (
                     <span className="pointer-events-none flex items-center">
                       {isDestinationAddressValid ? (
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
@@ -2990,6 +3073,7 @@ function DevisGratuitsPageInner() {
                       }
                       className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                     >
+                      <option value="">Choisir la distance</option>
                       <option value="0-10">0–10 m</option>
                       <option value="10-20">10–20 m</option>
                       <option value="20-30">20–30 m</option>
@@ -3038,7 +3122,7 @@ function DevisGratuitsPageInner() {
                   required
                   className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100"
                 />
-                {hasTriedSubmitStep1 && (
+                {(hasTriedSubmitStep2 || form.movingDate) && (
                   <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                     {isMovingDateValid ? (
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
