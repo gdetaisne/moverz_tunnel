@@ -1362,6 +1362,9 @@ function DevisGratuitsPageInner() {
   const [surfaceTouched, setSurfaceTouched] = useState(false);
   const [showPricingDetails, setShowPricingDetails] = useState(false);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
+  const [isCoarsePointer, setIsCoarsePointer] = useState<boolean | null>(null);
+  const [cameraUnavailable, setCameraUnavailable] = useState(false);
+  const [showUploadOnMobile, setShowUploadOnMobile] = useState(false);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [analysisProcesses, setAnalysisProcesses] = useState<AnalysisProcess[] | null>(
     null
@@ -1378,6 +1381,29 @@ function DevisGratuitsPageInner() {
   const [photoFlowChoice, setPhotoFlowChoice] = useState<
     "none" | "photos_now"
   >("none");
+
+  // Détection simple des devices à pointeur "grossier" (mobile / tablette),
+  // pour privilégier la caméra intégrée sur mobile tout en gardant un fallback upload.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(pointer: coarse)");
+
+    const update = (match: boolean) => {
+      setIsCoarsePointer(match);
+    };
+
+    update(mql.matches);
+
+    const listener = (event: MediaQueryListEvent) => {
+      update(event.matches);
+    };
+
+    mql.addEventListener("change", listener);
+
+    return () => {
+      mql.removeEventListener("change", listener);
+    };
+  }, []);
   const [hasPhotosAnswer, setHasPhotosAnswer] = useState<"pending" | "yes" | "no">("pending");
   const [isDestinationForeign, setIsDestinationForeign] = useState(false);
   const [excludedInventoryIds, setExcludedInventoryIds] = useState<string[]>([]);
@@ -4189,118 +4215,148 @@ function DevisGratuitsPageInner() {
             {/* Mode photos maintenant : zone d'upload + analyse */}
             {photoFlowChoice === "photos_now" && (
               <>
-                {/* Zone d'upload + drag & drop */}
                 <div className="space-y-3">
-                  <div
-                    className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (e.dataTransfer?.files?.length) {
-                        addLocalFiles(e.dataTransfer.files);
-                      }
-                    }}
-                  >
-                    <input
-                      type="file"
-                      multiple
-                      accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
-                      className="absolute inset-0 cursor-pointer opacity-0"
-                      onChange={(e) => {
-                        if (e.target.files?.length) {
-                          addLocalFiles(e.target.files);
-                        }
-                      }}
-                    />
-                    <p className="text-sm font-medium text-slate-100">
-                      Glissez vos photos ici ou cliquez pour sélectionner des fichiers.
-                    </p>
-                    <p className="mt-2 text-[11px] text-slate-400">
-                      Formats acceptés : photos standard de smartphone (JPG, JPEG, PNG, WEBP, HEIC, HEIF).
-                    </p>
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      Idéal : 4 photos par pièce (vue générale, deux angles, détails).
-                    </p>
-                  </div>
-
-                  {/* Caméra intégrée (multi-photos) avec fallback automatique */}
-                  <CameraCapture
-                    maxPhotos={48}
-                    onFilesChange={(files) => {
-                      if (files.length) {
-                        addLocalFiles(files);
-                      }
-                    }}
-                    className="mt-2"
-                  />
-
-                  {localUploadFiles.length > 0 && (
-                    <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                        Photos sélectionnées
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {localUploadFiles.map((item) => {
-                          const isImage = item.file.type.startsWith("image/");
-                          const borderClass =
-                            item.status === "uploaded"
-                              ? "border-emerald-400"
-                              : item.status === "uploading"
-                              ? "border-sky-400"
-                              : item.status === "error"
-                              ? "border-rose-400"
-                              : "border-slate-600";
-
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              className={`relative h-14 w-14 overflow-hidden rounded-xl border ${borderClass} bg-slate-900`}
-                              onClick={() =>
-                                setLocalUploadFiles((prev) =>
-                                  prev.filter((f) => f.id !== item.id)
-                                )
-                              }
-                              disabled={item.status === "uploading"}
-                              title="Retirer cette photo"
-                            >
-                              {isImage ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={item.previewUrl}
-                                  alt=""
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <span className="text-[10px] text-slate-200">FILE</span>
-                              )}
-                              <span className="absolute right-0 top-0 rounded-bl-md bg-slate-900/80 px-1 text-[9px] text-slate-100">
-                                ×
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="mt-3 flex justify-center">
+                  {/* Sur mobile: caméra intégrée comme chemin principal.
+                      En cas de refus / non support ou si l'utilisateur choisit explicitement,
+                      on bascule sur l'upload classique. */}
+                  {isCoarsePointer && !cameraUnavailable && !showUploadOnMobile && (
+                    <>
+                      <CameraCapture
+                        maxPhotos={48}
+                        onFilesChange={(files) => {
+                          if (files.length) {
+                            addLocalFiles(files);
+                          }
+                        }}
+                        onUnavailable={() => {
+                          setCameraUnavailable(true);
+                        }}
+                      />
+                      <p className="text-[11px] text-slate-400">
+                        Problème avec la caméra ou vous préférez utiliser vos photos
+                        déjà présentes dans la galerie ?{" "}
                         <button
                           type="button"
-                          onClick={handleAnalyzePhotos}
-                          disabled={
-                            !leadId ||
-                            isUploadingPhotos ||
-                            isAnalyzing ||
-                            localUploadFiles.every((f) => f.status !== "pending")
-                          }
-                          className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                          onClick={() => setShowUploadOnMobile(true)}
+                          className="font-semibold text-sky-300 underline underline-offset-2"
                         >
-                          {isUploadingPhotos || isAnalyzing
-                            ? "Analyse en cours…"
-                            : "Analyser mes photos"}
+                          Importer depuis la galerie
                         </button>
+                        .
+                      </p>
+                    </>
+                  )}
+
+                  {/* Desktop, ou fallback si la caméra n'est pas disponible / refusée,
+                     ou si l'utilisateur a choisi d'utiliser la galerie sur mobile. */}
+                  {(!isCoarsePointer || cameraUnavailable || showUploadOnMobile) && (
+                    <>
+                      <div
+                        className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (e.dataTransfer?.files?.length) {
+                            addLocalFiles(e.dataTransfer.files);
+                          }
+                        }}
+                      >
+                        <input
+                          type="file"
+                          multiple
+                          accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+                          className="absolute inset-0 cursor-pointer opacity-0"
+                          onChange={(e) => {
+                            if (e.target.files?.length) {
+                              addLocalFiles(e.target.files);
+                            }
+                          }}
+                        />
+                        <p className="text-sm font-medium text-slate-100">
+                          Glissez vos photos ici ou cliquez pour sélectionner des
+                          fichiers.
+                        </p>
+                        <p className="mt-2 text-[11px] text-slate-400">
+                          Formats acceptés : photos standard de smartphone (JPG, JPEG,
+                          PNG, WEBP, HEIC, HEIF).
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          Idéal : 4 photos par pièce (vue générale, deux angles,
+                          détails).
+                        </p>
                       </div>
-                    </div>
+
+                      {localUploadFiles.length > 0 && (
+                        <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            Photos sélectionnées
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {localUploadFiles.map((item) => {
+                              const isImage = item.file.type.startsWith("image/");
+                              const borderClass =
+                                item.status === "uploaded"
+                                  ? "border-emerald-400"
+                                  : item.status === "uploading"
+                                  ? "border-sky-400"
+                                  : item.status === "error"
+                                  ? "border-rose-400"
+                                  : "border-slate-600";
+
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  className={`relative h-14 w-14 overflow-hidden rounded-xl border ${borderClass} bg-slate-900`}
+                                  onClick={() =>
+                                    setLocalUploadFiles((prev) =>
+                                      prev.filter((f) => f.id !== item.id)
+                                    )
+                                  }
+                                  disabled={item.status === "uploading"}
+                                  title="Retirer cette photo"
+                                >
+                                  {isImage ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={item.previewUrl}
+                                      alt=""
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-[10px] text-slate-200">
+                                      FILE
+                                    </span>
+                                  )}
+                                  <span className="absolute right-0 top-0 rounded-bl-md bg-slate-900/80 px-1 text-[9px] text-slate-100">
+                                    ×
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-3 flex justify-center">
+                            <button
+                              type="button"
+                              onClick={handleAnalyzePhotos}
+                              disabled={
+                                !leadId ||
+                                isUploadingPhotos ||
+                                isAnalyzing ||
+                                localUploadFiles.every((f) => f.status !== "pending")
+                              }
+                              className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isUploadingPhotos || isAnalyzing
+                                ? "Analyse en cours…"
+                                : "Analyser mes photos"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </>

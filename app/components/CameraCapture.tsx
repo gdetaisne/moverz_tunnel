@@ -6,6 +6,7 @@ type CameraCaptureProps = {
   onFilesChange: (files: File[]) => void;
   maxPhotos?: number;
   className?: string;
+  onUnavailable?: () => void;
 };
 
 type CaptureState =
@@ -20,6 +21,7 @@ export function CameraCapture({
   onFilesChange,
   maxPhotos = 24,
   className,
+  onUnavailable,
 }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -54,6 +56,7 @@ export function CameraCapture({
       setError(
         "Votre appareil ne permet pas d'utiliser la caméra dans le navigateur. Utilisez plutôt l'upload de photos classique."
       );
+      onUnavailable?.();
       return;
     }
 
@@ -100,6 +103,7 @@ export function CameraCapture({
           "Impossible d'accéder à la caméra. Essayez de recharger la page ou utilisez l'upload classique."
         );
       }
+      onUnavailable?.();
       stopStream();
     }
   };
@@ -175,15 +179,10 @@ export function CameraCapture({
     <div className={className}>
       <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold text-slate-50">
-              Prendre des photos avec la caméra
-            </p>
-            <p className="text-[11px] text-slate-400">
-              Ouvre la caméra directement dans la page pour prendre plusieurs
-              photos d&apos;affilée.
-            </p>
-          </div>
+          <p className="text-[11px] text-slate-400">
+            Recommandations : 3 à 5 photos par pièce. Tout ce qui est vu sera
+            pris en compte.
+          </p>
           {state === "active" ? (
             <button
               type="button"
