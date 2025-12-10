@@ -245,9 +245,7 @@
     }
 
     function updateAnalyzeDisabled() {
-      // On autorise maintenant le clic sur "Lancer l'analyse" même sans photo
-      // pour pouvoir dévoiler la caméra / guider l'utilisateur. On ne bloque
-      // donc le bouton que pendant l'analyse en cours.
+      // Bouton désactivé uniquement pendant l'analyse en cours.
       analyzeBtn.disabled = isAnalyzing;
     }
 
@@ -480,6 +478,20 @@
 
     dropzone.addEventListener("click", function () {
       if (isAnalyzing) return;
+      setError("");
+
+      // Sur mobile avec caméra disponible: on affiche le bloc caméra
+      // (sans démarrer la caméra automatiquement). L'utilisateur choisit
+      // ensuite "Ouvrir la caméra" ou "Utiliser ma galerie".
+      if (cameraSupported && isCoarsePointer) {
+        ensureCameraUI();
+        if (cameraWrapper) {
+          cameraWrapper.style.display = "block";
+        }
+        return;
+      }
+
+      // Desktop ou caméra indisponible: comportement classique d'upload.
       fileInput.click();
     });
 
@@ -508,14 +520,6 @@
       var files = dt.files || [];
       handleFiles(files);
     });
-
-    // Préparation éventuelle de la caméra pour les devices mobiles/tablettes.
-    // Important: on ne démarre JAMAIS la caméra ni n'affiche le bloc caméra
-    // automatiquement. Le bloc n'apparaît que suite à une action explicite
-    // (ex: clic sur "Lancer l'analyse" sans photo, ou sur "Ouvrir la caméra").
-    if (cameraSupported && isCoarsePointer) {
-      ensureCameraUI();
-    }
 
     function renderResults(items) {
       if (!items || !items.length) {
@@ -695,24 +699,12 @@
     }
 
     async function analyze() {
-      if (isAnalyzing) return;
-
-      // Si aucune photo n'est encore sélectionnée, on ne lance pas l'analyse.
-      // Sur mobile, on dévoile le bloc caméra uniquement à ce moment-là pour
-      // éviter un affichage intrusif dès l'arrivée sur la page.
-      if (!selectedFiles.length) {
-        setError(
-          "Ajoutez 1 à 3 photos via la caméra ou votre galerie avant de lancer l’analyse."
-        );
-        if (cameraSupported && isCoarsePointer) {
-          ensureCameraUI();
-          if (cameraWrapper) {
-            cameraWrapper.style.display = "block";
-            // On laisse la dropzone visible : la caméra devient l'option
-            // principale visuelle, mais la galerie reste disponible.
-          }
+      if (!selectedFiles.length || isAnalyzing) {
+        if (!selectedFiles.length && !isAnalyzing) {
+          setError(
+            "Ajoutez au moins une photo avant de lancer l’analyse (caméra ou galerie)."
+          );
         }
-        updateAnalyzeDisabled();
         return;
       }
 
