@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { CameraCapture } from "../components/CameraCapture";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   createLead,
@@ -4188,7 +4189,7 @@ function DevisGratuitsPageInner() {
             {/* Mode photos maintenant : zone d'upload + analyse */}
             {photoFlowChoice === "photos_now" && (
               <>
-                {/* Zone d'upload */}
+                {/* Zone d'upload + drag & drop */}
                 <div className="space-y-3">
                   <div
                     className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
@@ -4217,12 +4218,23 @@ function DevisGratuitsPageInner() {
                       Glissez vos photos ici ou cliquez pour sélectionner des fichiers.
                     </p>
                     <p className="mt-2 text-[11px] text-slate-400">
-                      Formats acceptés : JPG, JPEG, PNG, WEBP, HEIC, HEIF.
+                      Formats acceptés : photos standard de smartphone (JPG, JPEG, PNG, WEBP, HEIC, HEIF).
                     </p>
                     <p className="mt-1 text-[11px] text-slate-500">
                       Idéal : 4 photos par pièce (vue générale, deux angles, détails).
                     </p>
                   </div>
+
+                  {/* Caméra intégrée (multi-photos) avec fallback automatique */}
+                  <CameraCapture
+                    maxPhotos={48}
+                    onFilesChange={(files) => {
+                      if (files.length) {
+                        addLocalFiles(files);
+                      }
+                    }}
+                    className="mt-2"
+                  />
 
                   {localUploadFiles.length > 0 && (
                     <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
@@ -4441,25 +4453,40 @@ function DevisGratuitsPageInner() {
                                     <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                                       Inventaire détecté
                                     </p>
-                                    <div className="max-h-32 space-y-0.5 overflow-y-auto pr-1">
+                                    <div className="space-y-1">
                                       {inventoryForRoom.map((row, idx) => {
                                         const isExcluded =
                                           excludedInventoryIds.includes(row.id);
 
                                         return (
-                                        <div
+                                          <div
                                             key={row.id}
-                                            className={`space-y-0.5 text-[11px] ${
+                                            className={`space-y-1 rounded-md px-1 py-1.5 text-[11px] ${
                                               isExcluded
-                                                ? "text-slate-500 line-through opacity-60"
-                                                : "text-slate-200"
+                                                ? "bg-slate-900/40 text-slate-500 line-through opacity-60"
+                                                : "bg-slate-900/70 text-slate-200"
                                             }`}
                                           >
-                                          <div className="flex items-center justify-between gap-2">
-                                              <span className="truncate">
-                                                {row.itemLabel}
-                                              </span>
-                                              <div className="flex items-center gap-2">
+                                            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                              <div className="flex flex-col gap-0.5">
+                                                <span className="truncate font-medium">
+                                                  {row.itemLabel}
+                                                </span>
+                                                <span className="text-[10px] text-slate-400">
+                                                  {typeof row.widthCm === "number" &&
+                                                  typeof row.depthCm === "number" &&
+                                                  typeof row.heightCm === "number"
+                                                    ? `${Math.round(
+                                                        row.widthCm
+                                                      )}×${Math.round(
+                                                        row.depthCm
+                                                      )}×${Math.round(
+                                                        row.heightCm
+                                                      )} cm`
+                                                    : "Mesures : —"}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center gap-2 self-start sm:self-auto">
                                                 <span className="shrink-0 text-right text-slate-300">
                                                   × {row.quantity}
                                                 </span>
@@ -4488,104 +4515,91 @@ function DevisGratuitsPageInner() {
                                                 <button
                                                   type="button"
                                                   onClick={() =>
-                                                    setExcludedInventoryIds(
-                                                      (prev) =>
-                                                        prev.includes(row.id)
-                                                          ? prev.filter(
-                                                              (id) =>
-                                                                id !== row.id
-                                                            )
-                                                          : [...prev, row.id]
+                                                    setExcludedInventoryIds((prev) =>
+                                                      prev.includes(row.id)
+                                                        ? prev.filter(
+                                                            (id) => id !== row.id
+                                                          )
+                                                        : [...prev, row.id]
                                                     )
                                                   }
                                                   className="rounded-full border border-slate-600 px-2 py-0.5 text-[9px] text-slate-300 hover:border-rose-400 hover:text-rose-300"
                                                 >
-                                                  {isExcluded
-                                                    ? "Rétablir"
-                                                    : "Retirer"}
+                                                  {isExcluded ? "Rétablir" : "Retirer"}
                                                 </button>
-                            </div>
-                        </div>
-                                          <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-400">
-                                            <span className="truncate">
-                                              {typeof row.widthCm === "number" &&
-                                              typeof row.depthCm === "number" &&
-                                              typeof row.heightCm === "number"
-                                                ? `${Math.round(
-                                                    row.widthCm
-                                                  )}×${Math.round(
-                                                    row.depthCm
-                                                  )}×${Math.round(
-                                                    row.heightCm
-                                                  )} cm`
-                                                : "Mesures : —"}
-                                            </span>
-                                            <span className="truncate text-right">
-                                              {typeof row.volumeNuM3 ===
-                                                "number" &&
-                                              typeof row.volumeM3 === "number"
-                                                ? `Volume nu : ${row.volumeNuM3.toFixed(
-                                                    2
-                                                  )} m³ • Emballé : ${row.volumeM3.toFixed(
-                                                    2
-                                                  )} m³`
-                                                : typeof row.volumeM3 === "number"
-                                                ? `Volume : ${row.volumeM3.toFixed(
-                                                    2
-                                                  )} m³`
-                                                : "Volume : —"}
-                                              {typeof row.valueEstimateEur ===
-                                              "number"
-                                                ? ` • Valeur : ${Math.round(
-                                                    row.valueEstimateEur
-                                                  )} €`
-                                                : ""}
-                                            </span>
-                                          </div>
-                                          {row.dependencies &&
-                                            row.dependencies.length > 0 && (
-                                              <div className="mt-0.5 space-y-0.5 text-[9px] text-slate-500">
-                                                {row.dependencies.map((dep) => (
-                                                  <div key={dep.id} className="flex justify-between gap-2">
-                                                    <span className="truncate">
-                                                      dont {dep.label} × {dep.quantity}
-                                                    </span>
-                                                    {typeof dep.volumeM3 === "number" && (
-                                                      <span className="shrink-0 text-right">
-                                                        {dep.volumeM3.toFixed(2)} m³
+                                              </div>
+                                            </div>
+                                            <div className="flex flex-col gap-0.5 text-[10px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+                                              <span className="truncate">
+                                                {typeof row.volumeNuM3 === "number" &&
+                                                typeof row.volumeM3 === "number"
+                                                  ? `Volume nu : ${row.volumeNuM3.toFixed(
+                                                      2
+                                                    )} m³ • Emballé : ${row.volumeM3.toFixed(
+                                                      2
+                                                    )} m³`
+                                                  : typeof row.volumeM3 === "number"
+                                                  ? `Volume : ${row.volumeM3.toFixed(
+                                                      2
+                                                    )} m³`
+                                                  : "Volume : —"}
+                                              </span>
+                                              <span className="truncate text-slate-300 sm:text-right">
+                                                {typeof row.valueEstimateEur === "number"
+                                                  ? `Valeur estimée : ${Math.round(
+                                                      row.valueEstimateEur
+                                                    )} €`
+                                                  : ""}
+                                              </span>
+                                            </div>
+                                            {row.dependencies &&
+                                              row.dependencies.length > 0 && (
+                                                <div className="mt-0.5 space-y-0.5 text-[9px] text-slate-500">
+                                                  {row.dependencies.map((dep) => (
+                                                    <div
+                                                      key={dep.id}
+                                                      className="flex justify-between gap-2"
+                                                    >
+                                                      <span className="truncate">
+                                                        dont {dep.label} × {dep.quantity}
                                                       </span>
-                                                    )}
-                      </div>
-                    ))}
-                  </div>
+                                                      {typeof dep.volumeM3 ===
+                                                        "number" && (
+                                                        <span className="shrink-0 text-right">
+                                                          {dep.volumeM3.toFixed(2)} m³
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            {row.packagingReason && (
+                                              <p className="text-[9px] text-slate-500">
+                                                {(() => {
+                                                  if (
+                                                    typeof row.volumeNuM3 === "number" &&
+                                                    typeof row.volumeM3 === "number"
+                                                  ) {
+                                                    const delta =
+                                                      row.volumeM3 - row.volumeNuM3;
+                                                    const deltaStr =
+                                                      delta > 0
+                                                        ? `+${delta.toFixed(2)} m³`
+                                                        : `${delta.toFixed(2)} m³`;
+                                                    return `Emballage : ${row.packagingReason} (${deltaStr})`;
+                                                  }
+                                                  return `Emballage : ${row.packagingReason}`;
+                                                })()}
+                                              </p>
                                             )}
-                                          {row.packagingReason && (
-                                            <p className="text-[9px] text-slate-500">
-                                              {(() => {
-                                                if (
-                                                  typeof row.volumeNuM3 === "number" &&
-                                                  typeof row.volumeM3 === "number"
-                                                ) {
-                                                  const delta =
-                                                    row.volumeM3 - row.volumeNuM3;
-                                                  const deltaStr =
-                                                    delta > 0
-                                                      ? `+${delta.toFixed(2)} m³`
-                                                      : `${delta.toFixed(2)} m³`;
-                                                  return `Emballage : ${row.packagingReason} (${deltaStr})`;
-                                                }
-                                                return `Emballage : ${row.packagingReason}`;
-                                              })()}
-                                            </p>
-                                          )}
-                                          {row.valueJustification && (
-                                            <p className="text-[9px] text-slate-500">
-                                              {row.valueJustification}
-                                            </p>
-                                          )}
-                        </div>
-                                      );
-                                    })}
+                                            {row.valueJustification && (
+                                              <p className="text-[9px] text-slate-500">
+                                                {row.valueJustification}
+                                              </p>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
                                     </div>
                                   </div>
                                 )}

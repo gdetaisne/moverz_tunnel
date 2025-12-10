@@ -112,7 +112,7 @@
       '  <div class="mzw-dropzone" id="mzw-dropzone">' +
       '    <div class="mzw-drop-title">Glissez vos photos ici</div>' +
       '    <div class="mzw-drop-helper">ou cliquez pour choisir dans votre galerie</div>' +
-      '    <div class="mzw-drop-limit">Jusqu’à 3 photos • JPEG ou PNG</div>' +
+      '    <div class="mzw-drop-limit">Jusqu’à 3 photos • photos standard de smartphone (JPG, JPEG, PNG, WEBP, HEIC, HEIF)</div>' +
       "  </div>" +
       '  <input type="file" id="mzw-file-input" accept="image/*" multiple style="display:none" />' +
       '  <div class="mzw-photos-row" id="mzw-photos-row" style="display:none"></div>' +
