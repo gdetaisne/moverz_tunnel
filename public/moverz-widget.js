@@ -65,6 +65,17 @@
       ".mzw-drop-title { font-size: 14px; font-weight: 500; }",
       ".mzw-drop-helper { margin-top: 4px; font-size: 12px; color: #6b7280; }",
       ".mzw-drop-limit { margin-top: 2px; font-size: 11px; color: #9ca3af; }",
+      ".mzw-camera { margin-top: 14px; border-radius: 16px; border: 1px solid rgba(148, 163, 184, 0.8); background: #020617; padding: 10px 10px 12px; }",
+      ".mzw-camera-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }",
+      ".mzw-camera-text { font-size: 11px; color: #e5e7eb; }",
+      ".mzw-camera-actions { margin-top: 6px; display: flex; gap: 6px; align-items: center; }",
+      ".mzw-camera-pill-btn { border-radius: 999px; padding: 5px 10px; font-size: 11px; font-weight: 500; border: 1px solid rgba(148, 163, 184, 0.9); background: #020617; color: #e5e7eb; cursor: pointer; }",
+      ".mzw-camera-pill-btn-primary { border-color: #22c55e; background: rgba(34, 197, 94, 0.15); color: #bbf7d0; }",
+      ".mzw-camera-pill-btn-secondary { border-color: rgba(148, 163, 184, 0.9); background: transparent; color: #e5e7eb; }",
+      ".mzw-camera-video-wrapper { margin-top: 8px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.8); background: #000000; }",
+      ".mzw-camera-video { width: 100%; height: 210px; object-fit: cover; background: #000000; }",
+      ".mzw-camera-cta-row { margin-top: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }",
+      ".mzw-camera-counter { font-size: 11px; color: #9ca3af; }",
       ".mzw-photos-row { margin-top: 10px; display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }",
       ".mzw-photo-pill { border-radius: 999px; background: #e5f0ff; border: 1px solid rgba(148, 163, 184, 0.8); padding: 4px 9px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: #111827; }",
       ".mzw-photo-pill-count { width: 18px; height: 18px; border-radius: 999px; background: rgba(59, 130, 246, 0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; }",
@@ -156,6 +167,36 @@
     var isAnalyzing = false;
     var hasResults = false;
 
+    // Détection d'un pointeur "grossier" (mobile/tablette) pour décider si on
+    // privilégie la caméra comme entrée principale.
+    var isCoarsePointer = false;
+    try {
+      if (typeof window !== "undefined" && window.matchMedia) {
+        var pointerMql = window.matchMedia("(pointer: coarse)");
+        isCoarsePointer = !!pointerMql.matches;
+        if (pointerMql.addEventListener) {
+          pointerMql.addEventListener("change", function (event) {
+            isCoarsePointer = !!event.matches;
+          });
+        }
+      }
+    } catch (e) {
+      // on ignore les erreurs de matchMedia
+    }
+
+    var cameraSupported =
+      typeof navigator !== "undefined" &&
+      !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    var cameraActive = false;
+    var cameraUnavailable = false;
+    var cameraWrapper = null;
+    var cameraVideo = null;
+    var cameraOpenBtn = null;
+    var cameraCloseBtn = null;
+    var cameraCaptureBtn = null;
+    var cameraCounterText = null;
+    var cameraStream = null;
+
     function setError(msg) {
       if (!msg) {
         errorEl.style.display = "none";
@@ -207,6 +248,214 @@
       analyzeBtn.disabled = isAnalyzing || selectedFiles.length === 0;
     }
 
+    function stopCamera() {
+      cameraActive = false;
+      if (cameraStream) {
+        try {
+          cameraStream.getTracks().forEach(function (track) {
+            try {
+              track.stop();
+            } catch (e) {}
+          });
+        } catch (e) {}
+        cameraStream = null;
+      }
+      if (cameraVideo) {
+        cameraVideo.srcObject = null;
+      }
+      if (cameraOpenBtn) {
+        cameraOpenBtn.disabled = false;
+      }
+    }
+
+    function fallbackToGallery() {
+      stopCamera();
+      if (cameraWrapper) {
+        cameraWrapper.style.display = "none";
+      }
+      if (dropzone) {
+        dropzone.style.display = "block";
+      }
+    }
+
+    function ensureCameraUI() {
+      if (cameraWrapper || !dropzone) return;
+
+      cameraWrapper = document.createElement("div");
+      cameraWrapper.className = "mzw-camera";
+
+      var header = document.createElement("div");
+      header.className = "mzw-camera-header";
+
+      var info = document.createElement("p");
+      info.className = "mzw-camera-text";
+      info.textContent =
+        "Recommandations : 3 à 5 photos par pièce. Tout ce qui est vu sera pris en compte.";
+
+      var actions = document.createElement("div");
+      actions.className = "mzw-camera-actions";
+
+      cameraOpenBtn = document.createElement("button");
+      cameraOpenBtn.type = "button";
+      cameraOpenBtn.className =
+        "mzw-camera-pill-btn mzw-camera-pill-btn-primary";
+      cameraOpenBtn.textContent = "Ouvrir la caméra";
+
+      cameraCloseBtn = document.createElement("button");
+      cameraCloseBtn.type = "button";
+      cameraCloseBtn.className =
+        "mzw-camera-pill-btn mzw-camera-pill-btn-secondary";
+      cameraCloseBtn.textContent = "Utiliser ma galerie";
+
+      actions.appendChild(cameraOpenBtn);
+      actions.appendChild(cameraCloseBtn);
+
+      header.appendChild(info);
+      header.appendChild(actions);
+
+      var videoWrapper = document.createElement("div");
+      videoWrapper.className = "mzw-camera-video-wrapper";
+
+      cameraVideo = document.createElement("video");
+      cameraVideo.className = "mzw-camera-video";
+      cameraVideo.playsInline = true;
+      cameraVideo.autoplay = true;
+      cameraVideo.muted = true;
+
+      videoWrapper.appendChild(cameraVideo);
+
+      var ctaRow = document.createElement("div");
+      ctaRow.className = "mzw-camera-cta-row";
+
+      cameraCaptureBtn = document.createElement("button");
+      cameraCaptureBtn.type = "button";
+      cameraCaptureBtn.className =
+        "mzw-camera-pill-btn mzw-camera-pill-btn-primary";
+      cameraCaptureBtn.textContent = "Prendre une photo";
+
+      cameraCounterText = document.createElement("span");
+      cameraCounterText.className = "mzw-camera-counter";
+      cameraCounterText.textContent =
+        "0 / 3 photos (max pour ce widget de démonstration)";
+
+      ctaRow.appendChild(cameraCaptureBtn);
+      ctaRow.appendChild(cameraCounterText);
+
+      cameraWrapper.appendChild(header);
+      cameraWrapper.appendChild(videoWrapper);
+      cameraWrapper.appendChild(ctaRow);
+
+      cameraWrapper.style.display = "none";
+
+      dropzone.parentNode.insertBefore(cameraWrapper, dropzone.nextSibling);
+
+      cameraOpenBtn.addEventListener("click", function () {
+        if (!cameraSupported || cameraUnavailable) {
+          cameraUnavailable = true;
+          fallbackToGallery();
+          setError(
+            "La caméra n'est pas disponible sur ce navigateur. Utilisez vos photos existantes."
+          );
+          return;
+        }
+        cameraWrapper.style.display = "block";
+        if (isCoarsePointer) {
+          dropzone.style.display = "none";
+        }
+        startCamera();
+      });
+
+      cameraCloseBtn.addEventListener("click", function () {
+        fallbackToGallery();
+      });
+
+      cameraCaptureBtn.addEventListener("click", function () {
+        captureFromCamera();
+      });
+    }
+
+    function updateCameraCounter() {
+      if (!cameraCounterText) return;
+      cameraCounterText.textContent =
+        selectedFiles.length +
+        " / 3 photos (max pour ce widget de démonstration)";
+    }
+
+    function startCamera() {
+      if (!cameraSupported || cameraActive) return;
+      setError("");
+      cameraActive = true;
+      if (cameraOpenBtn) {
+        cameraOpenBtn.disabled = true;
+      }
+      navigator.mediaDevices
+        .getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        })
+        .then(function (stream) {
+          cameraStream = stream;
+          if (!cameraVideo) return;
+          cameraVideo.srcObject = stream;
+          var playPromise = cameraVideo.play();
+          if (playPromise && playPromise.catch) {
+            playPromise.catch(function () {});
+          }
+        })
+        .catch(function (err) {
+          console.error("[MoverzWidget] Erreur accès caméra:", err);
+          cameraUnavailable = true;
+          fallbackToGallery();
+          setError(
+            "La caméra n'est pas disponible sur ce navigateur. Utilisez vos photos existantes."
+          );
+        });
+    }
+
+    function captureFromCamera() {
+      if (!cameraVideo || !cameraActive) return;
+      if (selectedFiles.length >= 3) {
+        setError(
+          "Ce widget de démonstration accepte jusqu'à 3 photos. Supprimez-en une pour en ajouter une nouvelle."
+        );
+        return;
+      }
+
+      var vw = cameraVideo.videoWidth || 0;
+      var vh = cameraVideo.videoHeight || 0;
+      if (!vw || !vh) return;
+
+      var maxWidth = 1600;
+      var maxHeight = 1200;
+      var ratio = Math.min(maxWidth / vw, maxHeight / vh, 1);
+      var targetWidth = Math.round(vw * ratio);
+      var targetHeight = Math.round(vh * ratio);
+
+      var canvas = document.createElement("canvas");
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      var ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.drawImage(cameraVideo, 0, 0, targetWidth, targetHeight);
+
+      canvas.toBlob(
+        function (blob) {
+          if (!blob) return;
+          var file = new File([blob], "camera-" + Date.now() + ".jpg", {
+            type: "image/jpeg",
+          });
+          selectedFiles.push(file);
+          updatePhotosUI();
+          updateAnalyzeDisabled();
+          updateCameraCounter();
+          setError("");
+        },
+        "image/jpeg",
+        0.9
+      );
+    }
+
     function handleFiles(files) {
       setError("");
       var added = 0;
@@ -256,6 +505,18 @@
       var files = dt.files || [];
       handleFiles(files);
     });
+
+    // Initialisation de la caméra pour les devices mobiles/tablettes.
+    if (cameraSupported) {
+      ensureCameraUI();
+      if (isCoarsePointer && cameraWrapper) {
+        // Sur mobile: on privilégie la caméra; la dropzone reste disponible via
+        // le bouton "Utiliser ma galerie".
+        cameraWrapper.style.display = "block";
+        dropzone.style.display = "none";
+        startCamera();
+      }
+    }
 
     function renderResults(items) {
       if (!items || !items.length) {
