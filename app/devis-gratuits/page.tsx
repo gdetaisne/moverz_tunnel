@@ -222,6 +222,47 @@ interface Process2InventoryRow {
   }[];
 }
 
+function getInventoryItemIcon(row: Process2InventoryRow): string {
+  const category = (row.category ?? "").toUpperCase();
+  const label = row.itemLabel.toLowerCase();
+
+  if (category === "LIT" || label.includes("lit")) return "🛏️";
+  if (
+    category === "CANAPE" ||
+    label.includes("canapé") ||
+    label.includes("canape") ||
+    label.includes("fauteuil")
+  )
+    return "🛋️";
+  if (category === "TABLE" || label.includes("table")) return "🍽️";
+  if (category === "CHAISE" || label.includes("chaise") || label.includes("tabouret"))
+    return "🪑";
+  if (
+    category === "ARMOIRE" ||
+    category === "RANGEMENT" ||
+    label.includes("armoire") ||
+    label.includes("commode")
+  )
+    return "🗄️";
+  if (category === "BIBLIOTHEQUE" || label.includes("bibliothèque") || label.includes("bibliotheque"))
+    return "📚";
+  if (category === "TV" || label.includes("tv") || label.includes("télé") || label.includes("tele"))
+    return "📺";
+  if (
+    category === "ELECTROMENAGER" ||
+    label.includes("frigo") ||
+    label.includes("lave-vaisselle") ||
+    label.includes("lave vaisselle") ||
+    label.includes("four")
+  )
+    return "🧊";
+  if (category === "CARTON" || label.includes("carton")) return "📦";
+  if (label.includes("lampe") || label.includes("lustre") || label.includes("lumière"))
+    return "💡";
+  if (label.includes("plante")) return "🪴";
+  return "📌";
+}
+
 interface LabProcess2Response {
   model: string;
   rooms: AnalyzedRoom[];
@@ -1420,8 +1461,11 @@ function DevisGratuitsPageInner() {
     valueEstimateEur: string;
   } | null>(null);
   const [inventoryLayoutVariant, setInventoryLayoutVariant] = useState<
-    "cards" | "accordion"
-  >("cards");
+    "list" | "icons"
+  >("list");
+  const [activeInventoryRoomId, setActiveInventoryRoomId] = useState<string | null>(
+    null
+  );
 
   const trimmedFirstName = form.firstName.trim();
   const trimmedEmail = form.email.trim().toLowerCase();
@@ -1488,6 +1532,37 @@ function DevisGratuitsPageInner() {
     }
     return { total, byRoom };
   }, [process2Inventory, excludedInventoryIds]);
+
+  const inventoryRooms = useMemo(() => {
+    if (!process2Inventory || process2Inventory.length === 0) return [];
+    const map = new Map<
+      string,
+      {
+        roomKey: string;
+        roomLabel: string;
+        roomType: string;
+      }
+    >();
+    for (const row of process2Inventory) {
+      const key = `${row.roomType}__${row.roomLabel}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          roomKey: key,
+          roomLabel: row.roomLabel,
+          roomType: row.roomType,
+        });
+      }
+    }
+    return Array.from(map.values());
+  }, [process2Inventory]);
+
+  useEffect(() => {
+    if (!inventoryRooms.length) {
+      setActiveInventoryRoomId(null);
+      return;
+    }
+    setActiveInventoryRoomId((prev) => prev ?? inventoryRooms[0]?.roomKey ?? null);
+  }, [inventoryRooms]);
 
   // S'assure qu'un lead existe bien dans le Back Office et retourne son id.
   // Utilisé à la fois à l'étape 1 (création) et plus tard (étape 4) pour éviter
@@ -4376,9 +4451,9 @@ function DevisGratuitsPageInner() {
                     <div className="inline-flex items-center gap-0.5 rounded-full bg-slate-900/80 p-0.5 text-[10px]">
                       <button
                         type="button"
-                        onClick={() => setInventoryLayoutVariant("cards")}
+                        onClick={() => setInventoryLayoutVariant("list")}
                         className={`rounded-full px-2 py-0.5 ${
-                          inventoryLayoutVariant === "cards"
+                          inventoryLayoutVariant === "list"
                             ? "bg-sky-500 text-slate-950 font-semibold"
                             : "text-slate-300 hover:text-sky-200"
                         }`}
@@ -4387,14 +4462,14 @@ function DevisGratuitsPageInner() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setInventoryLayoutVariant("accordion")}
+                        onClick={() => setInventoryLayoutVariant("icons")}
                         className={`rounded-full px-2 py-0.5 ${
-                          inventoryLayoutVariant === "accordion"
+                          inventoryLayoutVariant === "icons"
                             ? "bg-sky-500 text-slate-950 font-semibold"
                             : "text-slate-300 hover:text-sky-200"
                         }`}
                       >
-                        Accordéons
+                        Icônes
                       </button>
                     </div>
                   )}
@@ -4430,7 +4505,7 @@ function DevisGratuitsPageInner() {
                     </span>
                   </p>
                 )}
-                {analysisProcesses && (
+                {analysisProcesses && inventoryLayoutVariant === "list" && (
                   <div className="space-y-3">
                     {analysisProcesses.map((proc) => (
                       <div
@@ -4805,11 +4880,289 @@ function DevisGratuitsPageInner() {
                     </div>
                             );
 
-                            return roomContent;
+                            return (
+                              <div
+                                key={room.roomId}
+                                className="space-y-2 rounded-xl bg-slate-900/70 p-2"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-[11px] font-semibold text-slate-50">
+                                    {room.label}
+                                  </p>
+                                  <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
+                                    {totalItems} éléments
+                                  </span>
+                                </div>
+                                {roomContent}
+                              </div>
+                            );
                           })}
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {analysisProcesses && inventoryLayoutVariant === "icons" && (
+                  <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-950/80 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <p className="text-[11px] font-semibold text-slate-50">
+                          Vue icônes par pièce
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          Basée sur l&apos;inventaire IA (Process 2)
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
+                        {process2Inventory?.reduce(
+                          (sum, row) =>
+                            excludedInventoryIds.includes(row.id)
+                              ? sum
+                              : sum + (row.quantity || 1),
+                          0
+                        ) ?? 0}{" "}
+                        éléments
+                      </span>
+                    </div>
+
+                    {inventoryRooms.length > 1 && (
+                      <div className="flex flex-wrap gap-1 rounded-full bg-slate-900/80 p-1 text-[11px]">
+                        {inventoryRooms.map((room) => {
+                          const isActive = activeInventoryRoomId === room.roomKey;
+                          return (
+                            <button
+                              key={room.roomKey}
+                              type="button"
+                              onClick={() => setActiveInventoryRoomId(room.roomKey)}
+                              className={`rounded-full px-3 py-1 ${
+                                isActive
+                                  ? "bg-sky-500 text-slate-950 font-semibold"
+                                  : "text-slate-200 hover:bg-slate-800"
+                              }`}
+                            >
+                              {room.roomLabel}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {inventoryRooms.length === 1 && (
+                      <p className="text-[11px] font-semibold text-slate-100">
+                        {inventoryRooms[0]?.roomLabel}
+                      </p>
+                    )}
+
+                    {activeInventoryRoomId && (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                          {process2Inventory
+                            ?.filter((row) => {
+                              const key = `${row.roomType}__${row.roomLabel}`;
+                              return key === activeInventoryRoomId;
+                            })
+                            .map((row) => {
+                              const isExcluded = excludedInventoryIds.includes(row.id);
+                              const icon = getInventoryItemIcon(row);
+                              return (
+                                <button
+                                  key={row.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingInventoryId(row.id);
+                                    setEditingInventoryDraft({
+                                      itemLabel: row.itemLabel,
+                                      quantity: String(row.quantity ?? 1),
+                                      volumeM3:
+                                        typeof row.volumeM3 === "number"
+                                          ? String(row.volumeM3)
+                                          : "",
+                                      valueEstimateEur:
+                                        typeof row.valueEstimateEur === "number"
+                                          ? String(row.valueEstimateEur)
+                                          : "",
+                                    });
+                                  }}
+                                  className={`relative flex flex-col items-center justify-between gap-1 rounded-xl border px-2 py-2 text-[11px] ${
+                                    isExcluded
+                                      ? "border-slate-700 bg-slate-900/50 text-slate-500 opacity-60"
+                                      : "border-slate-600 bg-slate-900/80 text-slate-100"
+                                  }`}
+                                >
+                                  <span className="text-xl">{icon}</span>
+                                  <span className="line-clamp-2 text-center">
+                                    {row.itemLabel}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400">
+                                    × {row.quantity}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setExcludedInventoryIds((prev) =>
+                                        prev.includes(row.id)
+                                          ? prev.filter((id) => id !== row.id)
+                                          : [...prev, row.id]
+                                      );
+                                    }}
+                                    className="absolute right-1 top-1 rounded-full bg-slate-900/80 px-1 text-[9px] text-slate-300 hover:bg-rose-500 hover:text-white"
+                                  >
+                                    {isExcluded ? "↺" : "✕"}
+                                  </button>
+                                </button>
+                              );
+                            })}
+                        </div>
+
+                        <div className="mt-2 space-y-1 rounded-lg bg-slate-950/60 p-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                            Ajouter un meuble
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <input
+                              type="text"
+                              value={
+                                activeInventoryRoomId
+                                  ? newItemDrafts[activeInventoryRoomId]?.query ?? ""
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                activeInventoryRoomId &&
+                                setNewItemDrafts((prev) => ({
+                                  ...prev,
+                                  [activeInventoryRoomId]: {
+                                    query: e.target.value,
+                                    quantity:
+                                      prev[activeInventoryRoomId]?.quantity ?? "1",
+                                  },
+                                }))
+                              }
+                              placeholder="Ex: canapé, armoire..."
+                              className="w-40 flex-1 min-w-[120px] rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500/40"
+                            />
+                            <input
+                              type="number"
+                              min={1}
+                              value={
+                                activeInventoryRoomId
+                                  ? newItemDrafts[activeInventoryRoomId]?.quantity ??
+                                    "1"
+                                  : "1"
+                              }
+                              onChange={(e) =>
+                                activeInventoryRoomId &&
+                                setNewItemDrafts((prev) => ({
+                                  ...prev,
+                                  [activeInventoryRoomId]: {
+                                    query: prev[activeInventoryRoomId]?.query ?? "",
+                                    quantity: e.target.value,
+                                  },
+                                }))
+                              }
+                              className="w-14 rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500/40"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!activeInventoryRoomId) return;
+                                const draft =
+                                  newItemDrafts[activeInventoryRoomId] ?? null;
+                                const query = draft?.query?.trim();
+                                if (!query) return;
+                                const quantity = Math.max(
+                                  1,
+                                  Number(draft.quantity || "1") || 1
+                                );
+                                const lowerQuery = query.toLowerCase();
+                                const template = KNOWN_ITEMS.find((it) =>
+                                  it.label.toLowerCase().includes(lowerQuery)
+                                );
+                                const id = `user-${activeInventoryRoomId}-${Date.now()}-${Math.random()
+                                  .toString(36)
+                                  .slice(2)}`;
+                                const roomMeta = inventoryRooms.find(
+                                  (r) => r.roomKey === activeInventoryRoomId
+                                );
+                                if (!roomMeta) return;
+                                setProcess2Inventory((prev) => {
+                                  const base = prev ?? [];
+                                  return [
+                                    ...base,
+                                    {
+                                      id,
+                                      roomType: roomMeta.roomType,
+                                      roomLabel: roomMeta.roomLabel,
+                                      itemLabel: template?.label ?? query,
+                                      category: "MANUAL",
+                                      source: "manual",
+                                      quantity,
+                                      widthCm: null,
+                                      depthCm: null,
+                                      heightCm: null,
+                                      volumeM3: template?.volumeM3 ?? null,
+                                      volumeNuM3: template?.volumeM3 ?? null,
+                                      valueEstimateEur: null,
+                                      valueJustification: null,
+                                      fragile: false,
+                                      packagingFactor: null,
+                                      packagingReason: null,
+                                      dependencies: [],
+                                    },
+                                  ];
+                                });
+                                setNewItemDrafts((prev) => ({
+                                  ...prev,
+                                  [activeInventoryRoomId]: {
+                                    query: "",
+                                    quantity: "1",
+                                  },
+                                }));
+                              }}
+                              className="rounded-md bg-sky-500 px-3 py-1 text-[11px] font-semibold text-slate-950 hover:bg-sky-400"
+                            >
+                              Ajouter
+                            </button>
+                          </div>
+                          {activeInventoryRoomId &&
+                            newItemDrafts[activeInventoryRoomId]?.query && (
+                              <div className="mt-1 space-y-0.5 text-[10px] text-slate-400">
+                                {KNOWN_ITEMS.filter((it) =>
+                                  it.label
+                                    .toLowerCase()
+                                    .includes(
+                                      newItemDrafts[
+                                        activeInventoryRoomId
+                                      ].query.toLowerCase()
+                                    )
+                                )
+                                  .slice(0, 5)
+                                  .map((it) => (
+                                    <button
+                                      key={it.label}
+                                      type="button"
+                                      onClick={() =>
+                                        setNewItemDrafts((prev) => ({
+                                          ...prev,
+                                          [activeInventoryRoomId]: {
+                                            query: it.label,
+                                            quantity:
+                                              prev[activeInventoryRoomId]
+                                                ?.quantity ?? "1",
+                                          },
+                                        }))
+                                      }
+                                      className="block w-full truncate rounded-md px-2 py-0.5 text-left hover:bg-slate-800"
+                                    >
+                                      {it.label}
+                                    </button>
+                                  ))}
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    )}
                 </div>
               )}
             {photoFlowChoice === "photos_now" &&

@@ -480,14 +480,18 @@
       if (isAnalyzing) return;
       setError("");
 
-      // Sur mobile avec caméra disponible: on affiche le bloc caméra
-      // (sans démarrer la caméra automatiquement). L'utilisateur choisit
-      // ensuite "Ouvrir la caméra" ou "Utiliser ma galerie".
+      // Sur mobile avec caméra disponible: on lance directement le flux caméra
+      // au clic sur la zone, comme dans l'étape 4 du tunnel. La galerie reste
+      // accessible via le bouton "Utiliser ma galerie".
       if (cameraSupported && isCoarsePointer) {
         ensureCameraUI();
         if (cameraWrapper) {
           cameraWrapper.style.display = "block";
         }
+        if (dropzone) {
+          dropzone.style.display = "none";
+        }
+        startCamera();
         return;
       }
 
