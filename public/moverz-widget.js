@@ -507,14 +507,17 @@
     });
 
     // Initialisation de la caméra pour les devices mobiles/tablettes.
-    if (cameraSupported) {
+    // Important: on ne démarre JAMAIS la caméra automatiquement pour éviter
+    // d'afficher une demande de permission dès l'arrivée sur la page.
+    if (cameraSupported && isCoarsePointer) {
       ensureCameraUI();
-      if (isCoarsePointer && cameraWrapper) {
-        // Sur mobile: on privilégie la caméra; la dropzone reste disponible via
-        // le bouton "Utiliser ma galerie".
+      if (cameraWrapper) {
+        // Sur mobile: on privilégie visuellement la caméra, mais l'ouverture
+        // réelle (getUserMedia) ne se fait que sur clic explicite de l'utilisateur.
         cameraWrapper.style.display = "block";
-        dropzone.style.display = "none";
-        startCamera();
+        if (dropzone) {
+          dropzone.style.display = "none";
+        }
       }
     }
 
