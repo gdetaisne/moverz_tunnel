@@ -1419,6 +1419,9 @@ function DevisGratuitsPageInner() {
     volumeM3: string;
     valueEstimateEur: string;
   } | null>(null);
+  const [inventoryLayoutVariant, setInventoryLayoutVariant] = useState<
+    "cards" | "accordion"
+  >("cards");
 
   const trimmedFirstName = form.firstName.trim();
   const trimmedEmail = form.email.trim().toLowerCase();
@@ -4365,9 +4368,37 @@ function DevisGratuitsPageInner() {
             {photoFlowChoice === "photos_now" &&
               (analysisProcesses || isUploadingPhotos || isAnalyzing) && (
                 <div className="space-y-3 rounded-2xl bg-slate-950/80 p-3 text-xs text-slate-200 ring-1 ring-slate-800">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Aperçu de votre inventaire par pièce
-                </p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Aperçu de votre inventaire par pièce
+                  </p>
+                  {isDev && (
+                    <div className="inline-flex items-center gap-0.5 rounded-full bg-slate-900/80 p-0.5 text-[10px]">
+                      <button
+                        type="button"
+                        onClick={() => setInventoryLayoutVariant("cards")}
+                        className={`rounded-full px-2 py-0.5 ${
+                          inventoryLayoutVariant === "cards"
+                            ? "bg-sky-500 text-slate-950 font-semibold"
+                            : "text-slate-300 hover:text-sky-200"
+                        }`}
+                      >
+                        Liste
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInventoryLayoutVariant("accordion")}
+                        className={`rounded-full px-2 py-0.5 ${
+                          inventoryLayoutVariant === "accordion"
+                            ? "bg-sky-500 text-slate-950 font-semibold"
+                            : "text-slate-300 hover:text-sky-200"
+                        }`}
+                      >
+                        Accordéons
+                      </button>
+                    </div>
+                  )}
+                </div>
                 {analysisStartedAt && (
                   <div className="space-y-1">
                     <p className="text-[11px] text-slate-400">
@@ -4455,53 +4486,41 @@ function DevisGratuitsPageInner() {
                                     0
                                   );
 
-                            return (
-                            <div
-                              key={room.roomId}
-                                className="space-y-2 rounded-xl bg-slate-900/70 p-2"
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-[11px] font-semibold text-slate-50">
-                                  {room.label}
-                                </p>
-                                <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
-                                    {totalItems} éléments
-                                </span>
-                              </div>
-
+                            const roomContent = (
+                              <div className="mt-2 space-y-2">
                                 {/* Vignettes des photos de la pièce */}
                                 {room.photoIds.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5">
-                                  {room.photoIds.slice(0, 6).map((pid) => {
-                                    const file = localUploadFiles.find(
-                                      (f) => f.photoId === pid
-                                    );
-                                    if (file) {
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {room.photoIds.slice(0, 6).map((pid) => {
+                                      const file = localUploadFiles.find(
+                                        (f) => f.photoId === pid
+                                      );
+                                      if (file) {
+                                        return (
+                                          <div
+                                            key={pid}
+                                            className="h-8 w-8 overflow-hidden rounded-md border border-slate-700/80 bg-slate-800"
+                                          >
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                              src={file.previewUrl}
+                                              alt={file.file.name}
+                                              className="h-full w-full object-cover"
+                                            />
+                                          </div>
+                                        );
+                                      }
                                       return (
                                         <div
                                           key={pid}
-                                          className="h-8 w-8 overflow-hidden rounded-md border border-slate-700/80 bg-slate-800"
+                                          className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700/80 bg-slate-800 text-[9px] text-slate-300"
                                         >
-                                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                                          <img
-                                            src={file.previewUrl}
-                                            alt={file.file.name}
-                                            className="h-full w-full object-cover"
-                                          />
+                                          ?
                                         </div>
                                       );
-                                    }
-                                    return (
-                                      <div
-                                        key={pid}
-                                        className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700/80 bg-slate-800 text-[9px] text-slate-300"
-                                      >
-                                        ?
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
+                                    })}
+                                  </div>
+                                )}
 
                                 {/* Inventaire détaillé pour la pièce */}
                                 {inventoryForRoom.length > 0 && (
@@ -4785,6 +4804,8 @@ function DevisGratuitsPageInner() {
                       </div>
                     </div>
                             );
+
+                            return roomContent;
                           })}
                         </div>
                       </div>

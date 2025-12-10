@@ -506,19 +506,12 @@
       handleFiles(files);
     });
 
-    // Initialisation de la caméra pour les devices mobiles/tablettes.
-    // Important: on ne démarre JAMAIS la caméra automatiquement pour éviter
-    // d'afficher une demande de permission dès l'arrivée sur la page.
+    // Préparation éventuelle de la caméra pour les devices mobiles/tablettes.
+    // Important: on ne démarre JAMAIS la caméra ni n'affiche le bloc caméra
+    // automatiquement. Le bloc n'apparaît que suite à une action explicite
+    // (ex: clic sur "Lancer l'analyse" sans photo, ou sur "Ouvrir la caméra").
     if (cameraSupported && isCoarsePointer) {
       ensureCameraUI();
-      if (cameraWrapper) {
-        // Sur mobile: on privilégie visuellement la caméra, mais l'ouverture
-        // réelle (getUserMedia) ne se fait que sur clic explicite de l'utilisateur.
-        cameraWrapper.style.display = "block";
-        if (dropzone) {
-          dropzone.style.display = "none";
-        }
-      }
     }
 
     function renderResults(items) {
@@ -699,7 +692,27 @@
     }
 
     async function analyze() {
-      if (!selectedFiles.length || isAnalyzing) return;
+      if (isAnalyzing) return;
+
+      // Si aucune photo n'est encore sélectionnée, on ne lance pas l'analyse.
+      // Sur mobile, on dévoile le bloc caméra uniquement à ce moment-là pour
+      // éviter un affichage intrusif dès l'arrivée sur la page.
+      if (!selectedFiles.length) {
+        setError(
+          "Ajoutez 1 à 3 photos via la caméra ou votre galerie avant de lancer l’analyse."
+        );
+        if (cameraSupported && isCoarsePointer) {
+          ensureCameraUI();
+          if (cameraWrapper) {
+            cameraWrapper.style.display = "block";
+            // On laisse la dropzone visible : la caméra devient l'option
+            // principale visuelle, mais la galerie reste disponible.
+          }
+        }
+        updateAnalyzeDisabled();
+        return;
+      }
+
       isAnalyzing = true;
       setError("");
       updateAnalyzeDisabled();
