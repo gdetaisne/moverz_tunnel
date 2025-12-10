@@ -191,7 +191,7 @@
     var cameraUnavailable = false;
     var cameraWrapper = null;
     var cameraVideo = null;
-    var cameraOpenBtn = null;
+    var cameraOpenBtn = null; // conservé pour compat, mais plus affiché
     var cameraCloseBtn = null;
     var cameraCaptureBtn = null;
     var cameraCounterText = null;
@@ -264,9 +264,6 @@
       if (cameraVideo) {
         cameraVideo.srcObject = null;
       }
-      if (cameraOpenBtn) {
-        cameraOpenBtn.disabled = false;
-      }
     }
 
     function fallbackToGallery() {
@@ -296,19 +293,15 @@
       var actions = document.createElement("div");
       actions.className = "mzw-camera-actions";
 
-      cameraOpenBtn = document.createElement("button");
-      cameraOpenBtn.type = "button";
-      cameraOpenBtn.className =
-        "mzw-camera-pill-btn mzw-camera-pill-btn-primary";
-      cameraOpenBtn.textContent = "Ouvrir la caméra";
-
       cameraCloseBtn = document.createElement("button");
       cameraCloseBtn.type = "button";
       cameraCloseBtn.className =
         "mzw-camera-pill-btn mzw-camera-pill-btn-secondary";
       cameraCloseBtn.textContent = "Utiliser ma galerie";
 
-      actions.appendChild(cameraOpenBtn);
+      // On ne propose plus de bouton "Ouvrir la caméra" : la caméra est
+      // déclenchée directement au clic sur la dropzone. On garde uniquement
+      // "Utiliser ma galerie" comme option secondaire.
       actions.appendChild(cameraCloseBtn);
 
       header.appendChild(info);
@@ -350,22 +343,6 @@
 
       dropzone.parentNode.insertBefore(cameraWrapper, dropzone.nextSibling);
 
-      cameraOpenBtn.addEventListener("click", function () {
-        if (!cameraSupported || cameraUnavailable) {
-          cameraUnavailable = true;
-          fallbackToGallery();
-          setError(
-            "La caméra n'est pas disponible sur ce navigateur. Utilisez vos photos existantes."
-          );
-          return;
-        }
-        cameraWrapper.style.display = "block";
-        if (isCoarsePointer) {
-          dropzone.style.display = "none";
-        }
-        startCamera();
-      });
-
       cameraCloseBtn.addEventListener("click", function () {
         fallbackToGallery();
       });
@@ -386,9 +363,6 @@
       if (!cameraSupported || cameraActive) return;
       setError("");
       cameraActive = true;
-      if (cameraOpenBtn) {
-        cameraOpenBtn.disabled = true;
-      }
       navigator.mediaDevices
         .getUserMedia({
           video: { facingMode: { ideal: "environment" } },
