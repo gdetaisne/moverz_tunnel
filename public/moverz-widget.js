@@ -245,7 +245,10 @@
     }
 
     function updateAnalyzeDisabled() {
-      analyzeBtn.disabled = isAnalyzing || selectedFiles.length === 0;
+      // On autorise maintenant le clic sur "Lancer l'analyse" même sans photo
+      // pour pouvoir dévoiler la caméra / guider l'utilisateur. On ne bloque
+      // donc le bouton que pendant l'analyse en cours.
+      analyzeBtn.disabled = isAnalyzing;
     }
 
     function stopCamera() {
