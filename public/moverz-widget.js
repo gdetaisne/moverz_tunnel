@@ -703,6 +703,12 @@
       isAnalyzing = true;
       setError("");
       updateAnalyzeDisabled();
+      // Quand l'utilisateur lance l'analyse, on retire le bloc de prise de
+      // photos et on coupe la caméra pour ne pas laisser la preview active.
+      if (cameraWrapper) {
+        cameraWrapper.style.display = "none";
+      }
+      stopCamera();
       resultsEl.style.display = "none";
       resultsListEl.innerHTML = "";
 
