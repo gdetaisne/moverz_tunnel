@@ -3079,19 +3079,6 @@ function DevisGratuitsPageInner() {
                       <option value="80-90">80–90 m</option>
                       <option value="90-100">90–100 m</option>
                       </select>
-                      {(hasTriedSubmitStep2 || originDistanceTouched) && (
-                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                          {isOriginDistanceValid ? (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
-                              ✓
-                            </span>
-                          ) : (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
-                              ✕
-                            </span>
-                          )}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -3287,19 +3274,6 @@ function DevisGratuitsPageInner() {
                       <option value="80-90">80–90 m</option>
                       <option value="90-100">90–100 m</option>
                       </select>
-                      {(hasTriedSubmitStep2 || destinationDistanceTouched) && !form.destinationUnknown && (
-                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                          {isDestinationDistanceValid ? (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
-                              ✓
-                            </span>
-                          ) : (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white shadow-sm shadow-rose-500/60">
-                              ✕
-                            </span>
-                          )}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
