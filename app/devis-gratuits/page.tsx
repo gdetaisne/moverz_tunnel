@@ -152,9 +152,12 @@ interface FormState {
   serviceDebarras: boolean;
   optionStorage: boolean;
   optionCleaning: boolean;
-  optionPackingMaterials: boolean;
   optionDismantlingFull: boolean;
   optionDifficultAccess: boolean;
+  // Accès détaillés
+  accessNoElevator: boolean; // Escaliers sans ascenseur
+  accessSmallElevator: boolean; // Petit ascenseur / passages serrés
+  accessTruckDifficult: boolean; // Accès camion difficile
   // Services additionnels (étape 3)
   servicePackingFull: boolean; // Emballage complet
   serviceMountNewFurniture: boolean; // Montage meubles neufs
@@ -162,6 +165,13 @@ interface FormState {
   serviceWasteRemoval: boolean; // Évacuation déchets
   serviceHelpNoTruck: boolean; // Aide sans camion
   serviceSpecialHours: boolean; // Horaires spécifiques
+  // Mobilier spécifique détaillé
+  furnitureAmericanFridge: boolean; // Frigo US lourd
+  furnitureSafe: boolean; // Coffre-fort / armoire forte
+  furnitureBilliard: boolean; // Billard
+  furnitureAquarium: boolean; // Aquarium / vitrine
+  furnitureOver25kg: boolean; // Objet(s) > 25 kg
+  furnitureVeryFragile: boolean; // Objets très fragiles
   notes: string;
 }
 
@@ -363,9 +373,11 @@ const INITIAL_FORM_STATE: FormState = {
   serviceDebarras: false,
   optionStorage: false,
   optionCleaning: false,
-  optionPackingMaterials: false,
   optionDismantlingFull: false,
   optionDifficultAccess: false,
+  accessNoElevator: false,
+  accessSmallElevator: false,
+  accessTruckDifficult: false,
 
   // Services additionnels (étape 3)
   servicePackingFull: false,
@@ -374,6 +386,14 @@ const INITIAL_FORM_STATE: FormState = {
   serviceWasteRemoval: false,
   serviceHelpNoTruck: false,
   serviceSpecialHours: false,
+
+  // Mobilier spécifique détaillé
+  furnitureAmericanFridge: false,
+  furnitureSafe: false,
+  furnitureBilliard: false,
+  furnitureAquarium: false,
+  furnitureOver25kg: false,
+  furnitureVeryFragile: false,
 
   // Notes - vide
   notes: "",
@@ -2514,6 +2534,9 @@ function DevisGratuitsPageInner() {
   // mais en interne on garde les deux flags existants.
   const hasCleaningOrClearance = form.serviceDebarras || form.optionCleaning;
 
+  // Logique de logement : on ne parle pas d'ascenseur si logement = maison
+  const isHouseLike = form.housingType.startsWith("house");
+
   const handleSubmitStep1 = async (e: FormEvent) => {
     e.preventDefault();
     setHasTriedSubmitStep1(true);
@@ -2613,19 +2636,31 @@ function DevisGratuitsPageInner() {
     if (form.servicePiano === "droit") extras.push("Piano droit");
     if (form.servicePiano === "quart") extras.push("Piano quart de queue");
     if (form.serviceDebarras) extras.push("Besoin de débarras");
-    if (form.optionPackingMaterials) extras.push("Cartons livrés");
     if (form.optionDismantlingFull)
       extras.push("Beaucoup de meubles à démonter / remonter");
     if (form.optionStorage) extras.push("Stockage temporaire / garde‑meuble");
     if (form.optionCleaning) extras.push("Nettoyage de fin de déménagement");
     if (form.optionDifficultAccess)
-      extras.push("Accès camion très contraint (rue étroite / centre‑ville)");
+      extras.push("Rue / stationnement compliqué");
+    if (form.accessTruckDifficult)
+      extras.push("Accès camion difficile");
+    if (form.accessNoElevator && !isHouseLike)
+      extras.push("Escaliers sans ascenseur");
+    if (form.accessSmallElevator && !isHouseLike)
+      extras.push("Petit ascenseur / passages serrés");
     if (form.servicePackingFull) extras.push("Emballage complet");
     if (form.serviceMountNewFurniture) extras.push("Montage meubles neufs");
     if (form.serviceInsuranceExtra) extras.push("Assurance renforcée");
     if (form.serviceWasteRemoval) extras.push("Évacuation déchets");
-    if (form.serviceHelpNoTruck) extras.push("Aide sans camion");
+    if (form.serviceHelpNoTruck)
+      extras.push("Aide sans camion (changement de palier)");
     if (form.serviceSpecialHours) extras.push("Horaires spécifiques");
+    if (form.furnitureAmericanFridge) extras.push("Frigo US lourd");
+    if (form.furnitureSafe) extras.push("Coffre‑fort / armoire forte");
+    if (form.furnitureBilliard) extras.push("Billard");
+    if (form.furnitureAquarium) extras.push("Aquarium / vitrine");
+    if (form.furnitureOver25kg) extras.push("Objet(s) > 25 kg");
+    if (form.furnitureVeryFragile) extras.push("Objets très fragiles");
 
     const extraText =
       extras.length > 0 ? `Options : ${extras.join(", ")}` : "";
@@ -3351,6 +3386,9 @@ function DevisGratuitsPageInner() {
                             ...prev,
                             serviceMonteMeuble: false,
                             optionDifficultAccess: false,
+                            accessNoElevator: false,
+                            accessSmallElevator: false,
+                            accessTruckDifficult: false,
                             originCarryDistance:
                               prev.originCarryDistance === "OUI"
                                 ? ""
@@ -3406,6 +3444,41 @@ function DevisGratuitsPageInner() {
                       >
                         Monte‑meuble à prévoir
                       </button>
+                      {!isHouseLike && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateField("accessNoElevator", !form.accessNoElevator)
+                            }
+                            className={[
+                              "rounded-full border px-3 py-1 text-left",
+                              form.accessNoElevator
+                                ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                                : "border-slate-700 bg-slate-900/60 text-slate-200",
+                            ].join(" ")}
+                          >
+                            Escaliers sans ascenseur
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateField(
+                                "accessSmallElevator",
+                                !form.accessSmallElevator
+                              )
+                            }
+                            className={[
+                              "rounded-full border px-3 py-1 text-left",
+                              form.accessSmallElevator
+                                ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                                : "border-slate-700 bg-slate-900/60 text-slate-200",
+                            ].join(" ")}
+                          >
+                            Petit ascenseur / passages serrés
+                          </button>
+                        </>
+                      )}
                       <button
                         type="button"
                         onClick={() =>
@@ -3422,6 +3495,23 @@ function DevisGratuitsPageInner() {
                         ].join(" ")}
                       >
                         Rue / stationnement compliqué
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "accessTruckDifficult",
+                            !form.accessTruckDifficult
+                          )
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          form.accessTruckDifficult
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        Accès camion difficile
                       </button>
                       <button
                         type="button"
@@ -3480,6 +3570,12 @@ function DevisGratuitsPageInner() {
                             ...prev,
                             servicePiano: "none",
                             optionDismantlingFull: false,
+                            furnitureAmericanFridge: false,
+                            furnitureSafe: false,
+                            furnitureBilliard: false,
+                            furnitureAquarium: false,
+                            furnitureOver25kg: false,
+                            furnitureVeryFragile: false,
                           }));
                         }
                       }}
@@ -3533,6 +3629,102 @@ function DevisGratuitsPageInner() {
                           {label}
                         </button>
                       ))}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "furnitureAmericanFridge",
+                            !form.furnitureAmericanFridge
+                          )
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          form.furnitureAmericanFridge
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        Frigo US lourd
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField("furnitureSafe", !form.furnitureSafe)
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          form.furnitureSafe
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        Coffre‑fort / armoire forte
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField("furnitureBilliard", !form.furnitureBilliard)
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          form.furnitureBilliard
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        Billard
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "furnitureAquarium",
+                            !form.furnitureAquarium
+                          )
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          form.furnitureAquarium
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        Aquarium / vitrine
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "furnitureOver25kg",
+                            !form.furnitureOver25kg
+                          )
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          form.furnitureOver25kg
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        Objet(s) &gt; 25 kg
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "furnitureVeryFragile",
+                            !form.furnitureVeryFragile
+                          )
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          form.furnitureVeryFragile
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        Objets très fragiles
+                      </button>
                       <button
                         type="button"
                         onClick={() =>
@@ -4122,23 +4314,6 @@ function DevisGratuitsPageInner() {
                   type="button"
                   onClick={() =>
                     updateField(
-                      "optionPackingMaterials",
-                      !form.optionPackingMaterials
-                    )
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-[11px]",
-                    form.optionPackingMaterials
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Cartons livrés
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField(
                       "servicePackingFull",
                       !form.servicePackingFull
                     )
@@ -4218,7 +4393,7 @@ function DevisGratuitsPageInner() {
                       : "border-slate-700 bg-slate-900/60 text-slate-200",
                   ].join(" ")}
                 >
-                  Aide sans camion
+                  Aide sans camion (changement de palier)
                 </button>
                 <button
                   type="button"
