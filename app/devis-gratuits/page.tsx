@@ -3382,10 +3382,9 @@ function DevisGratuitsPageInner() {
                     <button
                       type="button"
                       onClick={() => {
-                        const next = !hasCustomAccess;
-                        setHasCustomAccess(next);
-                        if (!next) {
+                        if (hasCustomAccess) {
                           // Retour à "accès facile" → on remet les options détaillées à zéro
+                          setHasCustomAccess(false);
                           setForm((prev) => ({
                             ...prev,
                             serviceMonteMeuble: false,
@@ -3399,6 +3398,9 @@ function DevisGratuitsPageInner() {
                                 ? ""
                                 : prev.destinationCarryDistance,
                           }));
+                        } else {
+                          // L'utilisateur veut préciser les accès
+                          setHasCustomAccess(true);
                         }
                       }}
                       className={[
@@ -3411,25 +3413,20 @@ function DevisGratuitsPageInner() {
                       Accès facile
                     </button>
 
-                    {/* Options détaillées d'accès (activées quand 'Accès facile' est désactivé) */}
-                    <div
-                      className={
-                        hasCustomAccess
-                          ? "flex flex-wrap gap-1.5"
-                          : "flex flex-wrap gap-1.5 opacity-40 pointer-events-none"
-                      }
-                    >
+                    {/* Options détaillées d'accès */}
+                    <div className="flex flex-wrap gap-1.5">
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setHasCustomAccess(true);
                         updateField(
                           "serviceMonteMeuble",
                           !form.serviceMonteMeuble
-                        )
-                      }
+                        );
+                      }}
                       className={[
                         "rounded-full border px-3 py-1 text-left",
-                        form.serviceMonteMeuble && hasCustomAccess
+                        form.serviceMonteMeuble
                           ? "border-sky-400 bg-sky-500/20 text-sky-100"
                           : "border-slate-700 bg-slate-900/60 text-slate-200",
                       ].join(" ")}
@@ -3438,15 +3435,16 @@ function DevisGratuitsPageInner() {
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setHasCustomAccess(true);
                         updateField(
                           "optionDifficultAccess",
                           !form.optionDifficultAccess
-                        )
-                      }
+                        );
+                      }}
                       className={[
                         "rounded-full border px-3 py-1 text-left",
-                        form.optionDifficultAccess && hasCustomAccess
+                        form.optionDifficultAccess
                           ? "border-sky-400 bg-sky-500/20 text-sky-100"
                           : "border-slate-700 bg-slate-900/60 text-slate-200",
                       ].join(" ")}
@@ -3455,15 +3453,16 @@ function DevisGratuitsPageInner() {
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setHasCustomAccess(true);
                         updateField(
                           "originCarryDistance",
-                        (hasLongCarryOrigin ? "" : "OUI") as FormState["originCarryDistance"]
-                        )
-                      }
+                          (hasLongCarryOrigin ? "" : "OUI") as FormState["originCarryDistance"]
+                        );
+                      }}
                       className={[
                         "rounded-full border px-3 py-1 text-left",
-                        hasLongCarryOrigin && hasCustomAccess
+                        hasLongCarryOrigin
                           ? "border-sky-400 bg-sky-500/20 text-sky-100"
                           : "border-slate-700 bg-slate-900/60 text-slate-200",
                       ].join(" ")}
@@ -3473,15 +3472,16 @@ function DevisGratuitsPageInner() {
                     {!form.destinationUnknown && (
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
+                          setHasCustomAccess(true);
                           updateField(
                             "destinationCarryDistance",
                             (hasLongCarryDestination ? "" : "OUI") as FormState["destinationCarryDistance"]
-                          )
-                        }
+                          );
+                        }}
                         className={[
                           "rounded-full border px-3 py-1 text-left",
-                          hasLongCarryDestination && hasCustomAccess
+                          hasLongCarryDestination
                             ? "border-sky-400 bg-sky-500/20 text-sky-100"
                             : "border-slate-700 bg-slate-900/60 text-slate-200",
                         ].join(" ")}
