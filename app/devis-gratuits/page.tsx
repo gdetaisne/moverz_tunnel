@@ -4057,6 +4057,53 @@ function DevisGratuitsPageInner() {
 
             </div>
 
+            {/* Services en plus (facultatif) */}
+            <div className="space-y-2 rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
+              <p className="text-xs font-semibold text-slate-200">
+                Services en plus (facultatif)
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField("optionStorage", !form.optionStorage)
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-[11px]",
+                    form.optionStorage
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Stockage temporaire / garde‑meuble
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((prev) => {
+                      const next = !hasCleaningOrClearance;
+                      return {
+                        ...prev,
+                        serviceDebarras: next,
+                        optionCleaning: next,
+                      };
+                    })
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-[11px]",
+                    hasCleaningOrClearance
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Nettoyage / débarras après déménagement
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-400">
+                Ces services sont optionnels et viendront préciser votre demande au déménageur.
+              </p>
+            </div>
+
             {error && (
               <p className="text-sm text-rose-400" role="alert">
                 {error}
