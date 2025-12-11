@@ -3483,7 +3483,6 @@ function DevisGratuitsPageInner() {
                     {/* Détails mobilier (piano / meubles à démonter) */}
                     <div className="flex flex-wrap gap-1.5">
                       {[
-                        ["none", "Pas de piano"],
                         ["droit", "Piano droit"],
                         ["quart", "Piano quart de queue"],
                       ].map(([value, label]) => (
