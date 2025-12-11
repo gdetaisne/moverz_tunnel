@@ -1402,6 +1402,7 @@ function DevisGratuitsPageInner() {
   const [destinationDistanceTouched, setDestinationDistanceTouched] =
     useState(false);
   const [surfaceTouched, setSurfaceTouched] = useState(false);
+  const [showExtraOptions, setShowExtraOptions] = useState(false);
   const [showPricingDetails, setShowPricingDetails] = useState(false);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
   const [isCoarsePointer, setIsCoarsePointer] = useState<boolean | null>(null);
@@ -2486,6 +2487,11 @@ function DevisGratuitsPageInner() {
     .filter(Boolean)
     .join(" · ");
 
+  // Portage long : on utilise une valeur sentinelle simple "OUI"
+  // pour ne pas confondre avec les anciennes valeurs "0-10", "10-20", etc.
+  const hasLongCarryOrigin = form.originCarryDistance === "OUI";
+  const hasLongCarryDestination = form.destinationCarryDistance === "OUI";
+
   const handleSubmitStep1 = async (e: FormEvent) => {
     e.preventDefault();
     setHasTriedSubmitStep1(true);
@@ -3340,208 +3346,220 @@ function DevisGratuitsPageInner() {
 
             {/* Autres besoins éventuels (tous les services optionnels regroupés) */}
             <div className="space-y-2 rounded-2xl bg-slate-950/60 p-3 text-[11px] text-slate-300">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Autres besoins éventuels
-              </p>
-
-              {/* Accès */}
-              <div className="space-y-1">
-                <p className="text-[10px] font-semibold text-slate-400">
-                  Accès
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Autres besoins éventuels
                 </p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField(
-                        "serviceMonteMeuble",
-                        !form.serviceMonteMeuble
-                      )
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.serviceMonteMeuble
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Monte‑meuble à prévoir
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField(
-                        "optionDifficultAccess",
-                        !form.optionDifficultAccess
-                      )
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.optionDifficultAccess
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Accès très contraint
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField(
-                        "originCarryDistance",
-                        (form.originCarryDistance
-                          ? ""
-                          : "OUI") as FormState["originCarryDistance"]
-                      )
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.originCarryDistance
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Portage &gt; 15 m (départ)
-                  </button>
-                  {!form.destinationUnknown && (
+                {/* Sur mobile, on peut replier/déplier les options pour alléger visuellement */}
+                <button
+                  type="button"
+                  className="md:hidden text-[10px] text-sky-300 underline underline-offset-2"
+                  onClick={() => setShowExtraOptions((v) => !v)}
+                >
+                  {showExtraOptions ? 'Masquer' : 'Afficher'}
+                </button>
+              </div>
+
+              <div
+                className={`mt-2 grid gap-3 md:grid-cols-3 ${
+                  showExtraOptions ? '' : 'hidden md:grid'
+                }`}
+              >
+                {/* Accès */}
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-slate-400">
+                    Accès
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
                     <button
                       type="button"
                       onClick={() =>
                         updateField(
-                          "destinationCarryDistance",
-                          (form.destinationCarryDistance
-                            ? ""
-                            : "OUI") as FormState["destinationCarryDistance"]
+                          "serviceMonteMeuble",
+                          !form.serviceMonteMeuble
                         )
                       }
                       className={[
                         "rounded-full border px-3 py-1 text-left",
-                        form.destinationCarryDistance
+                        form.serviceMonteMeuble
                           ? "border-sky-400 bg-sky-500/20 text-sky-100"
                           : "border-slate-700 bg-slate-900/60 text-slate-200",
                       ].join(" ")}
                     >
-                      Portage &gt; 15 m (arrivée)
+                      Monte‑meuble à prévoir
                     </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Mobilier */}
-              <div className="space-y-1 mt-3">
-                <p className="text-[10px] font-semibold text-slate-400">
-                  Mobilier / objets spécifiques
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    ["none", "Pas de piano"],
-                    ["droit", "Piano droit"],
-                    ["quart", "Piano quart de queue"],
-                  ].map(([value, label]) => (
                     <button
-                      key={value}
                       type="button"
                       onClick={() =>
                         updateField(
-                          "servicePiano",
-                          value as FormState["servicePiano"]
+                          "optionDifficultAccess",
+                          !form.optionDifficultAccess
                         )
                       }
                       className={[
                         "rounded-full border px-3 py-1 text-left",
-                        form.servicePiano === value
+                        form.optionDifficultAccess
                           ? "border-sky-400 bg-sky-500/20 text-sky-100"
                           : "border-slate-700 bg-slate-900/60 text-slate-200",
                       ].join(" ")}
                     >
-                      {label}
+                      Accès très contraint
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField(
-                        "optionDismantlingFull",
-                        !form.optionDismantlingFull
-                      )
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.optionDismantlingFull
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Beaucoup de meubles à démonter / remonter
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateField(
+                          "originCarryDistance",
+                        (hasLongCarryOrigin ? "" : "OUI") as FormState["originCarryDistance"]
+                        )
+                      }
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                      hasLongCarryOrigin
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Portage &gt; 15 m (départ)
+                    </button>
+                    {!form.destinationUnknown && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "destinationCarryDistance",
+                            (hasLongCarryDestination ? "" : "OUI") as FormState["destinationCarryDistance"]
+                          )
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          hasLongCarryDestination
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        Portage &gt; 15 m (arrivée)
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Services */}
-              <div className="space-y-1 mt-3">
-                <p className="text-[10px] font-semibold text-slate-400">
-                  Services
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField("serviceDebarras", !form.serviceDebarras)
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.serviceDebarras
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Besoin de débarras
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField(
-                        "optionPackingMaterials",
-                        !form.optionPackingMaterials
-                      )
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.optionPackingMaterials
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Cartons / protections fournis
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField("optionStorage", !form.optionStorage)
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.optionStorage
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Besoin de stockage temporaire / garde‑meuble
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateField("optionCleaning", !form.optionCleaning)
-                    }
-                    className={[
-                      "rounded-full border px-3 py-1 text-left",
-                      form.optionCleaning
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
-                    ].join(" ")}
-                  >
-                    Nettoyage de fin de déménagement
-                  </button>
+                {/* Mobilier */}
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-slate-400">
+                    Mobilier / objets spécifiques
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      ["none", "Pas de piano"],
+                      ["droit", "Piano droit"],
+                      ["quart", "Piano quart de queue"],
+                    ].map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "servicePiano",
+                            value as FormState["servicePiano"]
+                          )
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          form.servicePiano === value
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateField(
+                          "optionDismantlingFull",
+                          !form.optionDismantlingFull
+                        )
+                      }
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        form.optionDismantlingFull
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Beaucoup de meubles à démonter / remonter
+                    </button>
+                  </div>
+                </div>
+
+                {/* Services */}
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-slate-400">
+                    Services
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateField("serviceDebarras", !form.serviceDebarras)
+                      }
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        form.serviceDebarras
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Besoin de débarras
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateField(
+                          "optionPackingMaterials",
+                          !form.optionPackingMaterials
+                        )
+                      }
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        form.optionPackingMaterials
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Cartons / protections fournis
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateField("optionStorage", !form.optionStorage)
+                      }
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        form.optionStorage
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Besoin de stockage temporaire / garde‑meuble
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateField("optionCleaning", !form.optionCleaning)
+                      }
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        form.optionCleaning
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Nettoyage de fin de déménagement
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
