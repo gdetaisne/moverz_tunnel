@@ -123,7 +123,8 @@ interface FormState {
     | "60-70"
     | "70-80"
     | "80-90"
-    | "90-100";
+    | "90-100"
+    | "OUI";
   originParkingAuth: boolean;
   destinationHousingType: HousingType | "";
   destinationFloor: string;
@@ -140,7 +141,8 @@ interface FormState {
     | "60-70"
     | "70-80"
     | "80-90"
-    | "90-100";
+    | "90-100"
+    | "OUI";
   destinationParkingAuth: boolean;
   destinationUnknown: boolean;
   density: DensityType;
