@@ -1441,6 +1441,7 @@ function DevisGratuitsPageInner() {
   const [surfaceTouched, setSurfaceTouched] = useState(false);
   const [hasCustomAccess, setHasCustomAccess] = useState(false);
   const [hasCustomFurniture, setHasCustomFurniture] = useState(false);
+  const [hasExtraServices, setHasExtraServices] = useState(false);
   const [showPricingDetails, setShowPricingDetails] = useState(false);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
   const [isCoarsePointer, setIsCoarsePointer] = useState<boolean | null>(null);
@@ -2536,6 +2537,23 @@ function DevisGratuitsPageInner() {
 
   // Logique de logement : on ne parle pas d'ascenseur si logement = maison
   const isHouseLike = form.housingType.startsWith("house");
+
+  // Si des services sont déjà cochés (ancien lead), on force l'état "Oui"
+  const hasAnyExtraService =
+    form.optionStorage ||
+    hasCleaningOrClearance ||
+    form.servicePackingFull ||
+    form.serviceMountNewFurniture ||
+    form.serviceInsuranceExtra ||
+    form.serviceWasteRemoval ||
+    form.serviceHelpNoTruck ||
+    form.serviceSpecialHours;
+
+  useEffect(() => {
+    if (hasAnyExtraService) {
+      setHasExtraServices(true);
+    }
+  }, [hasAnyExtraService]);
 
   const handleSubmitStep1 = async (e: FormEvent) => {
     e.preventDefault();
@@ -4274,145 +4292,193 @@ function DevisGratuitsPageInner() {
               <p className="text-xs font-semibold text-slate-200">
                 Services en plus (facultatif)
               </p>
-              <div className="flex flex-wrap gap-2">
+
+              {/* Toggle Non / Oui pour afficher les services */}
+              <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
-                  onClick={() =>
-                    updateField("optionStorage", !form.optionStorage)
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-[11px]",
-                    form.optionStorage
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Garde‑meuble
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setForm((prev) => {
-                      const next = !hasCleaningOrClearance;
-                      return {
+                  onClick={() => {
+                    if (hasExtraServices) {
+                      setHasExtraServices(false);
+                      setForm((prev) => ({
                         ...prev,
-                        serviceDebarras: next,
-                        optionCleaning: next,
-                      };
-                    })
-                  }
+                        optionStorage: false,
+                        serviceDebarras: false,
+                        optionCleaning: false,
+                        servicePackingFull: false,
+                        serviceMountNewFurniture: false,
+                        serviceInsuranceExtra: false,
+                        serviceWasteRemoval: false,
+                        serviceHelpNoTruck: false,
+                        serviceSpecialHours: false,
+                      }));
+                    }
+                  }}
                   className={[
                     "rounded-full border px-3 py-1 text-[11px]",
-                    hasCleaningOrClearance
+                    !hasExtraServices
                       ? "border-sky-400 bg-sky-500/20 text-sky-100"
                       : "border-slate-700 bg-slate-900/60 text-slate-200",
                   ].join(" ")}
                 >
-                  Nettoyage / débarras
+                  Non
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    updateField(
-                      "servicePackingFull",
-                      !form.servicePackingFull
-                    )
-                  }
+                  onClick={() => setHasExtraServices(true)}
                   className={[
                     "rounded-full border px-3 py-1 text-[11px]",
-                    form.servicePackingFull
+                    hasExtraServices
                       ? "border-sky-400 bg-sky-500/20 text-sky-100"
                       : "border-slate-700 bg-slate-900/60 text-slate-200",
                   ].join(" ")}
                 >
-                  Emballage complet
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField(
-                      "serviceMountNewFurniture",
-                      !form.serviceMountNewFurniture
-                    )
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-[11px]",
-                    form.serviceMountNewFurniture
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Montage meubles neufs
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField(
-                      "serviceInsuranceExtra",
-                      !form.serviceInsuranceExtra
-                    )
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-[11px]",
-                    form.serviceInsuranceExtra
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Assurance renforcée
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField(
-                      "serviceWasteRemoval",
-                      !form.serviceWasteRemoval
-                    )
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-[11px]",
-                    form.serviceWasteRemoval
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Évacuation déchets
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField(
-                      "serviceHelpNoTruck",
-                      !form.serviceHelpNoTruck
-                    )
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-[11px]",
-                    form.serviceHelpNoTruck
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Aide sans camion (changement de palier)
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField(
-                      "serviceSpecialHours",
-                      !form.serviceSpecialHours
-                    )
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-[11px]",
-                    form.serviceSpecialHours
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Horaires spécifiques
+                  Oui
                 </button>
               </div>
+
+              {hasExtraServices && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField("optionStorage", !form.optionStorage)
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-[11px]",
+                      form.optionStorage
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Garde‑meuble
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => {
+                        const next = !hasCleaningOrClearance;
+                        return {
+                          ...prev,
+                          serviceDebarras: next,
+                          optionCleaning: next,
+                        };
+                      })
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-[11px]",
+                      hasCleaningOrClearance
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Nettoyage / débarras
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "servicePackingFull",
+                        !form.servicePackingFull
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-[11px]",
+                      form.servicePackingFull
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Emballage complet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "serviceMountNewFurniture",
+                        !form.serviceMountNewFurniture
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-[11px]",
+                      form.serviceMountNewFurniture
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Montage meubles neufs
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "serviceInsuranceExtra",
+                        !form.serviceInsuranceExtra
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-[11px]",
+                      form.serviceInsuranceExtra
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Assurance renforcée
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "serviceWasteRemoval",
+                        !form.serviceWasteRemoval
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-[11px]",
+                      form.serviceWasteRemoval
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Évacuation déchets
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "serviceHelpNoTruck",
+                        !form.serviceHelpNoTruck
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-[11px]",
+                      form.serviceHelpNoTruck
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Aide sans camion (changement de palier)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "serviceSpecialHours",
+                        !form.serviceSpecialHours
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-[11px]",
+                      form.serviceSpecialHours
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Horaires spécifiques
+                  </button>
+                </div>
+              )}
+
               <p className="text-[10px] text-slate-400">
                 Ces services sont optionnels et viendront préciser votre demande au déménageur.
               </p>
@@ -4770,78 +4836,79 @@ function DevisGratuitsPageInner() {
                           détails).
                         </p>
                       </div>
-
-                      {localUploadFiles.length > 0 && (
-                        <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            Photos sélectionnées
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {localUploadFiles.map((item) => {
-                              const isImage = item.file.type.startsWith("image/");
-                              const borderClass =
-                                item.status === "uploaded"
-                                  ? "border-emerald-400"
-                                  : item.status === "uploading"
-                                  ? "border-sky-400"
-                                  : item.status === "error"
-                                  ? "border-rose-400"
-                                  : "border-slate-600";
-
-                              return (
-                                <button
-                                  key={item.id}
-                                  type="button"
-                                  className={`relative h-14 w-14 overflow-hidden rounded-xl border ${borderClass} bg-slate-900`}
-                                  onClick={() =>
-                                    setLocalUploadFiles((prev) =>
-                                      prev.filter((f) => f.id !== item.id)
-                                    )
-                                  }
-                                  disabled={item.status === "uploading"}
-                                  title="Retirer cette photo"
-                                >
-                                  {isImage ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                      src={item.previewUrl}
-                                      alt=""
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
-                                    <span className="text-[10px] text-slate-200">
-                                      FILE
-                                    </span>
-                                  )}
-                                  <span className="absolute right-0 top-0 rounded-bl-md bg-slate-900/80 px-1 text-[9px] text-slate-100">
-                                    ×
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <div className="mt-3 flex justify-center">
-                            <button
-                              type="button"
-                              onClick={handleAnalyzePhotos}
-                              disabled={
-                                !leadId ||
-                                isUploadingPhotos ||
-                                isAnalyzing ||
-                                localUploadFiles.every((f) => f.status !== "pending")
-                              }
-                              className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {isUploadingPhotos || isAnalyzing
-                                ? "Analyse en cours…"
-                                : "Analyser mes photos"}
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </>
                   )}
                 </div>
+
+                {/* Aperçu des photos sélectionnées + bouton d'analyse (caméra OU upload) */}
+                {localUploadFiles.length > 0 && (
+                  <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      Photos sélectionnées
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {localUploadFiles.map((item) => {
+                        const isImage = item.file.type.startsWith("image/");
+                        const borderClass =
+                          item.status === "uploaded"
+                            ? "border-emerald-400"
+                            : item.status === "uploading"
+                            ? "border-sky-400"
+                            : item.status === "error"
+                            ? "border-rose-400"
+                            : "border-slate-600";
+
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            className={`relative h-14 w-14 overflow-hidden rounded-xl border ${borderClass} bg-slate-900`}
+                            onClick={() =>
+                              setLocalUploadFiles((prev) =>
+                                prev.filter((f) => f.id !== item.id)
+                              )
+                            }
+                            disabled={item.status === "uploading"}
+                            title="Retirer cette photo"
+                          >
+                            {isImage ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={item.previewUrl}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-[10px] text-slate-200">
+                                FILE
+                              </span>
+                            )}
+                            <span className="absolute right-0 top-0 rounded-bl-md bg-slate-900/80 px-1 text-[9px] text-slate-100">
+                              ×
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-3 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={handleAnalyzePhotos}
+                        disabled={
+                          !leadId ||
+                          isUploadingPhotos ||
+                          isAnalyzing ||
+                          localUploadFiles.every((f) => f.status !== "pending")
+                        }
+                        className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isUploadingPhotos || isAnalyzing
+                          ? "Analyse en cours…"
+                          : "Analyser mes photos"}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
