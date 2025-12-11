@@ -1405,6 +1405,7 @@ function DevisGratuitsPageInner() {
     useState(false);
   const [surfaceTouched, setSurfaceTouched] = useState(false);
   const [showExtraOptions, setShowExtraOptions] = useState(false);
+  const [hasCustomAccess, setHasCustomAccess] = useState(false);
   const [showPricingDetails, setShowPricingDetails] = useState(false);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
   const [isCoarsePointer, setIsCoarsePointer] = useState<boolean | null>(null);
@@ -3377,6 +3378,47 @@ function DevisGratuitsPageInner() {
                     Accès
                   </p>
                   <div className="flex flex-wrap gap-1.5">
+                    {/* Accès facile (par défaut) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !hasCustomAccess;
+                        setHasCustomAccess(next);
+                        if (!next) {
+                          // Retour à "accès facile" → on remet les options détaillées à zéro
+                          setForm((prev) => ({
+                            ...prev,
+                            serviceMonteMeuble: false,
+                            optionDifficultAccess: false,
+                            originCarryDistance:
+                              prev.originCarryDistance === "OUI"
+                                ? ""
+                                : prev.originCarryDistance,
+                            destinationCarryDistance:
+                              prev.destinationCarryDistance === "OUI"
+                                ? ""
+                                : prev.destinationCarryDistance,
+                          }));
+                        }
+                      }}
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        !hasCustomAccess
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Accès facile
+                    </button>
+
+                    {/* Options détaillées d'accès (activées quand 'Accès facile' est désactivé) */}
+                    <div
+                      className={
+                        hasCustomAccess
+                          ? "flex flex-wrap gap-1.5"
+                          : "flex flex-wrap gap-1.5 opacity-40 pointer-events-none"
+                      }
+                    >
                     <button
                       type="button"
                       onClick={() =>
@@ -3387,7 +3429,7 @@ function DevisGratuitsPageInner() {
                       }
                       className={[
                         "rounded-full border px-3 py-1 text-left",
-                        form.serviceMonteMeuble
+                        form.serviceMonteMeuble && hasCustomAccess
                           ? "border-sky-400 bg-sky-500/20 text-sky-100"
                           : "border-slate-700 bg-slate-900/60 text-slate-200",
                       ].join(" ")}
@@ -3404,7 +3446,7 @@ function DevisGratuitsPageInner() {
                       }
                       className={[
                         "rounded-full border px-3 py-1 text-left",
-                        form.optionDifficultAccess
+                        form.optionDifficultAccess && hasCustomAccess
                           ? "border-sky-400 bg-sky-500/20 text-sky-100"
                           : "border-slate-700 bg-slate-900/60 text-slate-200",
                       ].join(" ")}
@@ -3421,7 +3463,7 @@ function DevisGratuitsPageInner() {
                       }
                       className={[
                         "rounded-full border px-3 py-1 text-left",
-                      hasLongCarryOrigin
+                        hasLongCarryOrigin && hasCustomAccess
                           ? "border-sky-400 bg-sky-500/20 text-sky-100"
                           : "border-slate-700 bg-slate-900/60 text-slate-200",
                       ].join(" ")}
@@ -3439,7 +3481,7 @@ function DevisGratuitsPageInner() {
                         }
                         className={[
                           "rounded-full border px-3 py-1 text-left",
-                          hasLongCarryDestination
+                          hasLongCarryDestination && hasCustomAccess
                             ? "border-sky-400 bg-sky-500/20 text-sky-100"
                             : "border-slate-700 bg-slate-900/60 text-slate-200",
                         ].join(" ")}
@@ -3447,6 +3489,7 @@ function DevisGratuitsPageInner() {
                         Portage &gt; 15 m (arrivée)
                       </button>
                     )}
+                    </div>
                   </div>
                 </div>
 
