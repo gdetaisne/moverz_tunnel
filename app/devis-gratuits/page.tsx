@@ -13,6 +13,7 @@ import {
   requestBackofficeConfirmation,
   uploadBackofficePhotos,
   saveBackofficeInventory,
+  sendBackofficePhotoReminder,
   trackTunnelEvent,
   type LeadTunnelCreatePayload,
 } from "@/lib/api/client";
@@ -1479,7 +1480,6 @@ function DevisGratuitsPageInner() {
     form.originPostalCode && form.originCity && form.originAddress
   );
   const isOriginHousingValid = Boolean(form.originHousingType);
-  const isOriginDistanceValid = Boolean(form.originCarryDistance);
 
   const isDestinationAddressFieldValid = Boolean(
     form.destinationUnknown ||
@@ -1490,16 +1490,13 @@ function DevisGratuitsPageInner() {
   const isDestinationHousingValid = Boolean(
     form.destinationUnknown || form.destinationHousingType
   );
-  const isDestinationDistanceValid = Boolean(
-    form.destinationUnknown || form.destinationCarryDistance
-  );
 
+  // On considère désormais la distance de portage comme une info facultative :
+  // elle n'entre plus dans la validation "bloquante" de l'étape 2.
   const isOriginAddressValid =
-    isOriginAddressFieldValid && isOriginHousingValid && isOriginDistanceValid;
+    isOriginAddressFieldValid && isOriginHousingValid;
   const isDestinationAddressValid =
-    isDestinationAddressFieldValid &&
-    isDestinationHousingValid &&
-    isDestinationDistanceValid;
+    isDestinationAddressFieldValid && isDestinationHousingValid;
   const isSurfaceValid = (() => {
     const raw = form.surfaceM2 ?? "";
     const n = Number(String(raw).replace(",", "."));
@@ -3372,142 +3369,206 @@ function DevisGratuitsPageInner() {
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                 Autres besoins éventuels
               </p>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField(
-                      "serviceMonteMeuble",
-                      !form.serviceMonteMeuble
-                    )
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-left",
-                    form.serviceMonteMeuble
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Monte‑meuble à prévoir
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField("serviceDebarras", !form.serviceDebarras)
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-left",
-                    form.serviceDebarras
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Besoin de débarras
-                </button>
-                {[
-                  ["none", "Pas de piano"],
-                  ["droit", "Piano droit"],
-                  ["quart", "Piano quart de queue"],
-                ].map(([value, label]) => (
+
+              {/* Accès */}
+              <div className="space-y-1">
+                <p className="text-[10px] font-semibold text-slate-400">
+                  Accès
+                </p>
+                <div className="flex flex-wrap gap-1.5">
                   <button
-                    key={value}
                     type="button"
                     onClick={() =>
                       updateField(
-                        "servicePiano",
-                        value as FormState["servicePiano"]
+                        "serviceMonteMeuble",
+                        !form.serviceMonteMeuble
                       )
                     }
                     className={[
                       "rounded-full border px-3 py-1 text-left",
-                      form.servicePiano === value
+                      form.serviceMonteMeuble
                         ? "border-sky-400 bg-sky-500/20 text-sky-100"
                         : "border-slate-700 bg-slate-900/60 text-slate-200",
                     ].join(" ")}
                   >
-                    {label}
+                    Monte‑meuble à prévoir
                   </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField(
-                      "optionPackingMaterials",
-                      !form.optionPackingMaterials
-                    )
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-left",
-                    form.optionPackingMaterials
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Cartons / protections fournis
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField(
-                      "optionDismantlingFull",
-                      !form.optionDismantlingFull
-                    )
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-left",
-                    form.optionDismantlingFull
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Beaucoup de meubles à démonter / remonter
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField("optionStorage", !form.optionStorage)
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-left",
-                    form.optionStorage
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Besoin de stockage temporaire / garde‑meuble
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField("optionCleaning", !form.optionCleaning)
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-left",
-                    form.optionCleaning
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Nettoyage de fin de déménagement
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateField(
-                      "optionDifficultAccess",
-                      !form.optionDifficultAccess
-                    )
-                  }
-                  className={[
-                    "rounded-full border px-3 py-1 text-left",
-                    form.optionDifficultAccess
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
-                  ].join(" ")}
-                >
-                  Accès très contraint (rue étroite, centre‑ville difficile
-                  pour le camion)
-                </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "optionDifficultAccess",
+                        !form.optionDifficultAccess
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.optionDifficultAccess
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Accès très contraint
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "originCarryDistance",
+                        (form.originCarryDistance
+                          ? ""
+                          : "OUI") as FormState["originCarryDistance"]
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.originCarryDistance
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Portage &gt; 15 m (départ)
+                  </button>
+                  {!form.destinationUnknown && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateField(
+                          "destinationCarryDistance",
+                          (form.destinationCarryDistance
+                            ? ""
+                            : "OUI") as FormState["destinationCarryDistance"]
+                        )
+                      }
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        form.destinationCarryDistance
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Portage &gt; 15 m (arrivée)
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Mobilier */}
+              <div className="space-y-1 mt-3">
+                <p className="text-[10px] font-semibold text-slate-400">
+                  Mobilier / objets spécifiques
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    ["none", "Pas de piano"],
+                    ["droit", "Piano droit"],
+                    ["quart", "Piano quart de queue"],
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() =>
+                        updateField(
+                          "servicePiano",
+                          value as FormState["servicePiano"]
+                        )
+                      }
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        form.servicePiano === value
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "optionDismantlingFull",
+                        !form.optionDismantlingFull
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.optionDismantlingFull
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Beaucoup de meubles à démonter / remonter
+                  </button>
+                </div>
+              </div>
+
+              {/* Services */}
+              <div className="space-y-1 mt-3">
+                <p className="text-[10px] font-semibold text-slate-400">
+                  Services
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField("serviceDebarras", !form.serviceDebarras)
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.serviceDebarras
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Besoin de débarras
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "optionPackingMaterials",
+                        !form.optionPackingMaterials
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.optionPackingMaterials
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Cartons / protections fournis
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField("optionStorage", !form.optionStorage)
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.optionStorage
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Besoin de stockage temporaire / garde‑meuble
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField("optionCleaning", !form.optionCleaning)
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.optionCleaning
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    Nettoyage de fin de déménagement
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -4146,23 +4207,42 @@ function DevisGratuitsPageInner() {
                   </button>
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (!leadId) {
-                        setError("Lead introuvable. Revenez à l'étape précédente puis réessayez.");
-                        return;
+                  onClick={async () => {
+                    if (!leadId) {
+                      setError("Lead introuvable. Revenez à l'étape précédente puis réessayez.");
+                      return;
+                    }
+                    setError(null);
+                    try {
+                      setIsSubmitting(true);
+
+                      // 1) Mettre à jour le statut photos côté tunnel
+                      await updateLead(leadId, { photosStatus: "PENDING" });
+
+                      // 2) S'assurer qu'un lead existe dans le Back Office
+                      const boLeadId = await ensureBackofficeLeadId();
+
+                      if (boLeadId) {
+                        // 3) Déclencher l'email MINOU "LEAD_PHOTOS_LATER"
+                        try {
+                          await sendBackofficePhotoReminder(boLeadId);
+                        } catch (emailErr) {
+                          console.warn("⚠️ Erreur lors de l'envoi de l'email de relance photos:", emailErr);
+                        }
+                      } else {
+                        console.warn(
+                          "⚠️ Impossible de synchroniser avec le Back Office pour la relance photos (boLeadId manquant)."
+                        );
                       }
-                      setError(null);
-                      try {
-                        setIsSubmitting(true);
-                        await updateLead(leadId, { photosStatus: "PENDING" });
-                        router.push("/devis-gratuits/merci");
-                      } catch (err: unknown) {
-                        const message = err instanceof Error ? err.message : "Erreur lors de l'envoi de l'email.";
-                        setError(message);
-                      } finally {
-                        setIsSubmitting(false);
-                      }
-                    }}
+
+                      router.push("/devis-gratuits/merci");
+                    } catch (err: unknown) {
+                      const message = err instanceof Error ? err.message : "Erreur lors de l'envoi de l'email.";
+                      setError(message);
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
                     disabled={isSubmitting}
                     className="inline-flex items-center justify-center rounded-xl border border-sky-400/70 bg-sky-950/30 px-4 py-3 text-sm font-semibold text-sky-100 hover:bg-sky-950/50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
