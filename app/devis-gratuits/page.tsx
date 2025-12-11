@@ -1406,6 +1406,7 @@ function DevisGratuitsPageInner() {
   const [surfaceTouched, setSurfaceTouched] = useState(false);
   const [showExtraOptions, setShowExtraOptions] = useState(false);
   const [hasCustomAccess, setHasCustomAccess] = useState(false);
+  const [hasCustomFurniture, setHasCustomFurniture] = useState(false);
   const [showPricingDetails, setShowPricingDetails] = useState(false);
   const [localUploadFiles, setLocalUploadFiles] = useState<LocalUploadFile[]>([]);
   const [isCoarsePointer, setIsCoarsePointer] = useState<boolean | null>(null);
@@ -2548,6 +2549,14 @@ function DevisGratuitsPageInner() {
     }
   };
 
+  // Si l'utilisateur revient à l'étape 2 avec un piano ou beaucoup de meubles,
+  // on active automatiquement le mode "mobilier détaillé" (hors formats présents).
+  useEffect(() => {
+    if (form.servicePiano !== "none" || form.optionDismantlingFull) {
+      setHasCustomFurniture(true);
+    }
+  }, [form.servicePiano, form.optionDismantlingFull]);
+
   // Chronomètre affiché (≈ 3 s / photo) pour l'analyse Process 2
   useEffect(() => {
     if (!analysisStartedAt) return;
@@ -2941,15 +2950,15 @@ function DevisGratuitsPageInner() {
               e.preventDefault();
               setHasTriedSubmitStep2(true);
               setError(null);
-              
-              // Validation étape 2 : champs obligatoires
-              if (!form.originPostalCode || !form.originCity || !form.originCarryDistance) {
+
+              // Validation étape 2 : champs obligatoires (distance de portage et options d'accès sont facultatifs)
+              if (!form.originPostalCode || !form.originCity) {
                 setError("Merci de vérifier les champs en rouge.");
                 return;
               }
               if (
                 !form.destinationUnknown &&
-                (!form.destinationPostalCode || !form.destinationCity || !form.destinationCarryDistance)
+                (!form.destinationPostalCode || !form.destinationCity)
               ) {
                 setError("Merci de vérifier les champs en rouge.");
                 return;
@@ -2962,7 +2971,7 @@ function DevisGratuitsPageInner() {
                 setError("Merci de vérifier les champs en rouge.");
                 return;
               }
-              
+
               goToStep(3);
             }}
           >
@@ -3499,91 +3508,78 @@ function DevisGratuitsPageInner() {
                     Mobilier / objets spécifiques
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {[
-                      ["none", "Pas de piano"],
-                      ["droit", "Piano droit"],
-                      ["quart", "Piano quart de queue"],
-                    ].map(([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() =>
-                          updateField(
-                            "servicePiano",
-                            value as FormState["servicePiano"]
-                          )
+                    {/* RAS par défaut */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (hasCustomFurniture) {
+                          // Retour à "rien de particulier"
+                          setHasCustomFurniture(false);
+                          setForm((prev) => ({
+                            ...prev,
+                            servicePiano: "none",
+                            optionDismantlingFull: false,
+                          }));
+                        } else {
+                          setHasCustomFurniture(true);
                         }
+                      }}
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        !hasCustomFurniture
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Rien de particulier
+                    </button>
+
+                    {/* Détails mobilier (piano / meubles à démonter) */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        ["none", "Pas de piano"],
+                        ["droit", "Piano droit"],
+                        ["quart", "Piano quart de queue"],
+                      ].map(([value, label]) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => {
+                            setHasCustomFurniture(true);
+                            updateField(
+                              "servicePiano",
+                              value as FormState["servicePiano"]
+                            );
+                          }}
+                          className={[
+                            "rounded-full border px-3 py-1 text-left",
+                            form.servicePiano === value
+                              ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                              : "border-slate-700 bg-slate-900/60 text-slate-200",
+                          ].join(" ")}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHasCustomFurniture(true);
+                          updateField(
+                            "optionDismantlingFull",
+                            !form.optionDismantlingFull
+                          );
+                        }}
                         className={[
                           "rounded-full border px-3 py-1 text-left",
-                          form.servicePiano === value
+                          form.optionDismantlingFull
                             ? "border-sky-400 bg-sky-500/20 text-sky-100"
                             : "border-slate-700 bg-slate-900/60 text-slate-200",
                         ].join(" ")}
                       >
-                        {label}
+                        Beaucoup de meubles à démonter / remonter
                       </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateField(
-                          "optionDismantlingFull",
-                          !form.optionDismantlingFull
-                        )
-                      }
-                      className={[
-                        "rounded-full border px-3 py-1 text-left",
-                        form.optionDismantlingFull
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
-                      ].join(" ")}
-                    >
-                      Beaucoup de meubles à démonter / remonter
-                    </button>
-                  </div>
-                </div>
-
-                {/* Services */}
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold text-slate-400">
-                    Services
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateField("optionStorage", !form.optionStorage)
-                      }
-                      className={[
-                        "rounded-full border px-3 py-1 text-left",
-                        form.optionStorage
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
-                      ].join(" ")}
-                    >
-                      Besoin de stockage temporaire / garde‑meuble
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setForm((prev) => {
-                          const next = !hasCleaningOrClearance;
-                          return {
-                            ...prev,
-                            serviceDebarras: next,
-                            optionCleaning: next,
-                          };
-                        })
-                      }
-                      className={[
-                        "rounded-full border px-3 py-1 text-left",
-                        hasCleaningOrClearance
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
-                      ].join(" ")}
-                    >
-                      Nettoyage / débarras après le déménagement
-                    </button>
+                    </div>
                   </div>
                 </div>
               </div>
