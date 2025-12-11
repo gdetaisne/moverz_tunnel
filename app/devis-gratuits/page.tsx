@@ -3074,35 +3074,8 @@ function DevisGratuitsPageInner() {
                       )}
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-medium text-slate-200">
-                      Distance de portage (m)
-                    </label>
-                    <div className="relative mt-1">
-                      <select
-                        value={form.originCarryDistance}
-                        onChange={(e) =>
-                          updateField(
-                            "originCarryDistance",
-                            e.target.value as FormState["originCarryDistance"]
-                          )
-                        }
-                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                      <option value="">Choisir la distance</option>
-                      <option value="0-10">0–10 m</option>
-                      <option value="10-20">10–20 m</option>
-                      <option value="20-30">20–30 m</option>
-                      <option value="30-40">30–40 m</option>
-                      <option value="40-50">40–50 m</option>
-                      <option value="50-60">50–60 m</option>
-                      <option value="60-70">60–70 m</option>
-                      <option value="70-80">70–80 m</option>
-                      <option value="80-90">80–90 m</option>
-                      <option value="90-100">90–100 m</option>
-                      </select>
-                    </div>
-                  </div>
+                  {/* Distance de portage : désormais gérée uniquement via le chip
+                      "Portage > 15 m" dans la section Accès. */}
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-[minmax(0,1.3fr),minmax(0,1fr)]">
@@ -3269,35 +3242,8 @@ function DevisGratuitsPageInner() {
                       )}
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-medium text-slate-200">
-                      Distance de portage (m)
-                    </label>
-                    <div className="relative mt-1">
-                      <select
-                        value={form.destinationCarryDistance}
-                        onChange={(e) =>
-                          updateField(
-                            "destinationCarryDistance",
-                            e.target.value as FormState["destinationCarryDistance"]
-                          )
-                        }
-                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                      >
-                      <option value="">Choisir la distance</option>
-                      <option value="0-10">0–10 m</option>
-                      <option value="10-20">10–20 m</option>
-                      <option value="20-30">20–30 m</option>
-                      <option value="30-40">30–40 m</option>
-                      <option value="40-50">40–50 m</option>
-                      <option value="50-60">50–60 m</option>
-                      <option value="60-70">60–70 m</option>
-                      <option value="70-80">70–80 m</option>
-                      <option value="80-90">80–90 m</option>
-                      <option value="90-100">90–100 m</option>
-                      </select>
-                    </div>
-                  </div>
+                  {/* Distance de portage arrivée : gérée via le chip
+                      "Portage > 15 m (arrivée)" dans la section Accès. */}
                 </div>
               </div>
             </div>
