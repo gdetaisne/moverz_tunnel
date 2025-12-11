@@ -3353,9 +3353,6 @@ function DevisGratuitsPageInner() {
                                 ? ""
                                 : prev.destinationCarryDistance,
                           }));
-                        } else {
-                          // L'utilisateur veut préciser les accès
-                          setHasCustomAccess(true);
                         }
                       }}
                       className={[
@@ -3367,85 +3364,96 @@ function DevisGratuitsPageInner() {
                     >
                       Accès facile
                     </button>
+                    {/* Accès contraint : sert juste à ouvrir les options */}
+                    <button
+                      type="button"
+                      onClick={() => setHasCustomAccess(true)}
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        hasCustomAccess
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Accès contraint
+                    </button>
+                  </div>
 
-                    {/* Options détaillées d'accès */}
-                    <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setHasCustomAccess(true);
-                        updateField(
-                          "serviceMonteMeuble",
-                          !form.serviceMonteMeuble
-                        );
-                      }}
-                      className={[
-                        "rounded-full border px-3 py-1 text-left",
-                        form.serviceMonteMeuble
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
-                      ].join(" ")}
-                    >
-                      Monte‑meuble à prévoir
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setHasCustomAccess(true);
-                        updateField(
-                          "optionDifficultAccess",
-                          !form.optionDifficultAccess
-                        );
-                      }}
-                      className={[
-                        "rounded-full border px-3 py-1 text-left",
-                        form.optionDifficultAccess
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
-                      ].join(" ")}
-                    >
-                      Accès très contraint
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setHasCustomAccess(true);
-                        updateField(
-                          "originCarryDistance",
-                          (hasLongCarryOrigin ? "" : "OUI") as FormState["originCarryDistance"]
-                        );
-                      }}
-                      className={[
-                        "rounded-full border px-3 py-1 text-left",
-                        hasLongCarryOrigin
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
-                      ].join(" ")}
-                    >
-                      Portage &gt; 15 m (départ)
-                    </button>
-                    {!form.destinationUnknown && (
+                  {/* Options détaillées d'accès – visibles uniquement si Accès contraint est actif */}
+                  {hasCustomAccess && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       <button
                         type="button"
-                        onClick={() => {
-                          setHasCustomAccess(true);
+                        onClick={() =>
                           updateField(
-                            "destinationCarryDistance",
-                            (hasLongCarryDestination ? "" : "OUI") as FormState["destinationCarryDistance"]
-                          );
-                        }}
+                            "serviceMonteMeuble",
+                            !form.serviceMonteMeuble
+                          )
+                        }
                         className={[
                           "rounded-full border px-3 py-1 text-left",
-                          hasLongCarryDestination
+                          form.serviceMonteMeuble
                             ? "border-sky-400 bg-sky-500/20 text-sky-100"
                             : "border-slate-700 bg-slate-900/60 text-slate-200",
                         ].join(" ")}
                       >
-                        Portage &gt; 15 m (arrivée)
+                        Monte‑meuble à prévoir
                       </button>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "optionDifficultAccess",
+                            !form.optionDifficultAccess
+                          )
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          form.optionDifficultAccess
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        Rue / stationnement compliqué
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "originCarryDistance",
+                            (hasLongCarryOrigin ? "" : "OUI") as FormState["originCarryDistance"]
+                          )
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-left",
+                          hasLongCarryOrigin
+                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ].join(" ")}
+                      >
+                        Portage &gt; 15 m (départ)
+                      </button>
+                      {!form.destinationUnknown && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateField(
+                              "destinationCarryDistance",
+                              (hasLongCarryDestination ? "" : "OUI") as FormState["destinationCarryDistance"]
+                            )
+                          }
+                          className={[
+                            "rounded-full border px-3 py-1 text-left",
+                            hasLongCarryDestination
+                              ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                              : "border-slate-700 bg-slate-900/60 text-slate-200",
+                          ].join(" ")}
+                        >
+                          Portage &gt; 15 m (arrivée)
+                        </button>
+                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Mobilier */}
@@ -3466,8 +3474,6 @@ function DevisGratuitsPageInner() {
                             servicePiano: "none",
                             optionDismantlingFull: false,
                           }));
-                        } else {
-                          setHasCustomFurniture(true);
                         }
                       }}
                       className={[
@@ -3479,9 +3485,24 @@ function DevisGratuitsPageInner() {
                     >
                       Rien de particulier
                     </button>
+                    {/* Ouvre les options détaillées */}
+                    <button
+                      type="button"
+                      onClick={() => setHasCustomFurniture(true)}
+                      className={[
+                        "rounded-full border px-3 py-1 text-left",
+                        hasCustomFurniture
+                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ].join(" ")}
+                    >
+                      Mobilier spécifique
+                    </button>
+                  </div>
 
-                    {/* Détails mobilier (piano / meubles à démonter) */}
-                    <div className="flex flex-wrap gap-1.5">
+                  {/* Détails mobilier (piano / meubles à démonter) – visibles uniquement si Mobilier spécifique est actif */}
+                  {hasCustomFurniture && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       {[
                         ["droit", "Piano droit"],
                         ["quart", "Piano quart de queue"],
@@ -3489,13 +3510,12 @@ function DevisGratuitsPageInner() {
                         <button
                           key={value}
                           type="button"
-                          onClick={() => {
-                            setHasCustomFurniture(true);
+                          onClick={() =>
                             updateField(
                               "servicePiano",
                               value as FormState["servicePiano"]
-                            );
-                          }}
+                            )
+                          }
                           className={[
                             "rounded-full border px-3 py-1 text-left",
                             form.servicePiano === value
@@ -3508,13 +3528,12 @@ function DevisGratuitsPageInner() {
                       ))}
                       <button
                         type="button"
-                        onClick={() => {
-                          setHasCustomFurniture(true);
+                        onClick={() =>
                           updateField(
                             "optionDismantlingFull",
                             !form.optionDismantlingFull
-                          );
-                        }}
+                          )
+                        }
                         className={[
                           "rounded-full border px-3 py-1 text-left",
                           form.optionDismantlingFull
@@ -3525,7 +3544,7 @@ function DevisGratuitsPageInner() {
                         Beaucoup de meubles à démonter / remonter
                       </button>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
