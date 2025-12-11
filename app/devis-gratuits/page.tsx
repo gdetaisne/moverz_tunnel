@@ -2492,6 +2492,10 @@ function DevisGratuitsPageInner() {
   const hasLongCarryOrigin = form.originCarryDistance === "OUI";
   const hasLongCarryDestination = form.destinationCarryDistance === "OUI";
 
+  // Service "Nettoyage / débarras" : pour le client c'est un seul choix,
+  // mais en interne on garde les deux flags existants.
+  const hasCleaningOrClearance = form.serviceDebarras || form.optionCleaning;
+
   const handleSubmitStep1 = async (e: FormEvent) => {
     e.preventDefault();
     setHasTriedSubmitStep1(true);
@@ -3503,37 +3507,6 @@ function DevisGratuitsPageInner() {
                     <button
                       type="button"
                       onClick={() =>
-                        updateField("serviceDebarras", !form.serviceDebarras)
-                      }
-                      className={[
-                        "rounded-full border px-3 py-1 text-left",
-                        form.serviceDebarras
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
-                      ].join(" ")}
-                    >
-                      Besoin de débarras
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateField(
-                          "optionPackingMaterials",
-                          !form.optionPackingMaterials
-                        )
-                      }
-                      className={[
-                        "rounded-full border px-3 py-1 text-left",
-                        form.optionPackingMaterials
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
-                      ].join(" ")}
-                    >
-                      Cartons / protections fournis
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
                         updateField("optionStorage", !form.optionStorage)
                       }
                       className={[
@@ -3548,16 +3521,23 @@ function DevisGratuitsPageInner() {
                     <button
                       type="button"
                       onClick={() =>
-                        updateField("optionCleaning", !form.optionCleaning)
+                        setForm((prev) => {
+                          const next = !hasCleaningOrClearance;
+                          return {
+                            ...prev,
+                            serviceDebarras: next,
+                            optionCleaning: next,
+                          };
+                        })
                       }
                       className={[
                         "rounded-full border px-3 py-1 text-left",
-                        form.optionCleaning
+                        hasCleaningOrClearance
                           ? "border-sky-400 bg-sky-500/20 text-sky-100"
                           : "border-slate-700 bg-slate-900/60 text-slate-200",
                       ].join(" ")}
                     >
-                      Nettoyage de fin de déménagement
+                      Nettoyage / débarras après le déménagement
                     </button>
                   </div>
                 </div>
