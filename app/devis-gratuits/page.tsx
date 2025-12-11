@@ -155,6 +155,13 @@ interface FormState {
   optionPackingMaterials: boolean;
   optionDismantlingFull: boolean;
   optionDifficultAccess: boolean;
+  // Services additionnels (étape 3)
+  servicePackingFull: boolean; // Emballage complet
+  serviceMountNewFurniture: boolean; // Montage meubles neufs
+  serviceInsuranceExtra: boolean; // Assurance renforcée
+  serviceWasteRemoval: boolean; // Évacuation déchets
+  serviceHelpNoTruck: boolean; // Aide sans camion
+  serviceSpecialHours: boolean; // Horaires spécifiques
   notes: string;
 }
 
@@ -359,6 +366,14 @@ const INITIAL_FORM_STATE: FormState = {
   optionPackingMaterials: false,
   optionDismantlingFull: false,
   optionDifficultAccess: false,
+
+  // Services additionnels (étape 3)
+  servicePackingFull: false,
+  serviceMountNewFurniture: false,
+  serviceInsuranceExtra: false,
+  serviceWasteRemoval: false,
+  serviceHelpNoTruck: false,
+  serviceSpecialHours: false,
 
   // Notes - vide
   notes: "",
@@ -2598,14 +2613,19 @@ function DevisGratuitsPageInner() {
     if (form.servicePiano === "droit") extras.push("Piano droit");
     if (form.servicePiano === "quart") extras.push("Piano quart de queue");
     if (form.serviceDebarras) extras.push("Besoin de débarras");
-    if (form.optionPackingMaterials)
-      extras.push("Cartons et protections fournis par Moverz");
+    if (form.optionPackingMaterials) extras.push("Cartons livrés");
     if (form.optionDismantlingFull)
       extras.push("Beaucoup de meubles à démonter / remonter");
     if (form.optionStorage) extras.push("Stockage temporaire / garde‑meuble");
     if (form.optionCleaning) extras.push("Nettoyage de fin de déménagement");
     if (form.optionDifficultAccess)
       extras.push("Accès camion très contraint (rue étroite / centre‑ville)");
+    if (form.servicePackingFull) extras.push("Emballage complet");
+    if (form.serviceMountNewFurniture) extras.push("Montage meubles neufs");
+    if (form.serviceInsuranceExtra) extras.push("Assurance renforcée");
+    if (form.serviceWasteRemoval) extras.push("Évacuation déchets");
+    if (form.serviceHelpNoTruck) extras.push("Aide sans camion");
+    if (form.serviceSpecialHours) extras.push("Horaires spécifiques");
 
     const extraText =
       extras.length > 0 ? `Options : ${extras.join(", ")}` : "";
@@ -4075,7 +4095,7 @@ function DevisGratuitsPageInner() {
                       : "border-slate-700 bg-slate-900/60 text-slate-200",
                   ].join(" ")}
                 >
-                  Stockage temporaire / garde‑meuble
+                  Garde‑meuble
                 </button>
                 <button
                   type="button"
@@ -4096,7 +4116,126 @@ function DevisGratuitsPageInner() {
                       : "border-slate-700 bg-slate-900/60 text-slate-200",
                   ].join(" ")}
                 >
-                  Nettoyage / débarras après déménagement
+                  Nettoyage / débarras
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "optionPackingMaterials",
+                      !form.optionPackingMaterials
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-[11px]",
+                    form.optionPackingMaterials
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Cartons livrés
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "servicePackingFull",
+                      !form.servicePackingFull
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-[11px]",
+                    form.servicePackingFull
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Emballage complet
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "serviceMountNewFurniture",
+                      !form.serviceMountNewFurniture
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-[11px]",
+                    form.serviceMountNewFurniture
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Montage meubles neufs
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "serviceInsuranceExtra",
+                      !form.serviceInsuranceExtra
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-[11px]",
+                    form.serviceInsuranceExtra
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Assurance renforcée
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "serviceWasteRemoval",
+                      !form.serviceWasteRemoval
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-[11px]",
+                    form.serviceWasteRemoval
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Évacuation déchets
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "serviceHelpNoTruck",
+                      !form.serviceHelpNoTruck
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-[11px]",
+                    form.serviceHelpNoTruck
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Aide sans camion
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "serviceSpecialHours",
+                      !form.serviceSpecialHours
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-[11px]",
+                    form.serviceSpecialHours
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Horaires spécifiques
                 </button>
               </div>
               <p className="text-[10px] text-slate-400">
