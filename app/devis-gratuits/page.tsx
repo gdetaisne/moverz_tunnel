@@ -1404,7 +1404,6 @@ function DevisGratuitsPageInner() {
   const [destinationDistanceTouched, setDestinationDistanceTouched] =
     useState(false);
   const [surfaceTouched, setSurfaceTouched] = useState(false);
-  const [showExtraOptions, setShowExtraOptions] = useState(false);
   const [hasCustomAccess, setHasCustomAccess] = useState(false);
   const [hasCustomFurniture, setHasCustomFurniture] = useState(false);
   const [showPricingDetails, setShowPricingDetails] = useState(false);
@@ -3312,21 +3311,9 @@ function DevisGratuitsPageInner() {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                   Autres besoins éventuels
                 </p>
-                {/* Sur mobile, on peut replier/déplier les options pour alléger visuellement */}
-                <button
-                  type="button"
-                  className="md:hidden text-[10px] text-sky-300 underline underline-offset-2"
-                  onClick={() => setShowExtraOptions((v) => !v)}
-                >
-                  {showExtraOptions ? 'Masquer' : 'Afficher'}
-                </button>
               </div>
 
-              <div
-                className={`mt-2 grid gap-3 md:grid-cols-3 ${
-                  showExtraOptions ? '' : 'hidden md:grid'
-                }`}
-              >
+              <div className="mt-2 grid gap-3 md:grid-cols-3">
                 {/* Accès */}
                 <div className="space-y-1">
                   <p className="text-[10px] font-semibold text-slate-400">
@@ -3461,7 +3448,7 @@ function DevisGratuitsPageInner() {
                   <p className="text-[10px] font-semibold text-slate-400">
                     Mobilier / objets spécifiques
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex gap-1.5 flex-wrap md:flex-nowrap">
                     {/* RAS par défaut */}
                     <button
                       type="button"
