@@ -16,6 +16,7 @@ import {
   sendBackofficePhotoReminder,
   trackTunnelEvent,
   type LeadTunnelCreatePayload,
+  type SaveBackofficeInventoryPayload,
 } from "@/lib/api/client";
 import {
   calculatePricing,
@@ -240,6 +241,12 @@ interface Process2InventoryRow {
     volumeNuM3?: number | null;
     volumeM3?: number | null;
   }[];
+}
+
+interface RoomPhotosForBackoffice {
+  roomLabel: string;
+  roomType?: string;
+  photoUrls: string[];
 }
 
 function getInventoryItemIcon(row: Process2InventoryRow): string {
@@ -1454,6 +1461,9 @@ function DevisGratuitsPageInner() {
   const [process2Inventory, setProcess2Inventory] = useState<Process2InventoryRow[] | null>(
     null
   );
+  const [roomPhotosForBackoffice, setRoomPhotosForBackoffice] = useState<
+    RoomPhotosForBackoffice[] | null
+  >(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStartedAt, setAnalysisStartedAt] = useState<number | null>(null);
   const [analysisElapsedMs, setAnalysisElapsedMs] = useState<number>(0);
@@ -1988,9 +1998,27 @@ function DevisGratuitsPageInner() {
         effectiveBackofficeLeadId = await ensureBackofficeLeadId();
       }
 
+      let backofficeUploaded:
+        | {
+            originalFilename: string;
+            url: string;
+          }[]
+        | null = null;
+
       if (effectiveBackofficeLeadId) {
         try {
-          await uploadBackofficePhotos(effectiveBackofficeLeadId, pendingFiles);
+          const uploadRes = await uploadBackofficePhotos(
+            effectiveBackofficeLeadId,
+            pendingFiles
+          );
+
+          backofficeUploaded =
+            uploadRes.data?.uploaded
+              ?.filter((p) => typeof p.originalFilename === "string" && !!p.url)
+              .map((p) => ({
+                originalFilename: p.originalFilename,
+                url: p.url,
+              })) ?? null;
         } catch (err) {
           console.warn(
             "⚠️ Upload des photos vers le Back Office échoué, les photos restent disponibles côté tunnel uniquement:",
@@ -2098,6 +2126,49 @@ function DevisGratuitsPageInner() {
                 });
               });
             });
+
+            // Mapping pièce → photos (URLs Back Office) pour le Back Office
+            if (backofficeUploaded && backofficeUploaded.length > 0) {
+              const urlByOriginalName = new Map<string, string>();
+              backofficeUploaded.forEach((p) => {
+                urlByOriginalName.set(p.originalFilename, p.url);
+              });
+
+              const photoById = new Map<string, { originalFilename: string }>();
+              result.success.forEach((p) => {
+                photoById.set(p.id, { originalFilename: p.originalFilename });
+              });
+
+              const roomPhotos: RoomPhotosForBackoffice[] = [];
+
+              for (const room of labData.rooms) {
+                const urls: string[] = [];
+
+                if (Array.isArray(room.photoIds)) {
+                  for (const photoId of room.photoIds) {
+                    const meta = photoById.get(photoId);
+                    if (!meta) continue;
+                    const url = urlByOriginalName.get(meta.originalFilename);
+                    if (!url) continue;
+                    urls.push(url);
+                  }
+                }
+
+                const deduped = Array.from(new Set(urls));
+                if (deduped.length > 0) {
+                  roomPhotos.push({
+                    roomLabel: room.label,
+                    roomType: room.roomType,
+                    photoUrls: deduped,
+                  });
+                }
+              }
+
+              setRoomPhotosForBackoffice(roomPhotos.length > 0 ? roomPhotos : null);
+            } else {
+              // Pas de mapping fiable vers le Back Office
+              setRoomPhotosForBackoffice(null);
+            }
 
             let enrichedItems = enrichItemsWithBusinessRules(
               itemsForRules,
@@ -2760,6 +2831,56 @@ function DevisGratuitsPageInner() {
           const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" =>
             e === "none" ? "NON" : e === "small" ? "PARTIEL" : "OUI";
 
+          const tunnelOptions = {
+            access: {
+              origin: {
+                escalierSansAscenseur: form.accessNoElevator || undefined,
+                petitAscenseurPassagesSerres: form.accessSmallElevator || undefined,
+                rueStationnementComplique: form.optionDifficultAccess || undefined,
+                accesCamionDifficile: form.accessTruckDifficult || undefined,
+                portageLong: hasLongCarryOrigin || undefined,
+                monteMeuble: form.serviceMonteMeuble || undefined,
+                autorisationStationnement: form.originParkingAuth ?? undefined,
+              },
+              destination: form.destinationUnknown
+                ? undefined
+                : {
+                    escalierSansAscenseur: form.accessNoElevator || undefined,
+                    petitAscenseurPassagesSerres: form.accessSmallElevator || undefined,
+                    rueStationnementComplique: form.optionDifficultAccess || undefined,
+                    accesCamionDifficile: form.accessTruckDifficult || undefined,
+                    portageLong: hasLongCarryDestination || undefined,
+                    monteMeuble: form.serviceMonteMeuble || undefined,
+                    autorisationStationnement: form.destinationParkingAuth ?? undefined,
+                  },
+            },
+            furniture: {
+              piano:
+                form.servicePiano === "none"
+                  ? null
+                  : form.servicePiano === "droit"
+                  ? "Piano droit"
+                  : "Piano quart de queue",
+              frigoUSLourd: form.furnitureAmericanFridge || undefined,
+              coffreFort: form.furnitureSafe || undefined,
+              billard: form.furnitureBilliard || undefined,
+              aquariumVitrine: form.furnitureAquarium || undefined,
+              objetsPlus25kg: form.furnitureOver25kg || undefined,
+              objetsTresFragiles: form.furnitureVeryFragile || undefined,
+              beaucoupADemonter: form.optionDismantlingFull || undefined,
+            },
+            services: {
+              gardeMeuble: form.optionStorage || undefined,
+              nettoyageDebarras: hasCleaningOrClearance || undefined,
+              emballageComplet: form.servicePackingFull || undefined,
+              montageMeublesNeufs: form.serviceMountNewFurniture || undefined,
+              assuranceRenforcee: form.serviceInsuranceExtra || undefined,
+              evacuationDechets: form.serviceWasteRemoval || undefined,
+              aideSansCamionPalier: form.serviceHelpNoTruck || undefined,
+              horairesSpecifiques: form.serviceSpecialHours || undefined,
+            },
+          };
+
           // Champs non remplis = undefined (pas envoyés au back-office)
           // Le filtrage dans updateBackofficeLead enlève les undefined
           const boUpdatePayload = {
@@ -2796,18 +2917,13 @@ function DevisGratuitsPageInner() {
             destFloor: form.destinationUnknown ? undefined : (form.destinationFloor ? parseInt(form.destinationFloor, 10) : undefined),
             destElevator: form.destinationUnknown ? undefined : (form.destinationElevator ? mapElevator(form.destinationElevator) : undefined),
             destParkingAuth: form.destinationUnknown ? undefined : form.destinationParkingAuth,
+
+            // Options détaillées du tunnel
+            tunnelOptions,
           };
 
           await updateBackofficeLead(backofficeLeadId, boUpdatePayload);
           console.log("✅ Lead mis à jour dans le Back Office");
-
-          // Demander l'envoi de l'email de confirmation
-          try {
-            await requestBackofficeConfirmation(backofficeLeadId);
-            console.log("✅ Email de confirmation demandé");
-          } catch (confirmErr) {
-            console.warn("⚠️ Email de confirmation non envoyé:", confirmErr);
-          }
         } catch (boErr) {
           console.warn("⚠️ Impossible de synchroniser avec le Back Office:", boErr);
         }
@@ -3022,7 +3138,7 @@ function DevisGratuitsPageInner() {
               e.preventDefault();
               setHasTriedSubmitStep2(true);
               setError(null);
-
+              
               // Validation étape 2 : champs obligatoires (distance de portage et options d'accès sont facultatifs)
               if (!form.originPostalCode || !form.originCity) {
                 setError("Merci de vérifier les champs en rouge.");
@@ -3043,7 +3159,7 @@ function DevisGratuitsPageInner() {
                 setError("Merci de vérifier les champs en rouge.");
                 return;
               }
-
+              
               goToStep(3);
             }}
           >
@@ -3381,8 +3497,8 @@ function DevisGratuitsPageInner() {
             {/* Autres besoins éventuels (tous les services optionnels regroupés) */}
             <div className="space-y-2 rounded-2xl bg-slate-950/60 p-3 text-[11px] text-slate-300">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Autres besoins éventuels
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Autres besoins éventuels
                 </p>
               </div>
 
@@ -3391,8 +3507,8 @@ function DevisGratuitsPageInner() {
                 <div className="space-y-1">
                   <p className="text-[10px] font-semibold text-slate-400">
                     Accès
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
+              </p>
+              <div className="flex flex-wrap gap-1.5">
                     {/* Accès facile (par défaut) */}
                     <button
                       type="button"
@@ -3445,39 +3561,39 @@ function DevisGratuitsPageInner() {
                   {/* Options détaillées d'accès – visibles uniquement si Accès contraint est actif */}
                   {hasCustomAccess && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateField(
-                            "serviceMonteMeuble",
-                            !form.serviceMonteMeuble
-                          )
-                        }
-                        className={[
-                          "rounded-full border px-3 py-1 text-left",
-                          form.serviceMonteMeuble
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
-                        ].join(" ")}
-                      >
-                        Monte‑meuble à prévoir
-                      </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "serviceMonteMeuble",
+                      !form.serviceMonteMeuble
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
+                    form.serviceMonteMeuble
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
+                  Monte‑meuble à prévoir
+                </button>
                       {!isHouseLike && (
                         <>
-                          <button
-                            type="button"
-                            onClick={() =>
+                <button
+                  type="button"
+                  onClick={() =>
                               updateField("accessNoElevator", !form.accessNoElevator)
-                            }
-                            className={[
-                              "rounded-full border px-3 py-1 text-left",
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
                               form.accessNoElevator
-                                ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                                : "border-slate-700 bg-slate-900/60 text-slate-200",
-                            ].join(" ")}
-                          >
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
                             Escaliers sans ascenseur
-                          </button>
+                </button>
                           <button
                             type="button"
                             onClick={() =>
@@ -3625,43 +3741,43 @@ function DevisGratuitsPageInner() {
                   {hasCustomFurniture && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {[
-                        ["droit", "Piano droit"],
-                        ["quart", "Piano quart de queue"],
-                      ].map(([value, label]) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() =>
-                            updateField(
-                              "servicePiano",
-                              value as FormState["servicePiano"]
-                            )
-                          }
-                          className={[
-                            "rounded-full border px-3 py-1 text-left",
-                            form.servicePiano === value
-                              ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                              : "border-slate-700 bg-slate-900/60 text-slate-200",
-                          ].join(" ")}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateField(
+                  ["droit", "Piano droit"],
+                  ["quart", "Piano quart de queue"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "servicePiano",
+                        value as FormState["servicePiano"]
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-3 py-1 text-left",
+                      form.servicePiano === value
+                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
                             "furnitureAmericanFridge",
                             !form.furnitureAmericanFridge
-                          )
-                        }
-                        className={[
-                          "rounded-full border px-3 py-1 text-left",
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
                           form.furnitureAmericanFridge
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
-                        ].join(" ")}
-                      >
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
                         Frigo US lourd
                       </button>
                       <button
@@ -3691,75 +3807,75 @@ function DevisGratuitsPageInner() {
                         ].join(" ")}
                       >
                         Billard
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateField(
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
                             "furnitureAquarium",
                             !form.furnitureAquarium
-                          )
-                        }
-                        className={[
-                          "rounded-full border px-3 py-1 text-left",
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
                           form.furnitureAquarium
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
-                        ].join(" ")}
-                      >
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
                         Aquarium / vitrine
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
                           updateField(
                             "furnitureOver25kg",
                             !form.furnitureOver25kg
                           )
-                        }
-                        className={[
-                          "rounded-full border px-3 py-1 text-left",
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
                           form.furnitureOver25kg
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
-                        ].join(" ")}
-                      >
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
                         Objet(s) &gt; 25 kg
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
                           updateField(
                             "furnitureVeryFragile",
                             !form.furnitureVeryFragile
                           )
-                        }
-                        className={[
-                          "rounded-full border px-3 py-1 text-left",
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
                           form.furnitureVeryFragile
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
-                        ].join(" ")}
-                      >
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
                         Objets très fragiles
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateField(
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
                             "optionDismantlingFull",
                             !form.optionDismantlingFull
-                          )
-                        }
-                        className={[
-                          "rounded-full border px-3 py-1 text-left",
+                    )
+                  }
+                  className={[
+                    "rounded-full border px-3 py-1 text-left",
                           form.optionDismantlingFull
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
-                        ].join(" ")}
-                      >
+                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                  ].join(" ")}
+                >
                         Beaucoup de meubles à démonter / remonter
-                      </button>
+                </button>
                     </div>
                   )}
                 </div>
@@ -4598,17 +4714,17 @@ function DevisGratuitsPageInner() {
                   </button>
                   <button
                     type="button"
-                  onClick={async () => {
-                    if (!leadId) {
-                      setError("Lead introuvable. Revenez à l'étape précédente puis réessayez.");
-                      return;
-                    }
-                    setError(null);
-                    try {
-                      setIsSubmitting(true);
+                    onClick={async () => {
+                      if (!leadId) {
+                        setError("Lead introuvable. Revenez à l'étape précédente puis réessayez.");
+                        return;
+                      }
+                      setError(null);
+                      try {
+                        setIsSubmitting(true);
 
                       // 1) Mettre à jour le statut photos côté tunnel
-                      await updateLead(leadId, { photosStatus: "PENDING" });
+                        await updateLead(leadId, { photosStatus: "PENDING" });
 
                       // 2) S'assurer qu'un lead existe dans le Back Office
                       const boLeadId = await ensureBackofficeLeadId();
@@ -4626,14 +4742,14 @@ function DevisGratuitsPageInner() {
                         );
                       }
 
-                      router.push("/devis-gratuits/merci");
-                    } catch (err: unknown) {
-                      const message = err instanceof Error ? err.message : "Erreur lors de l'envoi de l'email.";
-                      setError(message);
-                    } finally {
-                      setIsSubmitting(false);
-                    }
-                  }}
+                        router.push("/devis-gratuits/merci");
+                      } catch (err: unknown) {
+                        const message = err instanceof Error ? err.message : "Erreur lors de l'envoi de l'email.";
+                        setError(message);
+                      } finally {
+                        setIsSubmitting(false);
+                      }
+                    }}
                     disabled={isSubmitting}
                     className="inline-flex items-center justify-center rounded-xl border border-sky-400/70 bg-sky-950/30 px-4 py-3 text-sm font-semibold text-sky-100 hover:bg-sky-950/50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
@@ -4838,77 +4954,77 @@ function DevisGratuitsPageInner() {
                       </div>
                     </>
                   )}
-                </div>
+                      </div>
 
                 {/* Aperçu des photos sélectionnées + bouton d'analyse (caméra OU upload) */}
-                {localUploadFiles.length > 0 && (
-                  <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      Photos sélectionnées
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {localUploadFiles.map((item) => {
-                        const isImage = item.file.type.startsWith("image/");
-                        const borderClass =
-                          item.status === "uploaded"
-                            ? "border-emerald-400"
-                            : item.status === "uploading"
-                            ? "border-sky-400"
-                            : item.status === "error"
-                            ? "border-rose-400"
-                            : "border-slate-600";
+                      {localUploadFiles.length > 0 && (
+                        <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            Photos sélectionnées
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {localUploadFiles.map((item) => {
+                              const isImage = item.file.type.startsWith("image/");
+                              const borderClass =
+                                item.status === "uploaded"
+                                  ? "border-emerald-400"
+                                  : item.status === "uploading"
+                                  ? "border-sky-400"
+                                  : item.status === "error"
+                                  ? "border-rose-400"
+                                  : "border-slate-600";
 
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            className={`relative h-14 w-14 overflow-hidden rounded-xl border ${borderClass} bg-slate-900`}
-                            onClick={() =>
-                              setLocalUploadFiles((prev) =>
-                                prev.filter((f) => f.id !== item.id)
-                              )
-                            }
-                            disabled={item.status === "uploading"}
-                            title="Retirer cette photo"
-                          >
-                            {isImage ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={item.previewUrl}
-                                alt=""
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-[10px] text-slate-200">
-                                FILE
-                              </span>
-                            )}
-                            <span className="absolute right-0 top-0 rounded-bl-md bg-slate-900/80 px-1 text-[9px] text-slate-100">
-                              ×
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div className="mt-3 flex justify-center">
-                      <button
-                        type="button"
-                        onClick={handleAnalyzePhotos}
-                        disabled={
-                          !leadId ||
-                          isUploadingPhotos ||
-                          isAnalyzing ||
-                          localUploadFiles.every((f) => f.status !== "pending")
-                        }
-                        className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isUploadingPhotos || isAnalyzing
-                          ? "Analyse en cours…"
-                          : "Analyser mes photos"}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  className={`relative h-14 w-14 overflow-hidden rounded-xl border ${borderClass} bg-slate-900`}
+                                  onClick={() =>
+                                    setLocalUploadFiles((prev) =>
+                                      prev.filter((f) => f.id !== item.id)
+                                    )
+                                  }
+                                  disabled={item.status === "uploading"}
+                                  title="Retirer cette photo"
+                                >
+                                  {isImage ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={item.previewUrl}
+                                      alt=""
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-[10px] text-slate-200">
+                                      FILE
+                                    </span>
+                                  )}
+                                  <span className="absolute right-0 top-0 rounded-bl-md bg-slate-900/80 px-1 text-[9px] text-slate-100">
+                                    ×
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-3 flex justify-center">
+                            <button
+                              type="button"
+                              onClick={handleAnalyzePhotos}
+                              disabled={
+                                !leadId ||
+                                isUploadingPhotos ||
+                                isAnalyzing ||
+                                localUploadFiles.every((f) => f.status !== "pending")
+                              }
+                              className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isUploadingPhotos || isAnalyzing
+                                ? "Analyse en cours…"
+                                : "Analyser mes photos"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
               </>
             )}
 
@@ -5689,11 +5805,17 @@ function DevisGratuitsPageInner() {
 
                         try {
                           if (backofficeLeadId) {
+                            let confirmationLeadId = backofficeLeadId;
                             try {
-                              await saveBackofficeInventory(backofficeLeadId, {
+                              const payload: SaveBackofficeInventoryPayload = {
                                 items: process2Inventory,
                                 excludedInventoryIds,
-                              });
+                              };
+                              if (roomPhotosForBackoffice && roomPhotosForBackoffice.length > 0) {
+                                payload.photosByRoom = roomPhotosForBackoffice;
+                              }
+
+                              await saveBackofficeInventory(backofficeLeadId, payload);
                             } catch (err) {
                               // Cas particulier : le lead Back Office a été supprimé ou n'existe plus.
                               if (
@@ -5708,10 +5830,19 @@ function DevisGratuitsPageInner() {
                                   forceNew: true,
                                 });
                                 if (newId) {
-                                  await saveBackofficeInventory(newId, {
+                                  confirmationLeadId = newId;
+                                  const payload: SaveBackofficeInventoryPayload = {
                                     items: process2Inventory,
                                     excludedInventoryIds,
-                                  });
+                                  };
+                                  if (
+                                    roomPhotosForBackoffice &&
+                                    roomPhotosForBackoffice.length > 0
+                                  ) {
+                                    payload.photosByRoom = roomPhotosForBackoffice;
+                                  }
+
+                                  await saveBackofficeInventory(newId, payload);
                                 }
                               } else {
                                 console.error(
@@ -5719,6 +5850,14 @@ function DevisGratuitsPageInner() {
                                   err
                                 );
                               }
+                            }
+
+                            // Déclencher l'email de confirmation APRÈS la sauvegarde inventaire
+                            // pour que les PJ (CSV + déclaration) soient présentes.
+                            try {
+                              await requestBackofficeConfirmation(confirmationLeadId);
+                            } catch (confirmErr) {
+                              console.warn("⚠️ Email de confirmation non envoyé (photos now):", confirmErr);
                             }
                           }
                         } finally {

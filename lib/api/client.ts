@@ -392,6 +392,9 @@ export interface UpdateBackofficeLeadPayload {
   // Photos
   photosUrls?: string;
   aiEstimationConfidence?: number;
+
+  // Options détaillées du tunnel (JSON structuré)
+  tunnelOptions?: unknown;
 }
 
 export async function updateBackofficeLead(
@@ -471,45 +474,70 @@ export async function requestBackofficeConfirmation(
 ): Promise<{ success: boolean; message: string }> {
   const API_BASE_URL = getApiBaseUrl();
 
-  const response = await fetch(
-    `${API_BASE_URL}/public/leads/${backofficeLeadId}/request-confirmation`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-    }
-  );
+  const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-  if (!response.ok) {
-    let errorData: any = {};
-    try {
-      errorData = await response.json();
-    } catch {
-      // ignore
+  // Le back-office peut renvoyer DOCS_NOT_READY tant que les PJ ne sont pas prêtes.
+  const MAX_ATTEMPTS = 4; // ~4 tentatives
+  const DEFAULT_RETRY_MS = 2000;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const response = await fetch(
+      `${API_BASE_URL}/public/leads/${backofficeLeadId}/request-confirmation`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      }
+    );
+
+    if (!response.ok) {
+      let errorData: any = {};
+      try {
+        errorData = await response.json();
+      } catch {
+        // ignore
+      }
+
+      // DOCS_NOT_READY: on attend un peu et on retente (sans spammer d'emails)
+      if (errorData?.error === "DOCS_NOT_READY" && attempt < MAX_ATTEMPTS) {
+        const retryMs =
+          typeof errorData?.retryAfterMs === "number"
+            ? errorData.retryAfterMs
+            : DEFAULT_RETRY_MS;
+        await sleep(retryMs);
+        continue;
+      }
+
+      console.error("❌ Erreur demande confirmation:", {
+        status: response.status,
+        errorData,
+      });
+
+      if (response.status === 404) {
+        throw new Error("LEAD_NOT_FOUND");
+      }
+      if (response.status === 400 && errorData.error === "Lead email is missing") {
+        throw new Error("EMAIL_MISSING");
+      }
+      if (errorData?.error === "DOCS_NOT_READY") {
+        throw new Error("DOCS_NOT_READY");
+      }
+
+      throw new Error(
+        errorData.error || errorData.message || "Failed to request confirmation"
+      );
     }
 
-    console.error("❌ Erreur demande confirmation:", {
-      status: response.status,
-      errorData,
-    });
-
-    if (response.status === 404) {
-      throw new Error("LEAD_NOT_FOUND");
-    }
-    if (response.status === 400 && errorData.error === "Lead email is missing") {
-      throw new Error("EMAIL_MISSING");
-    }
-
-    throw new Error(errorData.error || errorData.message || "Failed to request confirmation");
+    const result = await response.json();
+    return {
+      success: result.success ?? true,
+      message: result.message ?? "Email de confirmation envoyé",
+    };
   }
 
-  const result = await response.json();
-  return {
-    success: result.success ?? true,
-    message: result.message ?? "Email de confirmation envoyé",
-  };
+  throw new Error("DOCS_NOT_READY");
 }
 
 // ============================================
@@ -632,9 +660,19 @@ export async function sendBackofficePhotoReminder(
 // SAVE INVENTORY TO BACKOFFICE
 // ============================================
 
+export interface SaveBackofficeInventoryPayload {
+  items: any[];
+  excludedInventoryIds: string[];
+  photosByRoom?: {
+    roomLabel: string;
+    roomType?: string;
+    photoUrls: string[];
+  }[];
+}
+
 export async function saveBackofficeInventory(
   backofficeLeadId: string,
-  payload: { items: any[]; excludedInventoryIds: string[] }
+  payload: SaveBackofficeInventoryPayload
 ): Promise<{ success: boolean }> {
   const API_BASE_URL = getApiBaseUrl();
 
