@@ -1428,6 +1428,7 @@ function DevisGratuitsPageInner() {
   });
   const [leadId, setLeadId] = useState<string | null>(null);
   const [backofficeLeadId, setBackofficeLeadId] = useState<string | null>(null);
+  const [adminMode, setAdminMode] = useState(false);
   const [linkingToken, setLinkingToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1821,6 +1822,25 @@ function DevisGratuitsPageInner() {
     }
     // une seule fois au mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Mode admin (discret) : activer via ?__admin=1 (persisté en localStorage)
+  // Objectif: permettre à Guillaume de repartir de zéro sans subir le cache/session.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = "moverz_tunnel_admin_mode";
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const flag = params.get("__admin");
+      if (flag === "1") {
+        window.localStorage.setItem(key, "1");
+      } else if (flag === "0") {
+        window.localStorage.removeItem(key);
+      }
+      setAdminMode(window.localStorage.getItem(key) === "1");
+    } catch {
+      // no-op
+    }
   }, []);
 
   // Sauvegarde automatique (sans perte silencieuse de données)
@@ -2944,6 +2964,32 @@ function DevisGratuitsPageInner() {
 
   return (
     <div className="relative flex flex-1 flex-col gap-6">
+      {adminMode && (
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window === "undefined") return;
+            const ok = window.confirm("Repartir de zéro ? (Reset tunnel)");
+            if (!ok) return;
+
+            try {
+              window.localStorage.removeItem("moverz_tunnel_form_state");
+              window.localStorage.removeItem("moverz_tunnel_session_id");
+            } catch {
+              // ignore
+            }
+
+            // Recharge en gardant le mode admin activé
+            const basePath = window.location.pathname || "/devis-gratuits";
+            window.location.href = `${basePath}?__admin=1`;
+          }}
+          className="pointer-events-auto fixed bottom-3 left-3 z-50 rounded-full border border-slate-800/70 bg-slate-950/60 px-2 py-1 text-[10px] font-medium text-slate-500 shadow-sm shadow-slate-950/70 opacity-60 hover:opacity-100 hover:border-slate-600 hover:text-slate-300"
+          title="Reset (admin)"
+        >
+          reset
+        </button>
+      )}
+
       {/* Stepper simple, mobile first */}
       <nav
         aria-label="Étapes du tunnel"
