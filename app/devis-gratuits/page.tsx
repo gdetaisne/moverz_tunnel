@@ -2862,7 +2862,9 @@ function DevisGratuitsPageInner() {
       }
 
       // 3. Synchroniser avec le Back Office (PATCH + request-confirmation)
-      if (backofficeLeadId) {
+      // Important: on récupère toujours un id BO effectif (création si manquant).
+      const effectiveBackofficeLeadId = backofficeLeadId ?? (await ensureBackofficeLeadId());
+      if (effectiveBackofficeLeadId) {
         try {
           // Mapper les valeurs du formulaire vers le format back-office
           const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" =>
@@ -2870,6 +2872,16 @@ function DevisGratuitsPageInner() {
 
           const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" =>
             e === "none" ? "NON" : e === "small" ? "PARTIEL" : "OUI";
+
+          const toIsoDate = (raw: string | null | undefined): string | undefined => {
+            if (!raw) return undefined;
+            const d = new Date(raw);
+            if (!Number.isFinite(d.getTime())) return undefined;
+            return d.toISOString();
+          };
+
+          const safeSurfaceM2 =
+            Number.isFinite(surface) && surface > 0 ? Math.round(surface) : undefined;
 
           const tunnelOptions = {
             access: {
@@ -2933,17 +2945,18 @@ function DevisGratuitsPageInner() {
             destPostalCode: form.destinationUnknown ? undefined : (form.destinationPostalCode || undefined),
 
             // Date - undefined si non sélectionnée
-            movingDate: form.movingDate || undefined,
+            movingDate: toIsoDate(form.movingDate),
             dateFlexible: form.dateFlexible,
 
             // Volume & Surface - undefined si non calculé
-            surfaceM2: Number.isFinite(surface) && surface > 0 ? surface : undefined,
+            surfaceM2: safeSurfaceM2,
             estimatedVolume: pricing ? pricing.volumeM3 : undefined,
             density: form.density ? mapDensity(form.density) : undefined,
 
             // Formule & Prix - undefined si non sélectionné/calculé
             formule: form.formule || undefined,
             estimatedPriceMin: pricing ? pricing.prixMin : undefined,
+            estimatedPriceAvg: pricing ? Math.round((pricing.prixMin + pricing.prixMax) / 2) : undefined,
             estimatedPriceMax: pricing ? pricing.prixMax : undefined,
 
             // Détails logement origine - undefined si non rempli
@@ -2962,8 +2975,48 @@ function DevisGratuitsPageInner() {
             tunnelOptions,
           };
 
-          await updateBackofficeLead(backofficeLeadId, boUpdatePayload);
-          console.log("✅ Lead mis à jour dans le Back Office");
+          const safePayload = {
+            originAddress: boUpdatePayload.originAddress,
+            originCity: boUpdatePayload.originCity,
+            originPostalCode: boUpdatePayload.originPostalCode,
+            destAddress: boUpdatePayload.destAddress,
+            destCity: boUpdatePayload.destCity,
+            destPostalCode: boUpdatePayload.destPostalCode,
+            movingDate: boUpdatePayload.movingDate,
+            dateFlexible: boUpdatePayload.dateFlexible,
+            surfaceM2: boUpdatePayload.surfaceM2,
+            estimatedVolume: boUpdatePayload.estimatedVolume,
+            density: boUpdatePayload.density,
+            formule: boUpdatePayload.formule,
+            estimatedPriceMin: boUpdatePayload.estimatedPriceMin,
+            estimatedPriceAvg: boUpdatePayload.estimatedPriceAvg,
+            estimatedPriceMax: boUpdatePayload.estimatedPriceMax,
+          };
+
+          try {
+            await updateBackofficeLead(effectiveBackofficeLeadId, boUpdatePayload);
+            console.log("✅ Lead mis à jour dans le Back Office");
+          } catch (err: unknown) {
+            // Si le lead BO a été supprimé/expiré, on recrée et on rejoue une fois.
+            if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
+              const newId = await ensureBackofficeLeadId({ forceNew: true });
+              if (newId) {
+                await updateBackofficeLead(newId, boUpdatePayload);
+              } else {
+                throw err;
+              }
+            } else if (
+              err instanceof Error &&
+              err.message.toLowerCase().includes("internal server error")
+            ) {
+              // Fallback: si le BO plante sur certains champs, on envoie un payload minimal
+              // pour au moins remplir l'essentiel (adresses, date, estimation).
+              console.warn("⚠️ BO 500 sur payload complet, retry minimal.");
+              await updateBackofficeLead(effectiveBackofficeLeadId, safePayload);
+            } else {
+              throw err;
+            }
+          }
         } catch (boErr) {
           console.warn("⚠️ Impossible de synchroniser avec le Back Office:", boErr);
         }
@@ -4979,114 +5032,114 @@ function DevisGratuitsPageInner() {
                      ou si l'utilisateur a choisi d'utiliser la galerie sur mobile. */}
                   {(!isCoarsePointer || cameraUnavailable || showUploadOnMobile) && (
                     <>
-                      <div
-                        className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          if (e.dataTransfer?.files?.length) {
-                            addLocalFiles(e.dataTransfer.files);
-                          }
-                        }}
-                      >
-                        <input
-                          type="file"
-                          multiple
-                          accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
-                          className="absolute inset-0 cursor-pointer opacity-0"
-                          onChange={(e) => {
-                            if (e.target.files?.length) {
-                              addLocalFiles(e.target.files);
-                            }
-                          }}
-                        />
-                        <p className="text-sm font-medium text-slate-100">
+                  <div
+                    className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (e.dataTransfer?.files?.length) {
+                        addLocalFiles(e.dataTransfer.files);
+                      }
+                    }}
+                  >
+                    <input
+                      type="file"
+                      multiple
+                      accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+                      className="absolute inset-0 cursor-pointer opacity-0"
+                      onChange={(e) => {
+                        if (e.target.files?.length) {
+                          addLocalFiles(e.target.files);
+                        }
+                      }}
+                    />
+                    <p className="text-sm font-medium text-slate-100">
                           Glissez vos photos ici ou cliquez pour sélectionner des
                           fichiers.
-                        </p>
-                        <p className="mt-2 text-[11px] text-slate-400">
+                    </p>
+                    <p className="mt-2 text-[11px] text-slate-400">
                           Formats acceptés : photos standard de smartphone (JPG, JPEG,
                           PNG, WEBP, HEIC, HEIF).
-                        </p>
-                        <p className="mt-1 text-[11px] text-slate-500">
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-500">
                           Idéal : 4 photos par pièce (vue générale, deux angles,
                           détails).
-                        </p>
-                      </div>
+                    </p>
+                  </div>
                     </>
                   )}
                       </div>
 
                 {/* Aperçu des photos sélectionnées + bouton d'analyse (caméra OU upload) */}
-                      {localUploadFiles.length > 0 && (
-                        <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            Photos sélectionnées
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {localUploadFiles.map((item) => {
-                              const isImage = item.file.type.startsWith("image/");
-                              const borderClass =
-                                item.status === "uploaded"
-                                  ? "border-emerald-400"
-                                  : item.status === "uploading"
-                                  ? "border-sky-400"
-                                  : item.status === "error"
-                                  ? "border-rose-400"
-                                  : "border-slate-600";
+                  {localUploadFiles.length > 0 && (
+                    <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Photos sélectionnées
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {localUploadFiles.map((item) => {
+                          const isImage = item.file.type.startsWith("image/");
+                          const borderClass =
+                            item.status === "uploaded"
+                              ? "border-emerald-400"
+                              : item.status === "uploading"
+                              ? "border-sky-400"
+                              : item.status === "error"
+                              ? "border-rose-400"
+                              : "border-slate-600";
 
-                              return (
-                                <button
-                                  key={item.id}
-                                  type="button"
-                                  className={`relative h-14 w-14 overflow-hidden rounded-xl border ${borderClass} bg-slate-900`}
-                                  onClick={() =>
-                                    setLocalUploadFiles((prev) =>
-                                      prev.filter((f) => f.id !== item.id)
-                                    )
-                                  }
-                                  disabled={item.status === "uploading"}
-                                  title="Retirer cette photo"
-                                >
-                                  {isImage ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                      src={item.previewUrl}
-                                      alt=""
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              className={`relative h-14 w-14 overflow-hidden rounded-xl border ${borderClass} bg-slate-900`}
+                              onClick={() =>
+                                setLocalUploadFiles((prev) =>
+                                  prev.filter((f) => f.id !== item.id)
+                                )
+                              }
+                              disabled={item.status === "uploading"}
+                              title="Retirer cette photo"
+                            >
+                              {isImage ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={item.previewUrl}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
                                     <span className="text-[10px] text-slate-200">
                                       FILE
                                     </span>
-                                  )}
-                                  <span className="absolute right-0 top-0 rounded-bl-md bg-slate-900/80 px-1 text-[9px] text-slate-100">
-                                    ×
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <div className="mt-3 flex justify-center">
-                            <button
-                              type="button"
-                              onClick={handleAnalyzePhotos}
-                              disabled={
-                                !leadId ||
-                                isUploadingPhotos ||
-                                isAnalyzing ||
-                                localUploadFiles.every((f) => f.status !== "pending")
-                              }
-                              className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {isUploadingPhotos || isAnalyzing
-                                ? "Analyse en cours…"
-                                : "Analyser mes photos"}
+                              )}
+                              <span className="absolute right-0 top-0 rounded-bl-md bg-slate-900/80 px-1 text-[9px] text-slate-100">
+                                ×
+                              </span>
                             </button>
-                          </div>
-                        </div>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-3 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={handleAnalyzePhotos}
+                          disabled={
+                            !leadId ||
+                            isUploadingPhotos ||
+                            isAnalyzing ||
+                            localUploadFiles.every((f) => f.status !== "pending")
+                          }
+                          className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isUploadingPhotos || isAnalyzing
+                            ? "Analyse en cours…"
+                            : "Analyser mes photos"}
+                        </button>
+                      </div>
+                    </div>
                       )}
               </>
             )}
@@ -5095,9 +5148,9 @@ function DevisGratuitsPageInner() {
               (analysisProcesses || isUploadingPhotos || isAnalyzing) && (
                 <div className="space-y-3 rounded-2xl bg-slate-950/80 p-3 text-xs text-slate-200 ring-1 ring-slate-800">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    Aperçu de votre inventaire par pièce
-                  </p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Aperçu de votre inventaire par pièce
+                </p>
                   {isDev && (
                     <div className="inline-flex items-center gap-0.5 rounded-full bg-slate-900/80 p-0.5 text-[10px]">
                       <button
@@ -5216,37 +5269,37 @@ function DevisGratuitsPageInner() {
                               <div className="mt-2 space-y-2">
                                 {/* Vignettes des photos de la pièce */}
                                 {room.photoIds.length > 0 && (
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {room.photoIds.slice(0, 6).map((pid) => {
-                                      const file = localUploadFiles.find(
-                                        (f) => f.photoId === pid
-                                      );
-                                      if (file) {
-                                        return (
-                                          <div
-                                            key={pid}
-                                            className="h-8 w-8 overflow-hidden rounded-md border border-slate-700/80 bg-slate-800"
-                                          >
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
-                                              src={file.previewUrl}
-                                              alt={file.file.name}
-                                              className="h-full w-full object-cover"
-                                            />
-                                          </div>
-                                        );
-                                      }
+                                <div className="flex flex-wrap gap-1.5">
+                                  {room.photoIds.slice(0, 6).map((pid) => {
+                                    const file = localUploadFiles.find(
+                                      (f) => f.photoId === pid
+                                    );
+                                    if (file) {
                                       return (
                                         <div
                                           key={pid}
-                                          className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700/80 bg-slate-800 text-[9px] text-slate-300"
+                                          className="h-8 w-8 overflow-hidden rounded-md border border-slate-700/80 bg-slate-800"
                                         >
-                                          ?
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                                          <img
+                                            src={file.previewUrl}
+                                            alt={file.file.name}
+                                            className="h-full w-full object-cover"
+                                          />
                                         </div>
                                       );
-                                    })}
-                                  </div>
-                                )}
+                                    }
+                                    return (
+                                      <div
+                                        key={pid}
+                                        className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700/80 bg-slate-800 text-[9px] text-slate-300"
+                                      >
+                                        ?
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
 
                                 {/* Inventaire détaillé pour la pièce */}
                                 {inventoryForRoom.length > 0 && (
@@ -5260,7 +5313,7 @@ function DevisGratuitsPageInner() {
                                           excludedInventoryIds.includes(row.id);
 
                                         return (
-                                          <div
+                                        <div
                                             key={row.id}
                                             className={`space-y-1 rounded-md px-1 py-1.5 text-[11px] ${
                                               isExcluded
@@ -5271,8 +5324,8 @@ function DevisGratuitsPageInner() {
                                             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                               <div className="flex flex-col gap-0.5">
                                                 <span className="truncate font-medium">
-                                                  {row.itemLabel}
-                                                </span>
+                                                {row.itemLabel}
+                                              </span>
                                                 <span className="text-[10px] text-slate-400">
                                                   {typeof row.widthCm === "number" &&
                                                   typeof row.depthCm === "number" &&
@@ -5317,90 +5370,90 @@ function DevisGratuitsPageInner() {
                                                   type="button"
                                                   onClick={() =>
                                                     setExcludedInventoryIds((prev) =>
-                                                      prev.includes(row.id)
-                                                        ? prev.filter(
+                                                        prev.includes(row.id)
+                                                          ? prev.filter(
                                                             (id) => id !== row.id
-                                                          )
-                                                        : [...prev, row.id]
+                                                            )
+                                                          : [...prev, row.id]
                                                     )
                                                   }
                                                   className="rounded-full border border-slate-600 px-2 py-0.5 text-[9px] text-slate-300 hover:border-rose-400 hover:text-rose-300"
                                                 >
                                                   {isExcluded ? "Rétablir" : "Retirer"}
                                                 </button>
-                                              </div>
-                                            </div>
+                            </div>
+                        </div>
                                             <div className="flex flex-col gap-0.5 text-[10px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-                                              <span className="truncate">
+                                            <span className="truncate">
                                                 {typeof row.volumeNuM3 === "number" &&
-                                                typeof row.volumeM3 === "number"
-                                                  ? `Volume nu : ${row.volumeNuM3.toFixed(
-                                                      2
-                                                    )} m³ • Emballé : ${row.volumeM3.toFixed(
-                                                      2
-                                                    )} m³`
-                                                  : typeof row.volumeM3 === "number"
-                                                  ? `Volume : ${row.volumeM3.toFixed(
-                                                      2
-                                                    )} m³`
-                                                  : "Volume : —"}
+                                              typeof row.volumeM3 === "number"
+                                                ? `Volume nu : ${row.volumeNuM3.toFixed(
+                                                    2
+                                                  )} m³ • Emballé : ${row.volumeM3.toFixed(
+                                                    2
+                                                  )} m³`
+                                                : typeof row.volumeM3 === "number"
+                                                ? `Volume : ${row.volumeM3.toFixed(
+                                                    2
+                                                  )} m³`
+                                                : "Volume : —"}
                                               </span>
                                               <span className="truncate text-slate-300 sm:text-right">
                                                 {typeof row.valueEstimateEur === "number"
                                                   ? `Valeur estimée : ${Math.round(
-                                                      row.valueEstimateEur
-                                                    )} €`
-                                                  : ""}
-                                              </span>
-                                            </div>
-                                            {row.dependencies &&
-                                              row.dependencies.length > 0 && (
-                                                <div className="mt-0.5 space-y-0.5 text-[9px] text-slate-500">
-                                                  {row.dependencies.map((dep) => (
+                                                    row.valueEstimateEur
+                                                  )} €`
+                                                : ""}
+                                            </span>
+                                          </div>
+                                          {row.dependencies &&
+                                            row.dependencies.length > 0 && (
+                                              <div className="mt-0.5 space-y-0.5 text-[9px] text-slate-500">
+                                                {row.dependencies.map((dep) => (
                                                     <div
                                                       key={dep.id}
                                                       className="flex justify-between gap-2"
                                                     >
-                                                      <span className="truncate">
-                                                        dont {dep.label} × {dep.quantity}
-                                                      </span>
+                                                    <span className="truncate">
+                                                      dont {dep.label} × {dep.quantity}
+                                                    </span>
                                                       {typeof dep.volumeM3 ===
                                                         "number" && (
-                                                        <span className="shrink-0 text-right">
-                                                          {dep.volumeM3.toFixed(2)} m³
-                                                        </span>
-                                                      )}
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            {row.packagingReason && (
-                                              <p className="text-[9px] text-slate-500">
-                                                {(() => {
-                                                  if (
-                                                    typeof row.volumeNuM3 === "number" &&
-                                                    typeof row.volumeM3 === "number"
-                                                  ) {
-                                                    const delta =
-                                                      row.volumeM3 - row.volumeNuM3;
-                                                    const deltaStr =
-                                                      delta > 0
-                                                        ? `+${delta.toFixed(2)} m³`
-                                                        : `${delta.toFixed(2)} m³`;
-                                                    return `Emballage : ${row.packagingReason} (${deltaStr})`;
-                                                  }
-                                                  return `Emballage : ${row.packagingReason}`;
-                                                })()}
-                                              </p>
+                                                      <span className="shrink-0 text-right">
+                                                        {dep.volumeM3.toFixed(2)} m³
+                                                      </span>
+                                                    )}
+                      </div>
+                    ))}
+                  </div>
                                             )}
-                                            {row.valueJustification && (
-                                              <p className="text-[9px] text-slate-500">
-                                                {row.valueJustification}
-                                              </p>
-                                            )}
-                                          </div>
-                                        );
-                                      })}
+                                          {row.packagingReason && (
+                                            <p className="text-[9px] text-slate-500">
+                                              {(() => {
+                                                if (
+                                                  typeof row.volumeNuM3 === "number" &&
+                                                  typeof row.volumeM3 === "number"
+                                                ) {
+                                                  const delta =
+                                                    row.volumeM3 - row.volumeNuM3;
+                                                  const deltaStr =
+                                                    delta > 0
+                                                      ? `+${delta.toFixed(2)} m³`
+                                                      : `${delta.toFixed(2)} m³`;
+                                                  return `Emballage : ${row.packagingReason} (${deltaStr})`;
+                                                }
+                                                return `Emballage : ${row.packagingReason}`;
+                                              })()}
+                                            </p>
+                                          )}
+                                          {row.valueJustification && (
+                                            <p className="text-[9px] text-slate-500">
+                                              {row.valueJustification}
+                                            </p>
+                                          )}
+                        </div>
+                                      );
+                                    })}
                                     </div>
                                   </div>
                                 )}
@@ -5545,7 +5598,7 @@ function DevisGratuitsPageInner() {
                                   </span>
                                 </div>
                                 {roomContent}
-                              </div>
+                    </div>
                             );
                           })}
                         </div>

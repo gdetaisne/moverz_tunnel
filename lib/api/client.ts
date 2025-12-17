@@ -456,13 +456,15 @@ export async function updateBackofficeLead(
       throw new Error("LEAD_NOT_FOUND");
     }
 
-    let errorMessage =
-      errorData.error ||
-      errorData.message ||
-      errorData.rawResponse ||
-      `Failed to update lead (${response.status})`;
+    const combined =
+      [errorData?.error, errorData?.message].filter(Boolean).join(" - ") ||
+      errorData?.rawResponse ||
+      null;
 
-    throw new Error(errorMessage);
+    const errorMessage =
+      combined || `Failed to update lead (${response.status})`;
+
+    throw new Error(`${errorMessage}`);
   }
 
   const result = await response.json();
