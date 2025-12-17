@@ -1863,6 +1863,14 @@ function DevisGratuitsPageInner() {
       (it) => (activeRoomCounts[it.type] || 0) >= it.requiredIndex
     );
 
+  const nextActiveRoomTargetLabel = (() => {
+    if (!activeMissionRoom) return null;
+    const next = activeMissionRoom.items.find(
+      (it) => (activeRoomCounts[it.type] || 0) < it.requiredIndex
+    );
+    return next?.label ?? null;
+  })();
+
   const audioCtxRef = useRef<AudioContext | null>(null);
   const playValidatedChime = useCallback(() => {
     try {
@@ -5018,8 +5026,9 @@ function DevisGratuitsPageInner() {
                                 </p>
                                 <p className="text-[11px] text-slate-300">
                                   {activeMissionRoom?.id?.startsWith("BEDROOM_")
-                                    ? "Commençons par les chambres: 1 vue large + 1–2 angles."
-                                    : "1 vue large + 1–2 angles."}
+                                    ? "Commençons par la/les chambre(s)."
+                                    : "Commençons par cette pièce."}{" "}
+                                  1 vue large + 1–2 angles.
                                 </p>
                               </div>
                               <button
@@ -5048,6 +5057,20 @@ function DevisGratuitsPageInner() {
                                   </span>
                                 )}
                               </div>
+
+                              {!isActiveRoomComplete && nextActiveRoomTargetLabel && (
+                                <div className="mt-2 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
+                                  <p className="text-[12px] font-semibold text-slate-100">
+                                    1) Prenez une photo de :{" "}
+                                    <span className="text-emerald-200">
+                                      {nextActiveRoomTargetLabel}
+                                    </span>
+                                  </p>
+                                  <p className="mt-1 text-[11px] text-slate-300">
+                                    Ensuite, faites 1–2 angles pour confirmer.
+                                  </p>
+                                </div>
+                              )}
 
                               <div className="mt-2 grid gap-2">
                                 {(activeMissionRoom?.items ?? []).map((it) => {
