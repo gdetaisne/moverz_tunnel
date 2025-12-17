@@ -1474,6 +1474,46 @@ function DevisGratuitsPageInner() {
     "none" | "photos_now"
   >("none");
 
+  // Pré-remplissage depuis l'URL (liens back-office / relances).
+  // Important : ne jamais écraser une saisie utilisateur déjà commencée.
+  const prefill = useMemo(() => {
+    const getFirst = (...keys: string[]) => {
+      for (const k of keys) {
+        const v = searchParams.get(k);
+        if (v && v.trim()) return v.trim();
+      }
+      return "";
+    };
+
+    return {
+      firstName: getFirst(
+        "contactName",
+        "firstName",
+        "name",
+        "fullName",
+        "contact_name",
+        "first_name"
+      ),
+      email: getFirst("contactEmail", "email", "mail", "contact_email"),
+    };
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if ((!prefill.firstName && !prefill.email) || firstNameTouched || emailTouched) return;
+
+    setForm((prev) => {
+      const next = { ...prev };
+      if (!prev.firstName?.trim() && prefill.firstName) {
+        next.firstName = prefill.firstName;
+      }
+      if (!prev.email?.trim() && prefill.email) {
+        next.email = prefill.email;
+      }
+      return next;
+    });
+  }, [prefill.firstName, prefill.email, firstNameTouched, emailTouched]);
+
   // Détection simple des devices à pointeur "grossier" (mobile / tablette),
   // pour privilégier la caméra intégrée sur mobile tout en gardant un fallback upload.
   useEffect(() => {
