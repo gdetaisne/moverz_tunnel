@@ -143,11 +143,15 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        const rawTypes = Array.isArray(decoded?.detectedTypes)
-          ? decoded.detectedTypes.filter((t: any) => typeof t === "string")
+        const rawTypes: string[] = Array.isArray(decoded?.detectedTypes)
+          ? (decoded.detectedTypes as unknown[]).filter(
+              (t): t is string => typeof t === "string"
+            )
           : [];
-        const rawLabels = Array.isArray(decoded?.detectedLabels)
-          ? decoded.detectedLabels.filter((t: any) => typeof t === "string")
+        const rawLabels: string[] = Array.isArray(decoded?.detectedLabels)
+          ? (decoded.detectedLabels as unknown[]).filter(
+              (t): t is string => typeof t === "string"
+            )
           : [];
 
         const normalizeType = (t: string): string | null => {

@@ -1830,7 +1830,7 @@ function DevisGratuitsPageInner() {
           }))
         )
         .find(({ it, idx }) => ((countsByRoomIndex[idx]?.[it.type] ?? 0) < it.requiredIndex));
-      const nextGainPoints = nextIncomplete ? nextIncomplete.points : 0;
+      const nextGainPoints = nextIncomplete ? nextIncomplete.it.points : 0;
 
       return {
         ...computeV2PrecisionScore({ maxReachedStep, donePoints, totalPoints }),
@@ -2369,11 +2369,14 @@ function DevisGratuitsPageInner() {
         storageKey: string;
         originalFilename: string;
       }> = [];
+      let uploadResult:
+        | { success: Array<{ id: string; storageKey: string; originalFilename: string }>; errors: { originalFilename: string; reason: string }[] }
+        | null = null;
 
       if (shouldUpload) {
-      const result = await uploadLeadPhotos(leadId, pendingFiles);
+        uploadResult = await uploadLeadPhotos(leadId, pendingFiles);
         uploadedForProcessing.push(
-          ...result.success.map((p) => ({
+          ...uploadResult.success.map((p) => ({
             id: p.id,
             storageKey: p.storageKey,
             originalFilename: p.originalFilename,
@@ -2396,15 +2399,16 @@ function DevisGratuitsPageInner() {
         }
       }
 
-      const totalForTimer = result.success.length || pendingFiles.length || 1;
+        const totalForTimer =
+          uploadResult.success.length || pendingFiles.length || 1;
       setAnalysisTargetSeconds(totalForTimer * 3);
 
       setLocalUploadFiles((prev) =>
         prev.map((f) => {
-          const ok = result.success.find(
+          const ok = uploadResult?.success.find(
             (s) => s.originalFilename === f.file.name
           );
-          const ko = result.errors.find(
+          const ko = uploadResult?.errors.find(
             (e) => e.originalFilename === f.file.name
           );
           if (ok) {
@@ -2760,7 +2764,7 @@ function DevisGratuitsPageInner() {
             throw err;
           }
         }
-      } else if (result.errors.length > 0) {
+      } else if (shouldUpload && (uploadResult?.errors.length ?? 0) > 0) {
         setError(
           "Aucun fichier n’a pu être enregistré. Vous pouvez réessayer ou les envoyer plus tard."
         );
@@ -3332,7 +3336,8 @@ function DevisGratuitsPageInner() {
 
           // Demander l'envoi de l'email de confirmation
           try {
-            await requestBackofficeConfirmation(backofficeLeadId);
+            // effectiveBackofficeLeadId est garanti non-null ici
+            await requestBackofficeConfirmation(effectiveBackofficeLeadId);
             console.log("✅ Email de confirmation demandé");
           } catch (confirmErr) {
             console.warn("⚠️ Email de confirmation non envoyé:", confirmErr);
