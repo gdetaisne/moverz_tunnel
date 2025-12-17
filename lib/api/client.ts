@@ -413,19 +413,18 @@ export async function updateBackofficeLead(
   backofficeLeadId: string,
   payload: UpdateBackofficeLeadPayload
 ): Promise<{ id: string }> {
-  const API_BASE_URL = getApiBaseUrl();
-
   // Filtrer les valeurs undefined - on n'envoie que ce qui est défini
   // Cela évite d'écraser des données existantes avec des valeurs vides
   const filteredPayload = Object.fromEntries(
     Object.entries(payload).filter(([, value]) => value !== undefined)
   );
 
-  const response = await fetch(`${API_BASE_URL}/public/leads/${backofficeLeadId}`, {
+  // Hotfix prod: proxy same-origin pour éviter les soucis cross-origin (Origin/CSRF) côté BO.
+  // Le serveur Next relaie ensuite vers `${NEXT_PUBLIC_API_URL}/public/leads/:id`.
+  const proxyUrl = `/api/backoffice/leads/${backofficeLeadId}`;
+  const response = await fetch(proxyUrl, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(filteredPayload),
   });
 
