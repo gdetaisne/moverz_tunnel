@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CameraCapture } from "../components/CameraCapture";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -5000,7 +5000,7 @@ function DevisGratuitsPageInner() {
             {photoFlowChoice === "photos_now" && (
               <>
                 <div id="v2-capture" />
-                <div className="space-y-3">
+              <div className="space-y-3">
                   {/* Sur mobile: caméra intégrée comme chemin principal.
                       En cas de refus / non support ou si l'utilisateur choisit explicitement,
                       on bascule sur l'upload classique. */}
@@ -5030,7 +5030,7 @@ function DevisGratuitsPageInner() {
                                     : "Commençons par cette pièce."}{" "}
                                   1 vue large + 1–2 angles.
                                 </p>
-                              </div>
+                  </div>
                               <button
                                 type="button"
                                 onClick={() => setShowCameraOverlay(false)}
@@ -5038,8 +5038,8 @@ function DevisGratuitsPageInner() {
                               >
                                 Fermer
                               </button>
-                            </div>
-                          </div>
+                  </div>
+                </div>
 
                           <div className="absolute inset-x-0 top-[72px] z-10 px-3">
                             <div className="rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70 backdrop-blur">
@@ -5056,7 +5056,7 @@ function DevisGratuitsPageInner() {
                                     Objectif 2–3 photos
                                   </span>
                                 )}
-                              </div>
+                  </div>
 
                               {!isActiveRoomComplete && nextActiveRoomTargetLabel && (
                                 <div className="mt-2 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
@@ -5068,8 +5068,8 @@ function DevisGratuitsPageInner() {
                                   </p>
                                   <p className="mt-1 text-[11px] text-slate-300">
                                     Ensuite, faites 1–2 angles pour confirmer.
-                                  </p>
-                                </div>
+                    </p>
+                  </div>
                               )}
 
                               <div className="mt-2 grid gap-2">
@@ -5092,10 +5092,10 @@ function DevisGratuitsPageInner() {
                                       <span className="ml-3 shrink-0 font-semibold">
                                         {done ? "✓" : "—"}
                                       </span>
-                                    </div>
+                </div>
                                   );
                                 })}
-                              </div>
+                  </div>
 
                               {isActiveRoomComplete && (
                                 <div className="mt-2 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
@@ -5126,38 +5126,38 @@ function DevisGratuitsPageInner() {
                                     >
                                       Pièce suivante
                                     </button>
-                                  </div>
-                                </div>
+                  </div>
+                </div>
                               )}
-                            </div>
-                          </div>
+                </div>
+              </div>
 
                           <div className="absolute inset-0 pt-[160px]">
                             <div className="h-full px-3 pb-[calc(env(safe-area-inset-bottom,0px)+10px)]">
-                              <CameraCapture
+                      <CameraCapture
                                 autoStart
                                 showChrome={false}
                                 showThumbnails={false}
                                 frameClassName="h-full"
                                 videoWrapperClassName="relative overflow-hidden rounded-2xl bg-black"
                                 videoClassName="h-[calc(100vh-260px)] w-full object-cover"
-                                maxPhotos={48}
-                                onFilesChange={(files) => {
+                        maxPhotos={48}
+                        onFilesChange={(files) => {
                                   if (files.length) addLocalFiles(files);
-                                }}
-                                onUnavailable={() => {
-                                  setCameraUnavailable(true);
+                        }}
+                        onUnavailable={() => {
+                          setCameraUnavailable(true);
                                   setShowCameraOverlay(false);
-                                }}
-                              />
+                        }}
+                      />
                               <div className="mt-2 flex items-center justify-between gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setShowUploadOnMobile(true)}
+                        <button
+                          type="button"
+                          onClick={() => setShowUploadOnMobile(true)}
                                   className="rounded-xl border border-slate-700 bg-slate-950/40 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-slate-500"
-                                >
-                                  Importer depuis la galerie
-                                </button>
+                        >
+                          Importer depuis la galerie
+                        </button>
                                 <button
                                   type="button"
                                   onClick={() =>
