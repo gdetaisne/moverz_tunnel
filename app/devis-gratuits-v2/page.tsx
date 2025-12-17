@@ -1742,6 +1742,7 @@ function DevisGratuitsPageInner() {
     "list" | "icons"
   >("list");
   const [showFullInventoryPanel, setShowFullInventoryPanel] = useState(false);
+  const [showCameraOverlay, setShowCameraOverlay] = useState(false);
   const [activeInventoryRoomId, setActiveInventoryRoomId] = useState<string | null>(
     null
   );
@@ -1852,6 +1853,63 @@ function DevisGratuitsPageInner() {
     (f) => f.roomIndex === activeMissionRoomIndex && f.status !== "error"
   ).length;
   const activeRoomTargetPhotos = 2; // objectif léger (2–3 photos)
+
+  const isMobileCameraPreferred =
+    Boolean(isCoarsePointer) && !cameraUnavailable && !showUploadOnMobile;
+
+  const isActiveRoomComplete =
+    !!activeMissionRoom &&
+    activeMissionRoom.items.every(
+      (it) => (activeRoomCounts[it.type] || 0) >= it.requiredIndex
+    );
+
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const playValidatedChime = useCallback(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const Ctx =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = audioCtxRef.current ?? new Ctx();
+      audioCtxRef.current = ctx;
+      const now = ctx.currentTime;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+      gain.connect(ctx.destination);
+
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(1320, now + 0.08);
+      osc.connect(gain);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    } catch {
+      // si audio bloqué par le navigateur, on ignore
+    }
+  }, []);
+
+  const [pulsingMissionItemIds, setPulsingMissionItemIds] = useState<string[]>([]);
+  const validatedMissionItemIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!activeMissionRoom) return;
+    for (const it of activeMissionRoom.items) {
+      const done = (activeRoomCounts[it.type] || 0) >= it.requiredIndex;
+      if (!done) continue;
+      if (validatedMissionItemIdsRef.current.has(it.id)) continue;
+      validatedMissionItemIdsRef.current.add(it.id);
+      setPulsingMissionItemIds((prev) => Array.from(new Set([...prev, it.id])));
+      playValidatedChime();
+      window.setTimeout(() => {
+        setPulsingMissionItemIds((prev) => prev.filter((x) => x !== it.id));
+      }, 900);
+    }
+  }, [activeMissionRoom, activeRoomCounts, playValidatedChime]);
 
   const inventoryVolume = useMemo(() => {
     if (!process2Inventory || process2Inventory.length === 0) {
@@ -2980,6 +3038,8 @@ function DevisGratuitsPageInner() {
     setMaxReachedStep(1 as StepId);
     setActiveMissionRoomIndex(0);
     setShowFullInventoryPanel(false);
+    setShowCameraOverlay(false);
+    validatedMissionItemIdsRef.current = new Set();
     // On recharge pour repartir d'un état vraiment clean (important en test mobile caméra)
     if (typeof window !== "undefined") {
       window.location.reload();
@@ -4803,6 +4863,7 @@ function DevisGratuitsPageInner() {
                     {activeMissionRoom.items.map((it) => {
                       const count = activeRoomCounts[it.type] || 0;
                       const done = count >= it.requiredIndex;
+                      const pulsing = pulsingMissionItemIds.includes(it.id);
                       return (
                         <div
                           key={it.id}
@@ -4811,6 +4872,7 @@ function DevisGratuitsPageInner() {
                             done
                               ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-100"
                               : "border-slate-700 bg-slate-950/40 text-slate-200",
+                            pulsing ? "ring-2 ring-emerald-300 animate-pulse" : "",
                           ].join(" ")}
                         >
                           <span className="min-w-0 truncate">{it.label}</span>
@@ -4863,6 +4925,9 @@ function DevisGratuitsPageInner() {
                     onClick={() => {
                       setHasPhotosAnswer("yes");
                       setPhotoFlowChoice("photos_now");
+                      if (isMobileCameraPreferred) {
+                        setShowCameraOverlay(true);
+                      }
                     window.setTimeout(() => {
                       document
                         .getElementById("v2-capture")
@@ -4931,37 +4996,167 @@ function DevisGratuitsPageInner() {
                   {/* Sur mobile: caméra intégrée comme chemin principal.
                       En cas de refus / non support ou si l'utilisateur choisit explicitement,
                       on bascule sur l'upload classique. */}
-                  {isCoarsePointer && !cameraUnavailable && !showUploadOnMobile && (
+                  {isMobileCameraPreferred && (
                     <>
-                      <CameraCapture
-                        maxPhotos={48}
-                        onFilesChange={(files) => {
-                          if (files.length) {
-                            addLocalFiles(files);
-                          }
-                        }}
-                        onUnavailable={() => {
-                          setCameraUnavailable(true);
-                        }}
-                      />
-                      <p className="text-[11px] text-slate-400">
-                        Problème avec la caméra ou vous préférez utiliser vos photos
-                        déjà présentes dans la galerie ?{" "}
+                      {!showCameraOverlay && (
                         <button
                           type="button"
-                          onClick={() => setShowUploadOnMobile(true)}
-                          className="font-semibold text-sky-300 underline underline-offset-2"
+                          onClick={() => setShowCameraOverlay(true)}
+                          className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 hover:bg-emerald-300"
                         >
-                          Importer depuis la galerie
+                          Ouvrir la caméra (plein écran)
                         </button>
-                        .
-                      </p>
+                      )}
+
+                      {showCameraOverlay && (
+                        <div className="fixed inset-0 z-[60] bg-black">
+                          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 px-3 pt-[calc(env(safe-area-inset-top,0px)+10px)]">
+                            <div className="pointer-events-auto flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-semibold text-slate-100">
+                                  Caméra · {activeMissionRoom?.label ?? "Pièce"}
+                                </p>
+                                <p className="text-[11px] text-slate-300">
+                                  {activeMissionRoom?.id?.startsWith("BEDROOM_")
+                                    ? "Commençons par les chambres: 1 vue large + 1–2 angles."
+                                    : "1 vue large + 1–2 angles."}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setShowCameraOverlay(false)}
+                                className="rounded-full border border-slate-600 bg-slate-950/50 px-3 py-1 text-[11px] font-semibold text-slate-100 hover:border-slate-400"
+                              >
+                                Fermer
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="absolute inset-x-0 top-[72px] z-10 px-3">
+                            <div className="rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70 backdrop-blur">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-[12px] font-semibold text-slate-50">
+                                  À prendre en photo maintenant
+                                </p>
+                                {isActiveRoomComplete ? (
+                                  <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
+                                    ✓ Validé
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] font-medium text-slate-300">
+                                    Objectif 2–3 photos
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="mt-2 grid gap-2">
+                                {(activeMissionRoom?.items ?? []).map((it) => {
+                                  const count = activeRoomCounts[it.type] || 0;
+                                  const done = count >= it.requiredIndex;
+                                  const pulsing = pulsingMissionItemIds.includes(it.id);
+                                  return (
+                                    <div
+                                      key={it.id}
+                                      className={[
+                                        "flex items-center justify-between rounded-xl border px-3 py-2 text-xs",
+                                        done
+                                          ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-100"
+                                          : "border-slate-700 bg-slate-950/40 text-slate-200",
+                                        pulsing ? "ring-2 ring-emerald-300 animate-pulse" : "",
+                                      ].join(" ")}
+                                    >
+                                      <span className="min-w-0 truncate">{it.label}</span>
+                                      <span className="ml-3 shrink-0 font-semibold">
+                                        {done ? "✓" : "—"}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {isActiveRoomComplete && (
+                                <div className="mt-2 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
+                                  <p className="text-[12px] font-semibold text-slate-100">
+                                    Something missing ?
+                                  </p>
+                                  <p className="mt-1 text-[11px] text-slate-300">
+                                    Optionnel: lampe, chaise, commode, petits meubles… (vous pouvez passer)
+                                  </p>
+                                  <div className="mt-2 flex gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        // on laisse la caméra ouverte, l'utilisateur peut prendre 1 photo en plus
+                                      }}
+                                      className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 bg-slate-950/30 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-slate-400"
+                                    >
+                                      Ajouter 1 photo
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveMissionRoomIndex((i) =>
+                                          Math.min(activeMissionRoomCount - 1, i + 1)
+                                        );
+                                      }}
+                                      className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-400 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-emerald-300"
+                                    >
+                                      Pièce suivante
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="absolute inset-0 pt-[160px]">
+                            <div className="h-full px-3 pb-[calc(env(safe-area-inset-bottom,0px)+10px)]">
+                              <CameraCapture
+                                autoStart
+                                showChrome={false}
+                                showThumbnails={false}
+                                frameClassName="h-full"
+                                videoWrapperClassName="relative overflow-hidden rounded-2xl bg-black"
+                                videoClassName="h-[calc(100vh-260px)] w-full object-cover"
+                                maxPhotos={48}
+                                onFilesChange={(files) => {
+                                  if (files.length) addLocalFiles(files);
+                                }}
+                                onUnavailable={() => {
+                                  setCameraUnavailable(true);
+                                  setShowCameraOverlay(false);
+                                }}
+                              />
+                              <div className="mt-2 flex items-center justify-between gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowUploadOnMobile(true)}
+                                  className="rounded-xl border border-slate-700 bg-slate-950/40 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-slate-500"
+                                >
+                                  Importer depuis la galerie
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setActiveMissionRoomIndex((i) =>
+                                      Math.min(activeMissionRoomCount - 1, i + 1)
+                                    )
+                                  }
+                                  className="rounded-xl bg-sky-400 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-sky-300"
+                                >
+                                  Pièce suivante
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
 
                   {/* Desktop, ou fallback si la caméra n'est pas disponible / refusée,
                      ou si l'utilisateur a choisi d'utiliser la galerie sur mobile. */}
-                  {(!isCoarsePointer || cameraUnavailable || showUploadOnMobile) && (
+                  {(!isMobileCameraPreferred || cameraUnavailable || showUploadOnMobile) && (
                     <>
                   <div
                     className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
@@ -6185,6 +6380,9 @@ function DevisGratuitsPageInner() {
           setPhotoFlowChoice("photos_now");
           setCurrentStep(4 as StepId);
           setMaxReachedStep((prev) => (prev < 4 ? (4 as StepId) : prev));
+          if (isMobileCameraPreferred) {
+            setShowCameraOverlay(true);
+          }
           window.setTimeout(() => {
             document
               .getElementById("v2-photos")

@@ -7,6 +7,12 @@ type CameraCaptureProps = {
   maxPhotos?: number;
   className?: string;
   onUnavailable?: () => void;
+  autoStart?: boolean;
+  videoClassName?: string;
+  videoWrapperClassName?: string;
+  frameClassName?: string;
+  showChrome?: boolean;
+  showThumbnails?: boolean;
 };
 
 type CaptureState =
@@ -22,6 +28,12 @@ export function CameraCapture({
   maxPhotos = 24,
   className,
   onUnavailable,
+  autoStart = false,
+  videoClassName,
+  videoWrapperClassName,
+  frameClassName,
+  showChrome = true,
+  showThumbnails = true,
 }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -48,6 +60,15 @@ export function CameraCapture({
       stopStream();
     };
   }, [stopStream]);
+
+  useEffect(() => {
+    if (!autoStart) return;
+    if (state !== "idle") return;
+    // autoStart est déclenché suite à une action utilisateur (ex: ouverture d'un overlay)
+    // ce qui augmente les chances que getUserMedia soit autorisé.
+    void startCamera();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
 
   const startCamera = async () => {
     if (typeof window === "undefined") return;
@@ -177,40 +198,52 @@ export function CameraCapture({
 
   return (
     <div className={className}>
-      <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] text-slate-400">
-            Recommandations : 3 à 5 photos par pièce. Tout ce qui est vu sera
-            pris en compte.
-          </p>
-          {state === "active" ? (
-            <button
-              type="button"
-              onClick={handleStop}
-              className="rounded-full border border-slate-600 bg-slate-900 px-3 py-1 text-[11px] font-medium text-slate-200 hover:bg-slate-800"
-            >
-              Fermer la caméra
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={startCamera}
-              className="rounded-full bg-sky-500 px-3 py-1 text-[11px] font-semibold text-slate-950 shadow-sm shadow-sky-500/40 hover:bg-sky-400"
-            >
-              Ouvrir la caméra
-            </button>
-          )}
-        </div>
+      <div
+        className={
+          frameClassName ??
+          "space-y-2 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70"
+        }
+      >
+        {showChrome && (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] text-slate-400">
+              Recommandations : 3 à 5 photos par pièce. Tout ce qui est vu sera
+              pris en compte.
+            </p>
+            {state === "active" ? (
+              <button
+                type="button"
+                onClick={handleStop}
+                className="rounded-full border border-slate-600 bg-slate-900 px-3 py-1 text-[11px] font-medium text-slate-200 hover:bg-slate-800"
+              >
+                Fermer la caméra
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={startCamera}
+                className="rounded-full bg-sky-500 px-3 py-1 text-[11px] font-semibold text-slate-950 shadow-sm shadow-sky-500/40 hover:bg-sky-400"
+              >
+                Ouvrir la caméra
+              </button>
+            )}
+          </div>
+        )}
 
         {(state === "active" || state === "starting") && (
           <div className="mt-2 space-y-2">
-            <div className="relative overflow-hidden rounded-xl border border-slate-700 bg-black">
+            <div
+              className={
+                videoWrapperClassName ??
+                "relative overflow-hidden rounded-xl border border-slate-700 bg-black"
+              }
+            >
               <video
                 ref={videoRef}
                 playsInline
                 muted
                 autoPlay
-                className="h-52 w-full bg-black object-cover"
+                className={videoClassName ?? "h-52 w-full bg-black object-cover"}
               />
             </div>
             <div className="flex items-center justify-between gap-3">
@@ -238,7 +271,7 @@ export function CameraCapture({
           </p>
         )}
 
-        {photos.length > 0 && (
+        {showThumbnails && photos.length > 0 && (
           <div className="mt-2 space-y-1">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
               Photos prises avec la caméra
