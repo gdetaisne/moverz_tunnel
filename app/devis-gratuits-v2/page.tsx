@@ -324,7 +324,8 @@ type QuickItemType =
   | "MIRROR"
   | "PIANO";
 
-type MissionRoomId = "BEDROOM" | "LIVING" | "KITCHEN" | "OTHER";
+// V2: IDs dynamiques (ex: BEDROOM_1, BEDROOM_2…) pour afficher une seule pièce à la fois.
+type MissionRoomId = string;
 
 interface MissionItem {
   id: string;
@@ -370,31 +371,34 @@ function estimateBedrooms(housingType: HousingType): number {
 function buildMissionForHousingType(housingType: HousingType): MissionRoom[] {
   const bedrooms = estimateBedrooms(housingType);
 
-  const bedroomItems: MissionItem[] = [];
-  for (let i = 1; i <= Math.max(1, bedrooms); i += 1) {
-    // On garde au moins 1 chambre "générique" si on n'a pas d'info.
-    bedroomItems.push({
-      id: `BED_${i}`,
-      type: "BED",
-      label: `Lit${bedrooms > 1 ? ` (chambre ${i})` : ""}`,
-      points: 12,
-      requiredIndex: i,
-    });
-    bedroomItems.push({
-      id: `WARDROBE_${i}`,
-      type: "WARDROBE",
-      label: `Armoire / dressing${bedrooms > 1 ? ` (chambre ${i})` : ""}`,
-      points: 10,
-      requiredIndex: i,
+  const bedroomCount = Math.max(1, bedrooms); // on garde au moins 1 chambre "générique"
+  const bedroomRooms: MissionRoom[] = [];
+
+  for (let i = 1; i <= bedroomCount; i += 1) {
+    bedroomRooms.push({
+      id: `BEDROOM_${i}`,
+      label: bedroomCount <= 1 ? "Chambre" : `Chambre ${i}/${bedroomCount}`,
+      items: [
+        {
+          id: `BED_${i}`,
+          type: "BED",
+          label: "Lit",
+          points: 12,
+          requiredIndex: i,
+        },
+        {
+          id: `WARDROBE_${i}`,
+          type: "WARDROBE",
+          label: "Armoire / dressing",
+          points: 10,
+          requiredIndex: i,
+        },
+      ],
     });
   }
 
   const rooms: MissionRoom[] = [
-    {
-      id: "BEDROOM",
-      label: bedrooms <= 1 ? "Chambre" : `Chambres (${bedrooms})`,
-      items: bedroomItems,
-    },
+    ...bedroomRooms,
     {
       id: "LIVING",
       label: "Salon / séjour",
@@ -410,13 +414,6 @@ function buildMissionForHousingType(housingType: HousingType): MissionRoom[] {
           id: "TABLE_1",
           type: "TABLE",
           label: "Table",
-          points: 6,
-          requiredIndex: 1,
-        },
-        {
-          id: "TV_1",
-          type: "TV",
-          label: "TV / écran",
           points: 6,
           requiredIndex: 1,
         },
@@ -1832,7 +1829,7 @@ function DevisGratuitsPageInner() {
   const photosInActiveRoom = localUploadFiles.filter(
     (f) => f.roomIndex === activeMissionRoomIndex && f.status !== "error"
   ).length;
-  const activeRoomTargetPhotos = 3;
+  const activeRoomTargetPhotos = 2; // objectif léger (2–3 photos)
 
   const inventoryVolume = useMemo(() => {
     if (!process2Inventory || process2Inventory.length === 0) {
@@ -4763,13 +4760,13 @@ function DevisGratuitsPageInner() {
               {activeMissionRoom && (
                 <div className="mt-3 space-y-2">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                      {activeMissionRoom.label} · {activeMissionRoomIndex + 1}/
-                      {activeMissionRoomCount}
+                    <p className="text-[12px] font-semibold text-slate-100">
+                      {activeMissionRoom.label}
                     </p>
                     <div className="text-[11px] font-medium text-slate-300">
+                      Objectif: 2–3 photos ·{" "}
                       {Math.min(photosInActiveRoom, activeRoomTargetPhotos)}/
-                      {activeRoomTargetPhotos} photos conseillées
+                      {activeRoomTargetPhotos}
                 </div>
                   </div>
 
@@ -4800,8 +4797,8 @@ function DevisGratuitsPageInner() {
                   </div>
 
                   <p className="text-[11px] text-slate-400">
-                    Astuce: 2–3 photos par pièce (vue large + 1–2 angles). Passez à la
-                    pièce suivante quand vous voulez.
+                    1 vue large + 1–2 angles. Passez à la pièce suivante quand vous
+                    voulez.
                   </p>
 
                   <div className="flex gap-2 pt-1">
