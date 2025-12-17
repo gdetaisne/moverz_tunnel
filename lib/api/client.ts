@@ -53,6 +53,12 @@ export interface LeadTunnelResponse {
 
 async function handleResponse(res: Response): Promise<LeadTunnelResponse> {
   if (!res.ok) {
+    // Important: en prod, une 404 peut arriver si le leadId restauré depuis localStorage
+    // ne correspond plus à la DB SQLite (redeploy, reset). On veut déclencher le fallback
+    // de recréation côté UI (qui cherche "LeadTunnel introuvable").
+    if (res.status === 404) {
+      throw new Error("LeadTunnel introuvable");
+    }
     let errorMessage = "Erreur lors de la communication avec le serveur.";
     try {
       const data = await res.json();
@@ -166,10 +172,16 @@ function getApiBaseUrl() {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!baseUrl) {
     throw new Error(
-      "NEXT_PUBLIC_API_URL n'est pas défini. Configure cette variable d'environnement pour pointer vers le Back Office."
+      "NEXT_PUBLIC_API_URL n'est pas défini. Configure cette variable d'environnement pour pointer vers le Back Office (ex: https://moverz-backoffice..., sans suffixe /api)."
     );
   }
-  return baseUrl.replace(/\/+$/, "");
+
+  // Tolérance: certains environnements configurent NEXT_PUBLIC_API_URL avec un suffixe (/api, /public).
+  // Le tunnel utilise ensuite /public/leads..., donc on normalise pour éviter /api/public/leads...
+  let normalized = baseUrl.trim().replace(/\/+$/, "");
+  normalized = normalized.replace(/\/(api|public)$/i, "");
+  normalized = normalized.replace(/\/+$/, "");
+  return normalized;
 }
 
 type LogicalStep = "ENTRY" | "CONTACT" | "PROJECT" | "RECAP" | "THANK_YOU" | "PHOTOS";
