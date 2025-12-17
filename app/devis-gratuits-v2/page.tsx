@@ -3330,7 +3330,7 @@ function DevisGratuitsPageInner() {
     <div
       className={[
         "relative flex flex-1 flex-col gap-6",
-        currentStep === 4 ? "pb-40" : "pb-10",
+        currentStep === 4 ? "pb-36" : "pb-10",
       ].join(" ")}
     >
       {/* Stepper simple, mobile first */}
@@ -4851,7 +4851,7 @@ function DevisGratuitsPageInner() {
                 />
               </div>
 
-              {/* Guidage mobile-first : on ne montre qu'UNE pièce à la fois */}
+              {/* Mission : on ne montre qu'UNE pièce à la fois (pas de navigation ici, on guide dans la caméra) */}
               {activeMissionRoom && (
                 <div className="mt-3 space-y-2">
                   <div className="flex items-center justify-between gap-3">
@@ -4904,61 +4904,8 @@ function DevisGratuitsPageInner() {
                     1 vue large + 1–2 angles. Passez à la pièce suivante quand vous
                     voulez.
                   </p>
-
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActiveMissionRoomIndex((i) => Math.max(0, i - 1))
-                      }
-                      disabled={activeMissionRoomIndex <= 0}
-                      className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-700/70 bg-slate-950/30 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Pièce précédente
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActiveMissionRoomIndex((i) =>
-                          Math.min(activeMissionRoomCount - 1, i + 1)
-                        )
-                      }
-                      disabled={activeMissionRoomIndex >= activeMissionRoomCount - 1}
-                      className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-400 px-3 py-2 text-xs font-semibold text-slate-950 shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Pièce suivante
-                    </button>
-                  </div>
                 </div>
               )}
-
-              <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHasPhotosAnswer("yes");
-                      setPhotoFlowChoice("photos_now");
-                      if (isMobileCameraPreferred) {
-                        setShowCameraOverlay(true);
-                      }
-                    window.setTimeout(() => {
-                      document
-                        .getElementById("v2-capture")
-                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }, 0);
-                    }}
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300"
-                  >
-                  Commencer les photos
-                  </button>
-                  <button
-                    type="button"
-                  onClick={() => setShowSkipPhotosConfirm(true)}
-                  className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-300 hover:border-slate-400"
-                >
-                  Continuer sans photos
-                  </button>
-              </div>
             </div>
 
             {showSkipPhotosConfirm && (
@@ -4979,10 +4926,10 @@ function DevisGratuitsPageInner() {
                       className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-emerald-300"
                     >
                       Ajouter des photos (recommandé)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
                         setShowSkipPhotosConfirm(false);
                         await handleNoInventory();
                       }}
@@ -5011,16 +4958,6 @@ function DevisGratuitsPageInner() {
                       on bascule sur l'upload classique. */}
                   {isMobileCameraPreferred && (
                     <>
-                      {!showCameraOverlay && (
-                        <button
-                          type="button"
-                          onClick={() => setShowCameraOverlay(true)}
-                          className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 hover:bg-emerald-300"
-                        >
-                          Ouvrir la caméra (plein écran)
-                        </button>
-                      )}
-
                       {showCameraOverlay && (
                         <div className="fixed inset-0 z-[60] bg-black">
                           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 px-3 pt-[calc(env(safe-area-inset-top,0px)+10px)]">
@@ -6389,51 +6326,50 @@ function DevisGratuitsPageInner() {
         </div>
       )}
 
+      {/* Option A: un seul CTA sticky (caméra) sur l'étape Photos, pas de dock multi-actions */}
       {currentStep === 4 && (
-        <V2PrecisionDock
-          maxReachedStep={maxReachedStep}
-          donePoints={v2Precision.donePoints}
-          totalPoints={v2Precision.totalPoints}
-          nextGainPoints={v2Precision.nextGainPoints || 8}
-          onAddPhoto={() => {
-            // Tant qu'on n'a pas validé le prix/lead, on évite de sauter au step 4.
-            if (!leadId || maxReachedStep < 3) {
-              setError(
-                "Complétez d’abord les étapes précédentes, puis ajoutez des photos."
-              );
-              setCurrentStep(maxReachedStep);
-              return;
-            }
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
+          <div className="pointer-events-auto mx-auto max-w-3xl px-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/90 p-3 shadow-lg shadow-slate-950/60 backdrop-blur">
+              <button
+                type="button"
+                onClick={() => {
+                  // Tant qu'on n'a pas validé le prix/lead, on évite de sauter au step 4.
+                  if (!leadId || maxReachedStep < 3) {
+                    setError(
+                      "Complétez d’abord les étapes précédentes, puis ajoutez des photos."
+                    );
+                    setCurrentStep(maxReachedStep);
+                    return;
+                  }
+                  setHasPhotosAnswer("yes");
+                  setPhotoFlowChoice("photos_now");
+                  if (isMobileCameraPreferred) {
+                    setShowCameraOverlay(true);
+                  } else {
+                    setShowUploadOnMobile(true);
+                    window.setTimeout(() => {
+                      document
+                        .getElementById("v2-capture")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 0);
+                  }
+                }}
+                className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 hover:bg-emerald-300"
+              >
+                Ouvrir la caméra
+              </button>
 
-            setHasPhotosAnswer("yes");
-            setPhotoFlowChoice("photos_now");
-            setCurrentStep(4 as StepId);
-            setMaxReachedStep((prev) => (prev < 4 ? (4 as StepId) : prev));
-            if (isMobileCameraPreferred) {
-              setShowCameraOverlay(true);
-            }
-            window.setTimeout(() => {
-              document
-                .getElementById("v2-photos")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }, 0);
-          }}
-          onGoToPhotos={() => {
-            if (maxReachedStep < 3) {
-              setError("Complétez d’abord les étapes précédentes.");
-              setCurrentStep(maxReachedStep);
-              return;
-            }
-
-            setCurrentStep(4 as StepId);
-            setMaxReachedStep((prev) => (prev < 4 ? (4 as StepId) : prev));
-            window.setTimeout(() => {
-              document
-                .getElementById("v2-photos")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }, 0);
-          }}
-        />
+              <button
+                type="button"
+                onClick={() => setShowSkipPhotosConfirm(true)}
+                className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-slate-700 bg-slate-950/40 px-4 py-2.5 text-xs font-semibold text-slate-200 hover:border-slate-500"
+              >
+                Passer les photos
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Debug dev only : bouton discret pour aller direct à l'étape 4 avec photos.
