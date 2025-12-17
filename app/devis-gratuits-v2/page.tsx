@@ -1654,6 +1654,7 @@ function DevisGratuitsPageInner() {
   });
   const [leadId, setLeadId] = useState<string | null>(null);
   const [backofficeLeadId, setBackofficeLeadId] = useState<string | null>(null);
+  const [backofficeSyncError, setBackofficeSyncError] = useState<string | null>(null);
   const [linkingToken, setLinkingToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -3207,6 +3208,7 @@ function DevisGratuitsPageInner() {
 
     try {
       setIsSubmitting(true);
+      setBackofficeSyncError(null);
 
       const performUpdate = async (id: string) => {
         await updateLead(id, updatePayload);
@@ -3251,7 +3253,9 @@ function DevisGratuitsPageInner() {
       }
 
       // 3. Synchroniser avec le Back Office (PATCH + request-confirmation)
-      if (backofficeLeadId) {
+      // Important: on récupère toujours un id BO effectif (création si manquant).
+      const effectiveBackofficeLeadId = backofficeLeadId ?? (await ensureBackofficeLeadId());
+      if (effectiveBackofficeLeadId) {
         try {
           // Mapper les valeurs du formulaire vers le format back-office
           const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" =>
@@ -3259,6 +3263,16 @@ function DevisGratuitsPageInner() {
 
           const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" =>
             e === "none" ? "NON" : e === "small" ? "PARTIEL" : "OUI";
+
+          const toIsoDate = (raw: string | null | undefined): string | undefined => {
+            if (!raw) return undefined;
+            const d = new Date(raw);
+            if (!Number.isFinite(d.getTime())) return undefined;
+            return d.toISOString();
+          };
+
+          const safeSurfaceM2 =
+            Number.isFinite(surface) && surface > 0 ? Math.round(surface) : undefined;
 
           // Champs non remplis = undefined (pas envoyés au back-office)
           // Le filtrage dans updateBackofficeLead enlève les undefined
@@ -3272,17 +3286,18 @@ function DevisGratuitsPageInner() {
             destPostalCode: form.destinationUnknown ? undefined : (form.destinationPostalCode || undefined),
 
             // Date - undefined si non sélectionnée
-            movingDate: form.movingDate || undefined,
+            movingDate: toIsoDate(form.movingDate),
             dateFlexible: form.dateFlexible,
 
             // Volume & Surface - undefined si non calculé
-            surfaceM2: Number.isFinite(surface) && surface > 0 ? surface : undefined,
+            surfaceM2: safeSurfaceM2,
             estimatedVolume: pricing ? pricing.volumeM3 : undefined,
             density: form.density ? mapDensity(form.density) : undefined,
 
             // Formule & Prix - undefined si non sélectionné/calculé
             formule: form.formule || undefined,
             estimatedPriceMin: pricing ? pricing.prixMin : undefined,
+            estimatedPriceAvg: pricing ? Math.round((pricing.prixMin + pricing.prixMax) / 2) : undefined,
             estimatedPriceMax: pricing ? pricing.prixMax : undefined,
 
             // Détails logement origine - undefined si non rempli
@@ -3298,7 +3313,21 @@ function DevisGratuitsPageInner() {
             destParkingAuth: form.destinationUnknown ? undefined : form.destinationParkingAuth,
           };
 
-          await updateBackofficeLead(backofficeLeadId, boUpdatePayload);
+          try {
+            await updateBackofficeLead(effectiveBackofficeLeadId, boUpdatePayload);
+          } catch (err: unknown) {
+            // Si le lead BO a été supprimé/expiré, on recrée et on rejoue une fois.
+            if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
+              const newId = await ensureBackofficeLeadId({ forceNew: true });
+              if (newId) {
+                await updateBackofficeLead(newId, boUpdatePayload);
+              } else {
+                throw err;
+              }
+            } else {
+              throw err;
+            }
+          }
           console.log("✅ Lead mis à jour dans le Back Office");
 
           // Demander l'envoi de l'email de confirmation
@@ -3310,6 +3339,12 @@ function DevisGratuitsPageInner() {
           }
         } catch (boErr) {
           console.warn("⚠️ Impossible de synchroniser avec le Back Office:", boErr);
+          // En dev on expose la raison (sinon on se retrouve avec des leads "vides" sans signal).
+          if (isDev) {
+            const msg =
+              boErr instanceof Error ? boErr.message : String(boErr ?? "unknown error");
+            setBackofficeSyncError(msg);
+          }
         }
       }
 
@@ -3338,6 +3373,14 @@ function DevisGratuitsPageInner() {
         aria-label="Étapes du tunnel"
         className="rounded-2xl bg-slate-900/60 p-3 shadow-sm ring-1 ring-slate-800"
       >
+        {backofficeSyncError && (
+          <div className="mb-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100">
+            <p className="font-semibold">
+              Sync Back Office échouée (dev) — le dossier peut apparaître vide côté BO.
+            </p>
+            <p className="mt-1 break-words text-amber-200/90">{backofficeSyncError}</p>
+          </div>
+        )}
         {/* Mobile : barre de progression + libellé courant */}
         {/* Mobile : mini stepper scrollable et cliquable */}
         <div className="flex gap-2 overflow-x-auto pb-2 sm:hidden">
