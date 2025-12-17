@@ -332,7 +332,7 @@ interface MissionItem {
   type: QuickItemType;
   label: string;
   points: number;
-  requiredIndex: number; // 1..n pour les items multiples (ex: 2 lits)
+  requiredIndex: number; // V2: seuil dans une pièce (souvent 1)
 }
 
 interface MissionRoom {
@@ -384,14 +384,14 @@ function buildMissionForHousingType(housingType: HousingType): MissionRoom[] {
           type: "BED",
           label: "Lit",
           points: 12,
-          requiredIndex: i,
+          requiredIndex: 1,
         },
         {
           id: `WARDROBE_${i}`,
           type: "WARDROBE",
           label: "Armoire / dressing",
           points: 10,
-          requiredIndex: i,
+          requiredIndex: 1,
         },
       ],
     });
@@ -1791,24 +1791,43 @@ function DevisGratuitsPageInner() {
 
   const v2Precision = useMemo(
     () => {
-      // Comptage "par photo" : si une photo détecte BED, on compte 1 BED (utile pour 2 lits, etc.)
-      const counts: Record<string, number> = {};
-      for (const entry of Object.values(quickItemsByPhotoId)) {
-        const uniqueTypes = Array.from(new Set(entry.types ?? []));
-        for (const t of uniqueTypes) {
-          counts[t] = (counts[t] || 0) + 1;
-        }
-      }
-
       const missionRooms = buildMissionForHousingType(form.housingType);
       const allItems = missionRooms.flatMap((r) => r.items);
       const totalPoints = allItems.reduce((sum, it) => sum + it.points, 0);
-      const donePoints = allItems.reduce((sum, it) => {
-        const c = counts[it.type] || 0;
-        return sum + (c >= it.requiredIndex ? it.points : 0);
+
+      // Comptage PAR PIÈCE (roomIndex) : on valide les objets trouvés dans les photos
+      // prises pour la pièce courante (gamification = simplification).
+      const countsByRoomIndex: Record<number, Record<string, number>> = {};
+      for (const f of localUploadFiles) {
+        const roomIndex = f.roomIndex ?? 0;
+        if (!f.photoId) continue;
+        if (f.status !== "uploaded") continue;
+        const entry = quickItemsByPhotoId[f.photoId];
+        if (!entry) continue;
+        const uniqueTypes = Array.from(new Set(entry.types ?? []));
+        if (!countsByRoomIndex[roomIndex]) countsByRoomIndex[roomIndex] = {};
+        for (const t of uniqueTypes) {
+          countsByRoomIndex[roomIndex][t] = (countsByRoomIndex[roomIndex][t] || 0) + 1;
+        }
+      }
+
+      const donePoints = missionRooms.reduce((sum, room, idx) => {
+        const roomCounts = countsByRoomIndex[idx] ?? {};
+        const roomDone = room.items.reduce((roomSum, it) => {
+          const c = roomCounts[it.type] || 0;
+          return roomSum + (c >= it.requiredIndex ? it.points : 0);
+        }, 0);
+        return sum + roomDone;
       }, 0);
 
-      const nextIncomplete = allItems.find((it) => (counts[it.type] || 0) < it.requiredIndex);
+      const nextIncomplete = missionRooms
+        .flatMap((room, idx) =>
+          room.items.map((it) => ({
+            it,
+            idx,
+          }))
+        )
+        .find(({ it, idx }) => ((countsByRoomIndex[idx]?.[it.type] ?? 0) < it.requiredIndex));
       const nextGainPoints = nextIncomplete ? nextIncomplete.points : 0;
 
       return {
@@ -1817,15 +1836,18 @@ function DevisGratuitsPageInner() {
         donePoints,
         nextGainPoints,
         missionRooms,
-        counts,
+        countsByRoomIndex,
       };
     },
-    [maxReachedStep, form.housingType, quickItemsByPhotoId]
+    [maxReachedStep, form.housingType, quickItemsByPhotoId, localUploadFiles]
   );
 
   const activeMissionRoom =
     v2Precision.missionRooms[activeMissionRoomIndex] ?? v2Precision.missionRooms[0];
   const activeMissionRoomCount = v2Precision.missionRooms.length || 1;
+  const activeRoomCounts =
+    (v2Precision as { countsByRoomIndex?: Record<number, Record<string, number>> })
+      .countsByRoomIndex?.[activeMissionRoomIndex] ?? {};
   const photosInActiveRoom = localUploadFiles.filter(
     (f) => f.roomIndex === activeMissionRoomIndex && f.status !== "error"
   ).length;
@@ -4769,10 +4791,17 @@ function DevisGratuitsPageInner() {
                       {activeRoomTargetPhotos}
                 </div>
                   </div>
+                  {activeMissionRoom.items.every(
+                    (it) => (activeRoomCounts[it.type] || 0) >= it.requiredIndex
+                  ) && (
+                    <p className="text-[11px] font-semibold text-emerald-200">
+                      ✓ Pièce validée
+                    </p>
+                  )}
 
                   <div className="grid gap-2">
                     {activeMissionRoom.items.map((it) => {
-                      const count = v2Precision.counts[it.type] || 0;
+                      const count = activeRoomCounts[it.type] || 0;
                       const done = count >= it.requiredIndex;
                       return (
                         <div
