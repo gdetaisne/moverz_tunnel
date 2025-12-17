@@ -3327,7 +3327,12 @@ function DevisGratuitsPageInner() {
   };
 
   return (
-    <div className="relative flex flex-1 flex-col gap-6 pb-40">
+    <div
+      className={[
+        "relative flex flex-1 flex-col gap-6",
+        currentStep === 4 ? "pb-40" : "pb-10",
+      ].join(" ")}
+    >
       {/* Stepper simple, mobile first */}
       <nav
         aria-label="Étapes du tunnel"
@@ -6384,50 +6389,52 @@ function DevisGratuitsPageInner() {
         </div>
       )}
 
-      <V2PrecisionDock
-        maxReachedStep={maxReachedStep}
-        donePoints={v2Precision.donePoints}
-        totalPoints={v2Precision.totalPoints}
-        nextGainPoints={v2Precision.nextGainPoints || 8}
-        onAddPhoto={() => {
-          // Tant qu'on n'a pas validé le prix/lead, on évite de sauter au step 4.
-          if (!leadId || maxReachedStep < 3) {
-            setError(
-              "Complétez d’abord les étapes précédentes, puis ajoutez des photos."
-            );
-            setCurrentStep(maxReachedStep);
-            return;
-          }
+      {currentStep === 4 && (
+        <V2PrecisionDock
+          maxReachedStep={maxReachedStep}
+          donePoints={v2Precision.donePoints}
+          totalPoints={v2Precision.totalPoints}
+          nextGainPoints={v2Precision.nextGainPoints || 8}
+          onAddPhoto={() => {
+            // Tant qu'on n'a pas validé le prix/lead, on évite de sauter au step 4.
+            if (!leadId || maxReachedStep < 3) {
+              setError(
+                "Complétez d’abord les étapes précédentes, puis ajoutez des photos."
+              );
+              setCurrentStep(maxReachedStep);
+              return;
+            }
 
-          setHasPhotosAnswer("yes");
-          setPhotoFlowChoice("photos_now");
-          setCurrentStep(4 as StepId);
-          setMaxReachedStep((prev) => (prev < 4 ? (4 as StepId) : prev));
-          if (isMobileCameraPreferred) {
-            setShowCameraOverlay(true);
-          }
-          window.setTimeout(() => {
-            document
-              .getElementById("v2-photos")
-              ?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 0);
-        }}
-        onGoToPhotos={() => {
-          if (maxReachedStep < 3) {
-            setError("Complétez d’abord les étapes précédentes.");
-            setCurrentStep(maxReachedStep);
-            return;
-          }
+            setHasPhotosAnswer("yes");
+            setPhotoFlowChoice("photos_now");
+            setCurrentStep(4 as StepId);
+            setMaxReachedStep((prev) => (prev < 4 ? (4 as StepId) : prev));
+            if (isMobileCameraPreferred) {
+              setShowCameraOverlay(true);
+            }
+            window.setTimeout(() => {
+              document
+                .getElementById("v2-photos")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 0);
+          }}
+          onGoToPhotos={() => {
+            if (maxReachedStep < 3) {
+              setError("Complétez d’abord les étapes précédentes.");
+              setCurrentStep(maxReachedStep);
+              return;
+            }
 
-          setCurrentStep(4 as StepId);
-          setMaxReachedStep((prev) => (prev < 4 ? (4 as StepId) : prev));
-          window.setTimeout(() => {
-            document
-              .getElementById("v2-photos")
-              ?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 0);
-        }}
-      />
+            setCurrentStep(4 as StepId);
+            setMaxReachedStep((prev) => (prev < 4 ? (4 as StepId) : prev));
+            window.setTimeout(() => {
+              document
+                .getElementById("v2-photos")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 0);
+          }}
+        />
+      )}
 
       {/* Debug dev only : bouton discret pour aller direct à l'étape 4 avec photos.
           En dev, si aucun lead n'existe encore, on en crée un minimal avant de sauter à l'étape 4. */}
