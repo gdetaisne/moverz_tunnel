@@ -3317,6 +3317,25 @@ function DevisGratuitsPageInner() {
             destParkingAuth: form.destinationUnknown ? undefined : form.destinationParkingAuth,
           };
 
+          // Payload minimal "safe" en cas de rejet du payload complet par le Back Office
+          const safePayload = {
+            originAddress: boUpdatePayload.originAddress,
+            originCity: boUpdatePayload.originCity,
+            originPostalCode: boUpdatePayload.originPostalCode,
+            destAddress: boUpdatePayload.destAddress,
+            destCity: boUpdatePayload.destCity,
+            destPostalCode: boUpdatePayload.destPostalCode,
+            movingDate: boUpdatePayload.movingDate,
+            dateFlexible: boUpdatePayload.dateFlexible,
+            surfaceM2: boUpdatePayload.surfaceM2,
+            estimatedVolume: boUpdatePayload.estimatedVolume,
+            density: boUpdatePayload.density,
+            formule: boUpdatePayload.formule,
+            estimatedPriceMin: boUpdatePayload.estimatedPriceMin,
+            estimatedPriceAvg: boUpdatePayload.estimatedPriceAvg,
+            estimatedPriceMax: boUpdatePayload.estimatedPriceMax,
+          };
+
           try {
             await updateBackofficeLead(effectiveBackofficeLeadId, boUpdatePayload);
           } catch (err: unknown) {
@@ -3325,12 +3344,19 @@ function DevisGratuitsPageInner() {
               const newId = await ensureBackofficeLeadId({ forceNew: true });
               if (newId) {
                 await updateBackofficeLead(newId, boUpdatePayload);
-              } else {
-                throw err;
+                console.log("✅ Lead recréé puis mis à jour dans le Back Office (V2)");
+                return;
               }
-            } else {
               throw err;
             }
+
+            // Fallback générique : si le BO rejette le payload complet (validation ou 5xx),
+            // on tente une mise à jour minimale avec uniquement les champs cœur.
+            console.warn(
+              "⚠️ Échec mise à jour lead BO (V2) avec payload complet, tentative avec payload minimal:",
+              err,
+            );
+            await updateBackofficeLead(effectiveBackofficeLeadId, safePayload);
           }
           console.log("✅ Lead mis à jour dans le Back Office");
 

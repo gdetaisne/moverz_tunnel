@@ -3002,20 +3002,21 @@ function DevisGratuitsPageInner() {
               const newId = await ensureBackofficeLeadId({ forceNew: true });
               if (newId) {
                 await updateBackofficeLead(newId, boUpdatePayload);
-              } else {
-                throw err;
+                console.log("✅ Lead recréé puis mis à jour dans le Back Office");
+                return;
               }
-            } else if (
-              err instanceof Error &&
-              err.message.toLowerCase().includes("internal server error")
-            ) {
-              // Fallback: si le BO plante sur certains champs, on envoie un payload minimal
-              // pour au moins remplir l'essentiel (adresses, date, estimation).
-              console.warn("⚠️ BO 500 sur payload complet, retry minimal.");
-              await updateBackofficeLead(effectiveBackofficeLeadId, safePayload);
-            } else {
               throw err;
             }
+
+            // Fallback générique : si le BO rejette le payload complet (validation ou 5xx),
+            // on tente une mise à jour minimale avec uniquement les champs cœur
+            // (adresses, date, surface, volume, prix) pour éviter d'avoir un lead "vide".
+            console.warn(
+              "⚠️ Échec mise à jour lead BO avec payload complet, tentative avec payload minimal:",
+              err,
+            );
+            await updateBackofficeLead(effectiveBackofficeLeadId, safePayload);
+            console.log("✅ Lead mis à jour dans le Back Office avec payload minimal");
           }
         } catch (boErr) {
           console.warn("⚠️ Impossible de synchroniser avec le Back Office:", boErr);
