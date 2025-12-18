@@ -1101,10 +1101,13 @@ function Step3MovingDayIntro({
 
   const distanceLabel = formatDistanceLabel(distanceKm);
 
-  const originHousing = formatHousingCard(form.originHousingType, form.originFloor);
+  const originHousing = formatHousingCard(
+    form.originHousingType,
+    form.originHousingType.startsWith("house") ? "0" : form.originFloor
+  );
   const destinationHousing = formatHousingCard(
     form.destinationHousingType,
-    form.destinationFloor
+    form.destinationHousingType.startsWith("house") ? "0" : form.destinationFloor
   );
 
   return (
@@ -1755,20 +1758,33 @@ function DevisGratuitsPageInner() {
     const surface = Number(form.surfaceM2.replace(",", "."));
     if (!surface || !Number.isFinite(surface)) return null;
 
+    const isOriginHouse =
+      form.originHousingType === "house" ||
+      form.originHousingType === "house_1floor" ||
+      form.originHousingType === "house_2floors" ||
+      form.originHousingType === "house_3floors";
+    const isDestinationHouse =
+      form.destinationHousingType === "house" ||
+      form.destinationHousingType === "house_1floor" ||
+      form.destinationHousingType === "house_2floors" ||
+      form.destinationHousingType === "house_3floors";
+
     const baseInput = {
       surfaceM2: surface,
       housingType: form.housingType,
       density: form.density,
       distanceKm,
       seasonFactor: combinedSeasonFactor,
-      originFloor: parseInt(form.originFloor || "0", 10) || 0,
+      originFloor: isOriginHouse ? 0 : parseInt(form.originFloor || "0", 10) || 0,
       originElevator:
         form.originElevator === "none"
           ? ("no" as const)
           : form.originElevator === "small"
           ? ("partial" as const)
           : ("yes" as const),
-      destinationFloor: parseInt(form.destinationFloor || "0", 10) || 0,
+      destinationFloor: isDestinationHouse
+        ? 0
+        : parseInt(form.destinationFloor || "0", 10) || 0,
       destinationElevator:
         form.destinationElevator === "none"
           ? ("no" as const)

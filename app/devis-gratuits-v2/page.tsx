@@ -1327,10 +1327,13 @@ function Step3MovingDayIntro({
 
   const distanceLabel = formatDistanceLabel(distanceKm);
 
-  const originHousing = formatHousingCard(form.originHousingType, form.originFloor);
+  const originHousing = formatHousingCard(
+    form.originHousingType,
+    form.originHousingType.startsWith("house") ? "0" : form.originFloor
+  );
   const destinationHousing = formatHousingCard(
     form.destinationHousingType,
-    form.destinationFloor
+    form.destinationHousingType.startsWith("house") ? "0" : form.destinationFloor
   );
 
   return (
@@ -2087,20 +2090,33 @@ function DevisGratuitsPageInner() {
     const surface = Number(form.surfaceM2.replace(",", "."));
     if (!surface || !Number.isFinite(surface)) return null;
 
-    const baseInput = {
+      const isOriginHouse =
+        form.originHousingType === "house" ||
+        form.originHousingType === "house_1floor" ||
+        form.originHousingType === "house_2floors" ||
+        form.originHousingType === "house_3floors";
+      const isDestinationHouse =
+        form.destinationHousingType === "house" ||
+        form.destinationHousingType === "house_1floor" ||
+        form.destinationHousingType === "house_2floors" ||
+        form.destinationHousingType === "house_3floors";
+
+      const baseInput = {
       surfaceM2: surface,
       housingType: form.housingType,
       density: form.density,
       distanceKm,
       seasonFactor: combinedSeasonFactor,
-      originFloor: parseInt(form.originFloor || "0", 10) || 0,
+      originFloor: isOriginHouse ? 0 : parseInt(form.originFloor || "0", 10) || 0,
       originElevator:
         form.originElevator === "none"
           ? ("no" as const)
           : form.originElevator === "small"
           ? ("partial" as const)
           : ("yes" as const),
-      destinationFloor: parseInt(form.destinationFloor || "0", 10) || 0,
+      destinationFloor: isDestinationHouse
+        ? 0
+        : parseInt(form.destinationFloor || "0", 10) || 0,
       destinationElevator:
         form.destinationElevator === "none"
           ? ("no" as const)
@@ -3280,6 +3296,50 @@ function DevisGratuitsPageInner() {
 
           // Champs non remplis = undefined (pas envoyés au back-office)
           // Le filtrage dans updateBackofficeLead enlève les undefined
+          // Options détaillées du tunnel pour archivage côté Lead.tunnelOptions
+          const tunnelOptions = {
+            access: {
+              origin: {
+                escalierSansAscenseur: form.originElevator === "none" || undefined,
+                petitAscenseurPassagesSerres:
+                  form.originElevator === "small" ? true : undefined,
+                rueStationnementComplique: form.optionDifficultAccess || undefined,
+                accesCamionDifficile: form.optionDifficultAccess || undefined,
+                monteMeuble: form.serviceMonteMeuble || undefined,
+                autorisationStationnement: form.originParkingAuth ?? undefined,
+              },
+              destination: form.destinationUnknown
+                ? undefined
+                : {
+                    escalierSansAscenseur:
+                      form.destinationElevator === "none" || undefined,
+                    petitAscenseurPassagesSerres:
+                      form.destinationElevator === "small" ? true : undefined,
+                    rueStationnementComplique: form.optionDifficultAccess || undefined,
+                    accesCamionDifficile: form.optionDifficultAccess || undefined,
+                    monteMeuble: form.serviceMonteMeuble || undefined,
+                    autorisationStationnement:
+                      form.destinationParkingAuth ?? undefined,
+                  },
+            },
+            furniture: {
+              piano:
+                form.servicePiano === "none"
+                  ? null
+                  : form.servicePiano === "droit"
+                  ? "Piano droit"
+                  : "Piano quart de queue",
+            },
+            services: {
+              gardeMeuble: form.optionStorage || undefined,
+              nettoyageDebarras:
+                form.serviceDebarras || form.optionCleaning || undefined,
+              emballageComplet: form.optionPackingMaterials || undefined,
+              beaucoupADemonter: form.optionDismantlingFull || undefined,
+              difficultAccess: form.optionDifficultAccess || undefined,
+            },
+          };
+
           const boUpdatePayload = {
             // Adresses - undefined si non rempli
             originAddress: form.originAddress || undefined,
@@ -3311,10 +3371,25 @@ function DevisGratuitsPageInner() {
             originParkingAuth: form.originParkingAuth,
 
             // Détails logement destination - undefined si destination inconnue ou non rempli
-            destHousingType: form.destinationUnknown ? undefined : (form.destinationHousingType || undefined),
-            destFloor: form.destinationUnknown ? undefined : (form.destinationFloor ? parseInt(form.destinationFloor, 10) : undefined),
-            destElevator: form.destinationUnknown ? undefined : (form.destinationElevator ? mapElevator(form.destinationElevator) : undefined),
-            destParkingAuth: form.destinationUnknown ? undefined : form.destinationParkingAuth,
+            destHousingType: form.destinationUnknown
+              ? undefined
+              : form.destinationHousingType || undefined,
+            destFloor: form.destinationUnknown
+              ? undefined
+              : form.destinationFloor
+              ? parseInt(form.destinationFloor, 10)
+              : undefined,
+            destElevator: form.destinationUnknown
+              ? undefined
+              : form.destinationElevator
+              ? mapElevator(form.destinationElevator)
+              : undefined,
+            destParkingAuth: form.destinationUnknown
+              ? undefined
+              : form.destinationParkingAuth,
+
+            // Options tunnel sérialisées
+            tunnelOptions,
           };
 
           // Payload minimal "safe" en cas de rejet du payload complet par le Back Office
