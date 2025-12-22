@@ -923,7 +923,7 @@ function AddressAutocomplete({
         {showStatus && status && (
           <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
             {status === "valid" ? (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-spark text-[11px] font-bold text-brand-navy shadow-sm">
                 ✓
               </span>
             ) : (
@@ -3505,7 +3505,7 @@ function DevisGratuitsPageInner() {
                       {(hasTriedSubmitStep2 || originHousingTouched) && (
                         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                           {isOriginHousingValid ? (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-spark text-[11px] font-bold text-brand-navy shadow-sm">
                               ✓
                             </span>
                           ) : (
@@ -3541,7 +3541,7 @@ function DevisGratuitsPageInner() {
                       {(hasTriedSubmitStep2 || surfaceTouched) && (
                         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                           {isSurfaceValid ? (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-spark text-[11px] font-bold text-brand-navy shadow-sm">
                               ✓
                             </span>
                           ) : (
@@ -3673,7 +3673,7 @@ function DevisGratuitsPageInner() {
                       {(hasTriedSubmitStep2 || destinationHousingTouched) && !form.destinationUnknown && (
                         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                           {isDestinationHousingValid ? (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-spark text-[11px] font-bold text-brand-navy shadow-sm">
                               ✓
                             </span>
                           ) : (
@@ -3699,7 +3699,7 @@ function DevisGratuitsPageInner() {
             )}
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-100">
+              <label className="block text-sm font-medium text-slate-900">
                 Date souhaitée
               </label>
               <div className="relative mt-1">
@@ -3721,12 +3721,12 @@ function DevisGratuitsPageInner() {
                     return d.toISOString().split("T")[0];
                   })()}
                   required
-                  className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100"
+                  className="w-full cursor-pointer rounded-xl border border-surface-3 bg-surface-1 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100"
                 />
                 {(hasTriedSubmitStep2 || form.movingDate) && (
                   <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                     {isMovingDateValid ? (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-spark text-[11px] font-bold text-brand-navy shadow-sm">
                         ✓
                       </span>
                     ) : (
