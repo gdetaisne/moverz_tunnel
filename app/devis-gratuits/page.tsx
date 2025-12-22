@@ -4659,8 +4659,8 @@ function DevisGratuitsPageInner() {
             </div>
 
             {/* Services en plus (facultatif) */}
-            <div className="space-y-2 rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
-              <p className="text-xs font-semibold text-slate-200">
+            <div className="space-y-2 rounded-2xl bg-surface-1 p-4 ring-1 ring-surface-3">
+              <p className="text-xs font-semibold text-slate-900">
                 Services en plus (facultatif)
               </p>
 
@@ -4688,8 +4688,8 @@ function DevisGratuitsPageInner() {
                   className={[
                     "rounded-full border px-3 py-1 text-[11px]",
                     !hasExtraServices
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ? "border-brand-deep bg-brand-deep text-white"
+                      : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                   ].join(" ")}
                 >
                   Non
@@ -4700,8 +4700,8 @@ function DevisGratuitsPageInner() {
                   className={[
                     "rounded-full border px-3 py-1 text-[11px]",
                     hasExtraServices
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ? "border-brand-deep bg-brand-deep text-white"
+                      : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                   ].join(" ")}
                 >
                   Oui
@@ -4850,7 +4850,7 @@ function DevisGratuitsPageInner() {
                 </div>
               )}
 
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-slate-500">
                 Ces services sont optionnels et viendront préciser votre demande au déménageur.
               </p>
             </div>
