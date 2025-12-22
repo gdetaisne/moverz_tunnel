@@ -58,6 +58,10 @@
       ".mzw-badge-dot { width: 6px; height: 6px; border-radius: 999px; background: rgb(var(--mzw-spark)); box-shadow: 0 0 0 4px rgba(var(--mzw-spark), 0.22); }",
       ".mzw-title { margin-top: 10px; font-size: 18px; font-weight: 600; }",
       ".mzw-subtitle { margin-top: 4px; font-size: 13px; color: #4b5563; }",
+      ".mzw-wow { margin-top: 10px; display: grid; grid-template-columns: 1fr; gap: 6px; }",
+      ".mzw-wow-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 16px; background: rgba(var(--mzw-spark), 0.10); border: 1px solid rgba(148, 163, 184, 0.7); }",
+      ".mzw-wow-check { width: 18px; height: 18px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: rgba(var(--mzw-deep), 0.12); color: rgb(var(--mzw-deep)); font-size: 12px; font-weight: 800; }",
+      ".mzw-wow-text { font-size: 12px; font-weight: 600; color: #0f172a; }",
       ".mzw-dropzone { margin-top: 16px; border-radius: 18px; border: 1px dashed rgba(148, 163, 184, 0.8); background: #f1f5f9; padding: 18px 14px; text-align: center; transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; }",
       ".mzw-dropzone.mzw-dropzone--active { border-color: rgba(var(--mzw-spark), 0.95); background: rgba(var(--mzw-spark), 0.14); box-shadow: 0 0 0 1px rgba(var(--mzw-deep), 0.10); }",
       ".mzw-drop-icon { width: 32px; height: 32px; border-radius: 999px; background: rgba(var(--mzw-spark), 0.14); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px; }",
@@ -84,12 +88,15 @@
       ".mzw-summary-pill { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: rgba(var(--mzw-spark), 0.22); color: rgb(var(--mzw-navy)); font-weight: 600; }",
       ".mzw-footer { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }",
       ".mzw-primary-btn { position: relative; overflow: hidden; border: none; border-radius: 999px; padding: 11px 14px; font-size: 14px; font-weight: 650; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(120deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); color: #ffffff; box-shadow: 0 12px 26px rgba(43, 122, 120, 0.26); transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease; }",
-      ".mzw-primary-btn[disabled] { opacity: 1; cursor: default; box-shadow: 0 12px 26px rgba(43, 122, 120, 0.26); }",
+      ".mzw-primary-btn[disabled] { opacity: 0.55; cursor: not-allowed; box-shadow: none; }",
       ".mzw-primary-btn-inner { position: relative; z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }",
       ".mzw-progress-mask { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.12); pointer-events: none; border-radius: inherit; transform: translateZ(0); width: 0%; opacity: 0; }",
       ".mzw-primary-btn:not([disabled]):hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(43, 122, 120, 0.30); }",
       ".mzw-primary-btn-chevron { font-size: 13px; }",
       ".mzw-small-text { font-size: 11px; color: #94a3b8; text-align: center; }",
+      ".mzw-links { display: flex; justify-content: space-between; gap: 10px; }",
+      ".mzw-link { appearance: none; border: none; background: transparent; padding: 0; margin: 0; font-size: 12px; color: rgb(var(--mzw-deep)); font-weight: 650; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }",
+      ".mzw-link-secondary { color: #334155; font-weight: 600; }",
       ".mzw-error { margin-top: 8px; font-size: 12px; color: #b91c1c; }",
       ".mzw-results { margin-top: 10px; border-radius: 16px; background: #f1f5f9; border: 1px solid rgba(148, 163, 184, 0.8); padding: 8px 6px 6px; max-height: 260px; overflow: auto; color: #0f172a; }",
       ".mzw-results-header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }",
@@ -118,6 +125,10 @@
       '    <div class="mzw-badge"><span class="mzw-badge-dot"></span><span>IA Moverz · Volume estimé</span></div>' +
       '    <div class="mzw-title">3 photos. Devis plus justes.</div>' +
       '    <div class="mzw-subtitle">On estime volume + valeur, puis vous comparez les devis.</div>' +
+      '    <div class="mzw-wow">' +
+      '      <div class="mzw-wow-item"><span class="mzw-wow-check">✓</span><span class="mzw-wow-text">Devis comparables</span></div>' +
+      '      <div class="mzw-wow-item"><span class="mzw-wow-check">✓</span><span class="mzw-wow-text">Moins de surprises</span></div>' +
+      "    </div>" +
       "  </div>" +
       '  <div class="mzw-summary" id="mzw-summary" style="display:none"></div>' +
       '  <div class="mzw-dropzone" id="mzw-dropzone">' +
@@ -143,6 +154,10 @@
       "      </div>" +
       "    </button>" +
       '    <div class="mzw-small-text">Gratuit · Résultat en &lt; 60 secondes</div>' +
+      '    <div class="mzw-links">' +
+      '      <button type="button" class="mzw-link mzw-link-secondary" id="mzw-skip-photos">Continuer sans photos</button>' +
+      '      <button type="button" class="mzw-link" id="mzw-photos-later">Ajouter plus tard</button>' +
+      "    </div>" +
       '    <div class="mzw-error" id="mzw-error" style="display:none"></div>' +
       "  </div>" +
       "</div>";
@@ -161,6 +176,8 @@
     var resultsListEl = root.getElementById("mzw-results-list");
     var resultsPillEl = root.getElementById("mzw-results-pill");
     var progressMaskEl = root.getElementById("mzw-progress-mask");
+    var skipPhotosBtn = root.getElementById("mzw-skip-photos");
+    var photosLaterBtn = root.getElementById("mzw-photos-later");
 
     /** @type {File[]} */
     var selectedFiles = [];
@@ -245,8 +262,8 @@
     }
 
     function updateAnalyzeDisabled() {
-      // Bouton désactivé uniquement pendant l'analyse en cours.
-      analyzeBtn.disabled = isAnalyzing;
+      // UX: on désactive tant qu'aucune photo n'est ajoutée (sauf après résultat).
+      analyzeBtn.disabled = isAnalyzing || (!hasResults && selectedFiles.length === 0);
     }
 
     function stopCamera() {
@@ -787,19 +804,37 @@
       if (!window.MoverzWidget) {
         window.MoverzWidget = {};
       }
-      window.MoverzWidget.goToQuotes = function () {
+      window.MoverzWidget.goToQuotes = function (mode) {
+        var suffix = mode ? String(mode) : "widget";
         window.location.href =
-          "https://devis.moverz.fr/devis-gratuits?src=moverz.fr&from=widget";
+          "https://devis.moverz.fr/devis-gratuits?src=moverz.fr&from=" +
+          encodeURIComponent(suffix);
       };
     }
 
     analyzeBtn.addEventListener("click", function () {
       if (hasResults && window.MoverzWidget && window.MoverzWidget.goToQuotes) {
-        window.MoverzWidget.goToQuotes();
+        window.MoverzWidget.goToQuotes("widget");
       } else {
         analyze();
       }
     });
+
+    if (skipPhotosBtn) {
+      skipPhotosBtn.addEventListener("click", function () {
+        if (window.MoverzWidget && window.MoverzWidget.goToQuotes) {
+          window.MoverzWidget.goToQuotes("widget_no_photos");
+        }
+      });
+    }
+
+    if (photosLaterBtn) {
+      photosLaterBtn.addEventListener("click", function () {
+        if (window.MoverzWidget && window.MoverzWidget.goToQuotes) {
+          window.MoverzWidget.goToQuotes("widget_photos_later");
+        }
+      });
+    }
 
     // Double-clic facultatif sur le bloc de résultats pour aller aux devis
     resultsEl.addEventListener("dblclick", function () {
