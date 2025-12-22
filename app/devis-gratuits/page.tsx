@@ -3739,20 +3739,20 @@ function DevisGratuitsPageInner() {
               </div>
             </div>
 
-            <label className="inline-flex items-center gap-2 text-xs text-slate-300">
+            <label className="inline-flex items-center gap-2 text-xs text-slate-700">
               <input
                 type="checkbox"
                 checked={form.dateFlexible}
                 onChange={(e) => updateField("dateFlexible", e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500/40"
+                className="h-4 w-4 rounded border-surface-3 bg-white text-brand-deep focus:ring-brand-spark/30"
               />
               <span>Je peux être flexible de quelques jours autour de cette date</span>
             </label>
 
             {/* Autres besoins éventuels (tous les services optionnels regroupés) */}
-            <div className="space-y-2 rounded-2xl bg-slate-950/60 p-3 text-[11px] text-slate-300">
+            <div className="space-y-2 rounded-2xl bg-surface-1 p-3 text-[11px] text-slate-700 ring-1 ring-surface-3">
               <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Autres besoins éventuels
                 </p>
               </div>
@@ -3760,7 +3760,7 @@ function DevisGratuitsPageInner() {
               <div className="mt-2 grid gap-3 md:grid-cols-3">
                 {/* Accès */}
                 <div className="space-y-1">
-                  <p className="text-[10px] font-semibold text-slate-400">
+                  <p className="text-[10px] font-semibold text-slate-600">
                     Accès
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -3792,8 +3792,8 @@ function DevisGratuitsPageInner() {
                       className={[
                         "rounded-full border px-3 py-1 text-left",
                         !hasCustomAccess
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                          ? "border-brand-deep bg-brand-deep text-white"
+                          : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                       ].join(" ")}
                     >
                       Accès facile
@@ -3805,8 +3805,8 @@ function DevisGratuitsPageInner() {
                       className={[
                         "rounded-full border px-3 py-1 text-left",
                         hasCustomAccess
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                          ? "border-brand-deep bg-brand-deep text-white"
+                          : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                       ].join(" ")}
                     >
                       Accès contraint
@@ -3827,8 +3827,8 @@ function DevisGratuitsPageInner() {
                   className={[
                     "rounded-full border px-3 py-1 text-left",
                     form.serviceMonteMeuble
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ? "border-brand-deep bg-brand-deep text-white"
+                      : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                   ].join(" ")}
                 >
                   Monte‑meuble à prévoir
@@ -3843,8 +3843,8 @@ function DevisGratuitsPageInner() {
                   className={[
                     "rounded-full border px-3 py-1 text-left",
                               form.accessNoElevator
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ? "border-brand-deep bg-brand-deep text-white"
+                      : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                   ].join(" ")}
                 >
                             Escaliers sans ascenseur
@@ -3860,8 +3860,8 @@ function DevisGratuitsPageInner() {
                             className={[
                               "rounded-full border px-3 py-1 text-left",
                               form.accessSmallElevator
-                                ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                                : "border-slate-700 bg-slate-900/60 text-slate-200",
+                                ? "border-brand-deep bg-brand-deep text-white"
+                                : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                             ].join(" ")}
                           >
                             Petit ascenseur / passages serrés
@@ -3879,8 +3879,8 @@ function DevisGratuitsPageInner() {
                         className={[
                           "rounded-full border px-3 py-1 text-left",
                           form.optionDifficultAccess
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                            ? "border-brand-deep bg-brand-deep text-white"
+                            : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                         ].join(" ")}
                       >
                         Rue / stationnement compliqué
@@ -3896,8 +3896,8 @@ function DevisGratuitsPageInner() {
                         className={[
                           "rounded-full border px-3 py-1 text-left",
                           form.accessTruckDifficult
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                            ? "border-brand-deep bg-brand-deep text-white"
+                            : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                         ].join(" ")}
                       >
                         Accès camion difficile
@@ -3913,8 +3913,8 @@ function DevisGratuitsPageInner() {
                         className={[
                           "rounded-full border px-3 py-1 text-left",
                           hasLongCarryOrigin
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                            ? "border-brand-deep bg-brand-deep text-white"
+                            : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                         ].join(" ")}
                       >
                         Portage &gt; 15 m (départ)
@@ -3931,8 +3931,8 @@ function DevisGratuitsPageInner() {
                           className={[
                             "rounded-full border px-3 py-1 text-left",
                             hasLongCarryDestination
-                              ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                              : "border-slate-700 bg-slate-900/60 text-slate-200",
+                              ? "border-brand-deep bg-brand-deep text-white"
+                              : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                           ].join(" ")}
                         >
                           Portage &gt; 15 m (arrivée)
@@ -3944,7 +3944,7 @@ function DevisGratuitsPageInner() {
 
                 {/* Mobilier */}
                 <div className="space-y-1">
-                  <p className="text-[10px] font-semibold text-slate-400">
+                  <p className="text-[10px] font-semibold text-slate-600">
                     Mobilier / objets spécifiques
                   </p>
                   <div className="flex gap-1.5 flex-wrap md:flex-nowrap">
@@ -3971,8 +3971,8 @@ function DevisGratuitsPageInner() {
                       className={[
                         "rounded-full border px-3 py-1 text-left",
                         !hasCustomFurniture
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                          ? "border-brand-deep bg-brand-deep text-white"
+                          : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                       ].join(" ")}
                     >
                       Rien de particulier
@@ -3984,8 +3984,8 @@ function DevisGratuitsPageInner() {
                       className={[
                         "rounded-full border px-3 py-1 text-left",
                         hasCustomFurniture
-                          ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                          : "border-slate-700 bg-slate-900/60 text-slate-200",
+                          ? "border-brand-deep bg-brand-deep text-white"
+                          : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                       ].join(" ")}
                     >
                       Mobilier spécifique
@@ -4011,8 +4011,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-left",
                       form.servicePiano === value
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ? "border-brand-deep bg-brand-deep text-white"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                     ].join(" ")}
                   >
                     {label}
@@ -4029,8 +4029,8 @@ function DevisGratuitsPageInner() {
                   className={[
                     "rounded-full border px-3 py-1 text-left",
                           form.furnitureAmericanFridge
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ? "border-brand-deep bg-brand-deep text-white"
+                      : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                   ].join(" ")}
                 >
                         Frigo US lourd
@@ -4043,8 +4043,8 @@ function DevisGratuitsPageInner() {
                         className={[
                           "rounded-full border px-3 py-1 text-left",
                           form.furnitureSafe
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                            ? "border-brand-deep bg-brand-deep text-white"
+                            : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                         ].join(" ")}
                       >
                         Coffre‑fort / armoire forte
