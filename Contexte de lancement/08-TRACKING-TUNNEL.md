@@ -1,5 +1,48 @@
 ## Tracking plan – Tunnel web Moverz
 
+### 0. GA4 (OBLIGATOIRE) – devis.moverz.fr
+
+Le tunnel envoie aussi des events **GA4** (en plus du tracking Back Office / `tunnel-events`) pour mesurer le funnel directement dans Google Analytics.
+
+#### 0.1. Pré-requis
+
+- Variable d’environnement: `NEXT_PUBLIC_GA4_ID`
+  - Exemple: `G-XXXXXXXXXX`
+  - Si la variable est absente, **aucun event GA4 n’est envoyé** (le tunnel reste 100% fonctionnel).
+
+#### 0.2. Events GA4 (v1)
+
+- **`form_start`**
+  - Quand: au premier démarrage “réel” (première interaction utilisateur dans le tunnel)
+- **`photos_added`**
+  - Quand: dès que l’utilisateur ajoute au moins une photo (et à chaque hausse du compteur)
+  - Param: `photos_count`
+- **`lead_submit`**
+  - Quand: dossier envoyé avec succès (fin de l’étape “Formules”)
+  - Param: `lead_id` (id tunnel)
+- (Optionnel) `dropoff_step`
+  - Non implémenté par défaut (à activer si besoin d’analyse frictions)
+
+#### 0.3. Paramètres GA4 (communs)
+
+Chaque event inclut:
+- `source` et `from` (lus depuis la querystring)
+  - mapping: `source` ← `source` ou `src` (fallback)
+- `city_slug` (si présent)
+- `step_name`, `step_index`
+
+#### 0.4. Debug GA4 (validation)
+
+- Utiliser GA4 **DebugView** pendant les tests.
+- Vérifier que les events `form_start`, `photos_added`, `lead_submit` apparaissent bien avec `source/from` et `step_*`.
+
+#### 0.5. Marquer `lead_submit` en conversion (GA4)
+
+Dans GA4:
+- Admin → **Events**
+- Trouver l’event `lead_submit`
+- Activer **Mark as conversion**
+
 ### 1. Objectifs business
 
 - **Mesurer l’acquisition tunnel**

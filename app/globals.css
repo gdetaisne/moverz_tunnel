@@ -2,8 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------
+   Moverz brand tokens (2025)
+   - Keep UI airy/light by default, pages can opt into dark hero.
+   - Values are RGB triplets to support Tailwind alpha syntax.
+------------------------------------------------------------ */
+:root {
+  /* Brand */
+  --brand-deep-teal: 43 122 120; /* #2B7A78 */
+  --brand-spark: 107 207 207; /* #6BCFCF */
+  --brand-navy: 15 23 42; /* #0F172A */
+  --brand-slate: 30 41 59; /* #1E293B */
+  --brand-warm: 245 158 11; /* #F59E0B (use sparingly) */
+
+  /* Surfaces (light-first) */
+  --surface-0: 255 255 255; /* white */
+  --surface-1: 248 250 252; /* slate-50 */
+  --surface-2: 241 245 249; /* slate-100 */
+  --surface-3: 226 232 240; /* slate-200 */
+
+  /* Text */
+  --text-1: 15 23 42; /* slate-900 */
+  --text-2: 51 65 85; /* slate-700 */
+  --text-3: 100 116 139; /* slate-500 */
+}
+
 body {
-  @apply bg-slate-950 text-slate-50;
+  background: rgb(var(--surface-0));
+  color: rgb(var(--text-1));
 }
 
 

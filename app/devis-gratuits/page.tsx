@@ -3,6 +3,7 @@
 import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { CameraCapture } from "../components/CameraCapture";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ga4Event } from "@/lib/analytics/ga4";
 import {
   createLead,
   updateLead,
@@ -1390,7 +1391,30 @@ function Step3MovingDayIntro({
 function DevisGratuitsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const src = searchParams.get("src") ?? undefined;
+  const source =
+    searchParams.get("source") ??
+    searchParams.get("src") ??
+    searchParams.get("utm_source") ??
+    undefined;
+  const from = searchParams.get("from") ?? undefined;
+  const citySlug =
+    searchParams.get("city_slug") ??
+    searchParams.get("citySlug") ??
+    undefined;
+
+  const getStepMeta = (step: StepId) => {
+    const stepLabel = STEPS.find((s) => s.id === step)?.label ?? String(step);
+    return { step_index: step, step_name: stepLabel };
+  };
+
+  const gaBaseParams = useMemo(
+    () => ({
+      source,
+      from,
+      city_slug: citySlug,
+    }),
+    [source, from, citySlug]
+  );
 
   // Pré-chauffer l'API d'adresses dès l'arrivée sur le tunnel pour éviter
   // que la toute première requête d'autocomplétion prenne 5-10s.
@@ -1476,6 +1500,51 @@ function DevisGratuitsPageInner() {
   const [photoFlowChoice, setPhotoFlowChoice] = useState<
     "none" | "photos_now"
   >("none");
+
+  // -----------------------
+  // GA4 tracking (mandatory)
+  // -----------------------
+  const hasFiredFormStartRef = useRef(false);
+  const lastPhotosCountRef = useRef(0);
+  const hasFiredLeadSubmitRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (hasFiredFormStartRef.current) return;
+
+    const fire = () => {
+      if (hasFiredFormStartRef.current) return;
+      hasFiredFormStartRef.current = true;
+      ga4Event("form_start", {
+        ...gaBaseParams,
+        ...getStepMeta(currentStep),
+      });
+    };
+
+    const onPointerDown = () => fire();
+    const onKeyDown = () => fire();
+
+    window.addEventListener("pointerdown", onPointerDown, { once: true });
+    window.addEventListener("keydown", onKeyDown, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gaBaseParams, currentStep]);
+
+  useEffect(() => {
+    const photosCount = localUploadFiles.filter((f) => f.status !== "error").length;
+    if (photosCount <= 0) return;
+    if (photosCount <= lastPhotosCountRef.current) return;
+    lastPhotosCountRef.current = photosCount;
+
+    ga4Event("photos_added", {
+      ...gaBaseParams,
+      ...getStepMeta(currentStep),
+      photos_count: photosCount,
+    });
+  }, [gaBaseParams, currentStep, localUploadFiles]);
 
   // Pré-remplissage depuis l'URL (liens back-office / relances).
   // Important : ne jamais écraser une saisie utilisateur déjà commencée.
@@ -1677,7 +1746,7 @@ function DevisGratuitsPageInner() {
         email: trimmedEmail,
         lastName: form.lastName.trim() || undefined,
         phone: form.phone.trim() || undefined,
-        source: src ?? undefined,
+        source: source ?? undefined,
         estimationMethod: "FORM" as const,
       };
       const { id: boLeadId } = await createBackofficeLead(backofficePayload);
@@ -1686,7 +1755,7 @@ function DevisGratuitsPageInner() {
       return boLeadId;
     } catch (boErr) {
       console.warn(
-        "⚠️ Impossible de synchroniser avec le Back Office (ensureBackofficeLeadId):",
+        "Impossible de synchroniser avec le Back Office (ensureBackofficeLeadId):",
         boErr
       );
       return null;
@@ -2077,7 +2146,7 @@ function DevisGratuitsPageInner() {
               })) ?? null;
         } catch (err) {
           console.warn(
-            "⚠️ Upload des photos vers le Back Office échoué, les photos restent disponibles côté tunnel uniquement:",
+            "Upload des photos vers le Back Office échoué, les photos restent disponibles côté tunnel uniquement:",
             err
           );
         }
@@ -2709,7 +2778,7 @@ function DevisGratuitsPageInner() {
         lastName: form.lastName.trim() || null,
         email: trimmedEmail,
         phone: form.phone.trim() || null,
-        source: src ?? null,
+        source: source ?? null,
       };
 
       // 1. Créer le lead local (SQLite)
@@ -2835,6 +2904,7 @@ function DevisGratuitsPageInner() {
     try {
       setIsSubmitting(true);
 
+      let effectiveLeadId = leadId;
       const performUpdate = async (id: string) => {
         await updateLead(id, updatePayload);
       };
@@ -2858,11 +2928,12 @@ function DevisGratuitsPageInner() {
               lastName: form.lastName.trim() || null,
               email: trimmedEmail || "test@moverz.dev",
               phone: form.phone.trim() || null,
-              source: src ?? null,
+              source: source ?? null,
             };
 
             const { id: newId } = await createLead(createPayload);
             setLeadId(newId);
+            effectiveLeadId = newId;
 
             await performUpdate(newId);
           } catch (retryErr) {
@@ -3028,15 +3099,24 @@ function DevisGratuitsPageInner() {
             // on tente une mise à jour minimale avec uniquement les champs cœur
             // (adresses, date, surface, volume, prix) pour éviter d'avoir un lead "vide".
             console.warn(
-              "⚠️ Échec mise à jour lead BO avec payload complet, tentative avec payload minimal:",
+              "Échec mise à jour lead BO avec payload complet, tentative avec payload minimal:",
               err,
             );
             await updateBackofficeLead(effectiveBackofficeLeadId, safePayload);
             console.log("✅ Lead mis à jour dans le Back Office avec payload minimal");
           }
         } catch (boErr) {
-          console.warn("⚠️ Impossible de synchroniser avec le Back Office:", boErr);
+          console.warn("Impossible de synchroniser avec le Back Office:", boErr);
         }
+      }
+
+      if (!hasFiredLeadSubmitRef.current) {
+        hasFiredLeadSubmitRef.current = true;
+        ga4Event("lead_submit", {
+          ...gaBaseParams,
+          ...getStepMeta(3),
+          lead_id: effectiveLeadId,
+        });
       }
 
       setCurrentStep(4);
@@ -3054,33 +3134,75 @@ function DevisGratuitsPageInner() {
 
   return (
     <div className="relative flex flex-1 flex-col gap-6">
-      <button
-        type="button"
-        onClick={() => {
-          if (typeof window === "undefined") return;
-          const ok = window.confirm("Repartir de zéro ? (Reset tunnel)");
-          if (!ok) return;
+      {process.env.NODE_ENV === "development" && (
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window === "undefined") return;
+            const ok = window.confirm("Repartir de zéro ? (Reset tunnel)");
+            if (!ok) return;
 
-          try {
-            window.localStorage.removeItem("moverz_tunnel_form_state");
-            window.localStorage.removeItem("moverz_tunnel_session_id");
-          } catch {
-            // ignore
-          }
+            try {
+              window.localStorage.removeItem("moverz_tunnel_form_state");
+              window.localStorage.removeItem("moverz_tunnel_session_id");
+            } catch {
+              // ignore
+            }
 
-          // Recharge propre (même URL, sans param spécial)
-          window.location.reload();
-        }}
-        className="pointer-events-auto fixed bottom-3 left-3 z-50 rounded-full border border-slate-800/70 bg-slate-950/40 px-2 py-1 text-[10px] font-medium text-slate-500 shadow-sm shadow-slate-950/70 opacity-50 hover:opacity-100 hover:border-slate-600 hover:text-slate-300"
-        title="Reset"
-      >
-        reset
-      </button>
+            // Recharge propre (même URL, sans param spécial)
+            window.location.reload();
+          }}
+          className="pointer-events-auto fixed bottom-3 left-3 z-50 rounded-full border border-surface-3 bg-white/80 px-2 py-1 text-[10px] font-medium text-slate-500 shadow-soft opacity-60 backdrop-blur hover:opacity-100"
+          title="Reset (dev)"
+        >
+          reset
+        </button>
+      )}
+
+      {/* Header + rassurance (minimal, premium) */}
+      <header className="space-y-3 rounded-3xl border border-surface-3 bg-white/80 p-4 shadow-soft backdrop-blur sm:p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              Moverz — demande de devis
+            </p>
+            <h1 className="text-lg font-semibold text-slate-900 sm:text-xl">
+              Un dossier clair, des devis comparables
+            </h1>
+            <p className="text-sm text-slate-600">
+              Astuce: <span className="font-semibold text-slate-900">les photos</span>{" "}
+              rendent le volume plus fiable et évitent les surprises.
+            </p>
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
+              Gratuit
+            </span>
+            <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
+              0 spam
+            </span>
+            <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
+              Pros contrôlés
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 sm:hidden">
+          <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
+            Gratuit
+          </span>
+          <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
+            0 spam
+          </span>
+          <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
+            Pros contrôlés
+          </span>
+        </div>
+      </header>
 
       {/* Stepper simple, mobile first */}
       <nav
         aria-label="Étapes du tunnel"
-        className="rounded-2xl bg-slate-900/60 p-3 shadow-sm ring-1 ring-slate-800"
+        className="rounded-3xl border border-surface-3 bg-white/80 p-3 shadow-soft backdrop-blur"
       >
         {/* Mobile : barre de progression + libellé courant */}
         {/* Mobile : mini stepper scrollable et cliquable */}
@@ -3099,10 +3221,10 @@ function DevisGratuitsPageInner() {
                 className={[
                   "flex h-10 min-w-[40px] items-center justify-center rounded-full border text-sm font-semibold transition-all",
                   isActive
-                    ? "border-sky-400 bg-sky-400 text-slate-950 shadow-lg shadow-sky-500/40"
+                    ? "border-transparent bg-gradient-to-r from-brand-deep to-brand-spark text-white shadow-brand"
                     : isCompleted
-                    ? "border-emerald-400/80 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30"
-                    : "border-slate-600/70 bg-slate-900 text-slate-400",
+                    ? "border-brand-deep/30 bg-brand-deep/10 text-brand-deep hover:bg-brand-deep/15"
+                    : "border-surface-3 bg-white text-slate-500",
                   canGoBack && !isActive ? "cursor-pointer" : "",
                   !canGoBack && !isActive ? "cursor-default opacity-50" : "",
                 ].join(" ")}
@@ -3136,11 +3258,11 @@ function DevisGratuitsPageInner() {
                     className={[
                       "flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold transition-all",
                       isActive
-                        ? "border-sky-400 bg-sky-400 text-slate-950 shadow-[0_0_0_4px_rgba(56,189,248,0.25)]"
+                        ? "border-transparent bg-gradient-to-r from-brand-deep to-brand-spark text-white shadow-[0_0_0_4px_rgba(43,122,120,0.18)]"
                         : isCompleted
-                        ? "border-emerald-400 bg-emerald-400 text-slate-950"
-                        : "border-slate-600/70 bg-slate-900 text-slate-300",
-                      canGoToStep && !isActive ? "hover:border-sky-300 hover:text-sky-200" : "",
+                        ? "border-brand-deep/30 bg-brand-deep/10 text-brand-deep"
+                        : "border-surface-3 bg-white text-slate-600",
+                      canGoToStep && !isActive ? "hover:border-brand-spark/60 hover:text-slate-900" : "",
                     ].join(" ")}
                   >
                     {isCompleted ? "✓" : step.id}
@@ -3149,17 +3271,17 @@ function DevisGratuitsPageInner() {
                     className={[
                       "text-[11px] font-medium",
                       isActive
-                        ? "text-sky-300"
+                        ? "text-brand-deep"
                         : isCompleted
-                        ? "text-slate-200"
-                        : "text-slate-400",
+                        ? "text-slate-800"
+                        : "text-slate-500",
                     ].join(" ")}
                   >
                     {step.label}
                   </span>
                 </button>
                 {!isLast && (
-                  <div className="h-px flex-1 rounded-full bg-slate-700/70" />
+                  <div className="h-px flex-1 rounded-full bg-surface-3" />
                 )}
               </div>
             );
@@ -3169,14 +3291,14 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 1 – Contact */}
       {currentStep === 1 && (
-        <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
+        <section className="flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep1}>
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-100">
+              <label className="block text-sm font-medium text-slate-900">
                 Comment voulez-vous qu’on vous appelle ?
               </label>
               {error && !form.firstName && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Un prénom, un nom ou un surnom qui sera utilisé dans nos échanges.
                 </p>
               )}
@@ -3188,14 +3310,14 @@ function DevisGratuitsPageInner() {
                     setFirstNameTouched(true);
                     updateField("firstName", e.target.value);
                   }}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  className="w-full rounded-xl border border-surface-3 bg-surface-1 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
                   placeholder="Prénom ou surnom"
                   autoComplete="given-name"
                 />
                 {(hasTriedSubmitStep1 || firstNameTouched) && (
                   <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                     {isFirstNameValid ? (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-spark text-[11px] font-bold text-brand-navy shadow-sm">
                         ✓
                       </span>
                     ) : (
@@ -3209,11 +3331,11 @@ function DevisGratuitsPageInner() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-100">
+              <label className="block text-sm font-medium text-slate-900">
                 Email de contact
               </label>
               {hasTriedSubmitStep1 && !isEmailValid && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Utilisé uniquement pour vous envoyer les devis et suivre votre dossier (jamais partagé ni revendu).
                 </p>
               )}
@@ -3225,14 +3347,14 @@ function DevisGratuitsPageInner() {
                     setEmailTouched(true);
                     updateField("email", e.target.value);
                   }}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  className="w-full rounded-xl border border-surface-3 bg-surface-1 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
                   placeholder="vous@email.fr"
                   autoComplete="email"
                 />
                 {(hasTriedSubmitStep1 || emailTouched) && (
                   <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                     {isEmailValid ? (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-spark text-[11px] font-bold text-brand-navy shadow-sm">
                         ✓
                       </span>
                     ) : (
@@ -3254,7 +3376,7 @@ function DevisGratuitsPageInner() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isSubmitting ? "Création en cours…" : "Commencer ma demande"}
             </button>
@@ -3264,7 +3386,7 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 2 – Projet (départ / arrivée en blocs ouverts) */}
       {currentStep === 2 && (
-        <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
+        <section className="flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
           <form
             className="space-y-5"
             onSubmit={(e) => {
@@ -3297,13 +3419,13 @@ function DevisGratuitsPageInner() {
             }}
           >
             {/* Bloc départ – toujours ouvert, sans badges */}
-            <div className="space-y-3 overflow-hidden rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
+            <div className="space-y-3 overflow-hidden rounded-2xl bg-surface-1 p-4 ring-1 ring-surface-3">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-deep">
                   Départ
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-500">
                     {originSummary || "Code postal, ville, type de logement…"}
                   </p>
                   {(hasTriedSubmitStep2 ||
@@ -3313,7 +3435,7 @@ function DevisGratuitsPageInner() {
                     form.originCarryDistance) && (
                     <span className="pointer-events-none flex items-center">
                       {isOriginAddressValid ? (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-spark text-[11px] font-bold text-brand-navy shadow-sm">
                           ✓
                         </span>
                       ) : (
@@ -3437,13 +3559,13 @@ function DevisGratuitsPageInner() {
             </div>
 
             {/* Bloc arrivée – toujours ouvert, sans badges */}
-            <div className="space-y-3 overflow-hidden rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
+            <div className="space-y-3 overflow-hidden rounded-2xl bg-surface-1 p-4 ring-1 ring-surface-3">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-deep">
                   Arrivée
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-500">
                     {destinationSummary || "Code postal, ville, type de logement…"}
                   </p>
                   {(hasTriedSubmitStep2 ||
@@ -3454,7 +3576,7 @@ function DevisGratuitsPageInner() {
                     form.destinationUnknown) && (
                     <span className="pointer-events-none flex items-center">
                       {isDestinationAddressValid ? (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-slate-950 shadow-sm shadow-emerald-500/60">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-spark text-[11px] font-bold text-brand-navy shadow-sm">
                           ✓
                         </span>
                       ) : (
@@ -3469,13 +3591,13 @@ function DevisGratuitsPageInner() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-medium text-slate-200">
+                  <p className="text-xs font-medium text-slate-800">
                     Adresse d’arrivée
                   </p>
-                  <label className="flex items-center gap-2 text-[11px] text-slate-300">
+                  <label className="flex items-center gap-2 text-[11px] text-slate-600">
                     <input
                       type="checkbox"
-                      className="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-500"
+                      className="h-3.5 w-3.5 rounded border-surface-3 bg-white text-brand-deep focus:ring-brand-spark/30"
                       checked={isDestinationForeign}
                       onChange={(e) => setIsDestinationForeign(e.target.checked)}
                     />
@@ -4026,13 +4148,13 @@ function DevisGratuitsPageInner() {
               <button
                 type="button"
                 onClick={() => goToStep(1)}
-                className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-400"
+                className="inline-flex flex-1 items-center justify-center rounded-xl border border-surface-3 bg-white px-4 py-3 text-sm font-medium text-slate-800 hover:border-slate-300"
               >
                 Retour
               </button>
               <button
                 type="submit"
-                className="inline-flex flex-1 items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300"
+                className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105"
               >
                 Étape suivante
               </button>
@@ -4043,16 +4165,16 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 3 – Volume & formules */}
       {currentStep === 3 && (
-        <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
+        <section className="flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep3}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-              <h2 className="text-lg font-semibold text-slate-50">
+              <h2 className="text-lg font-semibold text-slate-900">
                 Sélectionnez votre formule
               </h2>
             </div>
 
             {/* Bloc estimation volume + formules */}
-            <div className="space-y-4 rounded-2xl bg-slate-950/40 p-4 ring-1 ring-slate-800">
+            <div className="space-y-4 rounded-2xl bg-brand-navy/95 p-4 ring-1 ring-brand-slate/30">
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr),minmax(0,1.3fr)]">
                 {/* Colonne gauche : densité + surface/volume */}
                 <div className="space-y-4">
@@ -4743,14 +4865,14 @@ function DevisGratuitsPageInner() {
               <button
                 type="button"
                 onClick={() => goToStep(2)}
-                className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-400"
+                className="inline-flex flex-1 items-center justify-center rounded-xl border border-surface-3 bg-white px-4 py-3 text-sm font-medium text-slate-800 hover:border-slate-300"
               >
                 Modifier
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || !leadId}
-                className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isSubmitting ? "Validation…" : "Valider ma demande"}
               </button>
@@ -4761,16 +4883,16 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 4 – Photos & inventaire */}
       {currentStep === 4 && (
-        <section className="flex-1 rounded-2xl bg-slate-900/70 p-4 shadow-sm ring-1 ring-slate-800 sm:p-6">
+        <section className="flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
           <div className="space-y-6">
             {/* Question initiale : Avez-vous des photos ? */}
             {hasPhotosAnswer === "pending" && (
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-slate-50">
+                <h2 className="text-lg font-semibold text-slate-900">
                   Avez-vous des photos de votre logement ?
                 </h2>
-                <p className="text-sm text-slate-300">
-                  Les photos nous permettent de générer automatiquement un inventaire détaillé et une déclaration de valeur.
+                <p className="text-sm text-slate-600">
+                  Les photos sont la clé pour obtenir un volume fiable, des devis comparables et éviter les surprises.
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <button
@@ -4779,14 +4901,14 @@ function DevisGratuitsPageInner() {
                       setHasPhotosAnswer("yes");
                       setPhotoFlowChoice("photos_now");
                     }}
-                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300"
+                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105"
                   >
                     Oui, j'ai des photos
                   </button>
                   <button
                     type="button"
                     onClick={() => setHasPhotosAnswer("no")}
-                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-200 hover:border-slate-400"
+                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-surface-3 bg-white px-4 py-3 text-sm font-medium text-slate-800 hover:border-slate-300"
                   >
                     Non, pas pour le moment
                   </button>
@@ -4797,34 +4919,34 @@ function DevisGratuitsPageInner() {
             {/* Si l'utilisateur a répondu "non", on lui explique pourquoi c'est important */}
             {hasPhotosAnswer === "no" && photoFlowChoice === "none" && (
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-slate-50">
+                <h2 className="text-lg font-semibold text-slate-900">
                   Pourquoi les photos sont importantes
                 </h2>
-                <div className="space-y-3 rounded-2xl bg-emerald-500/10 p-4 ring-1 ring-emerald-400/30">
-                  <p className="text-sm font-medium text-emerald-200">
+                <div className="space-y-3 rounded-2xl bg-brand-deep/5 p-4 ring-1 ring-brand-deep/15">
+                  <p className="text-sm font-medium text-slate-900">
                     ✓ Devis plus précis et fiables
                   </p>
-                  <p className="text-sm text-slate-300">
+                  <p className="text-sm text-slate-600">
                     Sans photos, les déménageurs donneront des devis approximatifs avec des marges importantes. Vous risquez des suppléments le jour J.
                   </p>
                 </div>
-                <div className="space-y-3 rounded-2xl bg-amber-500/10 p-4 ring-1 ring-amber-400/30">
-                  <p className="text-sm font-medium text-amber-200">
-                    ⚠️ Inventaire et déclaration de valeur obligatoires
+                <div className="space-y-3 rounded-2xl bg-surface-2 p-4 ring-1 ring-surface-3">
+                  <p className="text-sm font-medium text-slate-900">
+                    Inventaire et déclaration de valeur
                   </p>
-                  <p className="text-sm text-slate-300">
+                  <p className="text-sm text-slate-600">
                     Les déménageurs vous demanderont systématiquement un inventaire et une déclaration de valeur. Avec nos photos + IA, c'est fait automatiquement.
                   </p>
                 </div>
-                <div className="space-y-3 rounded-2xl bg-sky-500/10 p-4 ring-1 ring-sky-400/30">
-                  <p className="text-sm font-medium text-sky-200">
-                    📧 Solution : finalisez plus tard par email
+                <div className="space-y-3 rounded-2xl bg-surface-2 p-4 ring-1 ring-surface-3">
+                  <p className="text-sm font-medium text-slate-900">
+                    Solution : finalisez plus tard par email
                   </p>
-                  <p className="text-sm text-slate-300">
+                  <p className="text-sm text-slate-600">
                     Vous n'avez pas vos photos maintenant ? On vous envoie un email récapitulatif avec un lien pour finaliser votre demande plus tard.
                   </p>
                 </div>
-                <p className="text-xs text-slate-300">
+                <p className="text-xs text-slate-600">
                   Dans tous les cas, vous recevrez aussi un{" "}
                   <span className="font-semibold">email de confirmation</span>{" "}
                   sur{" "}
@@ -4841,7 +4963,7 @@ function DevisGratuitsPageInner() {
                       setHasPhotosAnswer("yes");
                       setPhotoFlowChoice("photos_now");
                     }}
-                    className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition hover:bg-sky-300"
+                    className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105"
                   >
                     Finalement, j'ai des photos
                   </button>
@@ -4867,11 +4989,11 @@ function DevisGratuitsPageInner() {
                         try {
                           await sendBackofficePhotoReminder(boLeadId);
                         } catch (emailErr) {
-                          console.warn("⚠️ Erreur lors de l'envoi de l'email de relance photos:", emailErr);
+                          console.warn("Erreur lors de l'envoi de l'email de relance photos:", emailErr);
                         }
                       } else {
                         console.warn(
-                          "⚠️ Impossible de synchroniser avec le Back Office pour la relance photos (boLeadId manquant)."
+                          "Impossible de synchroniser avec le Back Office pour la relance photos (boLeadId manquant)."
                         );
                       }
 
@@ -4884,14 +5006,14 @@ function DevisGratuitsPageInner() {
                       }
                     }}
                     disabled={isSubmitting}
-                    className="inline-flex items-center justify-center rounded-xl border border-sky-400/70 bg-sky-950/30 px-4 py-3 text-sm font-semibold text-sky-100 hover:bg-sky-950/50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-xl border border-surface-3 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSubmitting ? "Envoi en cours..." : "Recevoir un email pour finaliser plus tard"}
                   </button>
                   <button
                     type="button"
                     onClick={handleNoInventory}
-                    className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-4 py-3 text-sm font-medium text-slate-300 hover:border-slate-400"
+                    className="inline-flex items-center justify-center rounded-xl border border-surface-3 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-slate-300"
                   >
                     Continuer sans photos (devis approximatifs)
                   </button>
@@ -4914,8 +5036,8 @@ function DevisGratuitsPageInner() {
                 </p>
                 <div className="flex flex-col items-stretch gap-2 text-[11px] text-slate-100 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-1 items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/20 text-[12px]">
-                      📷
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-deep/10 text-[11px] font-semibold text-brand-deep">
+                      PH
                     </div>
                     <span className="font-medium">Vos photos du logement</span>
                   </div>
@@ -4923,8 +5045,8 @@ function DevisGratuitsPageInner() {
                     ➜
                   </div>
                   <div className="flex flex-1 items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 text-[12px]">
-                      🤖
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-spark/20 text-[11px] font-semibold text-brand-deep">
+                      IA
                     </div>
                     <span className="font-medium">Traitement intelligent Moverz</span>
                   </div>
@@ -4932,8 +5054,8 @@ function DevisGratuitsPageInner() {
                     ➜
                   </div>
                   <div className="flex flex-1 items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/20 text-[12px]">
-                      📋
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-[11px] font-semibold text-slate-700 ring-1 ring-surface-3">
+                      DOC
                     </div>
                     <span className="font-medium">
                       Inventaire détaillé + déclaration de valeur prête
@@ -4946,7 +5068,7 @@ function DevisGratuitsPageInner() {
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                 <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-[11px] font-semibold text-emerald-300">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-deep/10 text-[11px] font-semibold text-brand-deep">
                     V
                   </div>
                   <div className="space-y-1 text-xs">
@@ -4960,7 +5082,7 @@ function DevisGratuitsPageInner() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/15 text-[11px] font-semibold text-sky-300">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-spark/20 text-[11px] font-semibold text-brand-deep">
                     i
                   </div>
                   <div className="space-y-1 text-xs">
@@ -4974,7 +5096,7 @@ function DevisGratuitsPageInner() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/15 text-[11px] font-semibold text-amber-300">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-[11px] font-semibold text-slate-700 ring-1 ring-surface-3">
                     €
                   </div>
                   <div className="space-y-1 text-xs">
@@ -4988,8 +5110,8 @@ function DevisGratuitsPageInner() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-fuchsia-500/15 text-[11px] font-semibold text-fuchsia-300">
-                    ⚡
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-[11px] font-semibold text-slate-700 ring-1 ring-surface-3">
+                    R
                   </div>
                   <div className="space-y-1 text-xs">
                     <p className="font-semibold text-slate-50">
@@ -5002,10 +5124,33 @@ function DevisGratuitsPageInner() {
                   </div>
                 </div>
                 </div>
-                <p className="text-[11px] font-medium text-emerald-300">
+                <p className="text-[11px] font-medium text-brand-deep">
                   → 4 photos par pièce suffisent (vue générale + deux angles +
                   détails si besoin).
                 </p>
+
+                <div className="rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Quoi photographier (simple et rapide)
+                  </p>
+                  <ul className="mt-2 space-y-1 text-[11px] text-slate-200">
+                    <li>
+                      <span className="font-semibold text-slate-50">Chaque pièce</span> :
+                      une vue générale + 2 angles.
+                    </li>
+                    <li>
+                      <span className="font-semibold text-slate-50">Objets “hors norme”</span> :
+                      piano, coffre-fort, frigo américain, aquarium.
+                    </li>
+                    <li>
+                      <span className="font-semibold text-slate-50">Accès</span> :
+                      escaliers, ascenseur (si petit), couloir étroit, rue/stationnement.
+                    </li>
+                  </ul>
+                  <p className="mt-2 text-[11px] text-slate-400">
+                    Conseil: commencez par salon/cuisine, puis chambres. Inutile de photographier chaque petit objet.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -5990,7 +6135,7 @@ function DevisGratuitsPageInner() {
                             try {
                               await requestBackofficeConfirmation(confirmationLeadId);
                             } catch (confirmErr) {
-                              console.warn("⚠️ Email de confirmation non envoyé (photos now):", confirmErr);
+                              console.warn("Email de confirmation non envoyé (photos now):", confirmErr);
                             }
                           }
                         } finally {
@@ -5998,7 +6143,7 @@ function DevisGratuitsPageInner() {
                           router.push("/devis-gratuits/merci");
                         }
                       }}
-                      className="inline-flex items-center rounded-full bg-emerald-400 px-4 py-1.5 text-[11px] font-semibold text-slate-950 shadow-sm shadow-emerald-500/40 hover:bg-emerald-300"
+                      className="inline-flex items-center rounded-full bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-1.5 text-[11px] font-semibold text-white shadow-brand hover:brightness-105"
                     >
                       Terminer et envoyer mon dossier
                     </button>
@@ -6255,7 +6400,7 @@ function DevisGratuitsPageInner() {
                   lastName: form.lastName || null,
                   email: form.email || null,
                   phone: form.phone || null,
-                  source: src ?? null,
+                  source: source ?? null,
                 };
                 const created = await createLead(payload);
                 setLeadId(created.id);
@@ -6273,7 +6418,7 @@ function DevisGratuitsPageInner() {
               );
             }
           }}
-          className="pointer-events-auto fixed bottom-3 left-3 z-50 rounded-full border border-slate-700/60 bg-slate-950/80 px-3 py-1 text-[10px] font-medium text-slate-400 shadow-sm shadow-slate-900/80 hover:border-sky-400 hover:text-sky-200"
+          className="pointer-events-auto fixed bottom-3 right-3 z-50 rounded-full border border-surface-3 bg-white/80 px-3 py-1 text-[10px] font-medium text-slate-600 shadow-soft backdrop-blur hover:border-slate-300"
         >
           Aller step 4 (debug)
         </button>

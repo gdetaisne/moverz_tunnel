@@ -201,12 +201,12 @@ export function CameraCapture({
       <div
         className={
           frameClassName ??
-          "space-y-2 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70"
+          "space-y-2 rounded-2xl bg-surface-1 p-3 ring-1 ring-surface-3"
         }
       >
         {showChrome && (
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-600">
               Recommandations : 3 à 5 photos par pièce. Tout ce qui est vu sera
               pris en compte.
             </p>
@@ -214,7 +214,7 @@ export function CameraCapture({
               <button
                 type="button"
                 onClick={handleStop}
-                className="rounded-full border border-slate-600 bg-slate-900 px-3 py-1 text-[11px] font-medium text-slate-200 hover:bg-slate-800"
+                className="rounded-full border border-surface-3 bg-white px-3 py-1 text-[11px] font-medium text-slate-700 hover:border-slate-300"
               >
                 Fermer la caméra
               </button>
@@ -222,7 +222,7 @@ export function CameraCapture({
               <button
                 type="button"
                 onClick={startCamera}
-                className="rounded-full bg-sky-500 px-3 py-1 text-[11px] font-semibold text-slate-950 shadow-sm shadow-sky-500/40 hover:bg-sky-400"
+                className="rounded-full bg-gradient-to-r from-brand-deep to-brand-spark px-3 py-1 text-[11px] font-semibold text-white shadow-brand hover:brightness-105"
               >
                 Ouvrir la caméra
               </button>
@@ -251,13 +251,13 @@ export function CameraCapture({
                 type="button"
                 onClick={handleCapture}
                 disabled={!canCaptureMore || state !== "active"}
-                className="flex-1 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm shadow-emerald-500/40 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 rounded-full bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-2 text-sm font-semibold text-white shadow-brand hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {canCaptureMore
                   ? "Prendre une photo"
                   : "Limite de photos atteinte"}
               </button>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-[11px] text-slate-600">
                 {photos.length} / {maxPhotos} photo
                 {maxPhotos > 1 ? "s" : ""}
               </span>
@@ -266,7 +266,7 @@ export function CameraCapture({
         )}
 
         {error && (
-          <p className="text-[11px] text-amber-300">
+          <p className="text-[11px] text-amber-600">
             {error}
           </p>
         )}
@@ -304,7 +304,7 @@ export function CameraCapture({
         )}
 
         {(state === "unsupported" || state === "permission-denied") && (
-          <p className="mt-1 text-[11px] text-slate-400">
+          <p className="mt-1 text-[11px] text-slate-600">
             Si la caméra ne fonctionne pas sur votre appareil, utilisez plutôt
             le bouton d&apos;upload classique juste au-dessus pour sélectionner
             vos photos depuis la galerie.
