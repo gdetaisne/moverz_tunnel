@@ -51,17 +51,17 @@
 
     var style = document.createElement("style");
     style.textContent = [
-      ".mzw-root { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; color: #0f172a; }",
-      ".mzw-card { background: #f9fafb; border-radius: 24px; padding: 20px 16px 16px; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18); color: #0f172a; max-width: 420px; min-height: 420px; display: flex; flex-direction: column; }",
+      ".mzw-root { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; color: #0f172a; --mzw-deep: 43 122 120; --mzw-spark: 107 207 207; --mzw-navy: 15 23 42; }",
+      ".mzw-card { background: #ffffff; border-radius: 24px; padding: 20px 16px 16px; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16); color: #0f172a; max-width: 420px; min-height: 420px; display: flex; flex-direction: column; }",
       ".mzw-header { margin-bottom: 16px; }",
-      ".mzw-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(16, 185, 129, 0.08); color: #047857; font-size: 11px; font-weight: 500; }",
-      ".mzw-badge-dot { width: 6px; height: 6px; border-radius: 999px; background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25); }",
+      ".mzw-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(var(--mzw-deep), 0.10); color: rgb(var(--mzw-deep)); font-size: 11px; font-weight: 600; }",
+      ".mzw-badge-dot { width: 6px; height: 6px; border-radius: 999px; background: rgb(var(--mzw-spark)); box-shadow: 0 0 0 4px rgba(var(--mzw-spark), 0.22); }",
       ".mzw-title { margin-top: 10px; font-size: 18px; font-weight: 600; }",
       ".mzw-subtitle { margin-top: 4px; font-size: 13px; color: #4b5563; }",
       ".mzw-dropzone { margin-top: 16px; border-radius: 18px; border: 1px dashed rgba(148, 163, 184, 0.8); background: #f1f5f9; padding: 18px 14px; text-align: center; transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; }",
-      ".mzw-dropzone.mzw-dropzone--active { border-color: #22c55e; background: #e0f2fe; box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.15); }",
-      ".mzw-drop-icon { width: 32px; height: 32px; border-radius: 999px; background: rgba(59, 130, 246, 0.08); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px; }",
-      ".mzw-drop-icon-inner { width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid #22c55e; display: flex; align-items: center; justify-content: center; font-size: 13px; }",
+      ".mzw-dropzone.mzw-dropzone--active { border-color: rgba(var(--mzw-spark), 0.95); background: rgba(var(--mzw-spark), 0.14); box-shadow: 0 0 0 1px rgba(var(--mzw-deep), 0.10); }",
+      ".mzw-drop-icon { width: 32px; height: 32px; border-radius: 999px; background: rgba(var(--mzw-spark), 0.14); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px; }",
+      ".mzw-drop-icon-inner { width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid rgba(var(--mzw-deep), 0.75); display: flex; align-items: center; justify-content: center; font-size: 13px; }",
       ".mzw-drop-title { font-size: 14px; font-weight: 500; }",
       ".mzw-drop-helper { margin-top: 4px; font-size: 12px; color: #6b7280; }",
       ".mzw-drop-limit { margin-top: 2px; font-size: 11px; color: #9ca3af; }",
@@ -70,42 +70,42 @@
       ".mzw-camera-text { font-size: 11px; color: #e5e7eb; }",
       ".mzw-camera-actions { margin-top: 6px; display: flex; gap: 6px; align-items: center; }",
       ".mzw-camera-pill-btn { border-radius: 999px; padding: 5px 10px; font-size: 11px; font-weight: 500; border: 1px solid rgba(148, 163, 184, 0.9); background: #020617; color: #e5e7eb; cursor: pointer; }",
-      ".mzw-camera-pill-btn-primary { border-color: #22c55e; background: rgba(34, 197, 94, 0.15); color: #bbf7d0; }",
+      ".mzw-camera-pill-btn-primary { border-color: rgba(var(--mzw-spark), 0.95); background: rgba(var(--mzw-deep), 0.22); color: rgba(var(--mzw-spark), 0.95); }",
       ".mzw-camera-pill-btn-secondary { border-color: rgba(148, 163, 184, 0.9); background: transparent; color: #e5e7eb; }",
       ".mzw-camera-video-wrapper { margin-top: 8px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.8); background: #000000; }",
       ".mzw-camera-video { width: 100%; height: 210px; object-fit: cover; background: #000000; }",
       ".mzw-camera-cta-row { margin-top: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }",
       ".mzw-camera-counter { font-size: 11px; color: #9ca3af; }",
       ".mzw-photos-row { margin-top: 10px; display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }",
-      ".mzw-photo-pill { border-radius: 999px; background: #e5f0ff; border: 1px solid rgba(148, 163, 184, 0.8); padding: 4px 9px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: #111827; }",
-      ".mzw-photo-pill-count { width: 18px; height: 18px; border-radius: 999px; background: rgba(59, 130, 246, 0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; }",
+      ".mzw-photo-pill { border-radius: 999px; background: rgba(var(--mzw-deep), 0.08); border: 1px solid rgba(148, 163, 184, 0.8); padding: 4px 9px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: #111827; }",
+      ".mzw-photo-pill-count { width: 18px; height: 18px; border-radius: 999px; background: rgba(var(--mzw-spark), 0.22); display: flex; align-items: center; justify-content: center; font-size: 11px; color: rgb(var(--mzw-navy)); }",
       ".mzw-photo-pill-remove { cursor: pointer; opacity: 0.65; }",
       ".mzw-summary { margin-top: 10px; display: flex; justify-content: flex-end; }",
-      ".mzw-summary-pill { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: rgba(191, 219, 254, 0.9); color: #1d4ed8; font-weight: 500; }",
+      ".mzw-summary-pill { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: rgba(var(--mzw-spark), 0.22); color: rgb(var(--mzw-navy)); font-weight: 600; }",
       ".mzw-footer { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }",
-      ".mzw-primary-btn { position: relative; overflow: hidden; border: none; border-radius: 999px; padding: 11px 14px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(120deg, #22c55e, #06b6d4); color: #0f172a; box-shadow: 0 12px 25px rgba(34, 197, 94, 0.35); transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease; }",
-      ".mzw-primary-btn[disabled] { opacity: 1; cursor: default; box-shadow: 0 12px 25px rgba(34, 197, 94, 0.35); }",
+      ".mzw-primary-btn { position: relative; overflow: hidden; border: none; border-radius: 999px; padding: 11px 14px; font-size: 14px; font-weight: 650; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(120deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); color: #ffffff; box-shadow: 0 12px 26px rgba(43, 122, 120, 0.26); transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease; }",
+      ".mzw-primary-btn[disabled] { opacity: 1; cursor: default; box-shadow: 0 12px 26px rgba(43, 122, 120, 0.26); }",
       ".mzw-primary-btn-inner { position: relative; z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }",
       ".mzw-progress-mask { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.12); pointer-events: none; border-radius: inherit; transform: translateZ(0); width: 0%; opacity: 0; }",
-      ".mzw-primary-btn:not([disabled]):hover { transform: translateY(-1px); box-shadow: 0 16px 30px rgba(34, 197, 94, 0.45); }",
+      ".mzw-primary-btn:not([disabled]):hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(43, 122, 120, 0.30); }",
       ".mzw-primary-btn-chevron { font-size: 13px; }",
       ".mzw-small-text { font-size: 11px; color: #94a3b8; text-align: center; }",
       ".mzw-error { margin-top: 8px; font-size: 12px; color: #b91c1c; }",
       ".mzw-results { margin-top: 10px; border-radius: 16px; background: #f1f5f9; border: 1px solid rgba(148, 163, 184, 0.8); padding: 8px 6px 6px; max-height: 260px; overflow: auto; color: #0f172a; }",
       ".mzw-results-header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }",
       ".mzw-results-title { font-size: 13px; font-weight: 500; color: #0f172a; }",
-      ".mzw-results-pill { font-size: 11px; color: #1d4ed8; background: rgba(191, 219, 254, 0.9); border-radius: 999px; padding: 2px 8px; }",
+      ".mzw-results-pill { font-size: 11px; color: rgb(var(--mzw-navy)); background: rgba(var(--mzw-spark), 0.22); border-radius: 999px; padding: 2px 8px; font-weight: 600; }",
       ".mzw-results-list { display: flex; flex-direction: column; gap: 6px; }",
       ".mzw-item { border-radius: 12px; background: #ffffff; padding: 8px 9px; border: 1px solid rgba(148, 163, 184, 0.8); }",
       ".mzw-item-header { display: flex; justify-content: space-between; gap: 8px; align-items: center; }",
       ".mzw-item-label { font-size: 12px; font-weight: 500; color: #0f172a; }",
       ".mzw-item-badges { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }",
-      ".mzw-chip { border-radius: 999px; background: rgba(59, 130, 246, 0.08); padding: 1px 6px; font-size: 10px; color: #1d4ed8; }",
+      ".mzw-chip { border-radius: 999px; background: rgba(var(--mzw-deep), 0.10); padding: 1px 6px; font-size: 10px; color: rgb(var(--mzw-deep)); font-weight: 600; }",
       ".mzw-chip-outline { border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.8); padding: 1px 6px; font-size: 10px; color: #111827; background: #f9fafb; }",
       ".mzw-item-body { margin-top: 4px; font-size: 11px; color: #4b5563; display: flex; flex-direction: column; gap: 2px; }",
       ".mzw-item-subdetails { margin-top: 3px; font-size: 10px; color: #6b7280; }",
       ".mzw-loading { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #e5f4ff; }",
-      ".mzw-spinner { width: 14px; height: 14px; border-radius: 999px; border: 2px solid rgba(148, 163, 184, 0.6); border-top-color: #22c55e; animation: mzw-spin 0.7s linear infinite; }",
+      ".mzw-spinner { width: 14px; height: 14px; border-radius: 999px; border: 2px solid rgba(148, 163, 184, 0.6); border-top-color: rgb(var(--mzw-deep)); animation: mzw-spin 0.7s linear infinite; }",
       "@keyframes mzw-spin { to { transform: rotate(360deg); } }",
       "@media (max-width: 640px) { .mzw-card { max-width: 100%; padding: 18px 16px 14px; } }",
     ].join("");
@@ -116,14 +116,14 @@
       '<div class="mzw-card">' +
       '  <div class="mzw-header">' +
       '    <div class="mzw-badge"><span class="mzw-badge-dot"></span><span>IA Moverz · Volume estimé</span></div>' +
-      '    <div class="mzw-title">Vos photos, notre IA fait le reste</div>' +
-      '    <div class="mzw-subtitle">Testez avec jusqu’à 3 photos, on estime le volume et la valeur de vos meubles.</div>' +
+      '    <div class="mzw-title">3 photos. Devis plus justes.</div>' +
+      '    <div class="mzw-subtitle">On estime volume + valeur, puis vous comparez les devis.</div>' +
       "  </div>" +
       '  <div class="mzw-summary" id="mzw-summary" style="display:none"></div>' +
       '  <div class="mzw-dropzone" id="mzw-dropzone">' +
-      '    <div class="mzw-drop-title">Glissez vos photos ici</div>' +
-      '    <div class="mzw-drop-helper">ou cliquez pour choisir dans votre galerie</div>' +
-      '    <div class="mzw-drop-limit">Jusqu’à 3 photos • photos standard de smartphone (JPG, JPEG, PNG, WEBP, HEIC, HEIF)</div>' +
+      '    <div class="mzw-drop-title">Ajoutez 1 à 3 photos</div>' +
+      '    <div class="mzw-drop-helper">Glissez-déposez ou choisissez dans la galerie</div>' +
+      '    <div class="mzw-drop-limit">Max 3 photos · JPG/PNG/WEBP/HEIC</div>' +
       "  </div>" +
       '  <input type="file" id="mzw-file-input" accept="image/*" multiple style="display:none" />' +
       '  <div class="mzw-photos-row" id="mzw-photos-row" style="display:none"></div>' +
@@ -142,7 +142,7 @@
       '        <span class="mzw-primary-btn-chevron">→</span>' +
       "      </div>" +
       "    </button>" +
-      '    <div class="mzw-small-text">Gratuit · Sans inscription · Résultat en &lt; 60 secondes</div>' +
+      '    <div class="mzw-small-text">Gratuit · Résultat en &lt; 60 secondes</div>' +
       '    <div class="mzw-error" id="mzw-error" style="display:none"></div>' +
       "  </div>" +
       "</div>";
@@ -354,9 +354,7 @@
 
     function updateCameraCounter() {
       if (!cameraCounterText) return;
-      cameraCounterText.textContent =
-        selectedFiles.length +
-        " / 3 photos (max pour ce widget de démonstration)";
+      cameraCounterText.textContent = selectedFiles.length + " / 3 photos";
     }
 
     function startCamera() {
@@ -765,7 +763,7 @@
         dropzone.style.display = "none";
         photosRow.style.display = "none";
         if (headerEl) headerEl.style.display = "none";
-        analyzeLabel.textContent = "Obtenir des devis gratuits";
+        analyzeLabel.textContent = "Comparer les devis";
       } catch (e) {
         console.error("[MoverzWidget] Erreur d’analyse:", e);
         setError(
@@ -791,7 +789,7 @@
       }
       window.MoverzWidget.goToQuotes = function () {
         window.location.href =
-          "https://devis.moverz.fr/?source=moverz.fr&from=header";
+          "https://devis.moverz.fr/devis-gratuits?src=moverz.fr&from=widget";
       };
     }
 
