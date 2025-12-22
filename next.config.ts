@@ -34,7 +34,22 @@ if (process.env.NODE_ENV !== "production") {
   }
 }
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      // Ensure widget updates propagate quickly (avoid “stuck in cache” on moverz.fr).
+      {
+        source: "/moverz-widget.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+        ],
+      },
+    ];
+  },
+};
 
 export default nextConfig;
 
