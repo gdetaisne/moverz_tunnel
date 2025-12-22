@@ -58,6 +58,11 @@
       ".mzw-badge-dot { width: 6px; height: 6px; border-radius: 999px; background: rgb(var(--mzw-spark)); box-shadow: 0 0 0 4px rgba(var(--mzw-spark), 0.22); }",
       ".mzw-title { margin-top: 10px; font-size: 18px; font-weight: 600; }",
       ".mzw-subtitle { margin-top: 4px; font-size: 13px; color: #4b5563; }",
+      ".mzw-steps { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }",
+      ".mzw-step { flex: 1; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 16px; background: rgba(var(--mzw-deep), 0.06); border: 1px solid rgba(148, 163, 184, 0.7); }",
+      ".mzw-step-num { width: 18px; height: 18px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: rgba(var(--mzw-spark), 0.22); color: rgb(var(--mzw-navy)); font-size: 11px; font-weight: 800; }",
+      ".mzw-step-text { font-size: 12px; font-weight: 650; color: #0f172a; }",
+      ".mzw-step-arrow { color: rgba(51, 65, 85, 0.7); font-size: 12px; font-weight: 800; }",
       ".mzw-wow { margin-top: 10px; display: grid; grid-template-columns: 1fr; gap: 6px; }",
       ".mzw-wow-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 16px; background: rgba(var(--mzw-spark), 0.10); border: 1px solid rgba(148, 163, 184, 0.7); }",
       ".mzw-wow-check { width: 18px; height: 18px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: rgba(var(--mzw-deep), 0.12); color: rgb(var(--mzw-deep)); font-size: 12px; font-weight: 800; }",
@@ -128,6 +133,13 @@
       '    <div class="mzw-badge"><span class="mzw-badge-dot"></span><span>IA Moverz · Volume estimé</span></div>' +
       '    <div class="mzw-title">3 photos. Devis plus justes.</div>' +
       '    <div class="mzw-subtitle">On estime volume + valeur, puis vous comparez les devis.</div>' +
+      '    <div class="mzw-steps" aria-label="Étapes">' +
+      '      <div class="mzw-step"><span class="mzw-step-num">1</span><span class="mzw-step-text">Ajoutez</span></div>' +
+      '      <span class="mzw-step-arrow">→</span>' +
+      '      <div class="mzw-step"><span class="mzw-step-num">2</span><span class="mzw-step-text">On estime</span></div>' +
+      '      <span class="mzw-step-arrow">→</span>' +
+      '      <div class="mzw-step"><span class="mzw-step-num">3</span><span class="mzw-step-text">Comparez</span></div>' +
+      "    </div>" +
       '    <div class="mzw-wow">' +
       '      <div class="mzw-wow-item"><span class="mzw-wow-check">✓</span><span class="mzw-wow-text">Devis comparables</span></div>' +
       '      <div class="mzw-wow-item"><span class="mzw-wow-check">✓</span><span class="mzw-wow-text">Moins de surprises</span></div>' +
