@@ -33,20 +33,32 @@ function MerciPageInner() {
           Merci pour votre demande !
         </h1>
         <p className="text-sm text-slate-600 sm:text-base">
-          Votre dossier de déménagement a bien été créé. Si vous avez déjà
-          envoyé des photos, nous venons de produire pour vous un inventaire
-          détaillé, une déclaration de valeur et un dossier complet prêt pour
-          les déménageurs.
+          Votre dossier est créé. On s’occupe du reste.
         </p>
-        <p className="text-xs text-slate-600 sm:text-sm">
-          Un email de confirmation vient de vous être envoyé. Il vous suffit de
-          cliquer sur le lien dans cet email pour valider votre adresse et
-          lancer la recherche de devis.
-        </p>
+
+        <div className="space-y-3 rounded-2xl bg-surface-1 p-4 text-left ring-1 ring-surface-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Prochaines étapes
+          </p>
+          <ul className="space-y-2 text-sm text-slate-700">
+            <li>
+              <span className="font-semibold text-slate-900">1)</span> Ouvrez l’email
+              de confirmation
+            </li>
+            <li>
+              <span className="font-semibold text-slate-900">2)</span> Cliquez sur le
+              lien pour valider votre adresse
+            </li>
+            <li>
+              <span className="font-semibold text-slate-900">3)</span> (Optionnel)
+              Ajoutez des photos pour des devis plus justes
+            </li>
+          </ul>
+        </div>
+
         <p className="text-[11px] text-slate-500 sm:text-xs">
-          Si l’adresse email indiquée n’est pas la bonne ou si vous ne recevez
-          rien, répondez simplement à l’email de bienvenue ou contactez‑nous
-          pour la corriger : nous mettrons votre dossier à jour.
+          Pas reçu l’email ? Vérifiez vos spams. Sinon, répondez à l’email de bienvenue ou
+          contactez‑nous pour corriger l’adresse.
         </p>
       </div>
     </div>
