@@ -4922,40 +4922,42 @@ function DevisGratuitsPageInner() {
                 <h2 className="text-lg font-semibold text-slate-900">
                   Pourquoi les photos sont importantes
                 </h2>
-                <div className="space-y-3 rounded-2xl bg-brand-deep/5 p-4 ring-1 ring-brand-deep/15">
-                  <p className="text-sm font-medium text-slate-900">
-                    ✓ Devis plus précis et fiables
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    Sans photos, les déménageurs donneront des devis approximatifs avec des marges importantes. Vous risquez des suppléments le jour J.
-                  </p>
-                </div>
-                <div className="space-y-3 rounded-2xl bg-surface-2 p-4 ring-1 ring-surface-3">
-                  <p className="text-sm font-medium text-slate-900">
-                    Inventaire et déclaration de valeur
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    Les déménageurs vous demanderont systématiquement un inventaire et une déclaration de valeur. Avec nos photos + IA, c'est fait automatiquement.
-                  </p>
-                </div>
-                <div className="space-y-3 rounded-2xl bg-surface-2 p-4 ring-1 ring-surface-3">
-                  <p className="text-sm font-medium text-slate-900">
-                    Solution : finalisez plus tard par email
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    Vous n'avez pas vos photos maintenant ? On vous envoie un email récapitulatif avec un lien pour finaliser votre demande plus tard.
-                  </p>
-                </div>
-                <p className="text-xs text-slate-600">
-                  Dans tous les cas, vous recevrez aussi un{" "}
-                  <span className="font-semibold">email de confirmation</span>{" "}
-                  sur{" "}
-                  <span className="font-semibold">
-                    {form.email || "votre adresse email"}
-                  </span>
-                  . Vous pourrez y vérifier vos informations et corriger
-                  l’adresse si besoin.
+                <p className="text-sm text-slate-600">
+                  Sans photos, les devis sont souvent plus larges et les surprises plus probables.
                 </p>
+
+                <div className="rounded-2xl bg-surface-1 p-4 ring-1 ring-surface-3">
+                  <ul className="space-y-2 text-sm text-slate-700">
+                    <li>
+                      <span className="font-semibold text-slate-900">Devis comparables</span>{" "}
+                      (volume plus fiable)
+                    </li>
+                    <li>
+                      <span className="font-semibold text-slate-900">Moins de suppléments</span>{" "}
+                      le jour J
+                    </li>
+                    <li>
+                      <span className="font-semibold text-slate-900">Inventaire + déclaration</span>{" "}
+                      générés automatiquement
+                    </li>
+                  </ul>
+                </div>
+
+                <details className="rounded-2xl border border-surface-3 bg-white p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-slate-900">
+                    En savoir plus
+                  </summary>
+                  <div className="mt-3 space-y-2 text-sm text-slate-600">
+                    <p>
+                      Les photos aident à estimer le volume et à préparer les documents
+                      demandés par les déménageurs (inventaire et déclaration de valeur).
+                    </p>
+                    <p>
+                      Pas vos photos maintenant ? On peut vous envoyer un email avec un lien
+                      pour finaliser plus tard.
+                    </p>
+                  </div>
+                </details>
                 <div className="flex flex-col gap-3 pt-2">
                   <button
                     type="button"
