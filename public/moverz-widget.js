@@ -269,12 +269,15 @@
     }
 
     function updateAnalyzeDisabled() {
-      // CTA reste cliquable même sans photo (il sert alors à ouvrir la galerie/caméra).
+      // Le bouton principal n'apparaît que quand il y a au moins 1 photo (ou des résultats).
       analyzeBtn.disabled = isAnalyzing;
       if (!hasResults && selectedFiles.length === 0) {
-        analyzeLabel.textContent = "Choisir mes photos";
-      } else if (!hasResults) {
-        analyzeLabel.textContent = "Lancer l’analyse";
+        analyzeBtn.style.display = "none";
+      } else {
+        analyzeBtn.style.display = "inline-flex";
+        if (!hasResults) {
+          analyzeLabel.textContent = "Analyze photos";
+        }
       }
     }
 
@@ -825,12 +828,6 @@
       if (hasResults && window.MoverzWidget && window.MoverzWidget.goToQuotes) {
         window.MoverzWidget.goToQuotes("widget");
       } else {
-        if (!selectedFiles.length && !isAnalyzing) {
-          // UX: si aucune photo n'est sélectionnée, ce bouton sert de raccourci
-          // vers la sélection galerie/caméra.
-          dropzone.click();
-          return;
-        }
         analyze();
       }
     });
