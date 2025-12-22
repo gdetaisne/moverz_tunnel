@@ -165,7 +165,7 @@
       "      </div>" +
       "    </button>" +
       '    <div class="mzw-small-text">Gratuit · Résultat en &lt; 60 secondes</div>' +
-      '    <div class="mzw-links">' +
+      '    <div class="mzw-links" style="display:none">' +
       '      <button type="button" class="mzw-link" id="mzw-photos-later">Ajouter plus tard</button>' +
       "    </div>" +
       '    <div class="mzw-error" id="mzw-error" style="display:none"></div>' +
@@ -271,15 +271,23 @@
     }
 
     function updateAnalyzeDisabled() {
-      // Le bouton principal n'apparaît que quand il y a au moins 1 photo (ou des résultats).
+      // Bouton principal : visible quand photos ou résultats
+      // Lien "plus tard" : visible seulement quand photos SANS résultats
       analyzeBtn.disabled = isAnalyzing;
+      
       if (!hasResults && selectedFiles.length === 0) {
+        // État initial : rien à montrer
         analyzeBtn.style.display = "none";
-      } else {
+        if (photosLaterBtn) photosLaterBtn.parentElement.style.display = "none";
+      } else if (!hasResults && selectedFiles.length > 0) {
+        // Photos ajoutées : montrer bouton + lien
         analyzeBtn.style.display = "inline-flex";
-        if (!hasResults) {
-          analyzeLabel.textContent = "Analyser mes photos";
-        }
+        analyzeLabel.textContent = "Analyser mes photos";
+        if (photosLaterBtn) photosLaterBtn.parentElement.style.display = "flex";
+      } else {
+        // Résultats : montrer seulement bouton, pas le lien
+        analyzeBtn.style.display = "inline-flex";
+        if (photosLaterBtn) photosLaterBtn.parentElement.style.display = "none";
       }
     }
 
