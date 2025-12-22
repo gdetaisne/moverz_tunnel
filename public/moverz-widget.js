@@ -91,13 +91,13 @@
       ".mzw-summary-pill { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: rgba(var(--mzw-spark), 0.22); color: rgb(var(--mzw-navy)); font-weight: 600; }",
       ".mzw-footer { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }",
       ".mzw-primary-btn { position: relative; overflow: hidden; border: none; border-radius: 999px; padding: 11px 14px; font-size: 14px; font-weight: 650; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(120deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); color: #ffffff; box-shadow: 0 12px 26px rgba(43, 122, 120, 0.26); transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease; }",
-      ".mzw-primary-btn[disabled] { opacity: 0.55; cursor: not-allowed; box-shadow: none; }",
+      ".mzw-primary-btn[disabled] { opacity: 1; cursor: pointer; box-shadow: 0 12px 26px rgba(43, 122, 120, 0.22); }",
       ".mzw-primary-btn-inner { position: relative; z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }",
       ".mzw-progress-mask { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.12); pointer-events: none; border-radius: inherit; transform: translateZ(0); width: 0%; opacity: 0; }",
       ".mzw-primary-btn:not([disabled]):hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(43, 122, 120, 0.30); }",
       ".mzw-primary-btn-chevron { font-size: 13px; }",
       ".mzw-small-text { font-size: 11px; color: #94a3b8; text-align: center; }",
-      ".mzw-links { display: flex; justify-content: space-between; gap: 10px; }",
+      ".mzw-links { display: flex; justify-content: flex-end; gap: 10px; }",
       ".mzw-link { appearance: none; border: none; background: transparent; padding: 0; margin: 0; font-size: 12px; color: rgb(var(--mzw-deep)); font-weight: 650; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }",
       ".mzw-link-secondary { color: #334155; font-weight: 600; }",
       ".mzw-error { margin-top: 8px; font-size: 12px; color: #b91c1c; }",
@@ -149,16 +149,15 @@
       "      </div>" +
       '      <div class="mzw-results-list" id="mzw-results-list"></div>' +
       "    </div>" +
-      '    <button class="mzw-primary-btn" id="mzw-analyze-btn" disabled>' +
+      '    <button class="mzw-primary-btn" id="mzw-analyze-btn">' +
       '      <div class="mzw-progress-mask" id="mzw-progress-mask"></div>' +
       '      <div class="mzw-primary-btn-inner">' +
-      '        <span id="mzw-analyze-label">Lancer l’analyse</span>' +
+      '        <span id="mzw-analyze-label">Choisir mes photos</span>' +
       '        <span class="mzw-primary-btn-chevron">→</span>' +
       "      </div>" +
       "    </button>" +
       '    <div class="mzw-small-text">Gratuit · Résultat en &lt; 60 secondes</div>' +
       '    <div class="mzw-links">' +
-      '      <button type="button" class="mzw-link mzw-link-secondary" id="mzw-skip-photos">Continuer sans photos</button>' +
       '      <button type="button" class="mzw-link" id="mzw-photos-later">Ajouter plus tard</button>' +
       "    </div>" +
       '    <div class="mzw-error" id="mzw-error" style="display:none"></div>' +
@@ -179,7 +178,6 @@
     var resultsListEl = root.getElementById("mzw-results-list");
     var resultsPillEl = root.getElementById("mzw-results-pill");
     var progressMaskEl = root.getElementById("mzw-progress-mask");
-    var skipPhotosBtn = root.getElementById("mzw-skip-photos");
     var photosLaterBtn = root.getElementById("mzw-photos-later");
 
     /** @type {File[]} */
@@ -265,8 +263,13 @@
     }
 
     function updateAnalyzeDisabled() {
-      // UX: on désactive tant qu'aucune photo n'est ajoutée (sauf après résultat).
-      analyzeBtn.disabled = isAnalyzing || (!hasResults && selectedFiles.length === 0);
+      // CTA reste cliquable même sans photo (il sert alors à ouvrir la galerie/caméra).
+      analyzeBtn.disabled = isAnalyzing;
+      if (!hasResults && selectedFiles.length === 0) {
+        analyzeLabel.textContent = "Choisir mes photos";
+      } else if (!hasResults) {
+        analyzeLabel.textContent = "Lancer l’analyse";
+      }
     }
 
     function stopCamera() {
@@ -816,17 +819,15 @@
       if (hasResults && window.MoverzWidget && window.MoverzWidget.goToQuotes) {
         window.MoverzWidget.goToQuotes("widget");
       } else {
+        if (!selectedFiles.length && !isAnalyzing) {
+          // UX: si aucune photo n'est sélectionnée, ce bouton sert de raccourci
+          // vers la sélection galerie/caméra.
+          dropzone.click();
+          return;
+        }
         analyze();
       }
     });
-
-    if (skipPhotosBtn) {
-      skipPhotosBtn.addEventListener("click", function () {
-        if (window.MoverzWidget && window.MoverzWidget.goToQuotes) {
-          window.MoverzWidget.goToQuotes("widget_no_photos");
-        }
-      });
-    }
 
     if (photosLaterBtn) {
       photosLaterBtn.addEventListener("click", function () {
