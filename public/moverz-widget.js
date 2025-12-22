@@ -129,12 +129,12 @@
     wrapper.innerHTML =
       '<div class="mzw-card">' +
       '  <div class="mzw-header">' +
-      '    <div class="mzw-badge"><span class="mzw-badge-dot"></span><span>AI Inventory</span></div>' +
-      '    <div class="mzw-title">Get accurate moving quotes</div>' +
-      '    <div class="mzw-subtitle">AI analyzes your photos to estimate volume and value—so quotes are comparable and surprises are minimized.</div>' +
+      '    <div class="mzw-badge"><span class="mzw-badge-dot"></span><span>IA Moverz</span></div>' +
+      '    <div class="mzw-title">Des devis de déménagement justes</div>' +
+      '    <div class="mzw-subtitle">L\'IA analyse vos photos pour estimer le volume et la valeur de vos biens, pour des devis comparables et moins de surprises.</div>' +
       '    <div class="mzw-benefits">' +
-      '      <div class="mzw-benefit"><span class="mzw-benefit-icon">✓</span><span>Fair estimates</span></div>' +
-      '      <div class="mzw-benefit"><span class="mzw-benefit-icon">✓</span><span>No surprises</span></div>' +
+      '      <div class="mzw-benefit"><span class="mzw-benefit-icon">✓</span><span>Estimations fiables</span></div>' +
+      '      <div class="mzw-benefit"><span class="mzw-benefit-icon">✓</span><span>Moins de surprises</span></div>' +
       "    </div>" +
       "  </div>" +
       '  <div class="mzw-summary" id="mzw-summary" style="display:none"></div>' +
@@ -142,8 +142,8 @@
       '    <div class="mzw-drop-icon">' +
       '      <svg class="mzw-drop-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color: rgb(var(--mzw-deep));"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' +
       "    </div>" +
-      '    <div class="mzw-drop-title">Upload photos</div>' +
-      '    <div class="mzw-drop-helper">Add 1–3 photos to get started</div>' +
+      '    <div class="mzw-drop-title">Ajouter des photos</div>' +
+      '    <div class="mzw-drop-helper">1 à 3 photos pour commencer</div>' +
       "  </div>" +
       '  <input type="file" id="mzw-file-input" accept="image/*" multiple style="display:none" />' +
       '  <div class="mzw-photos-row" id="mzw-photos-row" style="display:none"></div>' +
@@ -158,7 +158,7 @@
       '    <button class="mzw-primary-btn" id="mzw-analyze-btn">' +
       '      <div class="mzw-progress-mask" id="mzw-progress-mask"></div>' +
       '      <div class="mzw-primary-btn-inner">' +
-      '        <span id="mzw-analyze-label">Choisir mes photos</span>' +
+      '        <span id="mzw-analyze-label">Analyser mes photos</span>' +
       '        <span class="mzw-primary-btn-chevron">→</span>' +
       "      </div>" +
       "    </button>" +
@@ -276,7 +276,7 @@
       } else {
         analyzeBtn.style.display = "inline-flex";
         if (!hasResults) {
-          analyzeLabel.textContent = "Analyze photos";
+          analyzeLabel.textContent = "Analyser mes photos";
         }
       }
     }
