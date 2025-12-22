@@ -4852,26 +4852,62 @@ function DevisGratuitsPageInner() {
                   Sans photos, les devis sont souvent plus larges et les surprises plus probables.
                 </p>
 
-                <div className="rounded-2xl bg-surface-1 p-4 ring-1 ring-surface-3">
-                  <ul className="space-y-2 text-sm text-slate-700">
-                    <li>
-                      <span className="font-semibold text-slate-900">Devis comparables</span>{" "}
-                      (volume plus fiable)
-                    </li>
-                    <li>
-                      <span className="font-semibold text-slate-900">Moins de suppléments</span>{" "}
-                      le jour J
-                    </li>
-                    <li>
-                      <span className="font-semibold text-slate-900">Inventaire + déclaration</span>{" "}
-                      générés automatiquement
-                    </li>
-                  </ul>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-surface-3 bg-white p-4 shadow-soft">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-spark/25 text-brand-navy text-sm font-bold">
+                        ✓
+                      </span>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-slate-900">
+                          Devis comparables
+                        </p>
+                        <p className="text-xs text-slate-600">
+                          Volume plus fiable, moins de marge “au cas où”.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-surface-3 bg-white p-4 shadow-soft">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-spark/25 text-brand-navy text-sm font-bold">
+                        ✓
+                      </span>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-slate-900">
+                          Moins de suppléments
+                        </p>
+                        <p className="text-xs text-slate-600">
+                          Moins de surprises le jour J.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-surface-3 bg-white p-4 shadow-soft">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-spark/25 text-brand-navy text-sm font-bold">
+                        ✓
+                      </span>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-slate-900">
+                          Inventaire automatique
+                        </p>
+                        <p className="text-xs text-slate-600">
+                          Inventaire + déclaration de valeur générés.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <details className="rounded-2xl border border-surface-3 bg-white p-4">
-                  <summary className="cursor-pointer text-sm font-semibold text-slate-900">
-                    En savoir plus
+                <details className="group rounded-2xl border border-surface-3 bg-white p-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+                    <span>En savoir plus</span>
+                    <span className="text-slate-500 transition-transform group-open:rotate-180">
+                      ▼
+                    </span>
                   </summary>
                   <div className="mt-3 space-y-2 text-sm text-slate-600">
                     <p>
