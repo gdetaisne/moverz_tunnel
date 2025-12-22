@@ -4404,19 +4404,16 @@ function DevisGratuitsPageInner() {
                       formule === "ECONOMIQUE"
                         ? [
                             "Vous emballez vos cartons",
-                            "Portage et transport inclus dans les devis",
-                            "Démontage limité (lit principal)",
+                            "Transport + portage inclus",
                           ]
                         : formule === "STANDARD"
                         ? [
-                            "Protection du mobilier incluse dans les devis",
-                            "Portage complet prévu par les déménageurs",
                             "Bon compromis budget / confort",
+                            "Protection du mobilier incluse",
                           ]
                         : [
-                            "Emballage renforcé prévu dans les devis (fragiles, penderies…)",
-                            "Démontage/remontage étendu, repositionnement",
-                            "Planning plus souple et équipe dédiée côté déménageur",
+                            "Emballage renforcé (fragiles, penderies…)",
+                            "Démontage/remontage étendu",
                           ];
                     return (
                       <button
@@ -4426,27 +4423,27 @@ function DevisGratuitsPageInner() {
                         className={[
                           "flex min-w-[78%] flex-col gap-2 rounded-2xl border p-3 text-left text-xs transition snap-start sm:min-w-0",
                           isActive
-                            ? "border-sky-400 bg-sky-500/15 shadow-sm shadow-sky-500/30"
-                            : "border-slate-700 bg-slate-950/60 hover:border-slate-500",
+                            ? "border-brand-spark/70 bg-brand-deep/5 shadow-brand"
+                            : "border-surface-3 bg-white hover:border-slate-300",
                         ].join(" ")}
                       >
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-300">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-deep">
                           {label}
                         </span>
-                        <span className="text-[12px] font-medium text-slate-50">
+                        <span className="text-[12px] font-medium text-slate-900">
                           {title}
                         </span>
-                        <span className="text-[12px] font-semibold text-slate-100">
+                        <span className="text-[12px] font-semibold text-slate-900">
                           {pricing
                             ? `${formatPrice(pricing.prixMin)} – ${formatPrice(
                                 pricing.prixMax
                               )}`
                             : "Calcul…"}
                         </span>
-                        <ul className="mt-1 space-y-1 text-[11px] text-slate-400">
+                        <ul className="mt-1 space-y-1 text-[11px] text-slate-600">
                           {bullets.map((b) => (
                             <li key={b} className="flex gap-1">
-                              <span className="mt-[2px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-sky-400" />
+                              <span className="mt-[2px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-spark" />
                               <span>{b}</span>
                             </li>
                           ))}
@@ -4460,7 +4457,7 @@ function DevisGratuitsPageInner() {
               {activePricing &&
                 estimatedVolumeM3 != null &&
                 Number.isFinite(distanceKm) && (
-                  <div className="relative mt-3 space-y-2 rounded-2xl bg-slate-950/70 p-3 pb-6 text-[11px] text-slate-300 ring-1 ring-slate-800">
+                  <div className="relative mt-3 space-y-2 rounded-2xl bg-surface-1 p-3 text-[11px] text-slate-700 ring-1 ring-surface-3">
                     {(() => {
                       const volumePart = estimatedVolumeM3 * COEF_VOLUME;
                       const distancePart = distanceKm * COEF_DISTANCE;
@@ -4527,129 +4524,58 @@ function DevisGratuitsPageInner() {
                       return (
                         <>
                           <div className="space-y-1">
-                            <p className="font-semibold text-slate-100">
-                              Comment sont estimés les prix ?
+                            <p className="font-semibold text-slate-900">
+                              Comment calcule-t-on cette estimation ?
                             </p>
                             <p>
-                              On décompose votre estimation en plusieurs{" "}
-                              <span className="font-semibold">effets</span> qui
-                              s’additionnent pour atteindre environ{" "}
-                              <span className="font-semibold">
+                              Volume + distance + période + options, pour un centre à{" "}
+                              <span className="font-semibold text-slate-900">
                                 {formatPrice(Math.round(centre))}
                               </span>{" "}
-                              (avant marge de ±20 % pour obtenir la fourchette).
-                            </p>
-                            <p className="text-[11px] text-slate-400">
-                              Cliquez pour voir le détail volume, distance, saison, etc.
+                              (fourchette ±20 %).
                             </p>
                           </div>
 
                           <button
                             type="button"
                             onClick={() => setShowPricingDetails((v) => !v)}
-                            className="absolute -bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center rounded-full border border-slate-600 bg-slate-950 px-3 py-1 text-[11px] font-medium text-slate-200 shadow-sm hover:border-slate-400"
+                            className="inline-flex w-fit items-center rounded-full border border-surface-3 bg-white px-3 py-1 text-[11px] font-medium text-slate-700 shadow-soft hover:border-slate-300"
                           >
                             <span className="mr-1">
-                              {showPricingDetails ? "Masquer" : "Voir plus"}
+                              {showPricingDetails ? "Masquer" : "Voir détails"}
                             </span>
                             <span className="text-xs">
                               {showPricingDetails ? "▲" : "▼"}
                             </span>
                           </button>
                           {showPricingDetails && (
-                          <ul className="mt-2 ml-4 list-disc space-y-1">
-                            <li>
-                              <span className="font-semibold">
-                                Effet volume :
-                              </span>{" "}
-                              vos{" "}
-                              {estimatedVolumeM3.toLocaleString("fr-FR", {
-                                maximumFractionDigits: 1,
-                              })}{" "}
-                              m³ représentent le socle principal du prix. Sur
-                              cette distance, il faut compter entre{" "}
-                              <span className="font-semibold">
-                                {Math.round(prixParM3Min).toLocaleString(
-                                  "fr-FR"
-                                )}{" "}
-                                € et{" "}
-                                {Math.round(prixParM3Max).toLocaleString(
-                                  "fr-FR"
-                                )}{" "}
-                                €
-                              </span>{" "}
-                              par m³.
-                            </li>
-                            <li>
-                              <span className="font-semibold">
-                                Effet distance :
-                              </span>{" "}
-                              {distanceKm < 30
-                                ? "déménagement local, la distance ne rajoute quasiment rien par rapport au volume."
-                                : `dans votre cas, environ ${Math.round(
-                                    distanceKm
-                                  )} km à parcourir. Par rapport à un trajet très court de même volume, cela représente environ ${formatPrice(
-                                    Math.round(
-                                      Math.max(0, distanceImpact)
-                                    )
-                                  )} supplémentaires.`}
-                            </li>
-                            <li>
-                              <span className="font-semibold">
-                                Effet saison :
-                              </span>{" "}
-                              {seasonFactor > 1.01
-                                ? `période chargée : la saison ajoute environ ${formatPrice(
-                                    Math.round(effetSaison)
-                                  )} par rapport à une période calme.`
-                                : seasonFactor < 0.99
-                                ? `période calme : vous bénéficiez d’une réduction d’environ ${formatPrice(
-                                    Math.round(Math.abs(effetSaison))
-                                  )} par rapport à la haute saison.`
-                                : "période neutre : pas de majoration particulière liée à la saison."}
-                            </li>
-                            <li>
-                              <span className="font-semibold">
-                                Effet urgence :
-                              </span>{" "}
-                              {urgencyFactor > 1.01
-                                ? `déménagement dans moins d’un mois : cela ajoute environ ${formatPrice(
-                                    Math.round(effetUrgence)
-                                  )} de majoration.`
-                                : "déménagement prévu à plus d’un mois : pas de surcoût d’urgence."}
-                            </li>
-                            <li>
-                              <span className="font-semibold">
-                                Effet niveau de service :
-                              </span>{" "}
-                              {effetServices > 0
-                                ? `les options choisies (monte‑meuble, piano, débarras…) représentent environ ${formatPrice(
-                                    Math.round(effetServices)
-                                  )}.`
-                                : "aucun service additionnel sélectionné pour l’instant (monte‑meuble, piano, débarras…)."}
-                            </li>
-                          </ul>
-                          )}
-                          <div className="mt-1 space-y-0.5 text-[10px] text-slate-400">
-                            <p className="font-semibold text-slate-300">NB :</p>
-                            <ul className="ml-4 list-disc space-y-0.5">
+                            <ul className="mt-2 ml-4 list-disc space-y-1">
                               <li>
-                                Un m³ supplémentaire vous coûterait dans ces
-                                conditions environ{" "}
-                                <span className="font-semibold">
-                                  {Math.round(
-                                    pricePerM3Seasoned
-                                  ).toLocaleString("fr-FR")}{" "}
-                                  €
-                                </span>
-                                .
+                                <span className="font-semibold">Volume :</span>{" "}
+                                {estimatedVolumeM3.toLocaleString("fr-FR", {
+                                  maximumFractionDigits: 1,
+                                })}{" "}
+                                m³
                               </li>
                               <li>
-                                Un frigo 1 porte représente environ un demi m³ et
-                                dix cartons standards de déménagement environ 1 m³.
+                                <span className="font-semibold">Distance :</span>{" "}
+                                ~{Math.round(distanceKm).toLocaleString("fr-FR")} km
+                              </li>
+                              <li>
+                                <span className="font-semibold">Options :</span>{" "}
+                                {effetServices > 0
+                                  ? `≈ ${formatPrice(Math.round(effetServices))}`
+                                  : "aucune"}
                               </li>
                             </ul>
-                          </div>
+                          )}
+                          <p className="mt-1 text-[10px] text-slate-500">
+                            Repère: +1 m³ ≈{" "}
+                            <span className="font-semibold text-slate-700">
+                              {Math.round(pricePerM3Seasoned).toLocaleString("fr-FR")} €
+                            </span>
+                            .
+                          </p>
                         </>
                       );
                     })()}
