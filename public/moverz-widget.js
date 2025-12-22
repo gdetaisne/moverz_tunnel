@@ -75,10 +75,13 @@
       ".mzw-camera-actions { margin-top: 6px; display: flex; gap: 6px; align-items: center; }",
       ".mzw-camera-pill-btn { border-radius: 999px; padding: 5px 10px; font-size: 11px; font-weight: 500; border: 1px solid rgba(148, 163, 184, 0.9); background: #020617; color: #e5e7eb; cursor: pointer; }",
       ".mzw-camera-pill-btn-primary { border-color: rgba(var(--mzw-spark), 0.95); background: rgba(var(--mzw-deep), 0.22); color: rgba(var(--mzw-spark), 0.95); }",
-      ".mzw-camera-pill-btn-secondary { border-color: rgba(148, 163, 184, 0.9); background: transparent; color: #e5e7eb; }",
+      ".mzw-camera-pill-btn-secondary { border-color: rgba(148, 163, 184, 0.9); background: rgba(255, 255, 255, 0.06); color: #e5e7eb; }",
       ".mzw-camera-video-wrapper { margin-top: 8px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.8); background: #000000; }",
       ".mzw-camera-video { width: 100%; height: 210px; object-fit: cover; background: #000000; }",
-      ".mzw-camera-cta-row { margin-top: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }",
+      ".mzw-camera-cta-row { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }",
+      ".mzw-camera-cta-actions { display: flex; gap: 6px; align-items: center; flex: 1; }",
+      ".mzw-camera-cta-actions .mzw-camera-pill-btn-primary { flex: 1; }",
+      ".mzw-camera-cta-actions .mzw-camera-pill-btn-secondary { white-space: nowrap; }",
       ".mzw-camera-counter { font-size: 11px; color: #9ca3af; }",
       ".mzw-photos-row { margin-top: 10px; display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }",
       ".mzw-photo-pill { border-radius: 999px; background: rgba(var(--mzw-deep), 0.08); border: 1px solid rgba(148, 163, 184, 0.8); padding: 4px 9px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: #111827; }",
@@ -307,22 +310,13 @@
       info.textContent =
         "Recommandations : 3 à 5 photos par pièce. Tout ce qui est vu sera pris en compte.";
 
-      var actions = document.createElement("div");
-      actions.className = "mzw-camera-actions";
-
       cameraCloseBtn = document.createElement("button");
       cameraCloseBtn.type = "button";
       cameraCloseBtn.className =
         "mzw-camera-pill-btn mzw-camera-pill-btn-secondary";
-      cameraCloseBtn.textContent = "Utiliser ma galerie";
-
-      // On ne propose plus de bouton "Ouvrir la caméra" : la caméra est
-      // déclenchée directement au clic sur la dropzone. On garde uniquement
-      // "Utiliser ma galerie" comme option secondaire.
-      actions.appendChild(cameraCloseBtn);
+      cameraCloseBtn.textContent = "Importer depuis la galerie";
 
       header.appendChild(info);
-      header.appendChild(actions);
 
       var videoWrapper = document.createElement("div");
       videoWrapper.className = "mzw-camera-video-wrapper";
@@ -338,6 +332,9 @@
       var ctaRow = document.createElement("div");
       ctaRow.className = "mzw-camera-cta-row";
 
+      var ctaActions = document.createElement("div");
+      ctaActions.className = "mzw-camera-cta-actions";
+
       cameraCaptureBtn = document.createElement("button");
       cameraCaptureBtn.type = "button";
       cameraCaptureBtn.className =
@@ -349,7 +346,10 @@
       cameraCounterText.textContent =
         "0 / 3 photos (max pour ce widget de démonstration)";
 
-      ctaRow.appendChild(cameraCaptureBtn);
+      ctaActions.appendChild(cameraCloseBtn);
+      ctaActions.appendChild(cameraCaptureBtn);
+
+      ctaRow.appendChild(ctaActions);
       ctaRow.appendChild(cameraCounterText);
 
       cameraWrapper.appendChild(header);
