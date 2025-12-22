@@ -4174,7 +4174,7 @@ function DevisGratuitsPageInner() {
             </div>
 
             {/* Bloc estimation volume + formules */}
-            <div className="space-y-4 rounded-2xl bg-brand-navy/95 p-4 ring-1 ring-brand-slate/30">
+            <div className="space-y-4 rounded-2xl bg-surface-1 p-4 ring-1 ring-surface-3">
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr),minmax(0,1.3fr)]">
                 {/* Colonne gauche : densité + surface/volume */}
                 <div className="space-y-4">
@@ -4423,7 +4423,7 @@ function DevisGratuitsPageInner() {
                         className={[
                           "flex min-w-[78%] flex-col gap-2 rounded-2xl border p-3 text-left text-xs transition snap-start sm:min-w-0",
                           isActive
-                            ? "border-brand-spark/70 bg-brand-deep/5 shadow-brand"
+                            ? "border-brand-deep/60 bg-white shadow-[0_18px_40px_rgba(43,122,120,0.14)] ring-2 ring-brand-spark/25"
                             : "border-surface-3 bg-white hover:border-slate-300",
                         ].join(" ")}
                       >
