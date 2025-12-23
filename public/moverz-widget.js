@@ -187,7 +187,7 @@
       
       // 3 options pour les photos
       '  <div class="mzw-choice-section" id="mzw-choice-section">' +
-      '    <div class="mzw-choice-title">Envoyez-nous vos photos</div>' +
+      '    <div class="mzw-choice-title">Choisissez un mode d’envoi</div>' +
       '    <div class="mzw-choice-grid">' +
       
       // Option 1: Upload web
