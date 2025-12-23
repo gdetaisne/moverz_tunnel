@@ -60,6 +60,26 @@
       ".mzw-badge-dot { width: 5px; height: 5px; border-radius: 999px; background: rgb(var(--mzw-spark)); opacity: 0.9; animation: mzw-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }",
       ".mzw-title { margin-top: 16px; font-size: 22px; font-weight: 700; line-height: 1.2; background: linear-gradient(135deg, #0f172a 0%, rgb(var(--mzw-deep)) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.025em; }",
       ".mzw-subtitle { margin-top: 8px; font-size: 14px; color: #64748b; line-height: 1.5; font-weight: 400; margin-bottom: 24px; }",
+      ".mzw-choice-section { margin-top: 0; }",
+      ".mzw-choice-title { font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 16px; text-align: center; }",
+      ".mzw-choice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }",
+      "@media (max-width: 480px) { .mzw-choice-grid { grid-template-columns: 1fr; gap: 10px; } }",
+      ".mzw-choice-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 16px; border-radius: 16px; border: 2px solid rgba(148, 163, 184, 0.20); background: #ffffff; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); font-family: inherit; }",
+      ".mzw-choice-btn:hover { border-color: rgba(var(--mzw-spark), 0.40); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(var(--mzw-deep), 0.12); }",
+      ".mzw-choice-btn-whatsapp { border-color: rgba(37, 211, 102, 0.30); background: linear-gradient(135deg, rgba(37, 211, 102, 0.04) 0%, rgba(18, 140, 126, 0.08) 100%); }",
+      ".mzw-choice-btn-whatsapp:hover { border-color: rgba(37, 211, 102, 0.60); box-shadow: 0 8px 24px rgba(37, 211, 102, 0.20); }",
+      ".mzw-choice-btn-skip { border-style: dashed; }",
+      ".mzw-choice-btn-skip:hover { border-color: rgba(148, 163, 184, 0.50); background: rgba(241, 245, 249, 0.60); }",
+      ".mzw-choice-badge { position: absolute; top: -8px; right: -8px; background: #25D366; color: #ffffff; font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.03em; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35); }",
+      ".mzw-choice-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }",
+      ".mzw-choice-btn:hover .mzw-choice-icon { transform: scale(1.08); }",
+      ".mzw-choice-icon-teal { background: linear-gradient(135deg, rgb(var(--mzw-deep)) 0%, rgb(var(--mzw-spark)) 100%); box-shadow: 0 4px 12px rgba(var(--mzw-deep), 0.20); }",
+      ".mzw-choice-icon-whatsapp { background: #25D366; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.30); }",
+      ".mzw-choice-icon-neutral { background: #e2e8f0; }",
+      ".mzw-choice-icon-svg { width: 24px; height: 24px; color: #ffffff; }",
+      ".mzw-choice-icon-neutral .mzw-choice-icon-svg { color: #64748b; }",
+      ".mzw-choice-label { font-size: 14px; font-weight: 600; color: #0f172a; }",
+      ".mzw-choice-sublabel { font-size: 12px; color: #64748b; text-align: center; }",
       ".mzw-dropzone { margin-top: 0; position: relative; border-radius: 20px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 40px 28px; text-align: center; cursor: pointer; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; border: 1px solid rgba(var(--mzw-spark), 0.08); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.6) inset; }",
       ".mzw-dropzone.mzw-fade-out { opacity: 0; transform: translateY(-8px); pointer-events: none; }",
       ".mzw-dropzone:hover { background: rgba(255, 255, 255, 0.6); border-color: rgba(var(--mzw-spark), 0.20); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(var(--mzw-deep), 0.10), 0 4px 12px rgba(var(--mzw-spark), 0.08), 0 0 0 1px rgba(255, 255, 255, 0.8) inset; }",
@@ -147,11 +167,48 @@
       '    <div class="mzw-subtitle">Estimation IA en 60 secondes pour des devis précis et sans surprises.</div>' +
       "  </div>" +
       '  <div class="mzw-summary" id="mzw-summary" style="display:none"></div>' +
-      '  <div class="mzw-dropzone" id="mzw-dropzone">' +
+      
+      // 3 options pour les photos
+      '  <div class="mzw-choice-section" id="mzw-choice-section">' +
+      '    <div class="mzw-choice-title">Comment voulez-vous ajouter vos photos ?</div>' +
+      '    <div class="mzw-choice-grid">' +
+      
+      // Option 1: Upload web
+      '      <button class="mzw-choice-btn" id="mzw-choice-web" type="button">' +
+      '        <div class="mzw-choice-icon mzw-choice-icon-teal">' +
+      '          <svg class="mzw-choice-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' +
+      '        </div>' +
+      '        <div class="mzw-choice-label">Upload</div>' +
+      '        <div class="mzw-choice-sublabel">Appareil photo ou fichiers</div>' +
+      '      </button>' +
+      
+      // Option 2: WhatsApp
+      '      <button class="mzw-choice-btn mzw-choice-btn-whatsapp" id="mzw-choice-whatsapp" type="button">' +
+      '        <div class="mzw-choice-badge">Rapide</div>' +
+      '        <div class="mzw-choice-icon mzw-choice-icon-whatsapp">' +
+      '          <svg class="mzw-choice-icon-svg" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>' +
+      '        </div>' +
+      '        <div class="mzw-choice-label">WhatsApp</div>' +
+      '        <div class="mzw-choice-sublabel">Envoi instantané</div>' +
+      '      </button>' +
+      
+      // Option 3: Sans photos
+      '      <button class="mzw-choice-btn mzw-choice-btn-skip" id="mzw-choice-skip" type="button">' +
+      '        <div class="mzw-choice-icon mzw-choice-icon-neutral">' +
+      '          <svg class="mzw-choice-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>' +
+      '        </div>' +
+      '        <div class="mzw-choice-label">Sans photos</div>' +
+      '        <div class="mzw-choice-sublabel">Je complèterai plus tard</div>' +
+      '      </button>' +
+      
+      '    </div>' +
+      '  </div>' +
+      
+      '  <div class="mzw-dropzone" id="mzw-dropzone" style="display:none">' +
       '    <div class="mzw-drop-icon">' +
       '      <svg class="mzw-drop-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color: rgb(var(--mzw-deep));"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' +
       "    </div>" +
-      '    <div class="mzw-drop-title">Téléchargez vos photos</div>' +
+      '    <div class="mzw-drop-title">Ajoutez vos photos</div>' +
       '    <div class="mzw-drop-helper">Cliquez pour sélectionner ou glissez-déposez</div>' +
       '    <div class="mzw-drop-limit">1 à 3 photos · JPG, PNG ou HEIC</div>' +
       "  </div>" +
@@ -473,6 +530,62 @@
       }
       updatePhotosUI();
       updateAnalyzeDisabled();
+    }
+
+    // Event listeners pour les 3 options
+    var choiceWeb = root.getElementById("mzw-choice-web");
+    var choiceWhatsApp = root.getElementById("mzw-choice-whatsapp");
+    var choiceSkip = root.getElementById("mzw-choice-skip");
+    var choiceSection = root.getElementById("mzw-choice-section");
+
+    if (choiceWeb) {
+      choiceWeb.addEventListener("click", function () {
+        if (isAnalyzing) return;
+        setError("");
+        
+        // Masquer les choix, afficher la dropzone
+        if (choiceSection) choiceSection.style.display = "none";
+        if (dropzone) dropzone.style.display = "block";
+        
+        // Sur mobile avec caméra disponible: on lance directement le flux caméra
+        if (cameraSupported && isCoarsePointer) {
+          ensureCameraUI();
+          if (cameraWrapper) {
+            cameraWrapper.style.display = "block";
+          }
+          if (dropzone) {
+            dropzone.style.display = "none";
+          }
+          startCamera();
+          return;
+        }
+        
+        // Desktop ou caméra indisponible: comportement classique d'upload.
+        fileInput.click();
+      });
+    }
+
+    if (choiceWhatsApp) {
+      choiceWhatsApp.addEventListener("click", function () {
+        if (isAnalyzing) return;
+        setError("");
+        
+        // TODO: Implémenter le flow WhatsApp avec linking token
+        // Pour l'instant, on redirige vers le tunnel qui gère déjà WhatsApp
+        var tunnelUrl = window.location.origin + "/devis-gratuits";
+        window.location.href = tunnelUrl;
+      });
+    }
+
+    if (choiceSkip) {
+      choiceSkip.addEventListener("click", function () {
+        if (isAnalyzing) return;
+        setError("");
+        
+        // Rediriger directement vers le tunnel sans photos
+        var tunnelUrl = window.location.origin + "/devis-gratuits";
+        window.location.href = tunnelUrl;
+      });
     }
 
     dropzone.addEventListener("click", function () {
@@ -800,7 +913,7 @@
         setTimeout(function() {
           if (dropzone) dropzone.style.display = "none";
           if (photosRow) photosRow.style.display = "none";
-          if (headerEl) headerEl.style.display = "none";
+        if (headerEl) headerEl.style.display = "none";
         }, 400);
         analyzeLabel.textContent = "Comparer les devis";
       } catch (e) {
