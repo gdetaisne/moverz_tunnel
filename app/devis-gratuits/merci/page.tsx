@@ -25,6 +25,18 @@ function MerciPageInner() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
+      {/* Logo Moverz en haut */}
+      <div className="mb-8">
+        <svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 w-auto">
+          {/* Icon M stylisé */}
+          <path d="M8 4L12 8L16 4L12 12L8 4Z" fill="#2B7A78" opacity="0.8"/>
+          <path d="M4 8L8 12L12 8V20H8L4 16V8Z" fill="#2B7A78"/>
+          <path d="M12 8L16 12L20 8V20H16L12 16V8Z" fill="#6BCFCF"/>
+          {/* Texte Moverz */}
+          <text x="28" y="20" fontFamily="system-ui, -apple-system, sans-serif" fontSize="18" fontWeight="600" fill="#0F172A">Moverz</text>
+        </svg>
+      </div>
+      
       <div className="w-full max-w-md space-y-5 rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] sm:p-8">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white">
           <span className="text-2xl">✓</span>

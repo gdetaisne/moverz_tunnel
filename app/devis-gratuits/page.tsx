@@ -3158,6 +3158,18 @@ function DevisGratuitsPageInner() {
       </button>
       )}
 
+      {/* Logo Moverz */}
+      <div className="mb-6">
+        <svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 w-auto">
+          {/* Icon M stylisé */}
+          <path d="M8 4L12 8L16 4L12 12L8 4Z" fill="#2B7A78" opacity="0.8"/>
+          <path d="M4 8L8 12L12 8V20H8L4 16V8Z" fill="#2B7A78"/>
+          <path d="M12 8L16 12L20 8V20H16L12 16V8Z" fill="#6BCFCF"/>
+          {/* Texte Moverz */}
+          <text x="28" y="20" fontFamily="system-ui, -apple-system, sans-serif" fontSize="18" fontWeight="600" fill="#0F172A">Moverz</text>
+        </svg>
+      </div>
+      
       {/* Header aligné sur moverz.fr hero */}
       <header className="mb-8 space-y-5">
         {/* Badge */}
@@ -6523,6 +6535,21 @@ function DevisGratuitsPageInner() {
           </div>
         </div>
       )}
+
+      {/* Footer avec logo Moverz pour renforcer la marque */}
+      <footer className="mt-16 pt-8 border-t border-slate-200">
+        <div className="flex items-center justify-between">
+          <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-7 w-auto opacity-60">
+            {/* Icon M stylisé */}
+            <path d="M7 3L10 6L13 3L10 9L7 3Z" fill="#2B7A78" opacity="0.8"/>
+            <path d="M4 6L7 9L10 6V16H7L4 13V6Z" fill="#2B7A78"/>
+            <path d="M10 6L13 9L16 6V16H13L10 13V6Z" fill="#6BCFCF"/>
+            {/* Texte Moverz */}
+            <text x="22" y="16" fontFamily="system-ui, -apple-system, sans-serif" fontSize="15" fontWeight="600" fill="#0F172A">Moverz</text>
+          </svg>
+          <p className="text-xs text-slate-500">Déménagement transparent et sans stress</p>
+        </div>
+      </footer>
 
       {/* Debug dev only : bouton discret pour aller direct à l'étape 4 avec photos.
           En dev, si aucun lead n'existe encore, on en crée un minimal avant de sauter à l'étape 4. */}
