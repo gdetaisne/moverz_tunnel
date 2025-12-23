@@ -5159,7 +5159,7 @@ function DevisGratuitsPageInner() {
                   {(!isCoarsePointer || cameraUnavailable || showUploadOnMobile) && (
                     <>
                   <div
-                    className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/80 bg-slate-950/70 px-4 py-8 text-center transition hover:border-sky-400/70 hover:bg-slate-900/80"
+                    className="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-brand-spark/40 bg-surface-1 px-4 py-8 text-center transition hover:border-brand-spark/60 hover:bg-brand-spark/5"
                     onDragOver={(e) => {
                       e.preventDefault();
                     }}
@@ -5181,15 +5181,15 @@ function DevisGratuitsPageInner() {
                         }
                       }}
                     />
-                    <p className="text-sm font-medium text-slate-100">
+                    <p className="text-sm font-medium text-text-0">
                           Glissez vos photos ici ou cliquez pour sélectionner des
                           fichiers.
                     </p>
-                    <p className="mt-2 text-[11px] text-slate-400">
+                    <p className="mt-2 text-[11px] text-text-1">
                           Formats acceptés : photos standard de smartphone (JPG, JPEG,
                           PNG, WEBP, HEIC, HEIF).
                     </p>
-                    <p className="mt-1 text-[11px] text-slate-500">
+                    <p className="mt-1 text-[11px] text-text-2">
                           Idéal : 4 photos par pièce (vue générale, deux angles,
                           détails).
                     </p>
