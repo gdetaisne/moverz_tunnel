@@ -1234,12 +1234,11 @@ function Step3MovingDayIntro({
               .join(" ")}
           />
 
-          <div className="relative h-1 flex-1 rounded-full bg-slate-800/80">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_0,_rgba(56,189,248,0.5),transparent_55%),radial-gradient(circle_at_100%,rgba(16,185,129,0.5),transparent_55%)] opacity-40" />
+          <div className="relative h-1 flex-1 rounded-full bg-surface-3/80">
             {/* Camion qui part quand la date principale est atteinte */}
             <div
               className={[
-                "truck-on-line absolute -top-3 left-0 flex h-7 w-9 items-center justify-center rounded-lg bg-sky-400 text-xs font-semibold text-slate-950 shadow-md shadow-sky-500/40",
+                "truck-on-line absolute -top-3 left-0 flex h-7 w-9 items-center justify-center rounded-lg bg-brand-spark text-xs font-semibold text-brand-navy shadow-md shadow-brand",
                 phase === "calendar" && "opacity-0",
                 phase === "load" && "opacity-100",
                 phase === "drive" && "truck-drive",
@@ -3163,13 +3162,13 @@ function DevisGratuitsPageInner() {
       <header className="space-y-4 rounded-3xl border border-surface-3 bg-white/80 p-5 shadow-soft backdrop-blur sm:p-6">
         <div className="flex items-start justify-between gap-6">
           <div className="flex-1 space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-deep/8 to-brand-spark/10 px-2.5 py-1 backdrop-blur">
+            <div className="inline-flex items-center gap-2 rounded-lg bg-brand-deep/10 px-2.5 py-1 ring-1 ring-brand-deep/15">
               <div className="h-1.5 w-1.5 rounded-full bg-brand-spark moverz-animate-pulse" />
               <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-deep">
                 Demande de devis
               </span>
             </div>
-            <h1 className="text-xl font-bold moverz-gradient-text sm:text-2xl">
+            <h1 className="text-xl font-bold text-brand-navy sm:text-2xl">
               Devis comparables en 3 minutes
             </h1>
             <p className="flex items-center gap-1.5 text-sm text-slate-600">
@@ -3246,7 +3245,7 @@ function DevisGratuitsPageInner() {
                 className={[
                   "flex h-10 min-w-[40px] items-center justify-center rounded-full border text-sm font-bold transition-all antialiased",
                   isActive
-                    ? "border-transparent bg-gradient-to-r from-brand-deep to-brand-spark text-white shadow-brand"
+                    ? "border-transparent bg-brand-deep text-white shadow-brand"
                     : isCompleted
                     ? "border-brand-deep/30 bg-brand-deep/10 text-brand-deep hover:bg-brand-deep/15"
                     : "border-surface-3 bg-white text-slate-500",
@@ -3284,7 +3283,7 @@ function DevisGratuitsPageInner() {
                     className={[
                       "flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold moverz-transition-smooth antialiased",
                       isActive
-                        ? "border-transparent bg-gradient-to-r from-brand-deep to-brand-spark text-white shadow-[0_0_0_4px_rgba(43,122,120,0.18)] moverz-animate-pulse"
+                        ? "border-transparent bg-brand-deep text-white shadow-[0_0_0_4px_rgba(43,122,120,0.18)] moverz-animate-pulse"
                         : isCompleted
                         ? "border-brand-deep/30 bg-brand-deep/10 text-brand-deep"
                         : "border-surface-3 bg-white text-slate-600",
@@ -3403,7 +3402,7 @@ function DevisGratuitsPageInner() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand moverz-transition-smooth hover:shadow-brand-lg hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+              className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand moverz-transition-smooth hover:bg-brand-navy hover:shadow-brand-lg hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
             >
               {isSubmitting ? "Création en cours…" : "Commencer ma demande"}
             </button>
@@ -4246,7 +4245,7 @@ function DevisGratuitsPageInner() {
               </button>
               <button
                 type="submit"
-                className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105"
+                className="inline-flex flex-1 items-center justify-center rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-navy"
               >
                 Étape suivante
               </button>
@@ -4260,7 +4259,7 @@ function DevisGratuitsPageInner() {
         <section className="moverz-animate-fade-in flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep3}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-              <h2 className="text-lg font-semibold moverz-gradient-text">
+              <h2 className="text-lg font-semibold text-brand-navy">
                 Sélectionnez votre formule
               </h2>
             </div>
@@ -4890,7 +4889,7 @@ function DevisGratuitsPageInner() {
               <button
                 type="submit"
                 disabled={isSubmitting || !leadId}
-                className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex flex-1 items-center justify-center rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-navy disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isSubmitting ? "Validation…" : "Valider ma demande"}
               </button>
@@ -4907,7 +4906,7 @@ function DevisGratuitsPageInner() {
             {!hasPhotosAnswer && (
               <div className="space-y-4">
                 <div className="text-center">
-                  <h2 className="text-xl font-bold moverz-gradient-text">
+                  <h2 className="text-xl font-bold text-brand-navy">
                     Envoyez-nous vos photos
                 </h2>
                   <p className="mt-2 text-sm text-slate-600">
@@ -4927,7 +4926,7 @@ function DevisGratuitsPageInner() {
                     }}
                     className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-surface-3 bg-white p-5 text-center moverz-transition-smooth hover:border-brand-spark/40 hover:-translate-y-1 hover:shadow-brand"
                   >
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-deep/10 to-brand-spark/20 group-hover:scale-110 moverz-transition-smooth">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-deep/10 ring-1 ring-brand-deep/10 group-hover:scale-110 moverz-transition-smooth">
                       <svg className="h-7 w-7 text-brand-deep" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -4950,7 +4949,7 @@ function DevisGratuitsPageInner() {
                         ...gaBaseParams,
                       });
                     }}
-                    className="group relative flex flex-col items-center gap-3 rounded-2xl border-2 border-[#25D366]/30 bg-gradient-to-br from-[#25D366]/5 to-[#128C7E]/10 p-5 text-center moverz-transition-smooth hover:border-[#25D366]/60 hover:-translate-y-1 hover:shadow-lg"
+                    className="group relative flex flex-col items-center gap-3 rounded-2xl border-2 border-[#25D366]/30 bg-white p-5 text-center moverz-transition-smooth hover:border-[#25D366]/60 hover:-translate-y-1 hover:shadow-lg"
                   >
                     {/* Badge "Recommandé mobile" */}
                     <div className="absolute -top-2 -right-2 flex items-center gap-1 rounded-full bg-[#25D366] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-lg">
@@ -4974,7 +4973,7 @@ function DevisGratuitsPageInner() {
                 </div>
 
                 {/* Encart minimaliste : Pourquoi les photos ? */}
-                <div className="max-w-2xl mx-auto rounded-2xl border border-brand-spark/20 bg-gradient-to-br from-brand-spark/5 to-white p-4">
+                <div className="max-w-2xl mx-auto rounded-2xl border border-brand-spark/20 bg-white p-4">
                   <div className="flex items-start gap-3">
                     <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-spark/20">
                       <svg className="h-5 w-5 text-brand-deep" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -5010,7 +5009,7 @@ function DevisGratuitsPageInner() {
               <div className="space-y-4 moverz-animate-scale-in">
                 
                 {/* Card WhatsApp premium */}
-                <div className="overflow-hidden rounded-2xl border-2 border-[#25D366]/30 bg-gradient-to-br from-[#25D366]/5 via-white to-[#128C7E]/5 shadow-brand">
+                <div className="overflow-hidden rounded-2xl border-2 border-[#25D366]/30 bg-white shadow-brand">
                   
                   {/* Header */}
                   <div className="border-b border-[#25D366]/20 bg-white/80 p-5 backdrop-blur">
@@ -5046,7 +5045,7 @@ function DevisGratuitsPageInner() {
                             1
                           </div>
                           <p className="text-sm text-slate-700">
-                            Notez votre <strong>code dossier</strong> ci-dessous
+                            Cliquez sur <strong>&quot;Ouvrir WhatsApp&quot;</strong>
                           </p>
                         </div>
                         <div className="flex items-start gap-3">
@@ -5054,7 +5053,7 @@ function DevisGratuitsPageInner() {
                             2
                           </div>
                           <p className="text-sm text-slate-700">
-                            Cliquez sur <strong>"Ouvrir WhatsApp"</strong>
+                            Envoyez <strong>2–3 photos par pièce</strong>
                           </p>
                         </div>
                         <div className="flex items-start gap-3">
@@ -5062,7 +5061,7 @@ function DevisGratuitsPageInner() {
                             3
                           </div>
                           <p className="text-sm text-slate-700">
-                            Envoyez vos photos + mentionnez le code
+                            Ajoutez si possible la <strong>ville</strong> de départ et d’arrivée
                           </p>
                         </div>
                       </div>
@@ -5121,7 +5120,7 @@ function DevisGratuitsPageInner() {
             {/* Si l'utilisateur a répondu "non", on lui explique pourquoi c'est important */}
             {hasPhotosAnswer === "no" && photoFlowChoice === "none" && (
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold moverz-gradient-text">
+                <h2 className="text-lg font-semibold text-brand-navy">
                   Pourquoi les photos sont importantes
                 </h2>
                 <p className="text-sm text-slate-600">
@@ -5203,7 +5202,7 @@ function DevisGratuitsPageInner() {
                       setHasPhotosAnswer("yes");
                       setPhotoFlowChoice("web");
                     }}
-                    className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105"
+                    className="inline-flex items-center justify-center rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-navy"
                   >
                     Finalement, j'ai des photos
                   </button>
@@ -5267,7 +5266,7 @@ function DevisGratuitsPageInner() {
             {localUploadFiles.length === 0 && (
               <div className="space-y-4">
                 <div className="text-center">
-                  <h2 className="text-lg font-semibold moverz-gradient-text">
+                  <h2 className="text-lg font-semibold text-brand-navy">
                     Ajoutez vos photos
                 </h2>
                   <p className="mt-1 text-sm text-slate-600">
@@ -5487,7 +5486,7 @@ function DevisGratuitsPageInner() {
                     </p>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-400 transition-all"
+                        className="h-full rounded-full bg-brand-deep transition-all"
                         style={{
                           width: `${Math.min(
                             100,
@@ -6281,7 +6280,7 @@ function DevisGratuitsPageInner() {
                           router.push("/devis-gratuits/merci");
                         }
                       }}
-                      className="inline-flex items-center rounded-full bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-1.5 text-[11px] font-semibold text-white shadow-brand hover:brightness-105"
+                      className="inline-flex items-center rounded-full bg-brand-deep px-4 py-1.5 text-[11px] font-semibold text-white shadow-brand hover:bg-brand-navy"
                     >
                       Terminer et envoyer mon dossier
                     </button>
