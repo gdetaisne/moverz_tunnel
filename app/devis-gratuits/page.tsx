@@ -5325,132 +5325,30 @@ function DevisGratuitsPageInner() {
                 </button>
 
             {localUploadFiles.length === 0 && (
-              <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-50">
-                  Pourquoi ajouter des photos ?
-                </h2>
-                {/* Schéma visuel simple : photos → IA → inventaire + déclaration */}
-                <div className="space-y-1 rounded-2xl bg-slate-950/80 p-3 ring-1 ring-slate-800/70">
-                <p className="text-[11px] font-medium text-slate-300">
-                  Ce qui se passe derrière en 2 minutes :
-                </p>
-                <div className="flex flex-col items-stretch gap-2 text-[11px] text-slate-100 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-1 items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-deep/10 text-[11px] font-semibold text-brand-deep">
-                      PH
-                    </div>
-                    <span className="font-medium">Vos photos du logement</span>
-                  </div>
-                  <div className="hidden items-center text-slate-500 sm:flex">
-                    ➜
-                  </div>
-                  <div className="flex flex-1 items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-spark/20 text-[11px] font-semibold text-brand-deep">
-                      IA
-                    </div>
-                    <span className="font-medium">Traitement intelligent Moverz</span>
-                  </div>
-                  <div className="hidden items-center text-slate-500 sm:flex">
-                    ➜
-                  </div>
-                  <div className="flex flex-1 items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-[11px] font-semibold text-slate-700 ring-1 ring-surface-3">
-                      DOC
-                    </div>
-                    <span className="font-medium">
-                      Inventaire détaillé + déclaration de valeur prête
-                    </span>
-                  </div>
+              <div className="space-y-4">
+                <div className="text-center">
+                  <h2 className="text-lg font-semibold moverz-gradient-text">
+                    Ajoutez vos photos
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    4 photos par pièce suffisent
+                  </p>
                 </div>
-                </div>
-                <p className="text-xs text-slate-300">
-                  En 2 minutes, vos photos nous donnent tout ce qu’il faut :
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-deep/10 text-[11px] font-semibold text-brand-deep">
-                    V
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <p className="font-semibold text-slate-50">
-                      Volume ultra‑précis
-                    </p>
-                    <p className="text-slate-400">
-                      Estimation calibrée, moins de suppléments et de mauvaises
-                      surprises.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-spark/20 text-[11px] font-semibold text-brand-deep">
-                    i
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <p className="font-semibold text-slate-50">
-                      Inventaire automatique
-                    </p>
-                    <p className="text-slate-400">
-                      Plus besoin de tout lister pièce par pièce, on le fait pour
-                      vous et le déménageur.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-[11px] font-semibold text-slate-700 ring-1 ring-surface-3">
-                    €
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <p className="font-semibold text-slate-50">
-                      Déclaration de valeur prête
-                    </p>
-                    <p className="text-slate-400">
-                      Document obligatoire pour être bien couvert en cas de casse,
-                      pré‑rempli pour vous.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-[11px] font-semibold text-slate-700 ring-1 ring-surface-3">
-                    R
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <p className="font-semibold text-slate-50">
-                      Zéro stress, moins d’échanges
-                    </p>
-                    <p className="text-slate-400">
-                      Le déménageur comprend tout de suite votre logement, sans
-                      visite ni appels.
-                    </p>
-                  </div>
-                </div>
-                </div>
-                <p className="text-[11px] font-medium text-brand-deep">
-                  → 4 photos par pièce suffisent (vue générale + deux angles +
-                  détails si besoin).
-                </p>
 
-                <div className="rounded-2xl bg-slate-950/70 p-3 ring-1 ring-slate-800/70">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    Quoi photographier (simple et rapide)
-                  </p>
-                  <ul className="mt-2 space-y-1 text-[11px] text-slate-200">
-                    <li>
-                      <span className="font-semibold text-slate-50">Chaque pièce</span> :
-                      une vue générale + 2 angles.
-                    </li>
-                    <li>
-                      <span className="font-semibold text-slate-50">Objets “hors norme”</span> :
-                      piano, coffre-fort, frigo américain, aquarium.
-                    </li>
-                    <li>
-                      <span className="font-semibold text-slate-50">Accès</span> :
-                      escaliers, ascenseur (si petit), couloir étroit, rue/stationnement.
-                    </li>
-                  </ul>
-                  <p className="mt-2 text-[11px] text-slate-400">
-                    Conseil: commencez par salon/cuisine, puis chambres. Inutile de photographier chaque petit objet.
-                  </p>
-                </div>
+                {/* Aide minimaliste */}
+                <details className="group max-w-2xl mx-auto rounded-xl border border-surface-3 bg-white p-3">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold text-slate-700 [&::-webkit-details-marker]:hidden">
+                    <span>Que photographier ?</span>
+                    <span className="text-slate-400 transition-transform group-open:rotate-180">
+                      ▼
+                    </span>
+                  </summary>
+                  <div className="mt-2 space-y-1.5 text-xs text-slate-600">
+                    <p><strong>Chaque pièce :</strong> vue générale + 2 angles</p>
+                    <p><strong>Objets volumineux :</strong> piano, coffre-fort, frigo américain</p>
+                    <p><strong>Accès :</strong> escaliers, ascenseur, couloir étroit</p>
+                  </div>
+                </details>
               </div>
             )}
 
@@ -5536,27 +5434,27 @@ function DevisGratuitsPageInner() {
 
                 {/* Aperçu des photos sélectionnées + bouton d'analyse (caméra OU upload) */}
                   {localUploadFiles.length > 0 && (
-                    <div className="space-y-2 rounded-2xl bg-slate-950/70 p-3 text-xs text-slate-200">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                        Photos sélectionnées
+                    <div className="space-y-2 rounded-2xl border border-surface-3 bg-surface-1 p-3 text-xs">
+                      <p className="text-xs font-semibold text-slate-700">
+                        {localUploadFiles.length} photo{localUploadFiles.length > 1 ? 's' : ''} sélectionnée{localUploadFiles.length > 1 ? 's' : ''}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {localUploadFiles.map((item) => {
                           const isImage = item.file.type.startsWith("image/");
                           const borderClass =
                             item.status === "uploaded"
-                              ? "border-emerald-400"
+                              ? "border-brand-spark"
                               : item.status === "uploading"
-                              ? "border-sky-400"
+                              ? "border-brand-deep"
                               : item.status === "error"
                               ? "border-rose-400"
-                              : "border-slate-600";
+                              : "border-surface-3";
 
                           return (
                             <button
                               key={item.id}
                               type="button"
-                              className={`relative h-14 w-14 overflow-hidden rounded-xl border ${borderClass} bg-slate-900`}
+                              className={`relative h-14 w-14 overflow-hidden rounded-xl border-2 ${borderClass} bg-surface-1 moverz-transition-fast hover:scale-105`}
                               onClick={() =>
                                 setLocalUploadFiles((prev) =>
                                   prev.filter((f) => f.id !== item.id)
@@ -5573,11 +5471,11 @@ function DevisGratuitsPageInner() {
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                    <span className="text-[10px] text-slate-200">
+                                    <span className="text-[10px] text-slate-600">
                                       FILE
                                     </span>
                               )}
-                              <span className="absolute right-0 top-0 rounded-bl-md bg-slate-900/80 px-1 text-[9px] text-slate-100">
+                              <span className="absolute right-0 top-0 rounded-bl-md bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 shadow-sm">
                                 ×
                               </span>
                             </button>
