@@ -25,18 +25,18 @@ function MerciPageInner() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
-      <div className="w-full max-w-md space-y-5 rounded-3xl border border-surface-3 bg-white/90 p-6 shadow-soft backdrop-blur sm:p-8">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-deep text-white shadow-brand">
+      <div className="w-full max-w-md space-y-5 rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] sm:p-8">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white">
           <span className="text-2xl">✓</span>
         </div>
-        <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
+        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
           Merci pour votre demande !
         </h1>
         <p className="text-sm text-slate-600 sm:text-base">
-          Votre dossier est créé. On s’occupe du reste.
+          Votre dossier est créé. On s'occupe du reste.
         </p>
 
-        <div className="space-y-3 rounded-2xl bg-surface-1 p-4 text-left ring-1 ring-surface-3">
+        <div className="space-y-3 rounded-2xl bg-slate-50 p-4 text-left border border-slate-100">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
             Prochaines étapes
           </p>
