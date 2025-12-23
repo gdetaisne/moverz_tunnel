@@ -3517,6 +3517,38 @@ function DevisGratuitsPageInner() {
                       )}
                     </div>
                   </div>
+
+                  {/* Étage (si appartement) */}
+                  {form.originHousingType &&
+                   !form.originHousingType.startsWith("house") && (
+                    <div className="space-y-1">
+                      <label className="block text-xs font-medium text-slate-200">
+                        Étage
+                      </label>
+                      <div className="relative mt-1">
+                        <select
+                          value={form.originFloor}
+                          onChange={(e) =>
+                            updateField("originFloor", e.target.value)
+                          }
+                          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                        >
+                          <option value="0">Rez-de-chaussée</option>
+                          <option value="1">1er étage</option>
+                          <option value="2">2e étage</option>
+                          <option value="3">3e étage</option>
+                          <option value="4">4e étage</option>
+                          <option value="5">5e étage</option>
+                          <option value="6">6e étage</option>
+                          <option value="7">7e étage</option>
+                          <option value="8">8e étage</option>
+                          <option value="9">9e étage</option>
+                          <option value="10">10e étage ou +</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Distance de portage : désormais gérée uniquement via le chip
                       "Portage > 15 m" dans la section Accès. */}
                 </div>
@@ -3685,6 +3717,39 @@ function DevisGratuitsPageInner() {
                       )}
                     </div>
                   </div>
+
+                  {/* Étage (si appartement) */}
+                  {form.destinationHousingType &&
+                   !form.destinationHousingType.startsWith("house") &&
+                   !form.destinationUnknown && (
+                    <div className="space-y-1">
+                      <label className="block text-xs font-medium text-slate-200">
+                        Étage
+                      </label>
+                      <div className="relative mt-1">
+                        <select
+                          value={form.destinationFloor}
+                          onChange={(e) =>
+                            updateField("destinationFloor", e.target.value)
+                          }
+                          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                        >
+                          <option value="0">Rez-de-chaussée</option>
+                          <option value="1">1er étage</option>
+                          <option value="2">2e étage</option>
+                          <option value="3">3e étage</option>
+                          <option value="4">4e étage</option>
+                          <option value="5">5e étage</option>
+                          <option value="6">6e étage</option>
+                          <option value="7">7e étage</option>
+                          <option value="8">8e étage</option>
+                          <option value="9">9e étage</option>
+                          <option value="10">10e étage ou +</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Distance de portage arrivée : gérée via le chip
                       "Portage > 15 m (arrivée)" dans la section Accès. */}
                 </div>
