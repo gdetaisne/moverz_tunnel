@@ -3160,41 +3160,66 @@ function DevisGratuitsPageInner() {
       )}
 
       {/* Header + rassurance (minimal, premium) */}
-      <header className="space-y-3 rounded-3xl border border-surface-3 bg-white/80 p-4 shadow-soft backdrop-blur sm:p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Moverz — demande de devis
-            </p>
-            <h1 className="text-lg font-semibold moverz-gradient-text sm:text-xl">
-              Un dossier clair, des devis comparables
+      <header className="space-y-4 rounded-3xl border border-surface-3 bg-white/80 p-5 shadow-soft backdrop-blur sm:p-6">
+        <div className="flex items-start justify-between gap-6">
+          <div className="flex-1 space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-deep/8 to-brand-spark/10 px-2.5 py-1 backdrop-blur">
+              <div className="h-1.5 w-1.5 rounded-full bg-brand-spark moverz-animate-pulse" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-deep">
+                Demande de devis
+              </span>
+            </div>
+            <h1 className="text-xl font-bold moverz-gradient-text sm:text-2xl">
+              Devis comparables en 3 minutes
             </h1>
-            <p className="text-sm text-slate-600">
-              Astuce: <span className="font-semibold text-slate-900">les photos</span>{" "}
-              rendent le volume plus fiable et évitent les surprises.
+            <p className="flex items-center gap-1.5 text-sm text-slate-600">
+              <svg className="h-3.5 w-3.5 text-brand-spark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-medium text-slate-900">Les photos</span> évitent les surprises le jour J
             </p>
           </div>
           <div className="hidden sm:flex items-center gap-2">
-            <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
+            <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/60 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/50 backdrop-blur moverz-transition-fast hover:shadow hover:ring-slate-300/50">
+              <svg className="h-3 w-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
               Gratuit
             </span>
-            <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
-              0 spam
+            <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/60 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/50 backdrop-blur moverz-transition-fast hover:shadow hover:ring-slate-300/50">
+              <svg className="h-3 w-3 text-brand-spark" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Pros vérifiés
             </span>
-            <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
-              Pros contrôlés
+            <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/60 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/50 backdrop-blur moverz-transition-fast hover:shadow hover:ring-slate-300/50">
+              <svg className="h-3 w-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+              </svg>
+              0 spam
             </span>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 sm:hidden">
-          <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/60 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+            <svg className="h-3 w-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
             Gratuit
           </span>
-          <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
-            0 spam
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/60 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+            <svg className="h-3 w-3 text-brand-spark" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            Pros vérifiés
           </span>
-          <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-surface-3">
-            Pros contrôlés
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/60 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+            <svg className="h-3 w-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+              <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+            </svg>
+            0 spam
           </span>
         </div>
       </header>
