@@ -3244,7 +3244,7 @@ function DevisGratuitsPageInner() {
                 disabled={!canGoBack && !isActive}
                 onClick={canGoBack ? () => goToStep(step.id as StepId) : undefined}
                 className={[
-                  "flex h-10 min-w-[40px] items-center justify-center rounded-full border text-sm font-semibold transition-all",
+                  "flex h-10 min-w-[40px] items-center justify-center rounded-full border text-sm font-bold transition-all antialiased",
                   isActive
                     ? "border-transparent bg-gradient-to-r from-brand-deep to-brand-spark text-white shadow-brand"
                     : isCompleted
@@ -3253,6 +3253,7 @@ function DevisGratuitsPageInner() {
                   canGoBack && !isActive ? "cursor-pointer" : "",
                   !canGoBack && !isActive ? "cursor-default opacity-50" : "",
                 ].join(" ")}
+                style={{ WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
               >
                 {isCompleted ? "✓" : step.id}
               </button>
@@ -3281,7 +3282,7 @@ function DevisGratuitsPageInner() {
                 >
                   <div
                     className={[
-                      "flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold moverz-transition-smooth",
+                      "flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold moverz-transition-smooth antialiased",
                       isActive
                         ? "border-transparent bg-gradient-to-r from-brand-deep to-brand-spark text-white shadow-[0_0_0_4px_rgba(43,122,120,0.18)] moverz-animate-pulse"
                         : isCompleted
@@ -3289,6 +3290,7 @@ function DevisGratuitsPageInner() {
                         : "border-surface-3 bg-white text-slate-600",
                       canGoToStep && !isActive ? "hover:border-brand-spark/60 hover:text-slate-900 hover:scale-110" : "",
                     ].join(" ")}
+                    style={{ WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
                   >
                     {isCompleted ? "✓" : step.id}
                   </div>
