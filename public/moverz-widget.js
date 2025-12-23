@@ -203,7 +203,7 @@
       // 3 options pour les photos
       '  <div class="mzw-choice-section" id="mzw-choice-section">' +
       '    <div class="mzw-choice-title">Choisissez un mode d’envoi</div>' +
-      '    <div class="mzw-choice-micro">1 à 3 photos suffisent pour une estimation rapide</div>' +
+      '    <div class="mzw-choice-micro">2–3 photos par pièce suffisent</div>' +
       '    <div class="mzw-choice-grid">' +
       
       // Option 1: Upload web
@@ -234,7 +234,7 @@
       "    </div>" +
       '    <div class="mzw-drop-title">Ajoutez vos photos</div>' +
       '    <div class="mzw-drop-helper">Cliquez pour sélectionner ou glissez-déposez</div>' +
-      '    <div class="mzw-drop-limit">1 à 3 photos · JPG, PNG ou HEIC</div>' +
+      '    <div class="mzw-drop-limit">2–3 photos par pièce · JPG, PNG ou HEIC</div>' +
       "  </div>" +
       '  <input type="file" id="mzw-file-input" accept="image/*" multiple style="display:none" />' +
       '  <div class="mzw-photos-row" id="mzw-photos-row" style="display:none"></div>' +
@@ -491,7 +491,7 @@
       var info = document.createElement("p");
       info.className = "mzw-camera-text";
       info.textContent =
-        "Recommandations : 3 à 5 photos par pièce. Tout ce qui est vu sera pris en compte.";
+        "Recommandations : 2–3 photos par pièce. Tout ce qui est vu sera pris en compte.";
 
       cameraCloseBtn = document.createElement("button");
       cameraCloseBtn.type = "button";
