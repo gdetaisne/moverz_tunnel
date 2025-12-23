@@ -3,7 +3,7 @@
  */
 
 // Format: E.164 (remove spaces, keep +)
-export const MOVERZ_WHATSAPP_NUMBER = '33633046059'; // +33 6 33 04 60 59
+export const MOVERZ_WHATSAPP_NUMBER = '33752986581'; // +33 7 52 98 65 81 (WhatsApp Business Moverz)
 
 /**
  * Generate a unique linking token for lead identification
