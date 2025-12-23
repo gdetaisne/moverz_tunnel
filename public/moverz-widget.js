@@ -79,6 +79,7 @@
       ".mzw-subtitle { margin-top: 10px; font-size: 14.5px; color: #64748b; line-height: 1.5; font-weight: 400; margin-bottom: 28px; }",
       ".mzw-choice-section { margin-top: 0; }",
       ".mzw-choice-title { font-size: 19px; font-weight: 700; color: #0f172a; margin-bottom: 20px; text-align: center; background: linear-gradient(135deg, #0f172a 0%, rgb(var(--mzw-deep)) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.02em; }",
+      ".mzw-choice-micro { font-size: 12px; color: #64748b; text-align: center; margin: -10px auto 18px; line-height: 1.45; }",
       ".mzw-choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 500px; margin: 0 auto; }",
       "@media (max-width: 480px) { .mzw-choice-grid { grid-template-columns: 1fr; gap: 10px; } }",
       ".mzw-choice-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 24px 20px; border-radius: 18px; border: 2px solid rgba(148, 163, 184, 0.15); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); font-family: inherit; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02); }",
@@ -97,6 +98,20 @@
       ".mzw-choice-icon-neutral .mzw-choice-icon-svg { color: #64748b; }",
       ".mzw-choice-label { font-size: 14px; font-weight: 600; color: #0f172a; }",
       ".mzw-choice-sublabel { font-size: 12px; color: #64748b; text-align: center; }",
+      ".mzw-actions { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }",
+      ".mzw-privacy { font-size: 11px; color: #64748b; text-align: center; }",
+      ".mzw-photos-row { margin-top: 14px; display: none; flex-direction: column; gap: 10px; }",
+      ".mzw-photos-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; }",
+      ".mzw-photos-count { font-size: 12px; font-weight: 700; color: #0f172a; }",
+      ".mzw-photos-hint { font-size: 11px; color: #64748b; }",
+      ".mzw-photos-bar { height: 8px; width: 100%; border-radius: 999px; background: rgba(148, 163, 184, 0.22); overflow: hidden; }",
+      ".mzw-photos-bar-fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1); }",
+      ".mzw-thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }",
+      ".mzw-thumb { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.22); background: rgba(248, 250, 252, 0.9); box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06); }",
+      ".mzw-thumb::before { content: ''; display: block; padding-top: 100%; }",
+      ".mzw-thumb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }",
+      ".mzw-thumb-remove { position: absolute; top: 8px; right: 8px; height: 26px; width: 26px; border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.25); background: rgba(255, 255, 255, 0.92); color: #0f172a; font-weight: 800; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; }",
+      ".mzw-thumb-remove:hover { transform: scale(1.06); background: rgba(255, 255, 255, 1); }",
       ".mzw-dropzone { margin-top: 0; position: relative; border-radius: 20px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 40px 28px; text-align: center; cursor: pointer; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; border: 1px solid rgba(var(--mzw-spark), 0.08); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.6) inset; }",
       ".mzw-dropzone.mzw-fade-out { opacity: 0; transform: translateY(-8px); pointer-events: none; }",
       ".mzw-dropzone:hover { background: rgba(255, 255, 255, 0.6); border-color: rgba(var(--mzw-spark), 0.20); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(var(--mzw-deep), 0.10), 0 4px 12px rgba(var(--mzw-spark), 0.08), 0 0 0 1px rgba(255, 255, 255, 0.8) inset; }",
@@ -111,23 +126,23 @@
       ".mzw-dropzone:hover .mzw-drop-helper { color: #475569; }",
       ".mzw-drop-limit { margin-top: 10px; font-size: 11px; color: #94a3b8; font-weight: 400; transition: color 0.3s ease; }",
       ".mzw-dropzone:hover .mzw-drop-limit { color: #64748b; }",
-      ".mzw-camera { margin-top: 20px; border-radius: 18px; border: 1px solid rgba(var(--mzw-spark), 0.35); background: linear-gradient(135deg, #334155 0%, #1e293b 100%); padding: 18px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.30), 0 0 0 1px rgba(var(--mzw-spark), 0.20) inset; }",
+      ".mzw-camera { margin-top: 16px; border-radius: 18px; border: 1px solid rgba(148, 163, 184, 0.22); background: rgba(255, 255, 255, 0.92); padding: 18px; box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255,255,255,0.5) inset; }",
       ".mzw-camera-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }",
-      ".mzw-camera-text { font-size: 12px; color: #e2e8f0; font-weight: 600; line-height: 1.4; }",
+      ".mzw-camera-text { font-size: 12px; color: #334155; font-weight: 600; line-height: 1.4; }",
       ".mzw-camera-actions { display: flex; gap: 8px; align-items: center; }",
       ".mzw-camera-pill-btn { border-radius: 12px; padding: 9px 15px; font-size: 12px; font-weight: 800; border: none; cursor: pointer; transition: all 0.2s ease; }",
       ".mzw-camera-pill-btn-primary { background: linear-gradient(135deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); color: #ffffff; box-shadow: 0 6px 16px rgba(var(--mzw-spark), 0.40), 0 0 0 1px rgba(255,255,255,0.15) inset; }",
       ".mzw-camera-pill-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(var(--mzw-spark), 0.50), 0 0 0 1px rgba(255,255,255,0.20) inset; }",
-      ".mzw-camera-pill-btn-secondary { border: 1px solid rgba(148, 163, 184, 0.35); background: rgba(255, 255, 255, 0.10); color: #e2e8f0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10); }",
-      ".mzw-camera-pill-btn-secondary:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }",
+      ".mzw-camera-pill-btn-secondary { border: 1px solid rgba(148, 163, 184, 0.30); background: rgba(255, 255, 255, 0.95); color: #0f172a; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06); }",
+      ".mzw-camera-pill-btn-secondary:hover { background: #ffffff; transform: translateY(-1px); }",
       ".mzw-camera-video-wrapper { margin-top: 14px; border-radius: 16px; overflow: hidden; border: 2px solid rgba(var(--mzw-spark), 0.30); background: #000000; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.40); }",
       ".mzw-camera-video { width: 100%; height: 240px; object-fit: cover; background: #000000; }",
       ".mzw-camera-cta-row { margin-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }",
       ".mzw-camera-cta-actions { display: flex; gap: 8px; align-items: center; flex: 1; }",
       ".mzw-camera-cta-actions .mzw-camera-pill-btn-primary { flex: 1; }",
       ".mzw-camera-cta-actions .mzw-camera-pill-btn-secondary { white-space: nowrap; }",
-      ".mzw-camera-counter { font-size: 12px; color: #cbd5e1; font-weight: 700; }",
-      ".mzw-photos-row { margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }",
+      ".mzw-camera-counter { font-size: 12px; color: #64748b; font-weight: 700; }",
+      ".mzw-photos-row { margin-top: 14px; display: none; flex-direction: column; gap: 10px; transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }",
       ".mzw-photos-row.mzw-fade-out { opacity: 0; transform: translateY(-8px); pointer-events: none; }",
       ".mzw-photo-pill { border-radius: 10px; background: rgba(var(--mzw-deep), 0.06); border: 1px solid rgba(148, 163, 184, 0.20); padding: 8px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; color: #0f172a; font-weight: 600; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04); transition: all 0.2s ease; }",
       ".mzw-photo-pill:hover { transform: translateY(-1px); background: rgba(var(--mzw-deep), 0.08); box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08); }",
@@ -150,7 +165,7 @@
       ".mzw-links { display: flex; justify-content: center; gap: 16px; }",
       ".mzw-link { appearance: none; border: none; background: transparent; padding: 0; margin: 0; font-size: 13px; color: #64748b; font-weight: 700; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; transition: all 0.2s ease; }",
       ".mzw-link:hover { color: rgb(var(--mzw-deep)); text-decoration-thickness: 2px; transform: translateY(-1px); }",
-      ".mzw-error { margin-top: 12px; font-size: 13px; color: #fca5a5; font-weight: 700; padding: 14px 16px; background: rgba(220, 38, 38, 0.15); border-radius: 14px; border: 1px solid rgba(220, 38, 38, 0.30); }",
+      ".mzw-error { margin-top: 12px; font-size: 13px; color: #dc2626; font-weight: 700; padding: 14px 16px; background: rgba(220, 38, 38, 0.08); border-radius: 14px; border: 1px solid rgba(220, 38, 38, 0.20); }",
       ".mzw-results { margin-top: 20px; border-radius: 16px; background: #ffffff; border: 1px solid rgba(148, 163, 184, 0.15); padding: 20px; max-height: 360px; overflow: auto; color: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06); opacity: 0; transform: translateY(12px); transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }",
       ".mzw-results.mzw-fade-in { opacity: 1; transform: translateY(0); }",
       ".mzw-results-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid rgba(148, 163, 184, 0.12); }",
@@ -171,7 +186,7 @@
       "@keyframes mzw-spin { to { transform: rotate(360deg); } }",
       "@keyframes mzw-pulse { 0%, 100% { opacity: 0.9; transform: scale(1); } 50% { opacity: 1; transform: scale(1.15); } }",
       "@keyframes mzw-icon-pulse { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }",
-      "@media (max-width: 640px) { .mzw-card { max-width: 100%; padding: 24px 20px 20px; border-radius: 16px; } .mzw-title { font-size: 20px; } .mzw-subtitle { font-size: 13px; } .mzw-dropzone { padding: 32px 20px; } .mzw-drop-icon { width: 44px; height: 44px; } .mzw-drop-icon-svg { width: 22px; height: 22px; } }",
+      "@media (max-width: 640px) { .mzw-card { max-width: 100%; padding: 24px 20px 20px; border-radius: 16px; } .mzw-title { font-size: 20px; } .mzw-subtitle { font-size: 13px; } .mzw-dropzone { padding: 32px 20px; } .mzw-drop-icon { width: 44px; height: 44px; } .mzw-drop-icon-svg { width: 22px; height: 22px; } .mzw-thumbs { gap: 8px; } }",
     ].join("");
 
     var wrapper = document.createElement("div");
@@ -188,6 +203,7 @@
       // 3 options pour les photos
       '  <div class="mzw-choice-section" id="mzw-choice-section">' +
       '    <div class="mzw-choice-title">Choisissez un mode d’envoi</div>' +
+      '    <div class="mzw-choice-micro">1 à 3 photos suffisent pour une estimation rapide</div>' +
       '    <div class="mzw-choice-grid">' +
       
       // Option 1: Upload web
@@ -195,18 +211,18 @@
       '        <div class="mzw-choice-icon mzw-choice-icon-teal">' +
       '          <svg class="mzw-choice-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' +
       '        </div>' +
-      '        <div class="mzw-choice-label">Upload</div>' +
-      '        <div class="mzw-choice-sublabel">Appareil photo ou fichiers</div>' +
+      '        <div class="mzw-choice-label">Web</div>' +
+      '        <div class="mzw-choice-sublabel">Galerie ou appareil photo</div>' +
       '      </button>' +
       
       // Option 2: WhatsApp
       '      <button class="mzw-choice-btn mzw-choice-btn-whatsapp" id="mzw-choice-whatsapp" type="button">' +
-      '        <div class="mzw-choice-badge">Rapide</div>' +
+      '        <div class="mzw-choice-badge">Recommandé</div>' +
       '        <div class="mzw-choice-icon mzw-choice-icon-whatsapp">' +
       '          <svg class="mzw-choice-icon-svg" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>' +
       '        </div>' +
       '        <div class="mzw-choice-label">WhatsApp</div>' +
-      '        <div class="mzw-choice-sublabel">Envoi instantané</div>' +
+      '        <div class="mzw-choice-sublabel">Le plus simple sur mobile</div>' +
       '      </button>' +
       
       '    </div>' +
@@ -222,6 +238,20 @@
       "  </div>" +
       '  <input type="file" id="mzw-file-input" accept="image/*" multiple style="display:none" />' +
       '  <div class="mzw-photos-row" id="mzw-photos-row" style="display:none"></div>' +
+      '  <div class="mzw-actions" id="mzw-actions">' +
+      '    <button class="mzw-primary-btn" id="mzw-analyze-btn" type="button" style="display:none">' +
+      '      <span class="mzw-primary-btn-inner"><span id="mzw-analyze-label">Continuer</span></span>' +
+      '      <span class="mzw-progress-mask" id="mzw-progress-mask"></span>' +
+      "    </button>" +
+      '    <div class="mzw-privacy">Vos photos servent uniquement à estimer volume et accès</div>' +
+      "  </div>" +
+      '  <div class="mzw-results" id="mzw-results" style="display:none">' +
+      '    <div class="mzw-results-header">' +
+      '      <div class="mzw-results-title">Aperçu IA</div>' +
+      '      <div class="mzw-results-pill" id="mzw-results-pill">—</div>' +
+      "    </div>" +
+      '    <div class="mzw-results-list" id="mzw-results-list"></div>' +
+      "  </div>" +
       '  <div class="mzw-error" id="mzw-error" style="display:none"></div>' +
       "</div>";
 
@@ -241,10 +271,16 @@
     var progressMaskEl = root.getElementById("mzw-progress-mask");
     var photosLaterBtn = root.getElementById("mzw-photos-later");
 
+    // Init CTA state (now that DOM nodes exist)
+    updateAnalyzeDisabled();
+
     /** @type {File[]} */
     var selectedFiles = [];
     var isAnalyzing = false;
     var hasResults = false;
+
+    // Tracking: widget view
+    trackWidgetEvent("widget_view", {});
 
     // Détection d'un pointeur "grossier" (mobile/tablette) pour décider si on
     // privilégie la caméra comme entrée principale.
@@ -276,6 +312,39 @@
     var cameraCounterText = null;
     var cameraStream = null;
 
+    function getQueryParamsSafe() {
+      try {
+        return new URLSearchParams(window.location.search || "");
+      } catch (e) {
+        return new URLSearchParams("");
+      }
+    }
+
+    function trackWidgetEvent(name, params) {
+      params = params || {};
+      try {
+        var qs = getQueryParamsSafe();
+        var payload = {};
+        payload.source = qs.get("src") || "moverz.fr";
+        payload.from = qs.get("from") || "widget";
+        payload.component = "moverz_widget";
+        payload.path = (window.location && window.location.pathname) || "";
+        for (var k in params) {
+          if (Object.prototype.hasOwnProperty.call(params, k)) payload[k] = params[k];
+        }
+
+        if (typeof window.gtag === "function") {
+          window.gtag("event", name, payload);
+          return;
+        }
+        if (window.dataLayer && typeof window.dataLayer.push === "function") {
+          window.dataLayer.push(Object.assign({ event: name }, payload));
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
     function setError(msg) {
       if (!msg) {
         errorEl.style.display = "none";
@@ -293,33 +362,75 @@
       } else {
         photosRow.style.display = "flex";
         photosRow.innerHTML = "";
+
+        var maxPhotos = 3;
+        var meta = document.createElement("div");
+        meta.className = "mzw-photos-meta";
+
+        var left = document.createElement("div");
+        var countText = document.createElement("div");
+        countText.className = "mzw-photos-count";
+        countText.textContent = selectedFiles.length + " / " + maxPhotos + " photo" + (maxPhotos > 1 ? "s" : "");
+        var hint = document.createElement("div");
+        hint.className = "mzw-photos-hint";
+        hint.textContent = selectedFiles.length >= 2 ? "Parfait, vous pouvez continuer" : "Ajoutez 1 photo de plus si possible";
+        left.appendChild(countText);
+        left.appendChild(hint);
+
+        meta.appendChild(left);
+
+        var bar = document.createElement("div");
+        bar.className = "mzw-photos-bar";
+        var fill = document.createElement("div");
+        fill.className = "mzw-photos-bar-fill";
+        fill.style.width = Math.min(100, (selectedFiles.length / maxPhotos) * 100) + "%";
+        bar.appendChild(fill);
+
+        photosRow.appendChild(meta);
+        photosRow.appendChild(bar);
+
+        var grid = document.createElement("div");
+        grid.className = "mzw-thumbs";
+
         selectedFiles.forEach(function (file, index) {
-          var pill = document.createElement("div");
-          pill.className = "mzw-photo-pill";
+          var thumb = document.createElement("div");
+          thumb.className = "mzw-thumb";
 
-          var count = document.createElement("div");
-          count.className = "mzw-photo-pill-count";
-          count.textContent = String(index + 1);
+          // preview (best effort)
+          try {
+            var url = URL.createObjectURL(file);
+            var img = document.createElement("img");
+            img.className = "mzw-thumb-img";
+            img.alt = "Photo " + (index + 1);
+            img.src = url;
+            img.onload = function () {
+              try {
+                URL.revokeObjectURL(url);
+              } catch (e) {}
+            };
+            thumb.appendChild(img);
+          } catch (e) {
+            // fallback: no preview
+          }
 
-          var name = document.createElement("span");
-          // On n'affiche plus le nom complet du fichier (trop long sur mobile),
-          // juste un label générique compact.
-          name.textContent = "Photo " + (index + 1);
-
-          var remove = document.createElement("span");
-          remove.className = "mzw-photo-pill-remove";
-          remove.textContent = "x";
-          remove.addEventListener("click", function () {
+          var remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "mzw-thumb-remove";
+          remove.textContent = "×";
+          remove.title = "Retirer cette photo";
+          remove.addEventListener("click", function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
             selectedFiles.splice(index, 1);
             updatePhotosUI();
             updateAnalyzeDisabled();
+            trackWidgetEvent("widget_photos_removed", { photos_count: selectedFiles.length });
           });
-
-          pill.appendChild(count);
-          pill.appendChild(name);
-          pill.appendChild(remove);
-          photosRow.appendChild(pill);
+          thumb.appendChild(remove);
+          grid.appendChild(thumb);
         });
+
+        photosRow.appendChild(grid);
       }
     }
 
@@ -331,16 +442,13 @@
       if (!hasResults && selectedFiles.length === 0) {
         // État initial : rien à montrer
         analyzeBtn.style.display = "none";
-        if (photosLaterBtn) photosLaterBtn.parentElement.style.display = "none";
       } else if (!hasResults && selectedFiles.length > 0) {
         // Photos ajoutées : montrer bouton + lien
         analyzeBtn.style.display = "inline-flex";
-        analyzeLabel.textContent = "Analyser mes photos";
-        if (photosLaterBtn) photosLaterBtn.parentElement.style.display = "flex";
+        analyzeLabel.textContent = "Continuer";
       } else {
         // Résultats : montrer seulement bouton, pas le lien
         analyzeBtn.style.display = "inline-flex";
-        if (photosLaterBtn) photosLaterBtn.parentElement.style.display = "none";
       }
     }
 
@@ -538,6 +646,11 @@
       }
       updatePhotosUI();
       updateAnalyzeDisabled();
+      if (added > 0) {
+        trackWidgetEvent("widget_photos_added", {
+          photos_count: selectedFiles.length,
+        });
+      }
     }
 
     // Event listeners pour les 2 options
@@ -549,6 +662,7 @@
       choiceWeb.addEventListener("click", function () {
         if (isAnalyzing) return;
         setError("");
+        trackWidgetEvent("widget_upload_click", {});
         
         // Masquer les choix, afficher la dropzone
         if (choiceSection) choiceSection.style.display = "none";
@@ -576,9 +690,8 @@
       choiceWhatsApp.addEventListener("click", function () {
         if (isAnalyzing) return;
         setError("");
+        trackWidgetEvent("widget_whatsapp_click", {});
         
-        // TODO: Implémenter le flow WhatsApp avec linking token
-        // Pour l'instant, on redirige vers le tunnel qui gère déjà WhatsApp
         window.location.href = getTunnelUrl();
       });
     }
@@ -587,6 +700,7 @@
     dropzone.addEventListener("click", function () {
       if (isAnalyzing) return;
       setError("");
+      trackWidgetEvent("widget_dropzone_click", {});
 
       // Sur mobile avec caméra disponible: on lance directement le flux caméra
       // au clic sur la zone, comme dans l'étape 4 du tunnel. La galerie reste
@@ -937,13 +1051,18 @@
       }
       window.MoverzWidget.goToQuotes = function (mode) {
         var suffix = mode ? String(mode) : "widget";
-        window.location.href =
-          "https://devis.moverz.fr/devis-gratuits?src=moverz.fr&from=" +
-          encodeURIComponent(suffix);
+        var qs = getQueryParamsSafe();
+        if (!qs.get("src")) qs.set("src", "moverz.fr");
+        qs.set("from", suffix);
+        window.location.href = getTunnelUrl() + "?" + qs.toString();
       };
     }
 
     analyzeBtn.addEventListener("click", function () {
+      trackWidgetEvent("widget_continue_click", {
+        photos_count: selectedFiles.length,
+        has_results: !!hasResults,
+      });
       if (hasResults && window.MoverzWidget && window.MoverzWidget.goToQuotes) {
         window.MoverzWidget.goToQuotes("widget");
       } else {
