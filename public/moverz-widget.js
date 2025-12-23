@@ -78,8 +78,9 @@
       ".mzw-title { margin-top: 16px; font-size: 22px; font-weight: 700; line-height: 1.2; background: linear-gradient(135deg, #0f172a 0%, rgb(var(--mzw-deep)) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.025em; }",
       ".mzw-subtitle { margin-top: 8px; font-size: 14px; color: #64748b; line-height: 1.5; font-weight: 400; margin-bottom: 24px; }",
       ".mzw-choice-section { margin-top: 0; }",
-      ".mzw-choice-title { font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 16px; text-align: center; }",
-      ".mzw-choice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }",
+      ".mzw-choice-title { font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 8px; text-align: center; background: linear-gradient(135deg, #0f172a 0%, rgb(var(--mzw-deep)) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }",
+      ".mzw-choice-subtitle { font-size: 13px; color: #64748b; margin-bottom: 16px; text-align: center; }",
+      ".mzw-choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 500px; margin: 0 auto; }",
       "@media (max-width: 480px) { .mzw-choice-grid { grid-template-columns: 1fr; gap: 10px; } }",
       ".mzw-choice-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 16px; border-radius: 16px; border: 2px solid rgba(148, 163, 184, 0.20); background: #ffffff; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); font-family: inherit; }",
       ".mzw-choice-btn:hover { border-color: rgba(var(--mzw-spark), 0.40); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(var(--mzw-deep), 0.12); }",
@@ -187,7 +188,8 @@
       
       // 3 options pour les photos
       '  <div class="mzw-choice-section" id="mzw-choice-section">' +
-      '    <div class="mzw-choice-title">Comment voulez-vous ajouter vos photos ?</div>' +
+      '    <div class="mzw-choice-title">Envoyez-nous vos photos</div>' +
+      '    <div class="mzw-choice-subtitle">Pour des devis précis et comparables</div>' +
       '    <div class="mzw-choice-grid">' +
       
       // Option 1: Upload web
@@ -207,15 +209,6 @@
       '        </div>' +
       '        <div class="mzw-choice-label">WhatsApp</div>' +
       '        <div class="mzw-choice-sublabel">Envoi instantané</div>' +
-      '      </button>' +
-      
-      // Option 3: Sans photos
-      '      <button class="mzw-choice-btn mzw-choice-btn-skip" id="mzw-choice-skip" type="button">' +
-      '        <div class="mzw-choice-icon mzw-choice-icon-neutral">' +
-      '          <svg class="mzw-choice-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>' +
-      '        </div>' +
-      '        <div class="mzw-choice-label">Sans photos</div>' +
-      '        <div class="mzw-choice-sublabel">Je complèterai plus tard</div>' +
       '      </button>' +
       
       '    </div>' +
@@ -549,10 +542,9 @@
       updateAnalyzeDisabled();
     }
 
-    // Event listeners pour les 3 options
+    // Event listeners pour les 2 options
     var choiceWeb = root.getElementById("mzw-choice-web");
     var choiceWhatsApp = root.getElementById("mzw-choice-whatsapp");
-    var choiceSkip = root.getElementById("mzw-choice-skip");
     var choiceSection = root.getElementById("mzw-choice-section");
 
     if (choiceWeb) {
@@ -593,15 +585,6 @@
       });
     }
 
-    if (choiceSkip) {
-      choiceSkip.addEventListener("click", function () {
-        if (isAnalyzing) return;
-        setError("");
-        
-        // Rediriger directement vers le tunnel sans photos
-        window.location.href = getTunnelUrl();
-      });
-    }
 
     dropzone.addEventListener("click", function () {
       if (isAnalyzing) return;

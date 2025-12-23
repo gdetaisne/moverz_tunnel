@@ -3151,28 +3151,28 @@ function DevisGratuitsPageInner() {
   return (
     <div className="relative flex flex-1 flex-col gap-6">
       {process.env.NODE_ENV === "development" && (
-        <button
-          type="button"
-          onClick={() => {
-            if (typeof window === "undefined") return;
-            const ok = window.confirm("Repartir de zéro ? (Reset tunnel)");
-            if (!ok) return;
+      <button
+        type="button"
+        onClick={() => {
+          if (typeof window === "undefined") return;
+          const ok = window.confirm("Repartir de zéro ? (Reset tunnel)");
+          if (!ok) return;
 
-            try {
-              window.localStorage.removeItem("moverz_tunnel_form_state");
-              window.localStorage.removeItem("moverz_tunnel_session_id");
-            } catch {
-              // ignore
-            }
+          try {
+            window.localStorage.removeItem("moverz_tunnel_form_state");
+            window.localStorage.removeItem("moverz_tunnel_session_id");
+          } catch {
+            // ignore
+          }
 
-            // Recharge propre (même URL, sans param spécial)
-            window.location.reload();
-          }}
+          // Recharge propre (même URL, sans param spécial)
+          window.location.reload();
+        }}
           className="pointer-events-auto fixed bottom-3 left-3 z-50 rounded-full border border-surface-3 bg-white/80 px-2 py-1 text-[10px] font-medium text-slate-500 shadow-soft opacity-60 backdrop-blur hover:opacity-100"
           title="Reset (dev)"
-        >
-          reset
-        </button>
+      >
+        reset
+      </button>
       )}
 
       {/* Header + rassurance (minimal, premium) */}
@@ -4657,32 +4657,32 @@ function DevisGratuitsPageInner() {
                             </span>
                           </button>
                           {showPricingDetails && (
-                            <ul className="mt-2 ml-4 list-disc space-y-1">
-                              <li>
+                          <ul className="mt-2 ml-4 list-disc space-y-1">
+                            <li>
                                 <span className="font-semibold">Volume :</span>{" "}
-                                {estimatedVolumeM3.toLocaleString("fr-FR", {
-                                  maximumFractionDigits: 1,
-                                })}{" "}
+                              {estimatedVolumeM3.toLocaleString("fr-FR", {
+                                maximumFractionDigits: 1,
+                              })}{" "}
                                 m³
-                              </li>
-                              <li>
+                            </li>
+                            <li>
                                 <span className="font-semibold">Distance :</span>{" "}
                                 ~{Math.round(distanceKm).toLocaleString("fr-FR")} km
-                              </li>
-                              <li>
+                            </li>
+                            <li>
                                 <span className="font-semibold">Options :</span>{" "}
-                                {effetServices > 0
+                              {effetServices > 0
                                   ? `≈ ${formatPrice(Math.round(effetServices))}`
                                   : "aucune"}
-                              </li>
-                            </ul>
+                            </li>
+                          </ul>
                           )}
                           <p className="mt-1 text-[10px] text-slate-500">
                             Repère: +1 m³ ≈{" "}
                             <span className="font-semibold text-slate-700">
                               {Math.round(pricePerM3Seasoned).toLocaleString("fr-FR")} €
-                            </span>
-                            .
+                                </span>
+                                .
                           </p>
                         </>
                       );
@@ -4922,15 +4922,17 @@ function DevisGratuitsPageInner() {
             {/* Question initiale : Comment transmettre vos photos ? */}
             {!hasPhotosAnswer && (
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold moverz-gradient-text">
-                  Comment souhaitez-vous nous transmettre vos photos ?
+                <div className="text-center">
+                  <h2 className="text-xl font-bold moverz-gradient-text">
+                    Envoyez-nous vos photos
                 </h2>
-                <p className="text-sm text-slate-600">
-                  Les photos permettent des devis plus précis et évitent les surprises le jour J.
-                </p>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Pour des devis précis et sans surprises
+                  </p>
+                </div>
 
-                {/* 3 options : Web Upload / WhatsApp / Plus tard */}
-                <div className="grid gap-4 sm:grid-cols-3">
+                {/* 2 options : Web Upload / WhatsApp */}
+                <div className="grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
                   
                   {/* Option 1 : Upload Web */}
                   <button
@@ -4986,26 +4988,36 @@ function DevisGratuitsPageInner() {
                     </div>
                   </button>
 
-                  {/* Option 3 : Plus tard */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHasPhotosAnswer("no");
-                      setPhotoFlowChoice("none");
-                    }}
-                    className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-surface-3 bg-white p-5 text-center moverz-transition-smooth hover:border-slate-300 hover:bg-surface-1"
-                  >
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 group-hover:bg-slate-200 moverz-transition-smooth">
-                      <svg className="h-7 w-7 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </div>
+
+                {/* Encart minimaliste : Pourquoi les photos ? */}
+                <div className="max-w-2xl mx-auto rounded-2xl border border-brand-spark/20 bg-gradient-to-br from-brand-spark/5 to-white p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-spark/20">
+                      <svg className="h-5 w-5 text-brand-deep" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <div>
-                      <p className="font-semibold text-slate-900">Plus tard</p>
-                      <p className="mt-1 text-xs text-slate-600">Par email</p>
+                    <div className="flex-1 space-y-2">
+                      <p className="text-sm font-semibold text-slate-900">
+                        Pourquoi les photos sont essentielles ?
+                      </p>
+                      <ul className="space-y-1 text-xs text-slate-600">
+                        <li className="flex items-start gap-2">
+                          <span className="mt-0.5 text-brand-spark font-semibold">✓</span>
+                          <span>Devis 30% plus précis (évite les marges "au cas où")</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-0.5 text-brand-spark font-semibold">✓</span>
+                          <span>Moins de surprises et suppléments le jour J</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-0.5 text-brand-spark font-semibold">✓</span>
+                          <span>Inventaire + déclaration de valeur générés par IA</span>
+                        </li>
+                      </ul>
                     </div>
-                  </button>
-
+                  </div>
                 </div>
               </div>
             )}
@@ -5173,8 +5185,8 @@ function DevisGratuitsPageInner() {
                         </p>
                         <p className="text-xs text-slate-600">
                           Volume plus fiable, moins de marge “au cas où”.
-                        </p>
-                      </div>
+                  </p>
+                </div>
                     </div>
                   </div>
 
@@ -5189,8 +5201,8 @@ function DevisGratuitsPageInner() {
                         </p>
                         <p className="text-xs text-slate-600">
                           Moins de surprises le jour J.
-                        </p>
-                      </div>
+                  </p>
+                </div>
                     </div>
                   </div>
 
@@ -5205,8 +5217,8 @@ function DevisGratuitsPageInner() {
                         </p>
                         <p className="text-xs text-slate-600">
                           Inventaire + déclaration de valeur générés.
-                        </p>
-                      </div>
+                  </p>
+                </div>
                     </div>
                   </div>
                 </div>
@@ -5216,7 +5228,7 @@ function DevisGratuitsPageInner() {
                     <span>En savoir plus</span>
                     <span className="text-slate-500 transition-transform group-open:rotate-180">
                       ▼
-                    </span>
+                  </span>
                   </summary>
                   <div className="mt-3 space-y-2 text-sm text-slate-600">
                     <p>
