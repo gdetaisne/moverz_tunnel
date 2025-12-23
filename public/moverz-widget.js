@@ -28,6 +28,23 @@
     return apiBase.replace(/\/+$/, "") + "/api/widget/photo-inventory";
   }
 
+  function getTunnelUrl() {
+    var script = document.currentScript;
+    var baseUrl;
+
+    try {
+      if (script && script.src) {
+        baseUrl = new URL(script.src).origin;
+      } else {
+        baseUrl = window.location.origin;
+      }
+    } catch (e) {
+      baseUrl = window.location.origin;
+    }
+
+    return baseUrl.replace(/\/+$/, "") + "/devis-gratuits";
+  }
+
   function createRoot(options) {
     var target =
       document.querySelector("[data-moverz-widget-root]") ||
@@ -572,8 +589,7 @@
         
         // TODO: Implémenter le flow WhatsApp avec linking token
         // Pour l'instant, on redirige vers le tunnel qui gère déjà WhatsApp
-        var tunnelUrl = window.location.origin + "/devis-gratuits";
-        window.location.href = tunnelUrl;
+        window.location.href = getTunnelUrl();
       });
     }
 
@@ -583,8 +599,7 @@
         setError("");
         
         // Rediriger directement vers le tunnel sans photos
-        var tunnelUrl = window.location.origin + "/devis-gratuits";
-        window.location.href = tunnelUrl;
+        window.location.href = getTunnelUrl();
       });
     }
 
