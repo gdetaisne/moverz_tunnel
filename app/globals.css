@@ -32,4 +32,126 @@ body {
   color: rgb(var(--text-1));
 }
 
+/* ============================================================
+   PREMIUM ANIMATIONS & MICRO-INTERACTIONS (2025)
+============================================================ */
+
+/* Subtle pulse for badges and active states */
+@keyframes moverz-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+/* Gentle float for icons and interactive elements */
+@keyframes moverz-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Smooth fade-in on mount */
+@keyframes moverz-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale in for cards and modals */
+@keyframes moverz-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Shimmer effect for loading states */
+@keyframes moverz-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Progress bar fill animation */
+@keyframes moverz-progress {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+/* Utility classes for premium interactions */
+.moverz-animate-fade-in {
+  animation: moverz-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.moverz-animate-scale-in {
+  animation: moverz-scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.moverz-animate-pulse {
+  animation: moverz-pulse 2s ease-in-out infinite;
+}
+
+.moverz-animate-float {
+  animation: moverz-float 3s ease-in-out infinite;
+}
+
+/* Premium timing functions */
+.moverz-transition-smooth {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.moverz-transition-fast {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Gradient text utility */
+.moverz-gradient-text {
+  background: linear-gradient(135deg, rgb(var(--brand-navy)) 0%, rgb(var(--brand-deep-teal)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass effect for premium surfaces */
+.moverz-glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Shadow utilities */
+.shadow-brand {
+  box-shadow: 0 8px 32px rgba(var(--brand-deep-teal), 0.12), 0 2px 8px rgba(var(--brand-spark), 0.08);
+}
+
+.shadow-brand-lg {
+  box-shadow: 0 16px 48px rgba(var(--brand-deep-teal), 0.16), 0 4px 16px rgba(var(--brand-spark), 0.10);
+}
+
 

@@ -3166,7 +3166,7 @@ function DevisGratuitsPageInner() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
               Moverz — demande de devis
             </p>
-            <h1 className="text-lg font-semibold text-slate-900 sm:text-xl">
+            <h1 className="text-lg font-semibold moverz-gradient-text sm:text-xl">
               Un dossier clair, des devis comparables
             </h1>
             <p className="text-sm text-slate-600">
@@ -3256,13 +3256,13 @@ function DevisGratuitsPageInner() {
                 >
                   <div
                     className={[
-                      "flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold transition-all",
+                      "flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold moverz-transition-smooth",
                       isActive
-                        ? "border-transparent bg-gradient-to-r from-brand-deep to-brand-spark text-white shadow-[0_0_0_4px_rgba(43,122,120,0.18)]"
+                        ? "border-transparent bg-gradient-to-r from-brand-deep to-brand-spark text-white shadow-[0_0_0_4px_rgba(43,122,120,0.18)] moverz-animate-pulse"
                         : isCompleted
                         ? "border-brand-deep/30 bg-brand-deep/10 text-brand-deep"
                         : "border-surface-3 bg-white text-slate-600",
-                      canGoToStep && !isActive ? "hover:border-brand-spark/60 hover:text-slate-900" : "",
+                      canGoToStep && !isActive ? "hover:border-brand-spark/60 hover:text-slate-900 hover:scale-110" : "",
                     ].join(" ")}
                   >
                     {isCompleted ? "✓" : step.id}
@@ -3291,7 +3291,7 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 1 – Contact */}
       {currentStep === 1 && (
-        <section className="flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
+        <section className="moverz-animate-fade-in flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep1}>
             <div className="space-y-1">
               <label className="block text-sm font-medium text-slate-900">
@@ -3376,7 +3376,7 @@ function DevisGratuitsPageInner() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+              className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand moverz-transition-smooth hover:shadow-brand-lg hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
             >
               {isSubmitting ? "Création en cours…" : "Commencer ma demande"}
             </button>
@@ -3386,7 +3386,7 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 2 – Projet (départ / arrivée en blocs ouverts) */}
       {currentStep === 2 && (
-        <section className="flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
+        <section className="moverz-animate-fade-in flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
           <form
             className="space-y-5"
             onSubmit={(e) => {
@@ -3855,10 +3855,10 @@ function DevisGratuitsPageInner() {
                         }
                       }}
                       className={[
-                        "rounded-full border px-3 py-1 text-left",
+                        "rounded-full border px-3 py-1 text-left moverz-transition-fast",
                         !hasCustomAccess
-                          ? "border-brand-deep bg-brand-deep text-white"
-                          : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                          ? "border-brand-deep bg-brand-deep text-white shadow-sm"
+                          : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40 hover:shadow-sm",
                       ].join(" ")}
                     >
                       Accès facile
@@ -3868,10 +3868,10 @@ function DevisGratuitsPageInner() {
                       type="button"
                       onClick={() => setHasCustomAccess(true)}
                       className={[
-                        "rounded-full border px-3 py-1 text-left",
+                        "rounded-full border px-3 py-1 text-left moverz-transition-fast",
                         hasCustomAccess
-                          ? "border-brand-deep bg-brand-deep text-white"
-                          : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                          ? "border-brand-deep bg-brand-deep text-white shadow-sm"
+                          : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40 hover:shadow-sm",
                       ].join(" ")}
                     >
                       Accès contraint
@@ -4230,10 +4230,10 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 3 – Volume & formules */}
       {currentStep === 3 && (
-        <section className="flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
+        <section className="moverz-animate-fade-in flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
           <form className="space-y-5" onSubmit={handleSubmitStep3}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold moverz-gradient-text">
                 Sélectionnez votre formule
               </h2>
             </div>
@@ -4486,10 +4486,10 @@ function DevisGratuitsPageInner() {
                         type="button"
                         onClick={() => updateField("formule", formule)}
                         className={[
-                          "flex min-w-[78%] flex-col gap-2 rounded-2xl border p-3 text-left text-xs transition snap-start sm:min-w-0",
+                          "flex min-w-[78%] flex-col gap-2 rounded-2xl border p-3 text-left text-xs snap-start sm:min-w-0 moverz-transition-smooth",
                           isActive
-                            ? "border-brand-deep/60 bg-white shadow-[0_18px_40px_rgba(43,122,120,0.14)] ring-2 ring-brand-spark/25"
-                            : "border-surface-3 bg-white hover:border-slate-300",
+                            ? "border-brand-deep/70 bg-white shadow-brand scale-[1.02] ring-2 ring-brand-spark/30"
+                            : "border-surface-3 bg-white hover:border-brand-spark/40 hover:-translate-y-1 hover:shadow-brand",
                         ].join(" ")}
                       >
                         <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-deep">
@@ -4874,12 +4874,12 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 4 – Photos & inventaire */}
       {currentStep === 4 && (
-        <section className="flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
+        <section className="moverz-animate-fade-in flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
           <div className="space-y-6">
             {/* Question initiale : Avez-vous des photos ? */}
             {hasPhotosAnswer === "pending" && (
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-slate-900">
+                <h2 className="text-lg font-semibold moverz-gradient-text">
                   Avez-vous des photos de votre logement ?
                 </h2>
                 <p className="text-sm text-slate-600">
@@ -4910,7 +4910,7 @@ function DevisGratuitsPageInner() {
             {/* Si l'utilisateur a répondu "non", on lui explique pourquoi c'est important */}
             {hasPhotosAnswer === "no" && photoFlowChoice === "none" && (
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-slate-900">
+                <h2 className="text-lg font-semibold moverz-gradient-text">
                   Pourquoi les photos sont importantes
                 </h2>
                 <p className="text-sm text-slate-600">
