@@ -58,20 +58,24 @@
       ".mzw-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 6px; background: rgba(var(--mzw-deep), 0.08); color: rgb(var(--mzw-deep)); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }",
       ".mzw-badge-dot { width: 6px; height: 6px; border-radius: 999px; background: rgb(var(--mzw-spark)); opacity: 0.9; }",
       ".mzw-title { margin-top: 20px; font-size: 26px; font-weight: 700; line-height: 1.2; color: #0f172a; letter-spacing: -0.025em; }",
-      ".mzw-subtitle { margin-top: 10px; font-size: 15px; color: #64748b; line-height: 1.5; font-weight: 400; }",
-      ".mzw-trust { margin-top: 20px; display: flex; gap: 16px; align-items: center; padding: 14px 16px; border-radius: 12px; background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.04), rgba(var(--mzw-spark), 0.06)); border: 1px solid rgba(var(--mzw-spark), 0.15); }",
-      ".mzw-trust-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #475569; font-weight: 500; }",
-      ".mzw-trust-icon { width: 18px; height: 18px; border-radius: 999px; background: linear-gradient(135deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #ffffff; font-weight: 700; flex-shrink: 0; }",
-      ".mzw-trust-divider { width: 1px; height: 20px; background: rgba(var(--mzw-spark), 0.20); }",
-      ".mzw-dropzone { margin-top: 0; border: 1.5px dashed rgba(148, 163, 184, 0.30); border-radius: 16px; background: rgba(248, 250, 252, 0.60); padding: 48px 32px; text-align: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }",
-      ".mzw-dropzone:hover { border-color: rgba(var(--mzw-spark), 0.50); background: rgba(var(--mzw-spark), 0.05); transform: translateY(-2px); box-shadow: 0 12px 28px rgba(var(--mzw-spark), 0.12); }",
-      ".mzw-dropzone.mzw-dropzone--active { border-color: rgba(var(--mzw-spark), 0.70); background: rgba(var(--mzw-spark), 0.08); border-style: solid; box-shadow: 0 0 0 4px rgba(var(--mzw-spark), 0.10), 0 12px 28px rgba(var(--mzw-spark), 0.18); }",
-      ".mzw-drop-icon { width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 8px 20px rgba(var(--mzw-deep), 0.20), 0 2px 8px rgba(var(--mzw-spark), 0.15); transition: all 0.25s ease; }",
-      ".mzw-dropzone:hover .mzw-drop-icon { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(var(--mzw-deep), 0.25), 0 4px 12px rgba(var(--mzw-spark), 0.20); }",
-      ".mzw-drop-icon-svg { width: 30px; height: 30px; color: #ffffff; }",
-      ".mzw-drop-title { font-size: 17px; font-weight: 600; color: #0f172a; letter-spacing: -0.015em; }",
-      ".mzw-drop-helper { margin-top: 8px; font-size: 14px; color: #64748b; font-weight: 400; }",
-      ".mzw-drop-limit { margin-top: 10px; font-size: 12px; color: #94a3b8; font-weight: 400; }",
+      ".mzw-subtitle { margin-top: 10px; font-size: 15px; color: #64748b; line-height: 1.5; font-weight: 400; margin-bottom: 32px; }",
+      ".mzw-dropzone { margin-top: 0; position: relative; border-radius: 20px; background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.03) 0%, rgba(var(--mzw-spark), 0.05) 100%); padding: 56px 40px; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden; border: 2px solid transparent; }",
+      ".mzw-dropzone::before { content: ''; position: absolute; inset: 0; border-radius: 20px; padding: 2px; background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.15), rgba(var(--mzw-spark), 0.25)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; opacity: 1; transition: opacity 0.3s ease; }",
+      ".mzw-dropzone:hover::before { opacity: 0; }",
+      ".mzw-dropzone::after { content: ''; position: absolute; inset: 0; border-radius: 20px; padding: 2px; background: linear-gradient(135deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; opacity: 0; transition: opacity 0.3s ease; }",
+      ".mzw-dropzone:hover::after { opacity: 1; }",
+      ".mzw-dropzone:hover { background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.06) 0%, rgba(var(--mzw-spark), 0.08) 100%); transform: translateY(-4px); box-shadow: 0 20px 48px rgba(var(--mzw-deep), 0.15), 0 8px 24px rgba(var(--mzw-spark), 0.10); }",
+      ".mzw-dropzone.mzw-dropzone--active { background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.08) 0%, rgba(var(--mzw-spark), 0.12) 100%); transform: translateY(-2px) scale(0.99); box-shadow: 0 24px 64px rgba(var(--mzw-deep), 0.20), 0 12px 32px rgba(var(--mzw-spark), 0.15), 0 0 0 4px rgba(var(--mzw-spark), 0.12) inset; }",
+      ".mzw-dropzone.mzw-dropzone--active::before { opacity: 0; }",
+      ".mzw-dropzone.mzw-dropzone--active::after { opacity: 1; }",
+      ".mzw-drop-icon { position: relative; width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 12px 32px rgba(var(--mzw-deep), 0.25), 0 4px 16px rgba(var(--mzw-spark), 0.20), 0 0 0 1px rgba(255,255,255,0.1) inset; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }",
+      ".mzw-dropzone:hover .mzw-drop-icon { transform: translateY(-4px) scale(1.05); box-shadow: 0 16px 48px rgba(var(--mzw-deep), 0.35), 0 8px 24px rgba(var(--mzw-spark), 0.25), 0 0 0 1px rgba(255,255,255,0.15) inset; }",
+      ".mzw-drop-icon::before { content: ''; position: absolute; inset: 0; border-radius: 20px; background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent); opacity: 0; transition: opacity 0.3s ease; }",
+      ".mzw-dropzone:hover .mzw-drop-icon::before { opacity: 1; }",
+      ".mzw-drop-icon-svg { position: relative; z-index: 1; width: 34px; height: 34px; color: #ffffff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }",
+      ".mzw-drop-title { font-size: 19px; font-weight: 700; color: #0f172a; letter-spacing: -0.02em; margin-bottom: 12px; }",
+      ".mzw-drop-helper { font-size: 15px; color: #64748b; font-weight: 500; line-height: 1.5; }",
+      ".mzw-drop-limit { margin-top: 16px; font-size: 13px; color: #94a3b8; font-weight: 500; letter-spacing: -0.01em; }",
       ".mzw-camera { margin-top: 20px; border-radius: 18px; border: 1px solid rgba(var(--mzw-spark), 0.35); background: linear-gradient(135deg, #334155 0%, #1e293b 100%); padding: 18px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.30), 0 0 0 1px rgba(var(--mzw-spark), 0.20) inset; }",
       ".mzw-camera-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }",
       ".mzw-camera-text { font-size: 12px; color: #e2e8f0; font-weight: 600; line-height: 1.4; }",
@@ -139,11 +143,6 @@
       '    <div class="mzw-badge"><span class="mzw-badge-dot"></span><span>IA Moverz</span></div>' +
       '    <div class="mzw-title">Des devis de déménagement justes</div>' +
       '    <div class="mzw-subtitle">Estimation IA en 60 secondes pour des devis précis et sans surprises.</div>' +
-      '    <div class="mzw-trust">' +
-      '      <div class="mzw-trust-item"><span class="mzw-trust-icon">3+</span><span>Devis comparables</span></div>' +
-      '      <div class="mzw-trust-divider"></div>' +
-      '      <div class="mzw-trust-item"><span class="mzw-trust-icon">✓</span><span>Déménageurs vérifiés</span></div>' +
-      "    </div>" +
       "  </div>" +
       '  <div class="mzw-summary" id="mzw-summary" style="display:none"></div>' +
       '  <div class="mzw-dropzone" id="mzw-dropzone">' +
