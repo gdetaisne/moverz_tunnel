@@ -273,13 +273,13 @@
     var progressMaskEl = root.getElementById("mzw-progress-mask");
     var photosLaterBtn = root.getElementById("mzw-photos-later");
 
-    // Init CTA state (now that DOM nodes exist)
-    updateAnalyzeDisabled();
-
     /** @type {File[]} */
     var selectedFiles = [];
     var isAnalyzing = false;
     var hasResults = false;
+
+    // Init CTA state (now that DOM nodes exist AND variables are initialized)
+    updateAnalyzeDisabled();
 
     // Tracking: widget view
     trackWidgetEvent("widget_view", {});
