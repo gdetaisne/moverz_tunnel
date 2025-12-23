@@ -916,7 +916,7 @@ function AddressAutocomplete({
           onFocus={() => {
             if (results.length > 0) setShowDropdown(true);
           }}
-          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
           placeholder={placeholder}
           autoComplete="off"
         />
@@ -3402,7 +3402,7 @@ function DevisGratuitsPageInner() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand moverz-transition-smooth hover:bg-brand-navy hover:shadow-brand-lg hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+              className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand moverz-transition-smooth hover:bg-brand-navy hover:shadow-brand-lg hover:ring-2 hover:ring-brand-spark/30 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
             >
               {isSubmitting ? "Création en cours…" : "Commencer ma demande"}
             </button>
@@ -3512,7 +3512,7 @@ function DevisGratuitsPageInner() {
                             e.target.value as HousingType | ""
                           )
                         }
-                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
                       >
                       <option value="">Choisir le type de logement</option>
                       <option value="studio">Studio (1 pièce)</option>
@@ -3557,7 +3557,7 @@ function DevisGratuitsPageInner() {
                           onChange={(e) =>
                             updateField("originFloor", e.target.value)
                           }
-                          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
                         >
                           <option value="0">Rez-de-chaussée</option>
                           <option value="1">1er étage</option>
@@ -3594,7 +3594,7 @@ function DevisGratuitsPageInner() {
                           setSurfaceTouched(true);
                           updateField("surfaceM2", e.target.value);
                         }}
-                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
                       />
                       {(hasTriedSubmitStep2 || surfaceTouched) && (
                         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
@@ -3712,7 +3712,7 @@ function DevisGratuitsPageInner() {
                             e.target.value as HousingType | ""
                           )
                         }
-                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
                       >
                       <option value="">Choisir le type de logement</option>
                       <option value="studio">Studio (1 pièce)</option>
@@ -3758,7 +3758,7 @@ function DevisGratuitsPageInner() {
                           onChange={(e) =>
                             updateField("destinationFloor", e.target.value)
                           }
-                          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
                         >
                           <option value="0">Rez-de-chaussée</option>
                           <option value="1">1er étage</option>
@@ -3883,7 +3883,7 @@ function DevisGratuitsPageInner() {
                       className={[
                         "rounded-full border px-3 py-1 text-left moverz-transition-fast",
                         !hasCustomAccess
-                          ? "border-brand-deep bg-brand-deep text-white shadow-sm"
+                          ? "border-brand-deep bg-brand-deep text-white shadow-sm ring-1 ring-brand-spark/20"
                           : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40 hover:shadow-sm",
                       ].join(" ")}
                     >
@@ -3896,7 +3896,7 @@ function DevisGratuitsPageInner() {
                       className={[
                         "rounded-full border px-3 py-1 text-left moverz-transition-fast",
                         hasCustomAccess
-                          ? "border-brand-deep bg-brand-deep text-white shadow-sm"
+                          ? "border-brand-deep bg-brand-deep text-white shadow-sm ring-1 ring-brand-spark/20"
                           : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40 hover:shadow-sm",
                       ].join(" ")}
                     >
@@ -4102,8 +4102,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-left",
                       form.servicePiano === value
-                        ? "border-brand-deep bg-brand-deep text-white"
-                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                        ? "border-brand-deep bg-brand-deep text-white ring-1 ring-brand-spark/20"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40",
                     ].join(" ")}
                   >
                     {label}
@@ -4245,7 +4245,7 @@ function DevisGratuitsPageInner() {
               </button>
               <button
                 type="submit"
-                className="inline-flex flex-1 items-center justify-center rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-navy"
+                className="inline-flex flex-1 items-center justify-center rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-navy hover:ring-2 hover:ring-brand-spark/30"
               >
                 Étape suivante
               </button>
@@ -4338,7 +4338,7 @@ function DevisGratuitsPageInner() {
                               : "border-surface-3 bg-surface-1 hover:border-brand-deep/30",
                           ].join(" ")}
                         >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-sky-300/60 bg-sky-500/10">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-spark/60 bg-brand-spark/10">
                             <div className="grid grid-cols-3 gap-[1px]">
                               {[
                                 true,
@@ -4370,7 +4370,7 @@ function DevisGratuitsPageInner() {
                               Meubles classiques · affaires normales
                             </div>
                           </div>
-                          <div className="mt-3 inline-flex items-center rounded-full border border-sky-300/70 bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold text-sky-100">
+                          <div className="mt-3 inline-flex items-center rounded-full border border-brand-spark/70 bg-brand-spark/20 px-2 py-0.5 text-[10px] font-semibold text-brand-spark">
                             Volume normal
                           </div>
                         </button>
@@ -4735,8 +4735,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.optionStorage
-                        ? "border-brand-deep bg-brand-deep text-white"
-                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                        ? "border-brand-deep bg-brand-deep text-white ring-1 ring-brand-spark/20"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40",
                     ].join(" ")}
                   >
                     Garde‑meuble
@@ -4756,8 +4756,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       hasCleaningOrClearance
-                        ? "border-brand-deep bg-brand-deep text-white"
-                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                        ? "border-brand-deep bg-brand-deep text-white ring-1 ring-brand-spark/20"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40",
                     ].join(" ")}
                   >
                     Nettoyage / débarras
@@ -4773,8 +4773,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.servicePackingFull
-                        ? "border-brand-deep bg-brand-deep text-white"
-                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                        ? "border-brand-deep bg-brand-deep text-white ring-1 ring-brand-spark/20"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40",
                     ].join(" ")}
                   >
                     Emballage complet
@@ -4790,8 +4790,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.serviceMountNewFurniture
-                        ? "border-brand-deep bg-brand-deep text-white"
-                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                        ? "border-brand-deep bg-brand-deep text-white ring-1 ring-brand-spark/20"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40",
                     ].join(" ")}
                   >
                     Montage meubles neufs
@@ -4807,8 +4807,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.serviceInsuranceExtra
-                        ? "border-brand-deep bg-brand-deep text-white"
-                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                        ? "border-brand-deep bg-brand-deep text-white ring-1 ring-brand-spark/20"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40",
                     ].join(" ")}
                   >
                     Assurance renforcée
@@ -4824,8 +4824,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.serviceWasteRemoval
-                        ? "border-brand-deep bg-brand-deep text-white"
-                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                        ? "border-brand-deep bg-brand-deep text-white ring-1 ring-brand-spark/20"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40",
                     ].join(" ")}
                   >
                     Évacuation déchets
@@ -4841,8 +4841,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.serviceHelpNoTruck
-                        ? "border-brand-deep bg-brand-deep text-white"
-                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                        ? "border-brand-deep bg-brand-deep text-white ring-1 ring-brand-spark/20"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40",
                     ].join(" ")}
                   >
                     Aide sans camion (changement de palier)
@@ -4858,8 +4858,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.serviceSpecialHours
-                        ? "border-brand-deep bg-brand-deep text-white"
-                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
+                        ? "border-brand-deep bg-brand-deep text-white ring-1 ring-brand-spark/20"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-brand-spark/40",
                     ].join(" ")}
                   >
                     Horaires spécifiques
@@ -5318,7 +5318,7 @@ function DevisGratuitsPageInner() {
                         <button
                           type="button"
                           onClick={() => setShowUploadOnMobile(true)}
-                          className="font-semibold text-sky-300 underline underline-offset-2"
+                          className="font-semibold text-brand-spark underline underline-offset-2"
                         >
                           Importer depuis la galerie
                         </button>
@@ -5431,7 +5431,7 @@ function DevisGratuitsPageInner() {
                             isAnalyzing ||
                             localUploadFiles.every((f) => f.status !== "pending")
                           }
-                          className="inline-flex items-center justify-center rounded-xl bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/40 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex items-center justify-center rounded-xl bg-brand-spark px-5 py-2.5 text-sm font-semibold text-brand-navy shadow-md shadow-brand-spark/40 transition hover:bg-brand-spark/80 hover:ring-2 hover:ring-brand-spark/40 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isUploadingPhotos || isAnalyzing
                             ? "Analyse en cours…"
@@ -5457,8 +5457,8 @@ function DevisGratuitsPageInner() {
                         onClick={() => setInventoryLayoutVariant("list")}
                         className={`rounded-full px-2 py-0.5 ${
                           inventoryLayoutVariant === "list"
-                            ? "bg-sky-500 text-slate-950 font-semibold"
-                            : "text-slate-300 hover:text-sky-200"
+                            ? "bg-brand-spark text-brand-navy font-semibold"
+                            : "text-slate-300 hover:text-brand-spark"
                         }`}
                       >
                         Liste
@@ -5468,8 +5468,8 @@ function DevisGratuitsPageInner() {
                         onClick={() => setInventoryLayoutVariant("icons")}
                         className={`rounded-full px-2 py-0.5 ${
                           inventoryLayoutVariant === "icons"
-                            ? "bg-sky-500 text-slate-950 font-semibold"
-                            : "text-slate-300 hover:text-sky-200"
+                            ? "bg-brand-spark text-brand-navy font-semibold"
+                            : "text-slate-300 hover:text-brand-spark"
                         }`}
                       >
                         Icônes
@@ -5503,7 +5503,7 @@ function DevisGratuitsPageInner() {
                 {inventoryVolume.total != null && (
                   <p className="text-[11px] text-slate-300">
                     Volume estimé des objets (hors éléments retirés) :{" "}
-                    <span className="font-semibold text-sky-300">
+                    <span className="font-semibold text-brand-spark">
                       {inventoryVolume.total.toFixed(1)} m³
                     </span>
                   </p>
@@ -5661,7 +5661,7 @@ function DevisGratuitsPageInner() {
                                                           : "",
                                                     });
                                                   }}
-                                                  className="rounded-full border border-slate-600 px-2 py-0.5 text-[9px] text-slate-300 hover:border-sky-400 hover:text-sky-200"
+                                                  className="rounded-full border border-slate-600 px-2 py-0.5 text-[9px] text-slate-300 hover:border-brand-spark hover:text-brand-spark"
                                                 >
                                                   Modifier
                                                 </button>
@@ -5777,7 +5777,7 @@ function DevisGratuitsPageInner() {
                                         }))
                                       }
                                       placeholder="Ex: canapé, armoire..."
-                                      className="w-40 flex-1 min-w-[120px] rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500/40"
+                                      className="w-40 flex-1 min-w-[120px] rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-brand-spark focus:outline-none focus:ring-1 focus:ring-brand-spark/40"
                                     />
                                     <input
                                       type="number"
@@ -6280,7 +6280,7 @@ function DevisGratuitsPageInner() {
                           router.push("/devis-gratuits/merci");
                         }
                       }}
-                      className="inline-flex items-center rounded-full bg-brand-deep px-4 py-1.5 text-[11px] font-semibold text-white shadow-brand hover:bg-brand-navy"
+                      className="inline-flex items-center rounded-full bg-brand-deep px-4 py-1.5 text-[11px] font-semibold text-white shadow-brand hover:bg-brand-navy hover:ring-2 hover:ring-brand-spark/30"
                     >
                       Terminer et envoyer mon dossier
                     </button>
