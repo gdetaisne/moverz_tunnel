@@ -38,6 +38,10 @@ import {
   type RoomLike,
   type ItemLike,
 } from "@/lib/inventory/businessRules";
+import {
+  generateLinkingToken,
+  buildWhatsAppDeepLink,
+} from "@/lib/config/whatsapp";
 
 const STEPS = [
   { id: 1, label: "Contact" },
@@ -1498,7 +1502,7 @@ function DevisGratuitsPageInner() {
     null
   );
   const [photoFlowChoice, setPhotoFlowChoice] = useState<
-    "none" | "photos_now"
+    "none" | "web" | "whatsapp"
   >("none");
 
   // -----------------------
@@ -1608,7 +1612,19 @@ function DevisGratuitsPageInner() {
       mql.removeEventListener("change", listener);
     };
   }, []);
-  const [hasPhotosAnswer, setHasPhotosAnswer] = useState<"pending" | "yes" | "no">("pending");
+
+  // Generate linkingToken when reaching Step 4 for WhatsApp flow
+  useEffect(() => {
+    if (currentStep === 4 && !linkingToken) {
+      const token = generateLinkingToken();
+      setLinkingToken(token);
+      // TODO: Save to DB via API
+      // updateLead(leadId, { linkingToken: token });
+    }
+  }, [currentStep, linkingToken]);
+
+  const [hasPhotosAnswer, setHasPhotosAnswer] = useState<"pending" | "yes" | "no" | null>(null);
+  const [showWhatsAppFlow, setShowWhatsAppFlow] = useState(false);
   const [isDestinationForeign, setIsDestinationForeign] = useState(false);
   const [excludedInventoryIds, setExcludedInventoryIds] = useState<string[]>([]);
   const [newItemDrafts, setNewItemDrafts] = useState<
@@ -4903,34 +4919,232 @@ function DevisGratuitsPageInner() {
       {currentStep === 4 && (
         <section className="moverz-animate-fade-in flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
           <div className="space-y-6">
-            {/* Question initiale : Avez-vous des photos ? */}
-            {hasPhotosAnswer === "pending" && (
+            {/* Question initiale : Comment transmettre vos photos ? */}
+            {!hasPhotosAnswer && (
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold moverz-gradient-text">
-                  Avez-vous des photos de votre logement ?
+                  Comment souhaitez-vous nous transmettre vos photos ?
                 </h2>
                 <p className="text-sm text-slate-600">
-                  Les photos sont la clé pour obtenir un volume fiable, des devis comparables et éviter les surprises.
+                  Les photos permettent des devis plus précis et évitent les surprises le jour J.
                 </p>
-                <div className="flex flex-col gap-3 sm:flex-row">
+
+                {/* 3 options : Web Upload / WhatsApp / Plus tard */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                  
+                  {/* Option 1 : Upload Web */}
                   <button
                     type="button"
                     onClick={() => {
                       setHasPhotosAnswer("yes");
-                      setPhotoFlowChoice("photos_now");
+                      setPhotoFlowChoice("web");
                     }}
-                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105"
+                    className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-surface-3 bg-white p-5 text-center moverz-transition-smooth hover:border-brand-spark/40 hover:-translate-y-1 hover:shadow-brand"
                   >
-                    Oui, j'ai des photos
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-deep/10 to-brand-spark/20 group-hover:scale-110 moverz-transition-smooth">
+                      <svg className="h-7 w-7 text-brand-deep" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">Upload web</p>
+                      <p className="mt-1 text-xs text-slate-600">Depuis cet appareil</p>
+                    </div>
                   </button>
+
+                  {/* Option 2 : WhatsApp */}
                   <button
                     type="button"
-                    onClick={() => setHasPhotosAnswer("no")}
-                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-surface-3 bg-white px-4 py-3 text-sm font-medium text-slate-800 hover:border-slate-300"
+                    onClick={() => {
+                      setHasPhotosAnswer("yes");
+                      setPhotoFlowChoice("whatsapp");
+                      setShowWhatsAppFlow(true);
+                      // Track GA4
+                      ga4Event("whatsapp_option_selected", {
+                        ...gaBaseParams,
+                        linking_token: linkingToken,
+                      });
+                    }}
+                    className="group relative flex flex-col items-center gap-3 rounded-2xl border-2 border-[#25D366]/30 bg-gradient-to-br from-[#25D366]/5 to-[#128C7E]/10 p-5 text-center moverz-transition-smooth hover:border-[#25D366]/60 hover:-translate-y-1 hover:shadow-lg"
                   >
-                    Non, pas pour le moment
+                    {/* Badge "Recommandé mobile" */}
+                    <div className="absolute -top-2 -right-2 rounded-full bg-[#25D366] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-lg">
+                      📱 Rapide
+                    </div>
+                    
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#25D366] shadow-lg group-hover:scale-110 moverz-transition-smooth">
+                      <svg className="h-7 w-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">WhatsApp</p>
+                      <p className="mt-1 text-xs text-slate-600">Envoi instantané</p>
+                    </div>
                   </button>
+
+                  {/* Option 3 : Plus tard */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHasPhotosAnswer("no");
+                      setPhotoFlowChoice("none");
+                    }}
+                    className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-surface-3 bg-white p-5 text-center moverz-transition-smooth hover:border-slate-300 hover:bg-surface-1"
+                  >
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 group-hover:bg-slate-200 moverz-transition-smooth">
+                      <svg className="h-7 w-7 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">Plus tard</p>
+                      <p className="mt-1 text-xs text-slate-600">Par email</p>
+                    </div>
+                  </button>
+
                 </div>
+              </div>
+            )}
+
+            {/* Flow WhatsApp (NOUVEAU) */}
+            {photoFlowChoice === "whatsapp" && showWhatsAppFlow && linkingToken && (
+              <div className="space-y-4 moverz-animate-scale-in">
+                
+                {/* Card WhatsApp premium */}
+                <div className="overflow-hidden rounded-2xl border-2 border-[#25D366]/30 bg-gradient-to-br from-[#25D366]/5 via-white to-[#128C7E]/5 shadow-brand">
+                  
+                  {/* Header */}
+                  <div className="border-b border-[#25D366]/20 bg-white/80 p-5 backdrop-blur">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#25D366] shadow-lg">
+                        <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900">
+                          Envoyez vos photos sur WhatsApp
+                        </h3>
+                        <p className="text-xs text-slate-600">
+                          Instantané et sécurisé
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div className="space-y-4 p-5">
+                    
+                    {/* Étapes */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Comment ça marche
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#25D366] text-xs font-bold text-white">
+                            1
+                          </div>
+                          <p className="text-sm text-slate-700">
+                            Notez votre <strong>code dossier</strong> ci-dessous
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#25D366] text-xs font-bold text-white">
+                            2
+                          </div>
+                          <p className="text-sm text-slate-700">
+                            Cliquez sur <strong>"Ouvrir WhatsApp"</strong>
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#25D366] text-xs font-bold text-white">
+                            3
+                          </div>
+                          <p className="text-sm text-slate-700">
+                            Envoyez vos photos + mentionnez le code
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Code dossier */}
+                    <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200 shadow-sm">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Votre code dossier
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 rounded-lg bg-slate-100 px-4 py-3 text-center text-xl font-mono font-bold tracking-widest text-brand-deep">
+                          {linkingToken}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (linkingToken) {
+                              navigator.clipboard.writeText(linkingToken);
+                              // TODO: Toast "Code copié !"
+                            }
+                          }}
+                          className="rounded-lg bg-slate-200 p-3 text-slate-700 hover:bg-slate-300 moverz-transition-fast"
+                          title="Copier le code"
+                        >
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* CTA WhatsApp */}
+                    <a
+                      href={buildWhatsAppDeepLink(linkingToken)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => {
+                        // Track GA4
+                        ga4Event("whatsapp_cta_clicked", {
+                          ...gaBaseParams,
+                          location: "photo_step",
+                          linking_token: linkingToken,
+                        });
+                      }}
+                      className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-4 font-bold text-white shadow-lg moverz-transition-smooth hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+                    >
+                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                      </svg>
+                      Ouvrir WhatsApp
+                      <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </a>
+
+                    {/* Note */}
+                    <p className="text-center text-[10px] text-slate-500">
+                      💡 Tip : Gardez ce code à portée de main
+                    </p>
+                  </div>
+
+                </div>
+
+                {/* Option de revenir en arrière */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowWhatsAppFlow(false);
+                    setHasPhotosAnswer(null);
+                    setPhotoFlowChoice("none");
+                  }}
+                  className="mx-auto flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900 moverz-transition-fast"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Choisir un autre mode d'envoi
+                </button>
+
               </div>
             )}
 
@@ -5017,7 +5231,7 @@ function DevisGratuitsPageInner() {
                     type="button"
                     onClick={() => {
                       setHasPhotosAnswer("yes");
-                      setPhotoFlowChoice("photos_now");
+                      setPhotoFlowChoice("web");
                     }}
                     className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-brand-deep to-brand-spark px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:brightness-105"
                   >
@@ -5077,10 +5291,10 @@ function DevisGratuitsPageInner() {
               </div>
             )}
 
-            {/* Contenu existant : seulement si l'utilisateur a dit "oui" ou a choisi un flow */}
-            {(hasPhotosAnswer === "yes" || photoFlowChoice !== "none") && (
+            {/* Contenu existant : seulement si l'utilisateur a choisi le flow WEB */}
+            {photoFlowChoice === "web" && (
               <>
-            {photoFlowChoice !== "photos_now" && (
+            {localUploadFiles.length === 0 && (
               <div className="space-y-3">
                 <h2 className="text-lg font-semibold text-slate-50">
                   Pourquoi ajouter des photos ?
@@ -5212,7 +5426,7 @@ function DevisGratuitsPageInner() {
 
 
             {/* Mode photos maintenant : zone d'upload + analyse */}
-            {photoFlowChoice === "photos_now" && (
+            {photoFlowChoice === "web" && localUploadFiles.length > 0 && (
               <>
                 <div className="space-y-3">
                   {/* Sur mobile: caméra intégrée comme chemin principal.
@@ -5362,7 +5576,7 @@ function DevisGratuitsPageInner() {
               </>
             )}
 
-            {photoFlowChoice === "photos_now" &&
+            {photoFlowChoice === "web" &&
               (analysisProcesses || isUploadingPhotos || isAnalyzing) && (
                 <div className="space-y-3 rounded-2xl bg-slate-950/80 p-3 text-xs text-slate-200 ring-1 ring-slate-800">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -6087,7 +6301,7 @@ function DevisGratuitsPageInner() {
                     )}
                 </div>
               )}
-            {photoFlowChoice === "photos_now" &&
+            {photoFlowChoice === "web" &&
               process2Inventory &&
               process2Inventory.length > 0 && (
                 <div className="mt-4 space-y-2 rounded-2xl bg-emerald-500/10 p-3 text-xs text-emerald-50 ring-1 ring-emerald-400/40">
@@ -6464,7 +6678,7 @@ function DevisGratuitsPageInner() {
                 await ensureBackofficeLeadId({ forceNew: true });
               }
               setHasPhotosAnswer("yes");
-              setPhotoFlowChoice("photos_now");
+              setPhotoFlowChoice("web");
               setCurrentStep(4 as StepId);
               setMaxReachedStep(4 as StepId);
             } catch (e) {
