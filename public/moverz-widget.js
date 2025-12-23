@@ -77,32 +77,31 @@
 
     var style = document.createElement("style");
     style.textContent = [
-      // Core + Variables
-      ".mzw-root { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; color: #0f172a; --mzw-deep: 43 122 120; --mzw-spark: 107 207 207; --mzw-navy: 15 23 42; line-height: 1.5; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }",
+      // Core + Variables (Moverz 2025 style)
+      ".mzw-root { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; --mzw-deep: 43 122 120; --mzw-spark: 107 207 207; line-height: 1.5; -webkit-font-smoothing: antialiased; }",
       
-      // Card container - subtle glassmorphism
-      ".mzw-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 16px; padding: 32px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 16px rgba(0, 0, 0, 0.04); border: 1px solid rgba(148, 163, 184, 0.12); max-width: 420px; display: flex; flex-direction: column; position: relative; }",
+      // Card container - pure white, soft shadow like tunnel
+      ".mzw-card { background: #ffffff; border-radius: 24px; padding: 40px 36px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); max-width: 480px; display: flex; flex-direction: column; position: relative; }",
       
-      // Header - professional and clean
-      ".mzw-header { margin-bottom: 28px; transition: opacity 0.3s ease; }",
+      // Header - Moverz 2025 style (like tunnel hero)
+      ".mzw-header { margin-bottom: 32px; transition: opacity 0.3s ease; }",
       ".mzw-header.mzw-fade-out { opacity: 0; pointer-events: none; }",
-      ".mzw-title { font-size: 20px; font-weight: 600; line-height: 1.3; color: #0f172a; letter-spacing: -0.02em; margin-bottom: 8px; }",
-      ".mzw-subtitle { font-size: 14px; color: #64748b; line-height: 1.5; font-weight: 400; }",
+      ".mzw-badge { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 8px 16px; border-radius: 999px; border: 1px solid rgba(15, 23, 42, 0.08); background: #ffffff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }",
+      ".mzw-badge-dot { width: 6px; height: 6px; border-radius: 999px; background: #6BCFCF; }",
+      ".mzw-badge-text { font-size: 13px; font-weight: 500; color: #0f172a; }",
+      ".mzw-title { font-size: 32px; font-weight: 700; line-height: 1.2; color: #0f172a; letter-spacing: -0.02em; margin-bottom: 12px; }",
+      ".mzw-subtitle { font-size: 16px; color: #334155; line-height: 1.5; font-weight: 400; margin-bottom: 8px; }",
+      ".mzw-micro { font-size: 13px; color: #64748b; line-height: 1.4; }",
       
-      // Trust badges - minimal
-      ".mzw-trust { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(148, 163, 184, 0.08); }",
-      ".mzw-trust-item { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; }",
-      ".mzw-trust-icon { width: 14px; height: 14px; color: rgb(var(--mzw-deep)); opacity: 0.8; }",
-      
-      // Choice section - clean grid
-      ".mzw-choice-section { margin-top: 0; }",
-      ".mzw-choice-title { font-size: 15px; font-weight: 500; color: #334155; margin-bottom: 16px; }",
-      ".mzw-choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }",
+      // Choice section - Moverz 2025
+      ".mzw-choice-section { margin-top: 8px; }",
+      ".mzw-choice-title { font-size: 17px; font-weight: 600; color: #0f172a; margin-bottom: 20px; }",
+      ".mzw-choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }",
       "@media (max-width: 480px) { .mzw-choice-grid { grid-template-columns: 1fr; } }",
       
-      // Choice buttons - flat premium style
-      ".mzw-choice-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 16px; border-radius: 12px; border: 1.5px solid rgba(148, 163, 184, 0.18); background: #ffffff; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; }",
-      ".mzw-choice-btn:hover { border-color: rgba(var(--mzw-deep), 0.35); box-shadow: 0 4px 12px rgba(var(--mzw-deep), 0.08); transform: translateY(-1px); }",
+      // Choice buttons - clean with subtle hover
+      ".mzw-choice-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 20px; border-radius: 16px; border: 1.5px solid rgba(148, 163, 184, 0.20); background: #ffffff; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; }",
+      ".mzw-choice-btn:hover { border-color: rgba(43, 122, 120, 0.40); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06); transform: translateY(-2px); }",
       ".mzw-choice-btn-whatsapp { border-color: rgba(37, 211, 102, 0.25); }",
       ".mzw-choice-btn-whatsapp:hover { border-color: rgba(37, 211, 102, 0.50); box-shadow: 0 4px 12px rgba(37, 211, 102, 0.12); }",
       ".mzw-choice-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease; }",
@@ -128,17 +127,17 @@
       ".mzw-thumb-remove { position: absolute; top: 6px; right: 6px; height: 22px; width: 22px; border-radius: 999px; border: 1px solid rgba(0, 0, 0, 0.08); background: rgba(255, 255, 255, 0.95); color: #64748b; font-weight: 600; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; font-size: 14px; }",
       ".mzw-thumb-remove:hover { background: #ffffff; color: #0f172a; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); }",
       
-      // Dropzone - flat and clean
-      ".mzw-dropzone { margin-top: 0; border-radius: 12px; background: #fafbfc; padding: 32px 24px; text-align: center; cursor: pointer; transition: all 0.2s ease; border: 1.5px dashed rgba(148, 163, 184, 0.25); }",
+      // Dropzone - Moverz 2025 style
+      ".mzw-dropzone { margin-top: 0; border-radius: 16px; background: #f8fafc; padding: 36px 28px; text-align: center; cursor: pointer; transition: all 0.2s ease; border: 2px dashed rgba(148, 163, 184, 0.30); }",
       ".mzw-dropzone.mzw-fade-out { opacity: 0; pointer-events: none; }",
-      ".mzw-dropzone:hover { background: #f1f5f9; border-color: rgba(var(--mzw-deep), 0.35); }",
-      ".mzw-dropzone.mzw-dropzone--active { background: rgba(var(--mzw-spark), 0.08); border-color: rgba(var(--mzw-spark), 0.40); border-style: solid; }",
-      ".mzw-drop-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(var(--mzw-deep), 0.08); display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 14px; transition: all 0.2s ease; }",
-      ".mzw-dropzone:hover .mzw-drop-icon { background: rgba(var(--mzw-deep), 0.12); transform: translateY(-1px); }",
-      ".mzw-drop-icon-svg { width: 20px; height: 20px; color: rgb(var(--mzw-deep)); }",
-      ".mzw-drop-title { font-size: 14px; font-weight: 500; color: #0f172a; margin-bottom: 6px; }",
-      ".mzw-drop-helper { font-size: 13px; color: #64748b; line-height: 1.4; }",
-      ".mzw-drop-limit { margin-top: 10px; font-size: 12px; color: #94a3b8; }",
+      ".mzw-dropzone:hover { background: #f1f5f9; border-color: rgba(43, 122, 120, 0.40); }",
+      ".mzw-dropzone.mzw-dropzone--active { background: rgba(107, 207, 207, 0.08); border-color: rgba(107, 207, 207, 0.50); border-style: solid; }",
+      ".mzw-drop-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(43, 122, 120, 0.10); display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 16px; transition: all 0.2s ease; }",
+      ".mzw-dropzone:hover .mzw-drop-icon { background: rgba(43, 122, 120, 0.15); transform: translateY(-2px); }",
+      ".mzw-drop-icon-svg { width: 24px; height: 24px; color: #2B7A78; }",
+      ".mzw-drop-title { font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 8px; }",
+      ".mzw-drop-helper { font-size: 14px; color: #64748b; line-height: 1.4; }",
+      ".mzw-drop-limit { margin-top: 12px; font-size: 13px; color: #94a3b8; }",
       
       // Camera component - clean
       ".mzw-camera { margin-top: 16px; border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.15); background: #ffffff; padding: 16px; }",
@@ -157,12 +156,13 @@
       ".mzw-camera-cta-actions .mzw-camera-pill-btn-primary { flex: 1; }",
       ".mzw-camera-counter { font-size: 12px; color: #64748b; font-weight: 500; }",
       
-      // Primary button - flat premium
-      ".mzw-primary-btn { border: none; border-radius: 10px; padding: 14px 24px; font-size: 14px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: rgb(var(--mzw-deep)); color: #ffffff; transition: all 0.2s ease; width: 100%; margin-top: 16px; }",
-      ".mzw-primary-btn:hover:not([disabled]) { background: rgba(var(--mzw-deep), 0.90); box-shadow: 0 4px 12px rgba(var(--mzw-deep), 0.20); }",
+      // Primary button - pill shape like moverz.fr CTA
+      ".mzw-primary-btn { border: none; border-radius: 999px; padding: 14px 28px; font-size: 15px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: #1e293b; color: #ffffff; transition: all 0.2s ease; width: 100%; margin-top: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10); }",
+      ".mzw-primary-btn:hover:not([disabled]) { background: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }",
       ".mzw-primary-btn[disabled] { opacity: 0.5; cursor: not-allowed; }",
-      ".mzw-primary-btn-inner { display: inline-flex; align-items: center; gap: 8px; }",
-      ".mzw-primary-btn-chevron { font-size: 14px; }",
+      ".mzw-primary-btn-inner { display: inline-flex; align-items: center; gap: 10px; }",
+      ".mzw-primary-btn-chevron { font-size: 16px; transition: transform 0.2s ease; }",
+      ".mzw-primary-btn:hover:not([disabled]) .mzw-primary-btn-chevron { transform: translateX(2px); }",
       
       // Back button
       ".mzw-back-btn { appearance: none; border: none; background: transparent; padding: 10px 0; margin-top: 12px; font-size: 13px; color: #64748b; cursor: pointer; transition: color 0.15s ease; display: inline-flex; align-items: center; gap: 6px; }",
@@ -197,7 +197,7 @@
       "@keyframes mzw-spin { to { transform: rotate(360deg); } }",
       
       // Mobile responsive
-      "@media (max-width: 640px) { .mzw-card { max-width: 100%; padding: 24px 20px; border-radius: 12px; } .mzw-title { font-size: 18px; } .mzw-subtitle { font-size: 13px; } .mzw-dropzone { padding: 28px 20px; } }",
+      "@media (max-width: 640px) { .mzw-card { max-width: 100%; padding: 32px 24px; border-radius: 20px; } .mzw-title { font-size: 26px; } .mzw-subtitle { font-size: 15px; } .mzw-dropzone { padding: 32px 24px; } }",
     ].join("");
 
     var wrapper = document.createElement("div");
@@ -205,22 +205,13 @@
     wrapper.innerHTML =
       '<div class="mzw-card">' +
       '  <div class="mzw-header">' +
-      '    <div class="mzw-title">Devis de déménagement fiables</div>' +
-      '    <div class="mzw-subtitle">Estimation précise par IA pour des devis comparables et transparents.</div>' +
-      '    <div class="mzw-trust">' +
-      '      <div class="mzw-trust-item">' +
-      '        <svg class="mzw-trust-icon" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>' +
-      '        <span>Pros vérifiés</span>' +
-      '      </div>' +
-      '      <div class="mzw-trust-item">' +
-      '        <svg class="mzw-trust-icon" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>' +
-      '        <span>Gratuit</span>' +
-      '      </div>' +
-      '      <div class="mzw-trust-item">' +
-      '        <svg class="mzw-trust-icon" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.94 6.412A2 2 0 002 8.108V16a2 2 0 002 2h12a2 2 0 002-2V8.108a2 2 0 00-.94-1.696l-6-3.75a2 2 0 00-2.12 0l-6 3.75zm2.615 2.423a1 1 0 10-1.11 1.664l5 3.333a1 1 0 001.11 0l5-3.333a1 1 0 00-1.11-1.664L10 11.798 5.555 8.835z" clip-rule="evenodd" /></svg>' +
-      '        <span>0 spam</span>' +
-      '      </div>' +
+      '    <div class="mzw-badge">' +
+      '      <div class="mzw-badge-dot"></div>' +
+      '      <span class="mzw-badge-text">Service gratuit • Déménageurs vérifiés</span>' +
       '    </div>' +
+      '    <div class="mzw-title">Comparez 5+ devis maintenant</div>' +
+      '    <div class="mzw-subtitle">L\'IA analyse vos photos, compare les devis, vous déménagez sans stress.</div>' +
+      '    <div class="mzw-micro">3 min • IA • 0 spam • 5+ devis</div>' +
       "  </div>" +
       
       // Choice section
