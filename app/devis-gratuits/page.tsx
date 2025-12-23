@@ -908,7 +908,7 @@ function AddressAutocomplete({
 
   return (
     <div className="relative space-y-1">
-      <label className="block text-xs font-medium text-slate-200">{label}</label>
+      <label className="block text-xs font-medium text-slate-700">{label}</label>
       {helperText && (
         <p className="text-[11px] text-slate-400">{helperText}</p>
       )}
@@ -3517,7 +3517,7 @@ function DevisGratuitsPageInner() {
                 />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-slate-200">
+                    <label className="block text-xs font-medium text-slate-700">
                       Type de logement
                     </label>
                     <div className="relative mt-1">
@@ -3565,7 +3565,7 @@ function DevisGratuitsPageInner() {
                   {form.originHousingType &&
                    !form.originHousingType.startsWith("house") && (
                     <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
+                      <label className="block text-xs font-medium text-slate-700">
                         Étage
                       </label>
                       <div className="relative mt-1">
@@ -3598,7 +3598,7 @@ function DevisGratuitsPageInner() {
 
                 <div className="grid gap-3 sm:grid-cols-[minmax(0,1.3fr),minmax(0,1fr)]">
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-slate-200">
+                    <label className="block text-xs font-medium text-slate-700">
                       Surface approximative (m²)
                     </label>
                     <div className="relative mt-1">
@@ -3717,7 +3717,7 @@ function DevisGratuitsPageInner() {
                
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-slate-200">
+                    <label className="block text-xs font-medium text-slate-700">
                       Type de logement
                     </label>
                     <div className="relative mt-1">
@@ -3766,7 +3766,7 @@ function DevisGratuitsPageInner() {
                    !form.destinationHousingType.startsWith("house") &&
                    !form.destinationUnknown && (
                     <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-200">
+                      <label className="block text-xs font-medium text-slate-700">
                         Étage
                       </label>
                       <div className="relative mt-1">
