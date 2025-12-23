@@ -55,24 +55,21 @@
       ".mzw-card { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius: 24px; padding: 32px 28px 28px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(var(--mzw-spark), 0.20); color: #0f172a; max-width: 460px; display: flex; flex-direction: column; position: relative; overflow: hidden; }",
       ".mzw-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark)), rgb(var(--mzw-deep))); background-size: 200% 100%; animation: mzw-shimmer 3s ease-in-out infinite; }",
       "@keyframes mzw-shimmer { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 0%; } }",
-      ".mzw-header { margin-bottom: 28px; position: relative; z-index: 1; }",
+      ".mzw-header { margin-bottom: 24px; position: relative; z-index: 1; }",
       ".mzw-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 999px; background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.10), rgba(var(--mzw-spark), 0.12)); border: 1px solid rgba(var(--mzw-spark), 0.30); color: rgb(var(--mzw-deep)); font-size: 11px; font-weight: 700; letter-spacing: 0.03em; }",
       ".mzw-badge-dot { width: 7px; height: 7px; border-radius: 999px; background: linear-gradient(135deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); animation: mzw-pulse 2s ease-in-out infinite; }",
       "@keyframes mzw-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.95); } }",
       ".mzw-title { margin-top: 16px; font-size: 24px; font-weight: 800; line-height: 1.25; color: #0f172a; letter-spacing: -0.02em; }",
       ".mzw-subtitle { margin-top: 8px; font-size: 14px; color: #475569; line-height: 1.5; font-weight: 500; }",
-      ".mzw-benefits { margin-top: 18px; display: flex; gap: 10px; }",
-      ".mzw-benefit { display: flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; background: rgba(var(--mzw-spark), 0.10); border: 1px solid rgba(var(--mzw-spark), 0.25); font-size: 12px; color: rgb(var(--mzw-deep)); font-weight: 700; transition: all 0.2s ease; }",
-      ".mzw-benefit:hover { transform: translateY(-2px); background: rgba(var(--mzw-spark), 0.15); }",
-      ".mzw-benefit-icon { font-size: 11px; }",
-      ".mzw-dropzone { margin-top: 0; border: 2px dashed rgba(var(--mzw-spark), 0.35); border-radius: 18px; background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.03), rgba(var(--mzw-spark), 0.06)); padding: 40px 28px; text-align: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }",
-      ".mzw-dropzone:hover { border-color: rgba(var(--mzw-spark), 0.60); background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.06), rgba(var(--mzw-spark), 0.12)); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(var(--mzw-spark), 0.20); }",
-      ".mzw-dropzone.mzw-dropzone--active { border-color: rgb(var(--mzw-spark)); background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.10), rgba(var(--mzw-spark), 0.16)); border-style: solid; box-shadow: 0 0 0 4px rgba(var(--mzw-spark), 0.15), 0 12px 32px rgba(var(--mzw-spark), 0.25); }",
-      ".mzw-drop-icon { width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 18px; box-shadow: 0 8px 24px rgba(var(--mzw-deep), 0.30); transition: transform 0.25s ease; }",
-      ".mzw-dropzone:hover .mzw-drop-icon { transform: scale(1.05) rotate(2deg); box-shadow: 0 12px 32px rgba(var(--mzw-deep), 0.40); }",
-      ".mzw-drop-icon-svg { width: 30px; height: 30px; color: #ffffff; }",
-      ".mzw-drop-title { font-size: 17px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }",
+      ".mzw-dropzone { margin-top: 0; border: 2px dashed rgba(var(--mzw-spark), 0.35); border-radius: 16px; background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.02), rgba(var(--mzw-spark), 0.04)); padding: 36px 28px; text-align: center; cursor: pointer; transition: all 0.2s ease; position: relative; }",
+      ".mzw-dropzone:hover { border-color: rgba(var(--mzw-spark), 0.60); background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.04), rgba(var(--mzw-spark), 0.08)); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(var(--mzw-spark), 0.15); }",
+      ".mzw-dropzone.mzw-dropzone--active { border-color: rgb(var(--mzw-spark)); background: linear-gradient(135deg, rgba(var(--mzw-deep), 0.08), rgba(var(--mzw-spark), 0.12)); border-style: solid; box-shadow: 0 0 0 3px rgba(var(--mzw-spark), 0.15), 0 8px 20px rgba(var(--mzw-spark), 0.20); }",
+      ".mzw-drop-icon { width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, rgb(var(--mzw-deep)), rgb(var(--mzw-spark))); display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 6px 18px rgba(var(--mzw-deep), 0.25); transition: transform 0.2s ease; }",
+      ".mzw-dropzone:hover .mzw-drop-icon { transform: scale(1.03); }",
+      ".mzw-drop-icon-svg { width: 28px; height: 28px; color: #ffffff; }",
+      ".mzw-drop-title { font-size: 16px; font-weight: 700; color: #0f172a; letter-spacing: -0.01em; }",
       ".mzw-drop-helper { margin-top: 6px; font-size: 13px; color: #64748b; font-weight: 500; }",
+      ".mzw-drop-limit { margin-top: 8px; font-size: 12px; color: #94a3b8; font-weight: 500; }",
       ".mzw-camera { margin-top: 20px; border-radius: 18px; border: 1px solid rgba(var(--mzw-spark), 0.35); background: linear-gradient(135deg, #334155 0%, #1e293b 100%); padding: 18px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.30), 0 0 0 1px rgba(var(--mzw-spark), 0.20) inset; }",
       ".mzw-camera-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }",
       ".mzw-camera-text { font-size: 12px; color: #e2e8f0; font-weight: 600; line-height: 1.4; }",
@@ -139,19 +136,16 @@
       '  <div class="mzw-header">' +
       '    <div class="mzw-badge"><span class="mzw-badge-dot"></span><span>IA Moverz</span></div>' +
       '    <div class="mzw-title">Des devis de déménagement justes</div>' +
-      '    <div class="mzw-subtitle">L\'IA analyse vos photos pour estimer le volume et la valeur de vos biens, pour des devis comparables et moins de surprises.</div>' +
-      '    <div class="mzw-benefits">' +
-      '      <div class="mzw-benefit"><span class="mzw-benefit-icon">✓</span><span>Estimations fiables</span></div>' +
-      '      <div class="mzw-benefit"><span class="mzw-benefit-icon">✓</span><span>Moins de surprises</span></div>' +
-      "    </div>" +
+      '    <div class="mzw-subtitle">L\'IA analyse vos photos pour estimer le volume et la valeur de vos biens.</div>' +
       "  </div>" +
       '  <div class="mzw-summary" id="mzw-summary" style="display:none"></div>' +
       '  <div class="mzw-dropzone" id="mzw-dropzone">' +
       '    <div class="mzw-drop-icon">' +
       '      <svg class="mzw-drop-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color: rgb(var(--mzw-deep));"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' +
       "    </div>" +
-      '    <div class="mzw-drop-title">Ajouter des photos</div>' +
-      '    <div class="mzw-drop-helper">1 à 3 photos pour commencer</div>' +
+      '    <div class="mzw-drop-title">Téléchargez vos photos</div>' +
+      '    <div class="mzw-drop-helper">Cliquez pour sélectionner ou glissez-déposez</div>' +
+      '    <div class="mzw-drop-limit">1 à 3 photos · JPG, PNG ou HEIC</div>' +
       "  </div>" +
       '  <input type="file" id="mzw-file-input" accept="image/*" multiple style="display:none" />' +
       '  <div class="mzw-photos-row" id="mzw-photos-row" style="display:none"></div>' +
