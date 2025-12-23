@@ -5309,6 +5309,21 @@ function DevisGratuitsPageInner() {
             {/* Contenu existant : seulement si l'utilisateur a choisi le flow WEB */}
             {photoFlowChoice === "web" && (
               <>
+                {/* Bouton retour vers les options */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHasPhotosAnswer(null);
+                    setPhotoFlowChoice("none");
+                  }}
+                  className="mx-auto flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 moverz-transition-fast"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Choisir un autre mode d'envoi
+                </button>
+
             {localUploadFiles.length === 0 && (
               <div className="space-y-3">
                 <h2 className="text-lg font-semibold text-slate-50">
