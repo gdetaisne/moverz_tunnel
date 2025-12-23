@@ -916,7 +916,7 @@ function AddressAutocomplete({
           onFocus={() => {
             if (results.length > 0) setShowDropdown(true);
           }}
-          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
+          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200"
           placeholder={placeholder}
           autoComplete="off"
         />
@@ -3158,48 +3158,30 @@ function DevisGratuitsPageInner() {
       </button>
       )}
 
-      {/* Header + rassurance (minimal, premium) */}
-      <header className="space-y-4 rounded-3xl border border-surface-3 bg-white/80 p-5 shadow-soft backdrop-blur sm:p-6">
-        <div className="flex items-start justify-between gap-6">
-          <div className="flex-1 space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-lg bg-brand-deep/10 px-2.5 py-1 ring-1 ring-brand-deep/15">
-              <div className="h-1.5 w-1.5 rounded-full bg-brand-spark moverz-animate-pulse" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-deep">
-                Demande de devis
-              </span>
-            </div>
-            <h1 className="text-xl font-bold text-brand-navy sm:text-2xl">
-              Devis comparables en 3 minutes
-            </h1>
-            <p className="flex items-center gap-1.5 text-sm text-slate-600">
-              <svg className="h-3.5 w-3.5 text-brand-spark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="font-medium text-slate-900">Les photos</span> évitent les surprises le jour J
-            </p>
-          </div>
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/60 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/50 backdrop-blur moverz-transition-fast hover:shadow hover:ring-slate-300/50">
-              <svg className="h-3 w-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Gratuit
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/60 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/50 backdrop-blur moverz-transition-fast hover:shadow hover:ring-slate-300/50">
-              <svg className="h-3 w-3 text-brand-spark" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Pros vérifiés
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/60 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/50 backdrop-blur moverz-transition-fast hover:shadow hover:ring-slate-300/50">
-              <svg className="h-3 w-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-              </svg>
-              0 spam
-            </span>
-          </div>
+      {/* Header aligné sur moverz.fr hero */}
+      <header className="mb-8 space-y-5">
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2.5 rounded-full border border-slate-900/8 bg-white px-4 py-2 shadow-sm">
+          <div className="h-1.5 w-1.5 rounded-full bg-[#6BCFCF]" />
+          <span className="text-sm font-medium text-slate-900">
+            Service gratuit • Déménageurs vérifiés
+          </span>
         </div>
+        
+        {/* Titre énorme */}
+        <h1 className="text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+          Vous déménagez.<br />On compare.
+        </h1>
+        
+        {/* Subtitle */}
+        <p className="text-lg text-slate-700 sm:text-xl max-w-xl">
+          L'IA analyse vos photos, compare les devis, vous déménagez sans stress.
+        </p>
+        
+        {/* Micro-copy sous titre */}
+        <p className="text-sm text-slate-600">
+          Téléphone masqué • 0 spam • Les photos rendent les devis plus justes
+        </p>
         <div className="flex flex-wrap gap-2 sm:hidden">
           <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/60 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
             <svg className="h-3 w-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
@@ -3317,7 +3299,7 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 1 – Contact */}
       {currentStep === 1 && (
-        <section className="moverz-animate-fade-in flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
+        <section className="moverz-animate-fade-in flex-1 rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] sm:p-8">
           <form className="space-y-5" onSubmit={handleSubmitStep1}>
             <div className="space-y-1">
               <label className="block text-sm font-medium text-slate-900">
@@ -3336,7 +3318,7 @@ function DevisGratuitsPageInner() {
                     setFirstNameTouched(true);
                     updateField("firstName", e.target.value);
                   }}
-                  className="w-full rounded-xl border border-surface-3 bg-surface-1 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200"
                   placeholder="Prénom ou surnom"
                   autoComplete="given-name"
                 />
@@ -3373,7 +3355,7 @@ function DevisGratuitsPageInner() {
                     setEmailTouched(true);
                     updateField("email", e.target.value);
                   }}
-                  className="w-full rounded-xl border border-surface-3 bg-surface-1 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200"
                   placeholder="vous@email.fr"
                   autoComplete="email"
                 />
@@ -3402,9 +3384,10 @@ function DevisGratuitsPageInner() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand moverz-transition-smooth hover:bg-brand-navy hover:shadow-brand-lg hover:ring-2 hover:ring-brand-spark/30 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting ? "Création en cours…" : "Commencer ma demande"}
+              <span>{isSubmitting ? "Création en cours…" : "Commencer ma demande"}</span>
+              {!isSubmitting && <span className="transition-transform group-hover:translate-x-0.5">→</span>}
             </button>
           </form>
         </section>
@@ -3412,7 +3395,7 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 2 – Projet (départ / arrivée en blocs ouverts) */}
       {currentStep === 2 && (
-        <section className="moverz-animate-fade-in flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
+        <section className="moverz-animate-fade-in flex-1 rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] sm:p-8">
           <form
             className="space-y-5"
             onSubmit={(e) => {
@@ -3512,7 +3495,7 @@ function DevisGratuitsPageInner() {
                             e.target.value as HousingType | ""
                           )
                         }
-                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200"
                       >
                       <option value="">Choisir le type de logement</option>
                       <option value="studio">Studio (1 pièce)</option>
@@ -3557,7 +3540,7 @@ function DevisGratuitsPageInner() {
                           onChange={(e) =>
                             updateField("originFloor", e.target.value)
                           }
-                          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200"
                         >
                           <option value="0">Rez-de-chaussée</option>
                           <option value="1">1er étage</option>
@@ -3594,7 +3577,7 @@ function DevisGratuitsPageInner() {
                           setSurfaceTouched(true);
                           updateField("surfaceM2", e.target.value);
                         }}
-                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 pr-8 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200"
                       />
                       {(hasTriedSubmitStep2 || surfaceTouched) && (
                         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
@@ -3712,7 +3695,7 @@ function DevisGratuitsPageInner() {
                             e.target.value as HousingType | ""
                           )
                         }
-                        className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200"
                       >
                       <option value="">Choisir le type de logement</option>
                       <option value="studio">Studio (1 pièce)</option>
@@ -3758,7 +3741,7 @@ function DevisGratuitsPageInner() {
                           onChange={(e) =>
                             updateField("destinationFloor", e.target.value)
                           }
-                          className="w-full rounded-xl border border-slate-300 bg-slate-100 px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-brand-spark/70 focus:outline-none focus:ring-2 focus:ring-brand-spark/25"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200"
                         >
                           <option value="0">Rez-de-chaussée</option>
                           <option value="1">1er étage</option>
@@ -4245,9 +4228,10 @@ function DevisGratuitsPageInner() {
               </button>
               <button
                 type="submit"
-                className="inline-flex flex-1 items-center justify-center rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-navy hover:ring-2 hover:ring-brand-spark/30"
+                className="group inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-slate-800"
               >
-                Étape suivante
+                <span>Étape suivante</span>
+                <span className="transition-transform group-hover:translate-x-0.5">→</span>
               </button>
             </div>
           </form>
@@ -4256,10 +4240,10 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 3 – Volume & formules */}
       {currentStep === 3 && (
-        <section className="moverz-animate-fade-in flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
+        <section className="moverz-animate-fade-in flex-1 rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] sm:p-8">
           <form className="space-y-5" onSubmit={handleSubmitStep3}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-              <h2 className="text-lg font-semibold text-brand-navy">
+              <h2 className="text-lg font-bold text-slate-900">
                 Sélectionnez votre formule
               </h2>
             </div>
@@ -4889,9 +4873,10 @@ function DevisGratuitsPageInner() {
               <button
                 type="submit"
                 disabled={isSubmitting || !leadId}
-                className="inline-flex flex-1 items-center justify-center rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-navy disabled:cursor-not-allowed disabled:opacity-70"
+                className="group inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isSubmitting ? "Validation…" : "Valider ma demande"}
+                <span>{isSubmitting ? "Validation…" : "Valider ma demande"}</span>
+                {!isSubmitting && <span className="transition-transform group-hover:translate-x-0.5">→</span>}
               </button>
             </div>
           </form>
@@ -4900,13 +4885,13 @@ function DevisGratuitsPageInner() {
 
       {/* Étape 4 – Photos & inventaire */}
       {currentStep === 4 && (
-        <section className="moverz-animate-fade-in flex-1 rounded-3xl border border-surface-3 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6">
+        <section className="moverz-animate-fade-in flex-1 rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] sm:p-8">
           <div className="space-y-6">
             {/* Question initiale : Comment transmettre vos photos ? */}
             {!hasPhotosAnswer && (
               <div className="space-y-4">
                 <div className="text-center">
-                  <h2 className="text-xl font-bold text-brand-navy">
+                  <h2 className="text-xl font-bold text-slate-900">
                     Envoyez-nous vos photos
                 </h2>
                   <p className="mt-2 text-sm text-slate-600">
@@ -5120,7 +5105,7 @@ function DevisGratuitsPageInner() {
             {/* Si l'utilisateur a répondu "non", on lui explique pourquoi c'est important */}
             {hasPhotosAnswer === "no" && photoFlowChoice === "none" && (
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-brand-navy">
+                <h2 className="text-lg font-bold text-slate-900">
                   Pourquoi les photos sont importantes
                 </h2>
                 <p className="text-sm text-slate-600">
@@ -5202,9 +5187,10 @@ function DevisGratuitsPageInner() {
                       setHasPhotosAnswer("yes");
                       setPhotoFlowChoice("web");
                     }}
-                    className="inline-flex items-center justify-center rounded-xl bg-brand-deep px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-navy"
+                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-slate-800"
                   >
-                    Finalement, j'ai des photos
+                    <span>Finalement, j'ai des photos</span>
+                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
                   </button>
                   <button
                     type="button"
@@ -5266,7 +5252,7 @@ function DevisGratuitsPageInner() {
             {localUploadFiles.length === 0 && (
               <div className="space-y-4">
                 <div className="text-center">
-                  <h2 className="text-lg font-semibold text-brand-navy">
+                  <h2 className="text-lg font-bold text-slate-900">
                     Ajoutez vos photos
                 </h2>
                   <p className="mt-1 text-sm text-slate-600">
