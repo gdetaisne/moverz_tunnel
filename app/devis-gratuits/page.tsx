@@ -4057,8 +4057,8 @@ function DevisGratuitsPageInner() {
                         className={[
                           "rounded-full border px-3 py-1 text-left",
                           form.furnitureBilliard
-                            ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                            : "border-slate-700 bg-slate-900/60 text-slate-200",
+                            ? "border-brand-deep bg-brand-deep text-white"
+                            : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                         ].join(" ")}
                       >
                         Billard
@@ -4074,8 +4074,8 @@ function DevisGratuitsPageInner() {
                   className={[
                     "rounded-full border px-3 py-1 text-left",
                           form.furnitureAquarium
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ? "border-brand-deep bg-brand-deep text-white"
+                      : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                   ].join(" ")}
                 >
                         Aquarium / vitrine
@@ -4091,8 +4091,8 @@ function DevisGratuitsPageInner() {
                   className={[
                     "rounded-full border px-3 py-1 text-left",
                           form.furnitureOver25kg
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ? "border-brand-deep bg-brand-deep text-white"
+                      : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                   ].join(" ")}
                 >
                         Objet(s) &gt; 25 kg
@@ -4108,8 +4108,8 @@ function DevisGratuitsPageInner() {
                   className={[
                     "rounded-full border px-3 py-1 text-left",
                           form.furnitureVeryFragile
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ? "border-brand-deep bg-brand-deep text-white"
+                      : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                   ].join(" ")}
                 >
                         Objets très fragiles
@@ -4125,8 +4125,8 @@ function DevisGratuitsPageInner() {
                   className={[
                     "rounded-full border px-3 py-1 text-left",
                           form.optionDismantlingFull
-                      ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                      : "border-slate-700 bg-slate-900/60 text-slate-200",
+                      ? "border-brand-deep bg-brand-deep text-white"
+                      : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                   ].join(" ")}
                 >
                         Beaucoup de meubles à démonter / remonter
@@ -4194,8 +4194,8 @@ function DevisGratuitsPageInner() {
                           className={[
                             "flex w-full flex-col items-center justify-between rounded-2xl border px-4 py-4 text-center text-[11px] transition",
                             form.density === "light"
-                              ? "border-emerald-400 bg-emerald-500/8 shadow-[0_0_0_1px_rgba(16,185,129,0.35)]"
-                              : "border-slate-700/80 bg-slate-950/60 hover:border-emerald-300/70",
+                              ? "border-brand-deep/70 bg-brand-deep/10 shadow-[0_0_0_1px_rgba(43,122,120,0.35)]"
+                              : "border-surface-3 bg-surface-1 hover:border-brand-deep/30",
                           ].join(" ")}
                         >
                           <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-300/60 bg-emerald-500/10">
@@ -4243,8 +4243,8 @@ function DevisGratuitsPageInner() {
                           className={[
                             "flex w-full flex-col items-center justify-between rounded-2xl border px-4 py-4 text-center text-[11px] transition",
                             form.density === "normal"
-                              ? "border-sky-400 bg-sky-500/8 shadow-[0_0_0_1px_rgba(56,189,248,0.45)]"
-                              : "border-slate-700/80 bg-slate-950/60 hover:border-sky-300/70",
+                              ? "border-brand-deep/70 bg-brand-deep/10 shadow-[0_0_0_1px_rgba(43,122,120,0.35)]"
+                              : "border-surface-3 bg-surface-1 hover:border-brand-deep/30",
                           ].join(" ")}
                         >
                           <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-sky-300/60 bg-sky-500/10">
@@ -4290,8 +4290,8 @@ function DevisGratuitsPageInner() {
                           className={[
                             "flex w-full flex-col items-center justify-between rounded-2xl border px-4 py-4 text-center text-[11px] transition",
                             form.density === "dense"
-                              ? "border-amber-400 bg-amber-500/8 shadow-[0_0_0_1px_rgba(251,191,36,0.45)]"
-                              : "border-slate-700/80 bg-slate-950/60 hover:border-amber-300/70",
+                              ? "border-brand-deep/70 bg-brand-deep/10 shadow-[0_0_0_1px_rgba(43,122,120,0.35)]"
+                              : "border-surface-3 bg-surface-1 hover:border-brand-deep/30",
                           ].join(" ")}
                         >
                           <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-amber-300/60 bg-amber-500/10">
@@ -4644,8 +4644,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.optionStorage
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ? "border-brand-deep bg-brand-deep text-white"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                     ].join(" ")}
                   >
                     Garde‑meuble
@@ -4665,8 +4665,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       hasCleaningOrClearance
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ? "border-brand-deep bg-brand-deep text-white"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                     ].join(" ")}
                   >
                     Nettoyage / débarras
@@ -4682,8 +4682,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.servicePackingFull
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ? "border-brand-deep bg-brand-deep text-white"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                     ].join(" ")}
                   >
                     Emballage complet
@@ -4699,8 +4699,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.serviceMountNewFurniture
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ? "border-brand-deep bg-brand-deep text-white"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                     ].join(" ")}
                   >
                     Montage meubles neufs
@@ -4716,8 +4716,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.serviceInsuranceExtra
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ? "border-brand-deep bg-brand-deep text-white"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                     ].join(" ")}
                   >
                     Assurance renforcée
@@ -4733,8 +4733,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.serviceWasteRemoval
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ? "border-brand-deep bg-brand-deep text-white"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                     ].join(" ")}
                   >
                     Évacuation déchets
@@ -4750,8 +4750,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.serviceHelpNoTruck
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ? "border-brand-deep bg-brand-deep text-white"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                     ].join(" ")}
                   >
                     Aide sans camion (changement de palier)
@@ -4767,8 +4767,8 @@ function DevisGratuitsPageInner() {
                     className={[
                       "rounded-full border px-3 py-1 text-[11px]",
                       form.serviceSpecialHours
-                        ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                        : "border-slate-700 bg-slate-900/60 text-slate-200",
+                        ? "border-brand-deep bg-brand-deep text-white"
+                        : "border-surface-3 bg-white text-slate-700 hover:border-slate-300",
                     ].join(" ")}
                   >
                     Horaires spécifiques
