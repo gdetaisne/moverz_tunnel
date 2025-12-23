@@ -138,9 +138,9 @@
       '  <div class="mzw-header">' +
       '    <div class="mzw-badge"><span class="mzw-badge-dot"></span><span>IA Moverz</span></div>' +
       '    <div class="mzw-title">Des devis de déménagement justes</div>' +
-      '    <div class="mzw-subtitle">L\'IA analyse vos photos pour estimer le volume et la valeur de vos biens.</div>' +
+      '    <div class="mzw-subtitle">Estimation IA en 60 secondes pour des devis précis et sans surprises.</div>' +
       '    <div class="mzw-trust">' +
-      '      <div class="mzw-trust-item"><span class="mzw-trust-icon">✓</span><span>Plusieurs pros répondent</span></div>' +
+      '      <div class="mzw-trust-item"><span class="mzw-trust-icon">3+</span><span>Devis comparables</span></div>' +
       '      <div class="mzw-trust-divider"></div>' +
       '      <div class="mzw-trust-item"><span class="mzw-trust-icon">✓</span><span>Déménageurs vérifiés</span></div>' +
       "    </div>" +
