@@ -68,126 +68,127 @@
 
     var style = document.createElement("style");
     style.textContent = [
-      ".mzw-root { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; color: #0f172a; --mzw-deep: 43 122 120; --mzw-spark: 107 207 207; --mzw-navy: 15 23 42; }",
-      ".mzw-card { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 24px; padding: 32px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(148, 163, 184, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5); color: #0f172a; max-width: 440px; display: flex; flex-direction: column; position: relative; overflow: hidden; }",
-      ".mzw-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: rgba(var(--mzw-deep), 0.18); opacity: 1; }",
-      ".mzw-header { margin-bottom: 24px; position: relative; z-index: 1; transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }",
-      ".mzw-header.mzw-fade-out { opacity: 0; transform: translateY(-8px); pointer-events: none; }",
-      ".mzw-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; background: rgba(var(--mzw-deep), 0.08); border: 1px solid rgba(var(--mzw-deep), 0.14); color: rgb(var(--mzw-deep)); font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05); }",
-      ".mzw-badge-dot { width: 5px; height: 5px; border-radius: 999px; background: rgb(var(--mzw-spark)); box-shadow: 0 0 8px rgba(var(--mzw-spark), 0.6); animation: mzw-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }",
-      ".mzw-title { margin-top: 18px; font-size: 24px; font-weight: 800; line-height: 1.15; color: #0f172a; letter-spacing: -0.03em; }",
-      ".mzw-subtitle { margin-top: 10px; font-size: 14.5px; color: #64748b; line-height: 1.5; font-weight: 400; margin-bottom: 28px; }",
+      // Core + Variables
+      ".mzw-root { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; color: #0f172a; --mzw-deep: 43 122 120; --mzw-spark: 107 207 207; --mzw-navy: 15 23 42; line-height: 1.5; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }",
+      
+      // Card container - subtle glassmorphism
+      ".mzw-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 16px; padding: 32px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 16px rgba(0, 0, 0, 0.04); border: 1px solid rgba(148, 163, 184, 0.12); max-width: 420px; display: flex; flex-direction: column; position: relative; }",
+      
+      // Header - professional and clean
+      ".mzw-header { margin-bottom: 28px; transition: opacity 0.3s ease; }",
+      ".mzw-header.mzw-fade-out { opacity: 0; pointer-events: none; }",
+      ".mzw-title { font-size: 20px; font-weight: 600; line-height: 1.3; color: #0f172a; letter-spacing: -0.02em; margin-bottom: 8px; }",
+      ".mzw-subtitle { font-size: 14px; color: #64748b; line-height: 1.5; font-weight: 400; }",
+      
+      // Trust badges - minimal
+      ".mzw-trust { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(148, 163, 184, 0.08); }",
+      ".mzw-trust-item { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; }",
+      ".mzw-trust-icon { width: 14px; height: 14px; color: rgb(var(--mzw-deep)); opacity: 0.8; }",
+      
+      // Choice section - clean grid
       ".mzw-choice-section { margin-top: 0; }",
-      ".mzw-choice-title { font-size: 19px; font-weight: 700; color: #0f172a; margin-bottom: 20px; text-align: center; letter-spacing: -0.02em; }",
-      ".mzw-choice-micro { font-size: 12px; color: #64748b; text-align: center; margin: -10px auto 18px; line-height: 1.45; }",
-      ".mzw-reassurance { font-size: 11px; color: #64748b; text-align: center; margin: -10px auto 18px; font-weight: 600; letter-spacing: 0.01em; }",
-      ".mzw-choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 500px; margin: 0 auto; }",
-      "@media (max-width: 480px) { .mzw-choice-grid { grid-template-columns: 1fr; gap: 10px; } }",
-      ".mzw-choice-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 24px 20px; border-radius: 18px; border: 2px solid rgba(148, 163, 184, 0.15); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); font-family: inherit; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02); }",
-      ".mzw-choice-btn:hover { border-color: rgba(var(--mzw-spark), 0.50); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(var(--mzw-deep), 0.16), 0 0 0 1px rgba(var(--mzw-spark), 0.10); background: rgba(255, 255, 255, 1); }",
-      ".mzw-choice-btn-whatsapp { border-color: rgba(37, 211, 102, 0.30); background: rgba(37, 211, 102, 0.05); }",
-      ".mzw-choice-btn-whatsapp:hover { border-color: rgba(37, 211, 102, 0.60); box-shadow: 0 8px 24px rgba(37, 211, 102, 0.20); }",
-      ".mzw-choice-btn-skip { border-style: dashed; }",
-      ".mzw-choice-btn-skip:hover { border-color: rgba(148, 163, 184, 0.50); background: rgba(241, 245, 249, 0.60); }",
-      ".mzw-choice-badge { position: absolute; top: -8px; right: -8px; background: #25D366; color: #ffffff; font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.03em; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35); }",
-      ".mzw-choice-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }",
-      ".mzw-choice-btn:hover .mzw-choice-icon { transform: scale(1.1) translateY(-2px); }",
-      ".mzw-choice-icon-teal { background: rgb(var(--mzw-deep)); box-shadow: 0 8px 24px rgba(var(--mzw-deep), 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18); }",
-      ".mzw-choice-icon-whatsapp { background: #25D366; box-shadow: 0 8px 24px rgba(37, 211, 102, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18); }",
-      ".mzw-choice-icon-neutral { background: #e2e8f0; }",
-      ".mzw-choice-icon-svg { width: 24px; height: 24px; color: #ffffff; }",
-      ".mzw-choice-icon-neutral .mzw-choice-icon-svg { color: #64748b; }",
-      ".mzw-choice-label { font-size: 14px; font-weight: 600; color: #0f172a; }",
-      ".mzw-choice-sublabel { font-size: 12px; color: #64748b; text-align: center; }",
-      ".mzw-actions { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }",
-      ".mzw-privacy { font-size: 11px; color: #64748b; text-align: center; }",
-      ".mzw-photos-row { margin-top: 14px; display: none; flex-direction: column; gap: 10px; }",
-      ".mzw-photos-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; }",
-      ".mzw-photos-count { font-size: 12px; font-weight: 700; color: #0f172a; }",
-      ".mzw-photos-hint { font-size: 11px; color: #64748b; }",
-      ".mzw-photos-bar { height: 8px; width: 100%; border-radius: 999px; background: rgba(148, 163, 184, 0.22); overflow: hidden; }",
-      ".mzw-photos-bar-fill { height: 100%; width: 0%; border-radius: 999px; background: rgb(var(--mzw-deep)); transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1); }",
-      ".mzw-thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }",
-      ".mzw-thumb { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.22); background: rgba(248, 250, 252, 0.9); box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06); }",
+      ".mzw-choice-title { font-size: 15px; font-weight: 500; color: #334155; margin-bottom: 16px; }",
+      ".mzw-choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }",
+      "@media (max-width: 480px) { .mzw-choice-grid { grid-template-columns: 1fr; } }",
+      
+      // Choice buttons - flat premium style
+      ".mzw-choice-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 16px; border-radius: 12px; border: 1.5px solid rgba(148, 163, 184, 0.18); background: #ffffff; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; }",
+      ".mzw-choice-btn:hover { border-color: rgba(var(--mzw-deep), 0.35); box-shadow: 0 4px 12px rgba(var(--mzw-deep), 0.08); transform: translateY(-1px); }",
+      ".mzw-choice-btn-whatsapp { border-color: rgba(37, 211, 102, 0.25); }",
+      ".mzw-choice-btn-whatsapp:hover { border-color: rgba(37, 211, 102, 0.50); box-shadow: 0 4px 12px rgba(37, 211, 102, 0.12); }",
+      ".mzw-choice-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease; }",
+      ".mzw-choice-btn:hover .mzw-choice-icon { transform: scale(1.05); }",
+      ".mzw-choice-icon-teal { background: rgba(var(--mzw-deep), 0.10); }",
+      ".mzw-choice-icon-whatsapp { background: rgba(37, 211, 102, 0.12); }",
+      ".mzw-choice-icon-svg { width: 20px; height: 20px; color: rgb(var(--mzw-deep)); }",
+      ".mzw-choice-icon-whatsapp .mzw-choice-icon-svg { color: #25D366; }",
+      ".mzw-choice-label { font-size: 14px; font-weight: 500; color: #0f172a; }",
+      ".mzw-choice-sublabel { font-size: 12px; color: #64748b; margin-top: 2px; }",
+      
+      // Photos section - progressive disclosure
+      ".mzw-photos-row { margin-top: 16px; display: none; flex-direction: column; gap: 12px; }",
+      ".mzw-photos-meta { display: flex; align-items: center; justify-content: space-between; }",
+      ".mzw-photos-count { font-size: 13px; font-weight: 500; color: #0f172a; }",
+      ".mzw-photos-hint { font-size: 12px; color: #64748b; }",
+      ".mzw-photos-bar { height: 6px; width: 100%; border-radius: 999px; background: rgba(148, 163, 184, 0.15); overflow: hidden; }",
+      ".mzw-photos-bar-fill { height: 100%; width: 0%; border-radius: 999px; background: rgb(var(--mzw-deep)); transition: width 0.3s ease; }",
+      ".mzw-thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }",
+      ".mzw-thumb { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.15); background: #f8fafc; }",
       ".mzw-thumb::before { content: ''; display: block; padding-top: 100%; }",
       ".mzw-thumb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }",
-      ".mzw-thumb-remove { position: absolute; top: 8px; right: 8px; height: 26px; width: 26px; border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.25); background: rgba(255, 255, 255, 0.92); color: #0f172a; font-weight: 800; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; }",
-      ".mzw-thumb-remove:hover { transform: scale(1.06); background: rgba(255, 255, 255, 1); }",
-      ".mzw-dropzone { margin-top: 0; position: relative; border-radius: 20px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 40px 28px; text-align: center; cursor: pointer; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; border: 1px solid rgba(var(--mzw-spark), 0.08); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.6) inset; }",
-      ".mzw-dropzone.mzw-fade-out { opacity: 0; transform: translateY(-8px); pointer-events: none; }",
-      ".mzw-dropzone:hover { background: rgba(255, 255, 255, 0.6); border-color: rgba(var(--mzw-spark), 0.20); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(var(--mzw-deep), 0.10), 0 4px 12px rgba(var(--mzw-spark), 0.08), 0 0 0 1px rgba(255, 255, 255, 0.8) inset; }",
-      ".mzw-dropzone.mzw-dropzone--active { background: rgba(var(--mzw-spark), 0.12); border-color: rgba(var(--mzw-spark), 0.35); transform: scale(0.98); box-shadow: 0 16px 56px rgba(var(--mzw-deep), 0.15), 0 0 0 2px rgba(var(--mzw-spark), 0.25) inset; }",
-      ".mzw-drop-icon { position: relative; width: 48px; height: 48px; border-radius: 14px; background: rgba(var(--mzw-deep), 0.10); display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(255,255,255,0.60) inset; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); }",
-      ".mzw-dropzone:hover .mzw-drop-icon { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 32px rgba(var(--mzw-deep), 0.24), 0 0 0 1px rgba(255,255,255,0.15) inset; }",
-      ".mzw-dropzone.mzw-dropzone--active .mzw-drop-icon { transform: scale(1.1); animation: none; box-shadow: 0 16px 40px rgba(var(--mzw-spark), 0.30), 0 0 0 2px rgba(255,255,255,0.20) inset; }",
-      ".mzw-drop-icon-svg { width: 24px; height: 24px; color: rgb(var(--mzw-deep)); opacity: 0.95; }",
-      ".mzw-drop-title { font-size: 15px; font-weight: 600; color: #0f172a; letter-spacing: -0.02em; margin-bottom: 6px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }",
-      ".mzw-dropzone:hover .mzw-drop-title { transform: translateY(-1px); }",
-      ".mzw-drop-helper { font-size: 13px; color: #64748b; font-weight: 400; line-height: 1.5; transition: color 0.3s ease; }",
-      ".mzw-dropzone:hover .mzw-drop-helper { color: #475569; }",
-      ".mzw-drop-limit { margin-top: 10px; font-size: 11px; color: #94a3b8; font-weight: 400; transition: color 0.3s ease; }",
-      ".mzw-dropzone:hover .mzw-drop-limit { color: #64748b; }",
-      ".mzw-camera { margin-top: 16px; border-radius: 18px; border: 1px solid rgba(148, 163, 184, 0.22); background: rgba(255, 255, 255, 0.92); padding: 18px; box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255,255,255,0.5) inset; }",
-      ".mzw-camera-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }",
-      ".mzw-camera-text { font-size: 12px; color: #334155; font-weight: 600; line-height: 1.4; }",
-      ".mzw-camera-actions { display: flex; gap: 8px; align-items: center; }",
-      ".mzw-camera-pill-btn { border-radius: 12px; padding: 9px 15px; font-size: 12px; font-weight: 800; border: none; cursor: pointer; transition: all 0.2s ease; }",
-      ".mzw-camera-pill-btn-primary { background: rgb(var(--mzw-deep)); color: #ffffff; box-shadow: 0 6px 16px rgba(var(--mzw-deep), 0.22), 0 0 0 1px rgba(255,255,255,0.15) inset; }",
-      ".mzw-camera-pill-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(var(--mzw-deep), 0.28), 0 0 0 1px rgba(255,255,255,0.20) inset, 0 0 0 2px rgba(var(--mzw-spark), 0.20); }",
-      ".mzw-camera-pill-btn-secondary { border: 1px solid rgba(148, 163, 184, 0.30); background: rgba(255, 255, 255, 0.95); color: #0f172a; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06); }",
-      ".mzw-camera-pill-btn-secondary:hover { background: #ffffff; transform: translateY(-1px); }",
-      ".mzw-camera-video-wrapper { margin-top: 14px; border-radius: 16px; overflow: hidden; border: 2px solid rgba(var(--mzw-spark), 0.30); background: #000000; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.40); }",
+      ".mzw-thumb-remove { position: absolute; top: 6px; right: 6px; height: 22px; width: 22px; border-radius: 999px; border: 1px solid rgba(0, 0, 0, 0.08); background: rgba(255, 255, 255, 0.95); color: #64748b; font-weight: 600; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; font-size: 14px; }",
+      ".mzw-thumb-remove:hover { background: #ffffff; color: #0f172a; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); }",
+      
+      // Dropzone - flat and clean
+      ".mzw-dropzone { margin-top: 0; border-radius: 12px; background: #fafbfc; padding: 32px 24px; text-align: center; cursor: pointer; transition: all 0.2s ease; border: 1.5px dashed rgba(148, 163, 184, 0.25); }",
+      ".mzw-dropzone.mzw-fade-out { opacity: 0; pointer-events: none; }",
+      ".mzw-dropzone:hover { background: #f1f5f9; border-color: rgba(var(--mzw-deep), 0.35); }",
+      ".mzw-dropzone.mzw-dropzone--active { background: rgba(var(--mzw-spark), 0.08); border-color: rgba(var(--mzw-spark), 0.40); border-style: solid; }",
+      ".mzw-drop-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(var(--mzw-deep), 0.08); display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 14px; transition: all 0.2s ease; }",
+      ".mzw-dropzone:hover .mzw-drop-icon { background: rgba(var(--mzw-deep), 0.12); transform: translateY(-1px); }",
+      ".mzw-drop-icon-svg { width: 20px; height: 20px; color: rgb(var(--mzw-deep)); }",
+      ".mzw-drop-title { font-size: 14px; font-weight: 500; color: #0f172a; margin-bottom: 6px; }",
+      ".mzw-drop-helper { font-size: 13px; color: #64748b; line-height: 1.4; }",
+      ".mzw-drop-limit { margin-top: 10px; font-size: 12px; color: #94a3b8; }",
+      
+      // Camera component - clean
+      ".mzw-camera { margin-top: 16px; border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.15); background: #ffffff; padding: 16px; }",
+      ".mzw-camera-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }",
+      ".mzw-camera-text { font-size: 13px; color: #334155; font-weight: 500; }",
+      ".mzw-camera-actions { display: flex; gap: 8px; }",
+      ".mzw-camera-pill-btn { border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; transition: all 0.15s ease; }",
+      ".mzw-camera-pill-btn-primary { background: rgb(var(--mzw-deep)); color: #ffffff; }",
+      ".mzw-camera-pill-btn-primary:hover { background: rgba(var(--mzw-deep), 0.90); }",
+      ".mzw-camera-pill-btn-secondary { border: 1px solid rgba(148, 163, 184, 0.25); background: #ffffff; color: #334155; }",
+      ".mzw-camera-pill-btn-secondary:hover { background: #f8fafc; }",
+      ".mzw-camera-video-wrapper { margin-top: 12px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.20); background: #000000; }",
       ".mzw-camera-video { width: 100%; height: 240px; object-fit: cover; background: #000000; }",
-      ".mzw-camera-cta-row { margin-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }",
-      ".mzw-camera-cta-actions { display: flex; gap: 8px; align-items: center; flex: 1; }",
+      ".mzw-camera-cta-row { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }",
+      ".mzw-camera-cta-actions { display: flex; gap: 8px; flex: 1; }",
       ".mzw-camera-cta-actions .mzw-camera-pill-btn-primary { flex: 1; }",
-      ".mzw-camera-cta-actions .mzw-camera-pill-btn-secondary { white-space: nowrap; }",
-      ".mzw-camera-counter { font-size: 12px; color: #64748b; font-weight: 700; }",
-      ".mzw-photos-row { margin-top: 14px; display: none; flex-direction: column; gap: 10px; transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }",
-      ".mzw-photos-row.mzw-fade-out { opacity: 0; transform: translateY(-8px); pointer-events: none; }",
-      ".mzw-photo-pill { border-radius: 10px; background: rgba(var(--mzw-deep), 0.06); border: 1px solid rgba(148, 163, 184, 0.20); padding: 8px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; color: #0f172a; font-weight: 600; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04); transition: all 0.2s ease; }",
-      ".mzw-photo-pill:hover { transform: translateY(-1px); background: rgba(var(--mzw-deep), 0.08); box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08); }",
-      ".mzw-photo-pill-count { width: 22px; height: 22px; border-radius: 6px; background: rgb(var(--mzw-deep)); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #ffffff; font-weight: 700; box-shadow: 0 2px 6px rgba(var(--mzw-deep), 0.20); }",
-      ".mzw-photo-pill-remove { cursor: pointer; opacity: 0.50; font-size: 16px; font-weight: 600; transition: all 0.2s ease; margin-left: 6px; color: #64748b; }",
-      ".mzw-photo-pill-remove:hover { opacity: 1; transform: scale(1.15); color: #dc2626; }",
-      ".mzw-error { margin-top: 20px; font-size: 13px; color: #dc2626; font-weight: 600; padding: 14px 18px; background: rgba(220, 38, 38, 0.08); border-radius: 12px; border: 1px solid rgba(220, 38, 38, 0.20); }",
-      ".mzw-footer { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }",
-      ".mzw-primary-btn { position: relative; overflow: hidden; border: none; border-radius: 14px; padding: 16px 28px; font-size: 15px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: rgb(var(--mzw-deep)); color: #ffffff; box-shadow: 0 8px 28px rgba(var(--mzw-deep), 0.28), 0 0 0 1px rgba(255,255,255,0.10) inset; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }",
-      ".mzw-primary-btn::before { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.12); opacity: 0; transition: opacity 0.25s ease; }",
-      ".mzw-primary-btn[disabled] { opacity: 0.6; cursor: not-allowed; }",
-      ".mzw-primary-btn-inner { position: relative; z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 10px; }",
-      ".mzw-progress-mask { position: absolute; inset: 0; background: rgba(255,255,255,0.14); pointer-events: none; border-radius: inherit; transform: translateZ(0); width: 0%; opacity: 0; box-shadow: 0 0 20px rgba(255,255,255,0.18) inset; }",
-      ".mzw-primary-btn:not([disabled]):hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 16px 40px rgba(var(--mzw-deep), 0.45), 0 0 0 1px rgba(255,255,255,0.15) inset, 0 0 0 3px rgba(var(--mzw-spark), 0.15); }",
-      ".mzw-primary-btn:not([disabled]):hover::before { opacity: 1; }",
-      ".mzw-primary-btn:not([disabled]):active { transform: translateY(-1px) scale(0.98); }",
-      ".mzw-primary-btn-chevron { font-size: 16px; transition: transform 0.25s ease; }",
-      ".mzw-primary-btn:hover .mzw-primary-btn-chevron { transform: translateX(3px); }",
-      ".mzw-small-text { font-size: 12px; color: #64748b; text-align: center; font-weight: 500; }",
-      ".mzw-links { display: flex; justify-content: center; gap: 16px; }",
-      ".mzw-link { appearance: none; border: none; background: transparent; padding: 0; margin: 0; font-size: 13px; color: #64748b; font-weight: 700; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; transition: all 0.2s ease; }",
-      ".mzw-link:hover { color: rgb(var(--mzw-deep)); text-decoration-thickness: 2px; transform: translateY(-1px); }",
-      ".mzw-error { margin-top: 12px; font-size: 13px; color: #dc2626; font-weight: 700; padding: 14px 16px; background: rgba(220, 38, 38, 0.08); border-radius: 14px; border: 1px solid rgba(220, 38, 38, 0.20); }",
-      ".mzw-results { margin-top: 20px; border-radius: 16px; background: #ffffff; border: 1px solid rgba(148, 163, 184, 0.15); padding: 20px; max-height: 360px; overflow: auto; color: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06); opacity: 0; transform: translateY(12px); transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }",
+      ".mzw-camera-counter { font-size: 12px; color: #64748b; font-weight: 500; }",
+      
+      // Primary button - flat premium
+      ".mzw-primary-btn { border: none; border-radius: 10px; padding: 14px 24px; font-size: 14px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: rgb(var(--mzw-deep)); color: #ffffff; transition: all 0.2s ease; width: 100%; margin-top: 16px; }",
+      ".mzw-primary-btn:hover:not([disabled]) { background: rgba(var(--mzw-deep), 0.90); box-shadow: 0 4px 12px rgba(var(--mzw-deep), 0.20); }",
+      ".mzw-primary-btn[disabled] { opacity: 0.5; cursor: not-allowed; }",
+      ".mzw-primary-btn-inner { display: inline-flex; align-items: center; gap: 8px; }",
+      ".mzw-primary-btn-chevron { font-size: 14px; }",
+      
+      // Back button
+      ".mzw-back-btn { appearance: none; border: none; background: transparent; padding: 10px 0; margin-top: 12px; font-size: 13px; color: #64748b; cursor: pointer; transition: color 0.15s ease; display: inline-flex; align-items: center; gap: 6px; }",
+      ".mzw-back-btn:hover { color: #334155; }",
+      
+      // Privacy text
+      ".mzw-privacy { font-size: 12px; color: #94a3b8; text-align: center; margin-top: 16px; line-height: 1.4; }",
+      
+      // Error messages
+      ".mzw-error { margin-top: 16px; font-size: 13px; color: #dc2626; font-weight: 500; padding: 12px 16px; background: rgba(220, 38, 38, 0.06); border-radius: 10px; border: 1px solid rgba(220, 38, 38, 0.15); }",
+      
+      // Results section
+      ".mzw-results { margin-top: 20px; border-radius: 12px; background: #ffffff; border: 1px solid rgba(148, 163, 184, 0.15); padding: 20px; max-height: 360px; overflow: auto; opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.3s ease; }",
       ".mzw-results.mzw-fade-in { opacity: 1; transform: translateY(0); }",
-      ".mzw-results-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid rgba(148, 163, 184, 0.12); }",
-      ".mzw-results-title { font-size: 16px; font-weight: 700; color: #0f172a; }",
-      ".mzw-results-pill { font-size: 12px; color: #ffffff; background: rgb(var(--mzw-deep)); border-radius: 8px; padding: 5px 12px; font-weight: 700; box-shadow: 0 4px 12px rgba(var(--mzw-deep), 0.18); }",
-      ".mzw-results-list { display: flex; flex-direction: column; gap: 12px; }",
-      ".mzw-item { border-radius: 12px; background: rgba(248, 250, 252, 0.60); padding: 14px 16px; border: 1px solid rgba(148, 163, 184, 0.15); transition: all 0.2s ease; }",
-      ".mzw-item:hover { border-color: rgba(var(--mzw-spark), 0.30); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08); }",
+      ".mzw-results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(148, 163, 184, 0.10); }",
+      ".mzw-results-title { font-size: 15px; font-weight: 500; color: #0f172a; }",
+      ".mzw-results-pill { font-size: 12px; color: #ffffff; background: rgb(var(--mzw-deep)); border-radius: 6px; padding: 4px 10px; font-weight: 500; }",
+      ".mzw-results-list { display: flex; flex-direction: column; gap: 10px; }",
+      ".mzw-item { border-radius: 10px; background: #fafbfc; padding: 12px 14px; border: 1px solid rgba(148, 163, 184, 0.12); transition: all 0.15s ease; }",
+      ".mzw-item:hover { border-color: rgba(var(--mzw-deep), 0.25); background: #ffffff; }",
       ".mzw-item-header { display: flex; justify-content: space-between; gap: 10px; align-items: center; }",
-      ".mzw-item-label { font-size: 14px; font-weight: 700; color: #0f172a; }",
-      ".mzw-item-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }",
-      ".mzw-chip { border-radius: 6px; background: rgba(var(--mzw-deep), 0.08); padding: 4px 10px; font-size: 11px; color: rgb(var(--mzw-deep)); font-weight: 700; }",
-      ".mzw-chip-outline { border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.25); padding: 4px 10px; font-size: 11px; color: #64748b; background: #ffffff; font-weight: 600; }",
-      ".mzw-item-body { margin-top: 6px; font-size: 12px; color: #64748b; display: flex; flex-direction: column; gap: 2px; font-weight: 400; }",
-      ".mzw-item-subdetails { margin-top: 4px; font-size: 11px; color: #94a3b8; font-weight: 400; }",
-      ".mzw-loading { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #ffffff; font-weight: 500; }",
-      ".mzw-spinner { width: 16px; height: 16px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.25); border-top-color: #ffffff; animation: mzw-spin 0.6s linear infinite; }",
+      ".mzw-item-label { font-size: 13px; font-weight: 500; color: #0f172a; }",
+      ".mzw-item-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }",
+      ".mzw-chip { border-radius: 5px; background: rgba(var(--mzw-deep), 0.08); padding: 3px 8px; font-size: 11px; color: rgb(var(--mzw-deep)); font-weight: 500; }",
+      ".mzw-chip-outline { border-radius: 5px; border: 1px solid rgba(148, 163, 184, 0.20); padding: 3px 8px; font-size: 11px; color: #64748b; background: #ffffff; font-weight: 500; }",
+      ".mzw-item-body { margin-top: 6px; font-size: 12px; color: #64748b; line-height: 1.5; }",
+      ".mzw-item-subdetails { margin-top: 4px; font-size: 11px; color: #94a3b8; }",
+      
+      // Loading spinner
+      ".mzw-loading { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #ffffff; }",
+      ".mzw-spinner { width: 14px; height: 14px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.30); border-top-color: #ffffff; animation: mzw-spin 0.6s linear infinite; }",
       "@keyframes mzw-spin { to { transform: rotate(360deg); } }",
-      "@keyframes mzw-pulse { 0%, 100% { opacity: 0.9; transform: scale(1); } 50% { opacity: 1; transform: scale(1.15); } }",
-      "@keyframes mzw-icon-pulse { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }",
-      "@media (max-width: 640px) { .mzw-card { max-width: 100%; padding: 24px 20px 20px; border-radius: 16px; } .mzw-title { font-size: 20px; } .mzw-subtitle { font-size: 13px; } .mzw-dropzone { padding: 32px 20px; } .mzw-drop-icon { width: 44px; height: 44px; } .mzw-drop-icon-svg { width: 22px; height: 22px; } .mzw-thumbs { gap: 8px; } }",
+      
+      // Mobile responsive
+      "@media (max-width: 640px) { .mzw-card { max-width: 100%; padding: 24px 20px; border-radius: 12px; } .mzw-title { font-size: 18px; } .mzw-subtitle { font-size: 13px; } .mzw-dropzone { padding: 28px 20px; } }",
     ].join("");
 
     var wrapper = document.createElement("div");
@@ -195,918 +196,413 @@
     wrapper.innerHTML =
       '<div class="mzw-card">' +
       '  <div class="mzw-header">' +
-      '    <div class="mzw-badge"><span class="mzw-badge-dot"></span><span>IA Moverz</span></div>' +
-      '    <div class="mzw-title">Des devis de déménagement justes</div>' +
-      '    <div class="mzw-subtitle">Estimation IA en 60 secondes pour des devis précis et sans surprises.</div>' +
+      '    <div class="mzw-title">Devis de déménagement fiables</div>' +
+      '    <div class="mzw-subtitle">Estimation précise par IA pour des devis comparables et transparents.</div>' +
+      '    <div class="mzw-trust">' +
+      '      <div class="mzw-trust-item">' +
+      '        <svg class="mzw-trust-icon" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>' +
+      '        <span>Pros vérifiés</span>' +
+      '      </div>' +
+      '      <div class="mzw-trust-item">' +
+      '        <svg class="mzw-trust-icon" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>' +
+      '        <span>Gratuit</span>' +
+      '      </div>' +
+      '      <div class="mzw-trust-item">' +
+      '        <svg class="mzw-trust-icon" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.94 6.412A2 2 0 002 8.108V16a2 2 0 002 2h12a2 2 0 002-2V8.108a2 2 0 00-.94-1.696l-6-3.75a2 2 0 00-2.12 0l-6 3.75zm2.615 2.423a1 1 0 10-1.11 1.664l5 3.333a1 1 0 001.11 0l5-3.333a1 1 0 00-1.11-1.664L10 11.798 5.555 8.835z" clip-rule="evenodd" /></svg>' +
+      '        <span>0 spam</span>' +
+      '      </div>' +
+      '    </div>' +
       "  </div>" +
-      '  <div class="mzw-summary" id="mzw-summary" style="display:none"></div>' +
       
-      // 3 options pour les photos
+      // Choice section
       '  <div class="mzw-choice-section" id="mzw-choice-section">' +
-      '    <div class="mzw-choice-title">Choisissez un mode d’envoi</div>' +
-      '    <div class="mzw-choice-micro">2–3 photos par pièce suffisent</div>' +
-      '    <div class="mzw-reassurance">0 spam • pros vérifiés • gratuit</div>' +
+      '    <div class="mzw-choice-title">Comment souhaitez-vous envoyer vos photos ?</div>' +
       '    <div class="mzw-choice-grid">' +
       
-      // Option 1: Upload web
+      // Upload web
       '      <button class="mzw-choice-btn" id="mzw-choice-web" type="button">' +
       '        <div class="mzw-choice-icon mzw-choice-icon-teal">' +
-      '          <svg class="mzw-choice-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' +
+      '          <svg class="mzw-choice-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' +
       '        </div>' +
-      '        <div class="mzw-choice-label">Web</div>' +
-      '        <div class="mzw-choice-sublabel">Galerie ou appareil photo</div>' +
+      '        <div class="mzw-choice-label">Upload web</div>' +
+      '        <div class="mzw-choice-sublabel">Depuis votre appareil</div>' +
       '      </button>' +
       
-      // Option 2: WhatsApp
+      // WhatsApp
       '      <button class="mzw-choice-btn mzw-choice-btn-whatsapp" id="mzw-choice-whatsapp" type="button">' +
-      '        <div class="mzw-choice-badge">Recommandé</div>' +
       '        <div class="mzw-choice-icon mzw-choice-icon-whatsapp">' +
-      '          <svg class="mzw-choice-icon-svg" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>' +
+      '          <svg class="mzw-choice-icon-svg" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 3.817 1.452 5.483l-1.559 5.699 5.828-1.534a11.875 11.875 0 005.672 1.449h.005c6.554 0 11.89-5.335 11.893-11.893a11.819 11.819 0 00-3.48-8.413z"/></svg>' +
       '        </div>' +
       '        <div class="mzw-choice-label">WhatsApp</div>' +
-      '        <div class="mzw-choice-sublabel">Le plus simple sur mobile</div>' +
+      '        <div class="mzw-choice-sublabel">Simple et rapide</div>' +
       '      </button>' +
       
       '    </div>' +
       '  </div>' +
       
-      '  <div class="mzw-dropzone" id="mzw-dropzone" style="display:none">' +
-      '    <div class="mzw-drop-icon">' +
-      '      <svg class="mzw-drop-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color: rgb(var(--mzw-deep));"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' +
-      "    </div>" +
-      '    <div class="mzw-drop-title">Ajoutez vos photos</div>' +
-      '    <div class="mzw-drop-helper">Cliquez pour sélectionner ou glissez-déposez</div>' +
-      '    <div class="mzw-drop-limit">2–3 photos par pièce · JPG, PNG ou HEIC</div>' +
-      "  </div>" +
-      '  <input type="file" id="mzw-file-input" accept="image/*" multiple style="display:none" />' +
-      '  <div class="mzw-photos-row" id="mzw-photos-row" style="display:none"></div>' +
-      '  <div class="mzw-actions" id="mzw-actions">' +
-      '    <button class="mzw-primary-btn" id="mzw-analyze-btn" type="button" style="display:none">' +
-      '      <span class="mzw-primary-btn-inner"><span id="mzw-analyze-label">Continuer</span></span>' +
-      '      <span class="mzw-progress-mask" id="mzw-progress-mask"></span>' +
-      "    </button>" +
-      '    <div class="mzw-privacy">Vos photos servent uniquement à estimer volume et accès</div>' +
-      "  </div>" +
-      '  <div class="mzw-results" id="mzw-results" style="display:none">' +
-      '    <div class="mzw-results-header">' +
-      '      <div class="mzw-results-title">Aperçu IA</div>' +
-      '      <div class="mzw-results-pill" id="mzw-results-pill">—</div>' +
-      "    </div>" +
-      '    <div class="mzw-results-list" id="mzw-results-list"></div>' +
-      "  </div>" +
-      '  <div class="mzw-error" id="mzw-error" style="display:none"></div>' +
+      // Upload flow (hidden initially)
+      '  <div id="mzw-upload-flow" style="display:none">' +
+      '    <div class="mzw-dropzone" id="mzw-dropzone">' +
+      '      <div class="mzw-drop-icon">' +
+      '        <svg class="mzw-drop-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' +
+      '      </div>' +
+      '      <div class="mzw-drop-title">Glissez vos photos ici</div>' +
+      '      <div class="mzw-drop-helper">ou cliquez pour sélectionner</div>' +
+      '      <div class="mzw-drop-limit">2-3 photos par pièce • Max 48 photos</div>' +
+      '      <input type="file" id="mzw-file-input" accept="image/*" multiple style="display:none" />' +
+      '    </div>' +
+      
+      '    <div class="mzw-camera" id="mzw-camera" style="display:none">' +
+      '      <div class="mzw-camera-header">' +
+      '        <span class="mzw-camera-text">Prenez vos photos</span>' +
+      '        <div class="mzw-camera-actions">' +
+      '          <button class="mzw-camera-pill-btn mzw-camera-pill-btn-primary" id="mzw-camera-start" type="button">Démarrer</button>' +
+      '          <button class="mzw-camera-pill-btn mzw-camera-pill-btn-secondary" id="mzw-camera-close" type="button">Fermer</button>' +
+      '        </div>' +
+      '      </div>' +
+      '      <div id="mzw-camera-video-wrapper" class="mzw-camera-video-wrapper" style="display:none">' +
+      '        <video id="mzw-camera-video" class="mzw-camera-video" autoplay playsinline></video>' +
+      '      </div>' +
+      '      <div id="mzw-camera-cta-row" class="mzw-camera-cta-row" style="display:none">' +
+      '        <div class="mzw-camera-cta-actions">' +
+      '          <button class="mzw-camera-pill-btn mzw-camera-pill-btn-primary" id="mzw-camera-capture" type="button">Capturer</button>' +
+      '          <button class="mzw-camera-pill-btn mzw-camera-pill-btn-secondary" id="mzw-camera-stop" type="button">Arrêter</button>' +
+      '        </div>' +
+      '        <span class="mzw-camera-counter" id="mzw-camera-counter">0</span>' +
+      '      </div>' +
+      '    </div>' +
+      
+      '    <div class="mzw-photos-row" id="mzw-photos-row">' +
+      '      <div class="mzw-photos-meta">' +
+      '        <span class="mzw-photos-count" id="mzw-photos-count">0 photo</span>' +
+      '        <span class="mzw-photos-hint" id="mzw-photos-hint"></span>' +
+      '      </div>' +
+      '      <div class="mzw-photos-bar"><div class="mzw-photos-bar-fill" id="mzw-photos-bar-fill"></div></div>' +
+      '      <div class="mzw-thumbs" id="mzw-thumbs"></div>' +
+      '    </div>' +
+      
+      '    <button class="mzw-primary-btn" id="mzw-continue-btn" type="button" disabled>' +
+      '      <span class="mzw-primary-btn-inner">' +
+      '        <span id="mzw-btn-text">Continuer</span>' +
+      '        <span class="mzw-primary-btn-chevron">→</span>' +
+      '      </span>' +
+      '    </button>' +
+      
+      '    <button class="mzw-back-btn" id="mzw-back-choice" type="button">' +
+      '      <span>← Changer de méthode</span>' +
+      '    </button>' +
+      
+      '    <div class="mzw-privacy">Vos photos servent uniquement à estimer le volume et les accès. Aucune donnée n'est publique.</div>' +
+      '  </div>' +
+      
+      '  <div id="mzw-error" class="mzw-error" style="display:none"></div>' +
+      '  <div id="mzw-results" class="mzw-results"></div>' +
       "</div>";
 
     root.appendChild(style);
     root.appendChild(wrapper);
 
-    var headerEl = root.querySelector(".mzw-header");
+    // DOM refs
+    var choiceSection = root.getElementById("mzw-choice-section");
+    var choiceWebBtn = root.getElementById("mzw-choice-web");
+    var choiceWhatsAppBtn = root.getElementById("mzw-choice-whatsapp");
+    var uploadFlow = root.getElementById("mzw-upload-flow");
     var dropzone = root.getElementById("mzw-dropzone");
     var fileInput = root.getElementById("mzw-file-input");
+    var cameraEl = root.getElementById("mzw-camera");
+    var cameraStartBtn = root.getElementById("mzw-camera-start");
+    var cameraCloseBtn = root.getElementById("mzw-camera-close");
+    var cameraVideoWrapper = root.getElementById("mzw-camera-video-wrapper");
+    var cameraVideo = root.getElementById("mzw-camera-video");
+    var cameraCaptureBtn = root.getElementById("mzw-camera-capture");
+    var cameraStopBtn = root.getElementById("mzw-camera-stop");
+    var cameraCTARow = root.getElementById("mzw-camera-cta-row");
+    var cameraCounter = root.getElementById("mzw-camera-counter");
     var photosRow = root.getElementById("mzw-photos-row");
-    var analyzeBtn = root.getElementById("mzw-analyze-btn");
-    var analyzeLabel = root.getElementById("mzw-analyze-label");
+    var photosCount = root.getElementById("mzw-photos-count");
+    var photosHint = root.getElementById("mzw-photos-hint");
+    var photosBarFill = root.getElementById("mzw-photos-bar-fill");
+    var thumbsContainer = root.getElementById("mzw-thumbs");
+    var continueBtn = root.getElementById("mzw-continue-btn");
+    var btnText = root.getElementById("mzw-btn-text");
+    var backChoiceBtn = root.getElementById("mzw-back-choice");
     var errorEl = root.getElementById("mzw-error");
     var resultsEl = root.getElementById("mzw-results");
-    var resultsListEl = root.getElementById("mzw-results-list");
-    var resultsPillEl = root.getElementById("mzw-results-pill");
-    var progressMaskEl = root.getElementById("mzw-progress-mask");
-    var photosLaterBtn = root.getElementById("mzw-photos-later");
 
     /** @type {File[]} */
     var selectedFiles = [];
     var isAnalyzing = false;
     var hasResults = false;
-
-    // Init CTA state (now that DOM nodes exist AND variables are initialized)
-    updateAnalyzeDisabled();
-
-    // Tracking: widget view
-    trackWidgetEvent("widget_view", {});
-
-    // Détection d'un pointeur "grossier" (mobile/tablette) pour décider si on
-    // privilégie la caméra comme entrée principale.
-    var isCoarsePointer = false;
-    try {
-      if (typeof window !== "undefined" && window.matchMedia) {
-        var pointerMql = window.matchMedia("(pointer: coarse)");
-        isCoarsePointer = !!pointerMql.matches;
-        if (pointerMql.addEventListener) {
-          pointerMql.addEventListener("change", function (event) {
-            isCoarsePointer = !!event.matches;
-          });
-        }
-      }
-    } catch (e) {
-      // on ignore les erreurs de matchMedia
-    }
-
-    var cameraSupported =
-      typeof navigator !== "undefined" &&
-      !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-    var cameraActive = false;
-    var cameraUnavailable = false;
-    var cameraWrapper = null;
-    var cameraVideo = null;
-    var cameraOpenBtn = null; // conservé pour compat, mais plus affiché
-    var cameraCloseBtn = null;
-    var cameraCaptureBtn = null;
-    var cameraCounterText = null;
     var cameraStream = null;
 
-    function getQueryParamsSafe() {
-      try {
-        return new URLSearchParams(window.location.search || "");
-      } catch (e) {
-        return new URLSearchParams("");
-      }
-    }
+    // Tracking: widget view
+    trackWidgetEvent("widget_view");
 
-    function trackWidgetEvent(name, params) {
-      params = params || {};
-      try {
-        var qs = getQueryParamsSafe();
-        var payload = {};
-        payload.source = qs.get("src") || "moverz.fr";
-        payload.from = qs.get("from") || "widget";
-        payload.component = "moverz_widget";
-        payload.path = (window.location && window.location.pathname) || "";
-        for (var k in params) {
-          if (Object.prototype.hasOwnProperty.call(params, k)) payload[k] = params[k];
-        }
+    // Choice buttons
+    choiceWebBtn.addEventListener("click", function () {
+      trackWidgetEvent("widget_upload_click");
+      choiceSection.style.display = "none";
+      uploadFlow.style.display = "block";
+    });
 
-        if (typeof window.gtag === "function") {
-          window.gtag("event", name, payload);
-          return;
-        }
-        if (window.dataLayer && typeof window.dataLayer.push === "function") {
-          window.dataLayer.push(Object.assign({ event: name }, payload));
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
+    choiceWhatsAppBtn.addEventListener("click", function () {
+      trackWidgetEvent("widget_whatsapp_click");
+      var whatsappPhone = "33633046059";
+      var whatsappMessage = "Bonjour ! Je souhaite obtenir des devis pour mon déménagement 🚚";
+      var whatsappUrl = "https://wa.me/" + whatsappPhone + "?text=" + encodeURIComponent(whatsappMessage);
+      window.location.href = whatsappUrl;
+    });
 
-    function setError(msg) {
-      if (!msg) {
-        errorEl.style.display = "none";
-        errorEl.textContent = "";
-        return;
-      }
-      errorEl.style.display = "block";
-      errorEl.textContent = msg;
-    }
+    // Back to choice
+    backChoiceBtn.addEventListener("click", function () {
+      uploadFlow.style.display = "none";
+      choiceSection.style.display = "block";
+      selectedFiles = [];
+      updateUI();
+    });
 
-    function updatePhotosUI() {
-      if (!selectedFiles.length) {
-        photosRow.style.display = "none";
-        photosRow.innerHTML = "";
-      } else {
-        photosRow.style.display = "flex";
-        photosRow.innerHTML = "";
-
-        var maxPhotos = 3;
-        var meta = document.createElement("div");
-        meta.className = "mzw-photos-meta";
-
-        var left = document.createElement("div");
-        var countText = document.createElement("div");
-        countText.className = "mzw-photos-count";
-        countText.textContent = selectedFiles.length + " / " + maxPhotos + " photo" + (maxPhotos > 1 ? "s" : "");
-        var hint = document.createElement("div");
-        hint.className = "mzw-photos-hint";
-        hint.textContent = selectedFiles.length >= 2 ? "Parfait, vous pouvez continuer" : "Ajoutez 1 photo de plus si possible";
-        left.appendChild(countText);
-        left.appendChild(hint);
-
-        meta.appendChild(left);
-
-        var bar = document.createElement("div");
-        bar.className = "mzw-photos-bar";
-        var fill = document.createElement("div");
-        fill.className = "mzw-photos-bar-fill";
-        fill.style.width = Math.min(100, (selectedFiles.length / maxPhotos) * 100) + "%";
-        bar.appendChild(fill);
-
-        photosRow.appendChild(meta);
-        photosRow.appendChild(bar);
-
-        var grid = document.createElement("div");
-        grid.className = "mzw-thumbs";
-
-        selectedFiles.forEach(function (file, index) {
-          var thumb = document.createElement("div");
-          thumb.className = "mzw-thumb";
-
-          // preview (best effort)
-          try {
-            var url = URL.createObjectURL(file);
-            var img = document.createElement("img");
-            img.className = "mzw-thumb-img";
-            img.alt = "Photo " + (index + 1);
-            img.src = url;
-            img.onload = function () {
-              try {
-                URL.revokeObjectURL(url);
-              } catch (e) {}
-            };
-            thumb.appendChild(img);
-          } catch (e) {
-            // fallback: no preview
-          }
-
-          var remove = document.createElement("button");
-          remove.type = "button";
-          remove.className = "mzw-thumb-remove";
-          remove.textContent = "×";
-          remove.title = "Retirer cette photo";
-          remove.addEventListener("click", function (ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            selectedFiles.splice(index, 1);
-            updatePhotosUI();
-            updateAnalyzeDisabled();
-            trackWidgetEvent("widget_photos_removed", { photos_count: selectedFiles.length });
-          });
-          thumb.appendChild(remove);
-          grid.appendChild(thumb);
-        });
-
-        photosRow.appendChild(grid);
-      }
-    }
-
-    function updateAnalyzeDisabled() {
-      // Bouton principal : visible quand photos ou résultats
-      // Lien "plus tard" : visible seulement quand photos SANS résultats
-      analyzeBtn.disabled = isAnalyzing;
-      
-      if (!hasResults && selectedFiles.length === 0) {
-        // État initial : rien à montrer
-        analyzeBtn.style.display = "none";
-      } else if (!hasResults && selectedFiles.length > 0) {
-        // Photos ajoutées : montrer bouton + lien
-        analyzeBtn.style.display = "inline-flex";
-        analyzeLabel.textContent = "Continuer";
-      } else {
-        // Résultats : montrer seulement bouton, pas le lien
-        analyzeBtn.style.display = "inline-flex";
-      }
-    }
-
-    function stopCamera() {
-      cameraActive = false;
-      if (cameraStream) {
-        try {
-          cameraStream.getTracks().forEach(function (track) {
-            try {
-              track.stop();
-            } catch (e) {}
-          });
-        } catch (e) {}
-        cameraStream = null;
-      }
-      if (cameraVideo) {
-        cameraVideo.srcObject = null;
-      }
-    }
-
-    function fallbackToGallery() {
-      stopCamera();
-      if (cameraWrapper) {
-        cameraWrapper.style.display = "none";
-      }
-      if (dropzone) {
-        dropzone.style.display = "block";
-      }
-    }
-
-    function ensureCameraUI() {
-      if (cameraWrapper || !dropzone) return;
-
-      cameraWrapper = document.createElement("div");
-      cameraWrapper.className = "mzw-camera";
-
-      var header = document.createElement("div");
-      header.className = "mzw-camera-header";
-
-      var info = document.createElement("p");
-      info.className = "mzw-camera-text";
-      info.textContent =
-        "Recommandations : 2–3 photos par pièce. Tout ce qui est vu sera pris en compte.";
-
-      cameraCloseBtn = document.createElement("button");
-      cameraCloseBtn.type = "button";
-      cameraCloseBtn.className =
-        "mzw-camera-pill-btn mzw-camera-pill-btn-secondary";
-      cameraCloseBtn.textContent = "Importer depuis la galerie";
-
-      header.appendChild(info);
-
-      var videoWrapper = document.createElement("div");
-      videoWrapper.className = "mzw-camera-video-wrapper";
-
-      cameraVideo = document.createElement("video");
-      cameraVideo.className = "mzw-camera-video";
-      cameraVideo.playsInline = true;
-      cameraVideo.autoplay = true;
-      cameraVideo.muted = true;
-
-      videoWrapper.appendChild(cameraVideo);
-
-      var ctaRow = document.createElement("div");
-      ctaRow.className = "mzw-camera-cta-row";
-
-      var ctaActions = document.createElement("div");
-      ctaActions.className = "mzw-camera-cta-actions";
-
-      cameraCaptureBtn = document.createElement("button");
-      cameraCaptureBtn.type = "button";
-      cameraCaptureBtn.className =
-        "mzw-camera-pill-btn mzw-camera-pill-btn-primary";
-      cameraCaptureBtn.textContent = "Prendre une photo";
-
-      cameraCounterText = document.createElement("span");
-      cameraCounterText.className = "mzw-camera-counter";
-      cameraCounterText.textContent =
-        "0 / 3 photos (max pour ce widget de démonstration)";
-
-      ctaActions.appendChild(cameraCloseBtn);
-      ctaActions.appendChild(cameraCaptureBtn);
-
-      ctaRow.appendChild(ctaActions);
-      ctaRow.appendChild(cameraCounterText);
-
-      cameraWrapper.appendChild(header);
-      cameraWrapper.appendChild(videoWrapper);
-      cameraWrapper.appendChild(ctaRow);
-
-      cameraWrapper.style.display = "none";
-
-      dropzone.parentNode.insertBefore(cameraWrapper, dropzone.nextSibling);
-
-      cameraCloseBtn.addEventListener("click", function () {
-        fallbackToGallery();
-      });
-
-      cameraCaptureBtn.addEventListener("click", function () {
-        captureFromCamera();
-      });
-    }
-
-    function updateCameraCounter() {
-      if (!cameraCounterText) return;
-      cameraCounterText.textContent = selectedFiles.length + " / 3 photos";
-    }
-
-    function startCamera() {
-      if (!cameraSupported || cameraActive) return;
-      setError("");
-      cameraActive = true;
-      navigator.mediaDevices
-        .getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
-          audio: false,
-        })
-        .then(function (stream) {
-          cameraStream = stream;
-          if (!cameraVideo) return;
-          cameraVideo.srcObject = stream;
-          var playPromise = cameraVideo.play();
-          if (playPromise && playPromise.catch) {
-            playPromise.catch(function () {});
-          }
-        })
-        .catch(function (err) {
-          console.error("[MoverzWidget] Erreur accès caméra:", err);
-          cameraUnavailable = true;
-          fallbackToGallery();
-          setError(
-            "La caméra n'est pas disponible sur ce navigateur. Utilisez vos photos existantes."
-          );
-        });
-    }
-
-    function captureFromCamera() {
-      if (!cameraVideo || !cameraActive) return;
-      if (selectedFiles.length >= 3) {
-        setError(
-          "Ce widget de démonstration accepte jusqu'à 3 photos. Supprimez-en une pour en ajouter une nouvelle."
-        );
-        return;
-      }
-
-      var vw = cameraVideo.videoWidth || 0;
-      var vh = cameraVideo.videoHeight || 0;
-      if (!vw || !vh) return;
-
-      var maxWidth = 1600;
-      var maxHeight = 1200;
-      var ratio = Math.min(maxWidth / vw, maxHeight / vh, 1);
-      var targetWidth = Math.round(vw * ratio);
-      var targetHeight = Math.round(vh * ratio);
-
-      var canvas = document.createElement("canvas");
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
-      var ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      ctx.drawImage(cameraVideo, 0, 0, targetWidth, targetHeight);
-
-      canvas.toBlob(
-        function (blob) {
-          if (!blob) return;
-          var file = new File([blob], "camera-" + Date.now() + ".jpg", {
-            type: "image/jpeg",
-          });
-          selectedFiles.push(file);
-          updatePhotosUI();
-          updateAnalyzeDisabled();
-          updateCameraCounter();
-          setError("");
-        },
-        "image/jpeg",
-        0.9
-      );
-    }
-
-    function handleFiles(files) {
-      setError("");
-      var added = 0;
-      for (var i = 0; i < files.length; i++) {
-        if (selectedFiles.length >= 3) break;
-        var f = files[i];
-        if (!f.type || !f.type.startsWith("image/")) continue;
-        selectedFiles.push(f);
-        added++;
-      }
-      if (!added && !selectedFiles.length) {
-        setError("Choisissez au moins une photo au format image.");
-      } else if (selectedFiles.length > 3) {
-        selectedFiles = selectedFiles.slice(0, 3);
-      }
-      updatePhotosUI();
-      updateAnalyzeDisabled();
-      if (added > 0) {
-        trackWidgetEvent("widget_photos_added", {
-          photos_count: selectedFiles.length,
-        });
-      }
-    }
-
-    // Event listeners pour les 2 options
-    var choiceWeb = root.getElementById("mzw-choice-web");
-    var choiceWhatsApp = root.getElementById("mzw-choice-whatsapp");
-    var choiceSection = root.getElementById("mzw-choice-section");
-
-    if (choiceWeb) {
-      choiceWeb.addEventListener("click", function () {
-        if (isAnalyzing) return;
-        setError("");
-        trackWidgetEvent("widget_upload_click", {});
-        
-        // Masquer les choix, afficher la dropzone
-        if (choiceSection) choiceSection.style.display = "none";
-        if (dropzone) dropzone.style.display = "block";
-        
-        // Sur mobile avec caméra disponible: on lance directement le flux caméra
-        if (cameraSupported && isCoarsePointer) {
-          ensureCameraUI();
-          if (cameraWrapper) {
-            cameraWrapper.style.display = "block";
-          }
-          if (dropzone) {
-            dropzone.style.display = "none";
-          }
-          startCamera();
-          return;
-        }
-        
-        // Desktop ou caméra indisponible: comportement classique d'upload.
-        fileInput.click();
-      });
-    }
-
-    if (choiceWhatsApp) {
-      choiceWhatsApp.addEventListener("click", function () {
-        if (isAnalyzing) return;
-        setError("");
-        trackWidgetEvent("widget_whatsapp_click", {});
-        
-        // Ouvrir WhatsApp directement avec message pré-rempli
-        var whatsappPhone = "33752986581"; // +33 7 52 98 65 81 (WhatsApp Business Moverz)
-        var whatsappMessage = "Bonjour ! Je souhaite obtenir des devis pour mon déménagement 🚚";
-        var whatsappUrl = "https://wa.me/" + whatsappPhone + "?text=" + encodeURIComponent(whatsappMessage);
-        
-        // Utiliser location.href au lieu de window.open pour éviter le blocage popup
-        window.location.href = whatsappUrl;
-      });
-    }
-
-
+    // Dropzone
     dropzone.addEventListener("click", function () {
-      if (isAnalyzing) return;
-      setError("");
-      trackWidgetEvent("widget_dropzone_click", {});
-
-      // Sur mobile avec caméra disponible: on lance directement le flux caméra
-      // au clic sur la zone, comme dans l'étape 4 du tunnel. La galerie reste
-      // accessible via le bouton "Utiliser ma galerie".
-      if (cameraSupported && isCoarsePointer) {
-        ensureCameraUI();
-        if (cameraWrapper) {
-          cameraWrapper.style.display = "block";
-        }
-        if (dropzone) {
-          dropzone.style.display = "none";
-        }
-        startCamera();
-        return;
-      }
-
-      // Desktop ou caméra indisponible: comportement classique d'upload.
+      trackWidgetEvent("widget_dropzone_click");
       fileInput.click();
     });
 
-    fileInput.addEventListener("change", function (event) {
-      var files = event.target.files || [];
-      handleFiles(files);
+    fileInput.addEventListener("change", function (e) {
+      if (e.target.files && e.target.files.length > 0) {
+        addFiles(Array.from(e.target.files));
+      }
     });
 
-    dropzone.addEventListener("dragover", function (event) {
-      event.preventDefault();
-      if (isAnalyzing) return;
+    // Drag & drop
+    dropzone.addEventListener("dragover", function (e) {
+      e.preventDefault();
       dropzone.classList.add("mzw-dropzone--active");
     });
 
-    dropzone.addEventListener("dragleave", function (event) {
-      event.preventDefault();
+    dropzone.addEventListener("dragleave", function () {
       dropzone.classList.remove("mzw-dropzone--active");
     });
 
-    dropzone.addEventListener("drop", function (event) {
-      event.preventDefault();
+    dropzone.addEventListener("drop", function (e) {
+      e.preventDefault();
       dropzone.classList.remove("mzw-dropzone--active");
-      if (isAnalyzing) return;
-      var dt = event.dataTransfer;
-      if (!dt) return;
-      var files = dt.files || [];
-      handleFiles(files);
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        addFiles(Array.from(e.dataTransfer.files));
+      }
     });
 
-    function renderResults(items) {
-      if (!items || !items.length) {
-        resultsListEl.innerHTML =
-          '<div class="mzw-small-text">Aucun objet clairement détecté. Essayez avec une autre photo ou passez directement à la demande de devis.</div>';
-        resultsPillEl.textContent = "";
-        resultsEl.style.display = "block";
-        setTimeout(function() {
-          resultsEl.classList.add("mzw-fade-in");
-        }, 50);
-        return;
+    // Camera
+    cameraStartBtn.addEventListener("click", function () {
+      if (!cameraStream) {
+        navigator.mediaDevices
+          .getUserMedia({ video: { facingMode: "environment" }, audio: false })
+          .then(function (stream) {
+            cameraStream = stream;
+            cameraVideo.srcObject = stream;
+            cameraVideoWrapper.style.display = "block";
+            cameraCTARow.style.display = "flex";
+          })
+          .catch(function (err) {
+            showError("Impossible d'accéder à la caméra : " + err.message);
+          });
       }
+    });
 
-      var totalVolume = 0;
-      var totalValue = 0;
+    cameraCloseBtn.addEventListener("click", function () {
+      stopCamera();
+      cameraEl.style.display = "none";
+    });
 
-      resultsListEl.innerHTML = "";
+    cameraStopBtn.addEventListener("click", function () {
+      stopCamera();
+    });
 
-      items.forEach(function (item) {
-        var vol = typeof item.volumeM3 === "number" ? item.volumeM3 : 0;
-        var val =
-          typeof item.valueEstimateEur === "number"
-            ? item.valueEstimateEur
-            : 0;
-        totalVolume += vol;
-        totalValue += val;
-
-        var el = document.createElement("div");
-        el.className = "mzw-item";
-
-        var header = document.createElement("div");
-        header.className = "mzw-item-header";
-
-        var label = document.createElement("div");
-        label.className = "mzw-item-label";
-        label.textContent =
-          item.label + (item.quantity && item.quantity > 1 ? " (x" + item.quantity + ")" : "");
-
-        var badges = document.createElement("div");
-        badges.className = "mzw-item-badges";
-
-        if (vol) {
-          var chipVol = document.createElement("div");
-          chipVol.className = "mzw-chip";
-          chipVol.textContent = vol.toFixed(2) + " m³";
-          badges.appendChild(chipVol);
+    cameraCaptureBtn.addEventListener("click", function () {
+      if (!cameraStream) return;
+      var canvas = document.createElement("canvas");
+      canvas.width = cameraVideo.videoWidth;
+      canvas.height = cameraVideo.videoHeight;
+      var ctx = canvas.getContext("2d");
+      ctx.drawImage(cameraVideo, 0, 0);
+      canvas.toBlob(function (blob) {
+        if (blob) {
+          var file = new File([blob], "camera-" + Date.now() + ".jpg", { type: "image/jpeg" });
+          addFiles([file]);
         }
+      }, "image/jpeg");
+    });
 
-        if (val) {
-          var chipVal = document.createElement("div");
-          chipVal.className = "mzw-chip-outline";
-          chipVal.textContent = "~ " + Math.round(val) + " €";
-          badges.appendChild(chipVal);
-        }
+    // Continue button
+    continueBtn.addEventListener("click", function () {
+      if (selectedFiles.length > 0 && !isAnalyzing && !hasResults) {
+        trackWidgetEvent("widget_continue_click", { count: selectedFiles.length, has_results: false });
+        analyzePhotos();
+      } else if (hasResults) {
+        trackWidgetEvent("widget_continue_click", { count: selectedFiles.length, has_results: true });
+        window.location.href = getTunnelUrl();
+      }
+    });
 
-        header.appendChild(label);
-        header.appendChild(badges);
-
-        var body = document.createElement("div");
-        body.className = "mzw-item-body";
-
-        if (
-          typeof item.widthCm === "number" &&
-          typeof item.depthCm === "number" &&
-          typeof item.heightCm === "number"
-        ) {
-          var dims = document.createElement("div");
-          dims.textContent =
-            "Mesures approx. " +
-            item.widthCm +
-            "×" +
-            item.depthCm +
-            "×" +
-            item.heightCm +
-            " cm";
-          body.appendChild(dims);
-        }
-
-        if (item.valueJustification) {
-          var just = document.createElement("div");
-          just.textContent = item.valueJustification;
-          body.appendChild(just);
-        }
-
-        var sub = document.createElement("div");
-        sub.className = "mzw-item-subdetails";
-        var tags = [];
-        if (item.flags && item.flags.fragile) tags.push("Fragile");
-        if (item.flags && item.flags.requiresDisassembly)
-          tags.push("Démontage conseillé");
-        if (item.flags && item.flags.highValue) tags.push("Haute valeur");
-        if (tags.length) {
-          sub.textContent = tags.join(" • ");
-          body.appendChild(sub);
-        }
-
-        el.appendChild(header);
-        el.appendChild(body);
-        resultsListEl.appendChild(el);
+    function addFiles(files) {
+      var newFiles = files.filter(function (f) {
+        return f.type.startsWith("image/") && selectedFiles.length < 48;
       });
-
-      var roundedVol = totalVolume.toFixed(2);
-      var roundedVal = Math.round(totalValue / 50) * 50;
-      resultsPillEl.textContent =
-        roundedVol +
-        " m³ estimés · ~ " +
-        new Intl.NumberFormat("fr-FR").format(roundedVal) +
-        " €";
-      resultsEl.style.display = "block";
-      setTimeout(function() {
-        resultsEl.classList.add("mzw-fade-in");
-      }, 50);
+      selectedFiles = selectedFiles.concat(newFiles);
+      if (selectedFiles.length > 0) {
+        trackWidgetEvent("widget_photos_added", { count: selectedFiles.length });
+      }
+      updateUI();
     }
 
-    // Compression côté navigateur, alignée avec la normalisation backend (≈400x300, JPEG qualité 80).
-    function compressImageFile(file, maxWidth, maxHeight, quality) {
-      return new Promise(function (resolve) {
-        try {
-          if (!file.type || !file.type.startsWith("image/")) {
-            return resolve(file);
-          }
-
-          var img = new Image();
-          img.onload = function () {
-            try {
-              var width = img.naturalWidth || img.width;
-              var height = img.naturalHeight || img.height;
-              if (!width || !height) return resolve(file);
-
-              var ratio = Math.min(
-                maxWidth / width,
-                maxHeight / height,
-                1
-              );
-
-              var targetWidth = Math.round(width * ratio);
-              var targetHeight = Math.round(height * ratio);
-
-              var canvas = document.createElement("canvas");
-              canvas.width = targetWidth;
-              canvas.height = targetHeight;
-              var ctx = canvas.getContext("2d");
-              if (!ctx) return resolve(file);
-
-              ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-
-              canvas.toBlob(
-                function (blob) {
-                  if (!blob) return resolve(file);
-                  var name =
-                    (file.name || "photo")
-                      .replace(/\.[^.]+$/, "") + ".jpg";
-                  var compressed = new File([blob], name, {
-                    type: "image/jpeg",
-                  });
-                  resolve(compressed);
-                },
-                "image/jpeg",
-                quality
-              );
-            } catch (e) {
-              console.error("[MoverzWidget] Erreur compression image:", e);
-              resolve(file);
-            }
-          };
-          img.onerror = function () {
-            resolve(file);
-          };
-
-          var reader = new FileReader();
-          reader.onload = function (event) {
-            img.src = String(event.target && event.target.result);
-          };
-          reader.onerror = function () {
-            resolve(file);
-          };
-          reader.readAsDataURL(file);
-        } catch (e) {
-          console.error("[MoverzWidget] Erreur compression image:", e);
-          resolve(file);
-        }
-      });
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      trackWidgetEvent("widget_photos_removed", { count: selectedFiles.length });
+      updateUI();
     }
 
-    async function analyze() {
-      if (!selectedFiles.length || isAnalyzing) {
-        if (!selectedFiles.length && !isAnalyzing) {
-          setError(
-            "Ajoutez au moins une photo avant de lancer l’analyse (caméra ou galerie)."
-          );
+    function updateUI() {
+      var count = selectedFiles.length;
+      
+      // Photos count and progress
+      if (count > 0) {
+        photosRow.style.display = "flex";
+        photosCount.textContent = count + " photo" + (count > 1 ? "s" : "");
+        
+        var progress = Math.min((count / 12) * 100, 100);
+        photosBarFill.style.width = progress + "%";
+        
+        if (count < 6) {
+          photosHint.textContent = "Continuez";
+        } else if (count < 12) {
+          photosHint.textContent = "Excellent";
+        } else {
+          photosHint.textContent = "Parfait";
         }
-        return;
+        
+        // Thumbnails (max 3)
+        thumbsContainer.innerHTML = "";
+        selectedFiles.slice(0, 3).forEach(function (file, idx) {
+          var url = URL.createObjectURL(file);
+          var thumb = document.createElement("div");
+          thumb.className = "mzw-thumb";
+          thumb.innerHTML =
+            '<img class="mzw-thumb-img" src="' + url + '" alt="Photo" />' +
+            '<button class="mzw-thumb-remove" type="button" data-index="' + idx + '">×</button>';
+          thumbsContainer.appendChild(thumb);
+        });
+        
+        // Remove handlers
+        thumbsContainer.querySelectorAll(".mzw-thumb-remove").forEach(function (btn) {
+          btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            removeFile(parseInt(this.getAttribute("data-index"), 10));
+          });
+        });
+        
+        continueBtn.disabled = false;
+      } else {
+        photosRow.style.display = "none";
+        continueBtn.disabled = true;
       }
+      
+      // Camera counter
+      cameraCounter.textContent = count.toString();
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(function (track) {
+          track.stop();
+        });
+        cameraStream = null;
+      }
+      cameraVideoWrapper.style.display = "none";
+      cameraCTARow.style.display = "none";
+    }
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.style.display = "block";
+      setTimeout(function () {
+        errorEl.style.display = "none";
+      }, 5000);
+    }
+
+    function analyzePhotos() {
+      if (selectedFiles.length === 0) return;
 
       isAnalyzing = true;
-      setError("");
-      updateAnalyzeDisabled();
-      // Quand l'utilisateur lance l'analyse, on retire le bloc de prise de
-      // photos et on coupe la caméra pour ne pas laisser la preview active.
-      if (cameraWrapper) {
-        cameraWrapper.style.display = "none";
-      }
-      stopCamera();
-      resultsEl.classList.remove("mzw-fade-in");
-      resultsEl.style.display = "none";
-      resultsListEl.innerHTML = "";
+      continueBtn.disabled = true;
+      btnText.textContent = "Analyse en cours...";
 
-      var originalLabel = analyzeLabel.textContent;
-      analyzeLabel.textContent = "Analyse en cours…";
-
-      // Progression visuelle : durée en fonction du nombre de photos
-      // 1 photo = 9 s, 2 ou 3 photos = 11 s
-      var photoCount = selectedFiles.length || 1;
-      var expectedMs;
-      if (photoCount <= 1) {
-        expectedMs = 9000;
-      } else {
-        expectedMs = 11000;
-      }
-
-      if (progressMaskEl) {
-        progressMaskEl.style.transition = "none";
-        progressMaskEl.style.width = "0%";
-        progressMaskEl.style.opacity = "1";
-        // forcer un reflow pour que la transition reparte bien de 0%
-        void progressMaskEl.offsetWidth;
-        progressMaskEl.style.transition =
-          "width " + expectedMs + "ms linear";
-        progressMaskEl.style.width = "100%";
-      }
-
-      try {
         var formData = new FormData();
-
-        // Compression client : max 400x300, JPEG qualité 0.8 (aligné avec /api/uploads/photos).
-        var compressedFiles = await Promise.all(
-          selectedFiles.map(function (file) {
-            return compressImageFile(file, 400, 300, 0.8);
-          })
-        );
-
-        compressedFiles.forEach(function (file) {
+      selectedFiles.forEach(function (file) {
           formData.append("photos", file);
         });
 
-        var response = await fetch(apiUrl, {
+      fetch(apiUrl, {
           method: "POST",
           body: formData,
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error("Erreur serveur");
+          return res.json();
+        })
+        .then(function (data) {
+          isAnalyzing = false;
+          hasResults = true;
+          btnText.textContent = "Voir mes devis";
+          continueBtn.disabled = false;
+          displayResults(data);
+        })
+        .catch(function (err) {
+          isAnalyzing = false;
+          btnText.textContent = "Continuer";
+          continueBtn.disabled = false;
+          showError("Impossible d'analyser vos photos : " + err.message);
         });
-
-        var json;
-        try {
-          json = await response.json();
-        } catch (e) {
-          throw new Error("Réponse inattendue de l’IA.");
-        }
-
-        if (!response.ok) {
-          throw new Error(json && json.error ? json.error : "Erreur lors de l’analyse.");
-        }
-
-        var rooms = (json && json.rooms) || [];
-        var items =
-          rooms.length && rooms[0] && Array.isArray(rooms[0].items)
-            ? rooms[0].items
-            : [];
-
-        renderResults(items);
-        hasResults = true;
-
-        // Step 2 : on garde seulement l'inventaire + CTA bas de carte (avec transitions fluides)
-        if (dropzone) dropzone.classList.add("mzw-fade-out");
-        if (photosRow) photosRow.classList.add("mzw-fade-out");
-        if (headerEl) headerEl.classList.add("mzw-fade-out");
-        setTimeout(function() {
-          if (dropzone) dropzone.style.display = "none";
-          if (photosRow) photosRow.style.display = "none";
-        if (headerEl) headerEl.style.display = "none";
-        }, 400);
-        analyzeLabel.textContent = "Comparer les devis";
-      } catch (e) {
-        console.error("[MoverzWidget] Erreur d’analyse:", e);
-        setError(
-          "L’IA n’a pas réussi à lire vos photos cette fois. Vous pouvez réessayer ou passer directement aux devis."
-        );
-      } finally {
-        isAnalyzing = false;
-        if (!hasResults) {
-          analyzeLabel.textContent = originalLabel;
-        }
-        if (progressMaskEl) {
-          progressMaskEl.style.transition = "opacity 300ms ease-out";
-          progressMaskEl.style.opacity = "0";
-        }
-        updateAnalyzeDisabled();
-      }
     }
 
-    // Expose CTA handler à la page hôte
-    if (typeof window !== "undefined") {
-      if (!window.MoverzWidget) {
-        window.MoverzWidget = {};
-      }
-      window.MoverzWidget.goToQuotes = function (mode) {
-        var suffix = mode ? String(mode) : "widget";
-        var qs = getQueryParamsSafe();
-        if (!qs.get("src")) qs.set("src", "moverz.fr");
-        qs.set("from", suffix);
-        window.location.href = getTunnelUrl() + "?" + qs.toString();
-      };
-    }
+    function displayResults(data) {
+      if (!data || !data.rooms || data.rooms.length === 0) return;
 
-    analyzeBtn.addEventListener("click", function () {
-      trackWidgetEvent("widget_continue_click", {
-        photos_count: selectedFiles.length,
-        has_results: !!hasResults,
+      var html = '<div class="mzw-results-header">' +
+        '<div class="mzw-results-title">Inventaire estimé</div>' +
+        '<div class="mzw-results-pill">' + data.totalVolume.toFixed(1) + ' m³</div>' +
+        '</div>' +
+        '<div class="mzw-results-list">';
+
+      data.rooms.forEach(function (room) {
+        html += '<div class="mzw-item">' +
+          '<div class="mzw-item-header">' +
+          '<div class="mzw-item-label">' + room.roomType + '</div>' +
+          '<div class="mzw-item-badges">' +
+          '<span class="mzw-chip">' + room.volume.toFixed(1) + ' m³</span>' +
+          '</div>' +
+          '</div>';
+        
+        if (room.objects && room.objects.length > 0) {
+          html += '<div class="mzw-item-body">' + room.objects.slice(0, 3).join(", ");
+          if (room.objects.length > 3) html += "...";
+          html += '</div>';
+        }
+        
+        html += '</div>';
       });
-      if (hasResults && window.MoverzWidget && window.MoverzWidget.goToQuotes) {
-        window.MoverzWidget.goToQuotes("widget");
-      } else {
-        analyze();
-      }
-    });
 
-    if (photosLaterBtn) {
-      photosLaterBtn.addEventListener("click", function () {
-        if (window.MoverzWidget && window.MoverzWidget.goToQuotes) {
-          window.MoverzWidget.goToQuotes("widget_photos_later");
-        }
-      });
+      html += '</div>';
+      resultsEl.innerHTML = html;
+      resultsEl.classList.add("mzw-fade-in");
     }
 
-    // Double-clic facultatif sur le bloc de résultats pour aller aux devis
-    resultsEl.addEventListener("dblclick", function () {
-      if (window.MoverzWidget && window.MoverzWidget.goToQuotes) {
-        window.MoverzWidget.goToQuotes();
+    function trackWidgetEvent(eventName, params) {
+      if (typeof window.gtag === "function") {
+        window.gtag("event", eventName, params || {});
       }
-    });
-  }
-
-  function mount(options) {
-    options = options || {};
-    createRoot(options);
+    }
   }
 
   onReady(function () {
-    mount({});
+    createRoot({});
   });
-
-  if (!window.MoverzWidget) {
-    window.MoverzWidget = {};
-  }
-  window.MoverzWidget.mount = mount;
 })(); 
-
-
