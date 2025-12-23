@@ -352,7 +352,7 @@
 
     choiceWhatsAppBtn.addEventListener("click", function () {
       trackWidgetEvent("widget_whatsapp_click");
-      var whatsappPhone = "33633046059";
+      var whatsappPhone = "33752986581";
       var whatsappMessage = "Bonjour ! Je souhaite obtenir des devis pour mon déménagement 🚚";
       var whatsappUrl = "https://wa.me/" + whatsappPhone + "?text=" + encodeURIComponent(whatsappMessage);
       window.location.href = whatsappUrl;
