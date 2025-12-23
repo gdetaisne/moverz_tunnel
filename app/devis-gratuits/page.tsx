@@ -8,7 +8,6 @@ import {
   createLead,
   updateLead,
   uploadLeadPhotos,
-  ensureLinkingToken,
   createBackofficeLead,
   updateBackofficeLead,
   requestBackofficeConfirmation,
@@ -38,10 +37,7 @@ import {
   type RoomLike,
   type ItemLike,
 } from "@/lib/inventory/businessRules";
-import {
-  generateLinkingToken,
-  buildWhatsAppDeepLink,
-} from "@/lib/config/whatsapp";
+import { MOVERZ_WHATSAPP_NUMBER } from "@/lib/config/whatsapp";
 
 const STEPS = [
   { id: 1, label: "Contact" },
@@ -1459,7 +1455,6 @@ function DevisGratuitsPageInner() {
   });
   const [leadId, setLeadId] = useState<string | null>(null);
   const [backofficeLeadId, setBackofficeLeadId] = useState<string | null>(null);
-  const [linkingToken, setLinkingToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasTriedSubmitStep1, setHasTriedSubmitStep1] = useState(false);
@@ -1612,16 +1607,6 @@ function DevisGratuitsPageInner() {
       mql.removeEventListener("change", listener);
     };
   }, []);
-
-  // Generate linkingToken when reaching Step 4 for WhatsApp flow
-  useEffect(() => {
-    if (currentStep === 4 && !linkingToken) {
-      const token = generateLinkingToken();
-      setLinkingToken(token);
-      // TODO: Save to DB via API
-      // updateLead(leadId, { linkingToken: token });
-    }
-  }, [currentStep, linkingToken]);
 
   const [hasPhotosAnswer, setHasPhotosAnswer] = useState<"pending" | "yes" | "no" | null>(null);
   const [showWhatsAppFlow, setShowWhatsAppFlow] = useState(false);
@@ -2028,11 +2013,11 @@ function DevisGratuitsPageInner() {
   };
 
   const deepLinkWhatsapp = useMemo(() => {
-    if (!whatsappNumber || !linkingToken) return null;
-    const message = `Bonjour, je veux compléter mon inventaire avec des photos. Mon code dossier est : ${linkingToken}`;
+    if (!whatsappNumber) return null;
+    const message = `Bonjour, je souhaite envoyer des photos pour mon déménagement.`;
     const encoded = encodeURIComponent(message);
     return `https://wa.me/${whatsappNumber}?text=${encoded}`;
-  }, [whatsappNumber, linkingToken]);
+  }, [whatsappNumber]);
 
   const handleWhatsappLater = async () => {
     if (!leadId) {
@@ -2048,10 +2033,9 @@ function DevisGratuitsPageInner() {
     setError(null);
     try {
       setIsSubmitting(true);
-      const res = await ensureLinkingToken(leadId);
-      const token = res.linkingToken;
-      if (token && typeof window !== "undefined") {
-        const message = `Bonjour, je souhaite envoyer des photos pour mon déménagement. Mon code dossier est : ${token}`;
+      // Ouvre WhatsApp directement (pas besoin de linking token)
+      if (typeof window !== "undefined") {
+        const message = `Bonjour, je souhaite envoyer des photos pour mon déménagement.`;
         const encoded = encodeURIComponent(message);
         const url = `https://wa.me/${whatsappNumber}?text=${encoded}`;
         window.open(url, "_blank");
@@ -4964,7 +4948,6 @@ function DevisGratuitsPageInner() {
                       // Track GA4
                       ga4Event("whatsapp_option_selected", {
                         ...gaBaseParams,
-                        linking_token: linkingToken,
                       });
                     }}
                     className="group relative flex flex-col items-center gap-3 rounded-2xl border-2 border-[#25D366]/30 bg-gradient-to-br from-[#25D366]/5 to-[#128C7E]/10 p-5 text-center moverz-transition-smooth hover:border-[#25D366]/60 hover:-translate-y-1 hover:shadow-lg"
@@ -5023,7 +5006,7 @@ function DevisGratuitsPageInner() {
             )}
 
             {/* Flow WhatsApp (NOUVEAU) */}
-            {photoFlowChoice === "whatsapp" && showWhatsAppFlow && linkingToken && (
+            {photoFlowChoice === "whatsapp" && showWhatsAppFlow && (
               <div className="space-y-4 moverz-animate-scale-in">
                 
                 {/* Card WhatsApp premium */}
@@ -5085,36 +5068,9 @@ function DevisGratuitsPageInner() {
                       </div>
                     </div>
 
-                    {/* Code dossier */}
-                    <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200 shadow-sm">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Votre code dossier
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 rounded-lg bg-slate-100 px-4 py-3 text-center text-xl font-mono font-bold tracking-widest text-brand-deep">
-                          {linkingToken}
-                        </code>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (linkingToken) {
-                              navigator.clipboard.writeText(linkingToken);
-                              // TODO: Toast "Code copié !"
-                            }
-                          }}
-                          className="rounded-lg bg-slate-200 p-3 text-slate-700 hover:bg-slate-300 moverz-transition-fast"
-                          title="Copier le code"
-                        >
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
                     {/* CTA WhatsApp */}
                     <a
-                      href={buildWhatsAppDeepLink(linkingToken)}
+                      href={deepLinkWhatsapp || "#"}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => {
@@ -5122,7 +5078,6 @@ function DevisGratuitsPageInner() {
                         ga4Event("whatsapp_cta_clicked", {
                           ...gaBaseParams,
                           location: "photo_step",
-                          linking_token: linkingToken,
                         });
                       }}
                       className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-4 font-bold text-white shadow-lg moverz-transition-smooth hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
@@ -5138,7 +5093,7 @@ function DevisGratuitsPageInner() {
 
                     {/* Note */}
                     <p className="text-center text-[10px] text-slate-500">
-                      Astuce : Gardez ce code à portée de main
+                      Vous serez redirigé vers WhatsApp
                     </p>
                   </div>
 
