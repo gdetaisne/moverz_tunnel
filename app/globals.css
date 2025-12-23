@@ -130,12 +130,9 @@ body {
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Gradient text utility */
+/* Legacy utility kept for compatibility, but flattened (no gradients) */
 .moverz-gradient-text {
-  background: linear-gradient(135deg, rgb(var(--brand-navy)) 0%, rgb(var(--brand-deep-teal)) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: rgb(var(--brand-navy));
 }
 
 /* Glass effect for premium surfaces */

@@ -40,10 +40,13 @@ export default function DevisGratuitsLayout({
           l'écran sur Safari iOS. On ajoute un padding bas confortable pour
           que les boutons ne soient pas masqués par la barre système. */}
       <div className="relative mx-auto flex max-w-4xl flex-col px-4 pt-6 pb-24 sm:px-6 lg:px-8 sm:pb-12">
-        {/* Subtle premium background (navy + teal, very light) */}
+        {/* Flat premium background (no gradients) */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 -top-28 h-64 bg-[radial-gradient(900px_circle_at_15%_0%,rgba(var(--brand-spark),0.22),transparent_55%),radial-gradient(700px_circle_at_90%_10%,rgba(var(--brand-deep-teal),0.14),transparent_55%)]"
+          className="pointer-events-none absolute inset-x-0 -top-28 h-64"
+          style={{
+            background: "rgba(107, 207, 207, 0.06)",
+          }}
         />
         {children}
       </div>

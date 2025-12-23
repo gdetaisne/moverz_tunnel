@@ -26,7 +26,7 @@ function MerciPageInner() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       <div className="w-full max-w-md space-y-5 rounded-3xl border border-surface-3 bg-white/90 p-6 shadow-soft backdrop-blur sm:p-8">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-brand-deep to-brand-spark text-white shadow-brand">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-deep text-white shadow-brand">
           <span className="text-2xl">✓</span>
         </div>
         <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
