@@ -698,7 +698,9 @@
         var whatsappPhone = "33752986581"; // +33 7 52 98 65 81 (WhatsApp Business Moverz)
         var whatsappMessage = "Bonjour ! Je souhaite obtenir des devis pour mon déménagement 🚚";
         var whatsappUrl = "https://wa.me/" + whatsappPhone + "?text=" + encodeURIComponent(whatsappMessage);
-        window.open(whatsappUrl, "_blank");
+        
+        // Utiliser location.href au lieu de window.open pour éviter le blocage popup
+        window.location.href = whatsappUrl;
       });
     }
 
