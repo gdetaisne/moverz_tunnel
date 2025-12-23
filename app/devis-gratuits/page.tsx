@@ -5329,11 +5329,11 @@ function DevisGratuitsPageInner() {
                 <div className="text-center">
                   <h2 className="text-lg font-semibold moverz-gradient-text">
                     Ajoutez vos photos
-                  </h2>
+                </h2>
                   <p className="mt-1 text-sm text-slate-600">
                     4 photos par pièce suffisent
                   </p>
-                </div>
+                    </div>
 
                 {/* Aide minimaliste */}
                 <details className="group max-w-2xl mx-auto rounded-xl border border-surface-3 bg-white p-3">
@@ -5354,7 +5354,7 @@ function DevisGratuitsPageInner() {
 
 
             {/* Mode photos maintenant : zone d'upload + analyse */}
-            {photoFlowChoice === "web" && localUploadFiles.length > 0 && (
+            {photoFlowChoice === "web" && (
               <>
                 <div className="space-y-3">
                   {/* Sur mobile: caméra intégrée comme chemin principal.
