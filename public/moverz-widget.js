@@ -47,25 +47,25 @@
 
   function createRoot(options) {
     try {
-      var target =
-        document.querySelector("[data-moverz-widget-root]") ||
-        document.getElementById("moverz-widget-root") ||
-        document.body;
+    var target =
+      document.querySelector("[data-moverz-widget-root]") ||
+      document.getElementById("moverz-widget-root") ||
+      document.body;
 
       if (!target) {
         console.error("[Moverz Widget] No target found for widget");
         return;
       }
 
-      var host = document.createElement("div");
-      host.className = "mzw-host";
-      target.appendChild(host);
+    var host = document.createElement("div");
+    host.className = "mzw-host";
+    target.appendChild(host);
 
-      if (host.attachShadow) {
-        var shadow = host.attachShadow({ mode: "open" });
-        mountWidget(shadow, options);
-      } else {
-        mountWidget(host, options);
+    if (host.attachShadow) {
+      var shadow = host.attachShadow({ mode: "open" });
+      mountWidget(shadow, options);
+    } else {
+      mountWidget(host, options);
       }
     } catch (e) {
       console.error("[Moverz Widget] Error creating widget:", e);
@@ -301,7 +301,7 @@
       '      <span>← Changer de méthode</span>' +
       '    </button>' +
       
-      '    <div class="mzw-privacy">Vos photos servent uniquement à estimer le volume et les accès. Aucune donnée n'est publique.</div>' +
+      '    <div class="mzw-privacy">Vos photos servent uniquement à estimer le volume et les accès. Aucune donnée n\'est publique.</div>' +
       '  </div>' +
       
       '  <div id="mzw-error" class="mzw-error" style="display:none"></div>' +
@@ -309,8 +309,8 @@
       "</div>";
 
     try {
-      root.appendChild(style);
-      root.appendChild(wrapper);
+    root.appendChild(style);
+    root.appendChild(wrapper);
       console.log("[Moverz Widget] Widget mounted successfully");
     } catch (e) {
       console.error("[Moverz Widget] Error appending widget to DOM:", e);
