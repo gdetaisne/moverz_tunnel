@@ -46,20 +46,29 @@
   }
 
   function createRoot(options) {
-    var target =
-      document.querySelector("[data-moverz-widget-root]") ||
-      document.getElementById("moverz-widget-root") ||
-      document.body;
+    try {
+      var target =
+        document.querySelector("[data-moverz-widget-root]") ||
+        document.getElementById("moverz-widget-root") ||
+        document.body;
 
-    var host = document.createElement("div");
-    host.className = "mzw-host";
-    target.appendChild(host);
+      if (!target) {
+        console.error("[Moverz Widget] No target found for widget");
+        return;
+      }
 
-    if (host.attachShadow) {
-      var shadow = host.attachShadow({ mode: "open" });
-      mountWidget(shadow, options);
-    } else {
-      mountWidget(host, options);
+      var host = document.createElement("div");
+      host.className = "mzw-host";
+      target.appendChild(host);
+
+      if (host.attachShadow) {
+        var shadow = host.attachShadow({ mode: "open" });
+        mountWidget(shadow, options);
+      } else {
+        mountWidget(host, options);
+      }
+    } catch (e) {
+      console.error("[Moverz Widget] Error creating widget:", e);
     }
   }
 
@@ -299,8 +308,13 @@
       '  <div id="mzw-results" class="mzw-results"></div>' +
       "</div>";
 
-    root.appendChild(style);
-    root.appendChild(wrapper);
+    try {
+      root.appendChild(style);
+      root.appendChild(wrapper);
+      console.log("[Moverz Widget] Widget mounted successfully");
+    } catch (e) {
+      console.error("[Moverz Widget] Error appending widget to DOM:", e);
+    }
 
     // DOM refs
     var choiceSection = root.getElementById("mzw-choice-section");
