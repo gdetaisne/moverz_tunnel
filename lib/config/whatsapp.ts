@@ -23,7 +23,7 @@ export function generateLinkingToken(): string {
  * Build WhatsApp deep link with pre-filled message
  */
 export function buildWhatsAppDeepLink(linkingToken: string): string {
-  const message = `Bonjour 👋\n\nJe veux compléter mon inventaire avec des photos.\n\nMon code dossier : ${linkingToken}`;
+  const message = `Bonjour,\n\nJe veux compléter mon inventaire avec des photos.\n\nMon code dossier : ${linkingToken}`;
   return `https://wa.me/${MOVERZ_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
