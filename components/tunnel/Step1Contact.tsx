@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { Mail, User, ArrowRight, Check, X } from "lucide-react";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 interface Step1ContactProps {
   firstName: string;
@@ -24,6 +25,7 @@ export default function Step1Contact({
 }: Step1ContactProps) {
   const [firstNameTouched, setFirstNameTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
+  const { isMobile } = useDeviceDetection();
 
   const isFirstNameValid = firstName.trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -179,14 +181,16 @@ export default function Step1Contact({
               </div>
 
               {/* Title */}
-              <div className="text-center">
-                <h3 className="text-xl font-bold text-[#0F172A] mb-2">
-                  Rapide et sécurisé
-                </h3>
-                <p className="text-sm text-[#1E293B]/70">
-                  Vos données sont protégées et ne seront jamais partagées
-                </p>
-              </div>
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-[#0F172A] mb-2">
+              {isMobile ? "WhatsApp recommandé" : "Rapide et sécurisé"}
+            </h3>
+            <p className="text-sm text-[#1E293B]/70">
+              {isMobile 
+                ? "Upload photos direct depuis votre mobile" 
+                : "Vos données sont protégées et ne seront jamais partagées"}
+            </p>
+          </div>
 
               {/* Benefits */}
               <div className="space-y-3">
