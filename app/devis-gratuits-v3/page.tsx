@@ -199,11 +199,19 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 2 && (
-            <Step2Project
+            <Step2ProjectComplete
               originPostalCode={state.originPostalCode}
               originCity={state.originCity}
+              originHousingType={state.originHousingType}
+              originFloor={state.originFloor}
+              originElevator={state.originElevator}
+              originAccess={state.originAccess}
               destinationPostalCode={state.destinationPostalCode}
               destinationCity={state.destinationCity}
+              destinationHousingType={state.destinationHousingType}
+              destinationFloor={state.destinationFloor}
+              destinationElevator={state.destinationElevator}
+              destinationAccess={state.destinationAccess}
               destinationUnknown={state.destinationUnknown}
               movingDate={state.movingDate}
               dateFlexible={state.dateFlexible}
@@ -215,9 +223,21 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 3 && (
-            <Step3Formules
+            <Step3VolumeServices
               surfaceM2={state.surfaceM2}
               formule={state.formule}
+              serviceFurnitureStorage={state.serviceFurnitureStorage}
+              serviceCleaning={state.serviceCleaning}
+              serviceFullPacking={state.serviceFullPacking}
+              serviceFurnitureAssembly={state.serviceFurnitureAssembly}
+              serviceInsurance={state.serviceInsurance}
+              serviceWasteRemoval={state.serviceWasteRemoval}
+              serviceHelpWithoutTruck={state.serviceHelpWithoutTruck}
+              serviceSpecificSchedule={state.serviceSpecificSchedule}
+              hasPiano={state.hasPiano}
+              hasFragileItems={state.hasFragileItems}
+              hasSpecificFurniture={state.hasSpecificFurniture}
+              specificNotes={state.specificNotes}
               onFieldChange={(field, value) => updateField(field as any, value)}
               onSubmit={handleSubmitStep3}
               isSubmitting={false}
