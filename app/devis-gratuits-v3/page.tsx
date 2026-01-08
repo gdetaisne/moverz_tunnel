@@ -235,7 +235,7 @@ function DevisGratuitsV3Content() {
         </div>
 
         {/* Navigation helpers */}
-        {state.currentStep > 1 && state.currentStep < 4 && (
+        {state.currentStep > 1 && (
           <div className="mt-8 flex items-center justify-center gap-4">
             <button
               onClick={() => {
@@ -265,7 +265,7 @@ function DevisGratuitsV3Content() {
 
             {/* Step indicator */}
             <div className="flex items-center gap-2">
-              {[1, 2, 3, 4].map((step) => (
+              {[1, 2, 3].map((step) => (
                 <button
                   key={step}
                   onClick={() => {
@@ -273,11 +273,11 @@ function DevisGratuitsV3Content() {
                       goToStep(step as 1 | 2 | 3 | 4);
                     }
                   }}
-                  disabled={step > state.currentStep}
+                  disabled={step >= state.currentStep && state.currentStep < 4}
                   className={`w-2 h-2 rounded-full transition-all ${
                     step === state.currentStep
                       ? "bg-[#6BCFCF] w-8"
-                      : step < state.currentStep
+                      : step < state.currentStep || state.currentStep === 4
                       ? "bg-[#6BCFCF]/50 cursor-pointer hover:bg-[#6BCFCF]/70"
                       : "bg-[#E3E5E8]"
                   }`}
