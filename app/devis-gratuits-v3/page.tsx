@@ -12,8 +12,8 @@ import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import TunnelHero from "@/components/tunnel/TunnelHero";
 import Step1Contact from "@/components/tunnel/Step1Contact";
-import Step2Project from "@/components/tunnel/Step2Project";
-import Step3Formules from "@/components/tunnel/Step3Formules";
+import Step2ProjectComplete from "@/components/tunnel/Step2ProjectComplete";
+import Step3VolumeServices from "@/components/tunnel/Step3VolumeServices";
 import ConfirmationPage from "@/components/tunnel/ConfirmationPage";
 import TrustSignals from "@/components/tunnel/TrustSignals";
 

@@ -9,13 +9,14 @@ export interface TunnelFormState {
   email: string;
   phone: string;
   
-  // Project (Step 2)
+  // Project (Step 2 - Trajet + Logements)
   originPostalCode: string;
   originCity: string;
   originAddress: string;
   originHousingType: string;
   originFloor: string;
   originElevator: string;
+  originAccess: string;
   
   destinationPostalCode: string;
   destinationCity: string;
@@ -23,16 +24,33 @@ export interface TunnelFormState {
   destinationHousingType: string;
   destinationFloor: string;
   destinationElevator: string;
+  destinationAccess: string;
   destinationUnknown: boolean;
   
   movingDate: string;
   movingDateEnd: string;
   dateFlexible: boolean;
   
-  // Formules (Step 3)
+  // Volume & Services (Step 3)
   surfaceM2: string;
   density: "light" | "normal" | "dense";
   formule: "ECONOMIQUE" | "STANDARD" | "PREMIUM";
+  
+  // Services en plus
+  serviceFurnitureStorage: boolean;
+  serviceCleaning: boolean;
+  serviceFullPacking: boolean;
+  serviceFurnitureAssembly: boolean;
+  serviceInsurance: boolean;
+  serviceWasteRemoval: boolean;
+  serviceHelpWithoutTruck: boolean;
+  serviceSpecificSchedule: boolean;
+  
+  // Autres besoins
+  hasPiano: boolean;
+  hasFragileItems: boolean;
+  hasSpecificFurniture: boolean;
+  specificNotes: string;
   
   // Meta
   leadId: string | null;
@@ -52,6 +70,7 @@ const INITIAL_STATE: TunnelFormState = {
   originHousingType: "",
   originFloor: "0",
   originElevator: "none",
+  originAccess: "easy",
   
   destinationPostalCode: "",
   destinationCity: "",
@@ -59,6 +78,7 @@ const INITIAL_STATE: TunnelFormState = {
   destinationHousingType: "",
   destinationFloor: "0",
   destinationElevator: "none",
+  destinationAccess: "easy",
   destinationUnknown: false,
   
   movingDate: "",
@@ -68,6 +88,20 @@ const INITIAL_STATE: TunnelFormState = {
   surfaceM2: "60",
   density: "normal",
   formule: "STANDARD",
+  
+  serviceFurnitureStorage: false,
+  serviceCleaning: false,
+  serviceFullPacking: false,
+  serviceFurnitureAssembly: false,
+  serviceInsurance: false,
+  serviceWasteRemoval: false,
+  serviceHelpWithoutTruck: false,
+  serviceSpecificSchedule: false,
+  
+  hasPiano: false,
+  hasFragileItems: false,
+  hasSpecificFurniture: false,
+  specificNotes: "",
   
   leadId: null,
   currentStep: 1,
