@@ -236,17 +236,55 @@ function DevisGratuitsV3Content() {
 
         {/* Navigation helpers */}
         {state.currentStep > 1 && state.currentStep < 4 && (
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex items-center justify-center gap-4">
             <button
               onClick={() => {
                 const prevStep = (state.currentStep - 1) as 1 | 2 | 3 | 4;
-                trackStepChange(state.currentStep, prevStep, "PROJECT", "CONTACT", "back");
+                const stepMap = {
+                  1: "CONTACT",
+                  2: "PROJECT",
+                  3: "RECAP",
+                  4: "THANK_YOU",
+                } as const;
+                trackStepChange(
+                  state.currentStep,
+                  prevStep,
+                  stepMap[state.currentStep as 1 | 2 | 3 | 4],
+                  stepMap[prevStep],
+                  "back"
+                );
                 goToStep(prevStep);
               }}
-              className="text-[#1E293B]/70 hover:text-[#0F172A] text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl border-2 border-[#E3E5E8] bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#F8F9FA] transition-all"
             >
-              ← Retour
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Retour</span>
             </button>
+
+            {/* Step indicator */}
+            <div className="flex items-center gap-2">
+              {[1, 2, 3, 4].map((step) => (
+                <button
+                  key={step}
+                  onClick={() => {
+                    if (step < state.currentStep) {
+                      goToStep(step as 1 | 2 | 3 | 4);
+                    }
+                  }}
+                  disabled={step > state.currentStep}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    step === state.currentStep
+                      ? "bg-[#6BCFCF] w-8"
+                      : step < state.currentStep
+                      ? "bg-[#6BCFCF]/50 cursor-pointer hover:bg-[#6BCFCF]/70"
+                      : "bg-[#E3E5E8]"
+                  }`}
+                  aria-label={`Étape ${step}`}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
