@@ -117,7 +117,7 @@ export default function ConfirmationPage({
             </div>
             <div>
               <p className="font-semibold text-[#0F172A] mb-1">
-                Notre IA analyse et prépare votre dossier
+                Notre IA prépare votre dossier en 30 secondes
               </p>
               <p className="text-sm text-[#1E293B]/70">
                 Estimation volume, inventaire, dossier standardisé pour tous les déménageurs
