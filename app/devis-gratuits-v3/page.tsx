@@ -1,16 +1,20 @@
 'use client';
 
-import { FormEvent, Suspense, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ga4Event } from "@/lib/analytics/ga4";
 import {
   createLead,
   updateLead,
-  trackTunnelEvent,
   type LeadTunnelCreatePayload,
 } from "@/lib/api/client";
+import { useTunnelState } from "@/hooks/useTunnelState";
+import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import TunnelHero from "@/components/tunnel/TunnelHero";
 import Step1Contact from "@/components/tunnel/Step1Contact";
+import Step2Project from "@/components/tunnel/Step2Project";
+import Step3Formules from "@/components/tunnel/Step3Formules";
+import ConfirmationPage from "@/components/tunnel/ConfirmationPage";
 import TrustSignals from "@/components/tunnel/TrustSignals";
 
 const STEPS = [
@@ -20,166 +24,231 @@ const STEPS = [
   { id: 4, label: "Photos" },
 ] as const;
 
-type StepId = (typeof STEPS)[number]["id"];
-
-interface FormState {
-  firstName: string;
-  email: string;
-}
-
-const INITIAL_FORM_STATE: FormState = {
-  firstName: "",
-  email: "",
-};
-
 function DevisGratuitsV3Content() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const [currentStep, setCurrentStep] = useState<StepId>(1);
-  const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE);
-  const [leadId, setLeadId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
+  const { state, updateField, updateFields, goToStep } = useTunnelState();
   const source = searchParams.get("source") || searchParams.get("src") || "direct";
   const from = searchParams.get("from") || "/devis-gratuits-v3";
+  
+  const { trackStep, trackStepChange, trackCompletion, trackError } = useTunnelTracking({
+    source,
+    from,
+    leadId: state.leadId,
+  });
 
+  // Track initial entry
   useEffect(() => {
-    // Track tunnel start
-    ga4Event("form_start", {
-      source,
-      from,
-      step_name: "CONTACT",
-      step_index: 1,
-    });
-
-    trackTunnelEvent({
-      eventType: "TUNNEL_SESSION_STARTED",
-      leadTunnelId: undefined,
-      source,
-      logicalStep: "ENTRY",
-      screenId: "contact_v3",
-      extra: {
-        sessionId: getSessionId(),
-        device: /mobile/i.test(navigator.userAgent) ? "mobile" : "desktop",
-        tunnelVersion: "v3",
-        urlPath: window.location.pathname,
-      },
-    }).catch(console.error);
+    if (state.currentStep === 1 && !state.leadId) {
+      ga4Event("form_start", {
+        source,
+        from,
+        step_name: "CONTACT",
+        step_index: 1,
+      });
+      trackStep(1, "CONTACT", "contact_v3");
+    }
   }, [source, from]);
 
-  function getSessionId(): string {
-    let sessionId = localStorage.getItem("moverz_tunnel_session_id");
-    if (!sessionId) {
-      sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      localStorage.setItem("moverz_tunnel_session_id", sessionId);
+  // Track step views
+  useEffect(() => {
+    const stepMap = {
+      1: { logical: "CONTACT" as const, screen: "contact_v3" },
+      2: { logical: "PROJECT" as const, screen: "project_v3" },
+      3: { logical: "RECAP" as const, screen: "formules_v3" },
+      4: { logical: "THANK_YOU" as const, screen: "confirmation_v3" },
+    };
+    
+    const current = stepMap[state.currentStep];
+    if (current) {
+      trackStep(state.currentStep, current.logical, current.screen);
     }
-    return sessionId;
-  }
-
-  function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  }
+  }, [state.currentStep]);
 
   async function handleSubmitStep1(e: FormEvent) {
     e.preventDefault();
-    setError(null);
 
-    if (!form.firstName.trim() || form.firstName.trim().length < 2) {
-      setError("Merci de saisir votre prénom ou surnom");
+    if (!state.firstName.trim() || state.firstName.trim().length < 2) {
+      trackError("VALIDATION_ERROR", "Invalid firstName", 1, "CONTACT");
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      setError("Merci de saisir un email valide");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) {
+      trackError("VALIDATION_ERROR", "Invalid email", 1, "CONTACT");
       return;
     }
-
-    setIsSubmitting(true);
 
     try {
       const payload: LeadTunnelCreatePayload = {
-        firstName: form.firstName.trim(),
-        lastName: "",
-        email: form.email.trim(),
-        phone: "",
+        firstName: state.firstName.trim(),
+        lastName: state.lastName.trim(),
+        email: state.email.trim(),
+        phone: state.phone.trim(),
         source,
         primaryChannel: "web",
       };
 
       const response = await createLead(payload);
-      setLeadId(response.id);
+      updateFields({ leadId: response.id, linkingCode: response.linkingToken || null });
 
-      // Track success
-      ga4Event("lead_submit", {
-        source,
-        from,
-        lead_id: response.id,
-      });
-
-      trackTunnelEvent({
-        eventType: "TUNNEL_STEP_CHANGED",
-        leadTunnelId: response.id,
-        source,
-        logicalStep: "PROJECT",
-        screenId: "project_v3",
-        extra: {
-          sessionId: getSessionId(),
-          fromStep: "CONTACT",
-          toStep: "PROJECT",
-          direction: "forward",
-          urlPath: window.location.pathname,
-        },
-      }).catch(console.error);
-
-      // Go to step 2
-      setCurrentStep(2);
+      trackStepChange(1, 2, "CONTACT", "PROJECT", "forward");
+      goToStep(2);
     } catch (err: any) {
       console.error("Error creating lead:", err);
-      setError(err.message || "Une erreur est survenue. Merci de réessayer.");
-    } finally {
-      setIsSubmitting(false);
+      trackError("API_ERROR", err.message || "Failed to create lead", 1, "CONTACT");
+    }
+  }
+
+  async function handleSubmitStep2(e: FormEvent) {
+    e.preventDefault();
+
+    const isOriginValid = state.originPostalCode.length === 5 && state.originCity.trim().length > 0;
+    const isDestinationValid = state.destinationUnknown || 
+      (state.destinationPostalCode.length === 5 && state.destinationCity.trim().length > 0);
+    const isDateValid = state.movingDate.length > 0;
+
+    if (!isOriginValid || !isDestinationValid || !isDateValid) {
+      trackError("VALIDATION_ERROR", "Invalid project fields", 2, "PROJECT");
+      return;
+    }
+
+    try {
+      if (state.leadId) {
+        await updateLead(state.leadId, {
+          originPostalCode: state.originPostalCode,
+          originCity: state.originCity,
+          originAddress: state.originAddress,
+          destinationPostalCode: state.destinationUnknown ? null : state.destinationPostalCode,
+          destinationCity: state.destinationUnknown ? null : state.destinationCity,
+          destinationAddress: state.destinationUnknown ? null : state.destinationAddress,
+          movingDate: state.movingDate,
+        });
+      }
+
+      trackStepChange(2, 3, "PROJECT", "RECAP", "forward");
+      goToStep(3);
+    } catch (err: any) {
+      console.error("Error updating lead:", err);
+      trackError("API_ERROR", err.message || "Failed to update lead", 2, "PROJECT");
+    }
+  }
+
+  async function handleSubmitStep3(e: FormEvent) {
+    e.preventDefault();
+
+    const surface = parseInt(state.surfaceM2) || 60;
+    if (surface < 10 || surface > 500) {
+      trackError("VALIDATION_ERROR", "Invalid surface", 3, "RECAP");
+      return;
+    }
+
+    try {
+      if (state.leadId) {
+        const volumeM3 = Math.round(surface * 0.7);
+        const distanceKm = 450; // Placeholder - would calculate from cities
+        const priceMin = Math.round(surface * 15);
+        const priceMax = Math.round(surface * 25);
+        
+        await updateLead(state.leadId, {
+          surfaceM2: surface,
+          volumeM3: volumeM3,
+          density: state.density,
+          formule: state.formule,
+          priceMin: priceMin,
+          priceMax: priceMax,
+          distanceKm: distanceKm,
+        });
+      }
+
+      trackStepChange(3, 4, "RECAP", "THANK_YOU", "forward");
+      trackCompletion();
+      goToStep(4);
+    } catch (err: any) {
+      console.error("Error finalizing lead:", err);
+      trackError("API_ERROR", err.message || "Failed to finalize lead", 3, "RECAP");
     }
   }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#F8F9FA] to-white">
       {/* Hero with progress */}
-      <TunnelHero currentStep={currentStep} totalSteps={STEPS.length} />
+      <TunnelHero currentStep={state.currentStep} totalSteps={STEPS.length} />
 
       {/* Main content */}
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Trust signals */}
-        <div className="mb-12">
-          <TrustSignals />
-        </div>
+        {state.currentStep < 4 && (
+          <div className="mb-12">
+            <TrustSignals />
+          </div>
+        )}
 
         {/* Step content */}
         <div className="bg-white rounded-3xl shadow-lg p-8 md:p-12">
-          {currentStep === 1 && (
+          {state.currentStep === 1 && (
             <Step1Contact
-              firstName={form.firstName}
-              email={form.email}
+              firstName={state.firstName}
+              email={state.email}
               onFirstNameChange={(value) => updateField("firstName", value)}
               onEmailChange={(value) => updateField("email", value)}
               onSubmit={handleSubmitStep1}
-              isSubmitting={isSubmitting}
-              error={error}
+              isSubmitting={false}
+              error={null}
             />
           )}
 
-          {currentStep === 2 && (
-            <div className="text-center py-20">
-              <h2 className="text-3xl font-bold text-[#0F172A] mb-4">
-                Étape 2 : Projet
-              </h2>
-              <p className="text-lg text-[#1E293B]/70">
-                (À venir - en cours de développement)
-              </p>
-            </div>
+          {state.currentStep === 2 && (
+            <Step2Project
+              originPostalCode={state.originPostalCode}
+              originCity={state.originCity}
+              destinationPostalCode={state.destinationPostalCode}
+              destinationCity={state.destinationCity}
+              destinationUnknown={state.destinationUnknown}
+              movingDate={state.movingDate}
+              dateFlexible={state.dateFlexible}
+              onFieldChange={(field, value) => updateField(field as any, value)}
+              onSubmit={handleSubmitStep2}
+              isSubmitting={false}
+              error={null}
+            />
+          )}
+
+          {state.currentStep === 3 && (
+            <Step3Formules
+              surfaceM2={state.surfaceM2}
+              formule={state.formule}
+              onFieldChange={(field, value) => updateField(field as any, value)}
+              onSubmit={handleSubmitStep3}
+              isSubmitting={false}
+              error={null}
+            />
+          )}
+
+          {state.currentStep === 4 && (
+            <ConfirmationPage
+              firstName={state.firstName}
+              email={state.email}
+              linkingCode={state.linkingCode || undefined}
+            />
           )}
         </div>
+
+        {/* Navigation helpers */}
+        {state.currentStep > 1 && state.currentStep < 4 && (
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => {
+                const prevStep = (state.currentStep - 1) as 1 | 2 | 3 | 4;
+                trackStepChange(state.currentStep, prevStep, "PROJECT", "CONTACT", "back");
+                goToStep(prevStep);
+              }}
+              className="text-[#1E293B]/70 hover:text-[#0F172A] text-sm font-medium transition-colors"
+            >
+              ← Retour
+            </button>
+          </div>
+        )}
       </div>
     </main>
   );
@@ -187,9 +256,15 @@ function DevisGratuitsV3Content() {
 
 export default function DevisGratuitsV3Page() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FA]" />}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-[#F8F9FA] to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#6BCFCF] border-t-transparent"></div>
+          <p className="mt-4 text-[#1E293B]/70">Chargement...</p>
+        </div>
+      </div>
+    }>
       <DevisGratuitsV3Content />
     </Suspense>
   );
 }
-
