@@ -16,6 +16,9 @@ export interface TunnelFormState {
   originHousingType: string;
   originFloor: string;
   originElevator: string;
+  originFurnitureLift: string; // Monte-meuble (unknown/no/yes)
+  originCarryDistance: string; // Distance portage (0-10, 10-20, etc.)
+  originParkingAuth: boolean; // Autorisation stationnement
   originAccess: string;
   
   destinationPostalCode: string;
@@ -24,6 +27,9 @@ export interface TunnelFormState {
   destinationHousingType: string;
   destinationFloor: string;
   destinationElevator: string;
+  destinationFurnitureLift: string; // Monte-meuble
+  destinationCarryDistance: string; // Distance portage
+  destinationParkingAuth: boolean; // Autorisation stationnement
   destinationAccess: string;
   destinationUnknown: boolean;
   
@@ -45,11 +51,28 @@ export interface TunnelFormState {
   serviceWasteRemoval: boolean;
   serviceHelpWithoutTruck: boolean;
   serviceSpecificSchedule: boolean;
+  serviceDebarras: boolean; // Débarras séparé
+  serviceDismantling: boolean; // Démontage complet
+  
+  // Accès détaillés (NOUVEAU)
+  accessNoElevator: boolean; // Escaliers sans ascenseur
+  accessSmallElevator: boolean; // Petit ascenseur / passages serrés
+  accessTruckDifficult: boolean; // Accès camion difficile
+  
+  // Piano détaillé (NOUVEAU)
+  servicePiano: string; // "none" | "droit" | "quart"
+  hasPiano: boolean; // Backward compat
+  
+  // Mobilier lourd/spécifique (NOUVEAU)
+  furnitureAmericanFridge: boolean;
+  furnitureSafe: boolean;
+  furnitureBilliard: boolean;
+  furnitureAquarium: boolean;
+  furnitureOver25kg: boolean;
+  hasSpecificFurniture: boolean; // Backward compat
   
   // Autres besoins
-  hasPiano: boolean;
   hasFragileItems: boolean;
-  hasSpecificFurniture: boolean;
   specificNotes: string;
   
   // Meta
@@ -70,6 +93,9 @@ const INITIAL_STATE: TunnelFormState = {
   originHousingType: "",
   originFloor: "0",
   originElevator: "none",
+  originFurnitureLift: "unknown",
+  originCarryDistance: "0-10",
+  originParkingAuth: false,
   originAccess: "easy",
   
   destinationPostalCode: "",
@@ -78,6 +104,9 @@ const INITIAL_STATE: TunnelFormState = {
   destinationHousingType: "",
   destinationFloor: "0",
   destinationElevator: "none",
+  destinationFurnitureLift: "unknown",
+  destinationCarryDistance: "0-10",
+  destinationParkingAuth: false,
   destinationAccess: "easy",
   destinationUnknown: false,
   
@@ -97,10 +126,24 @@ const INITIAL_STATE: TunnelFormState = {
   serviceWasteRemoval: false,
   serviceHelpWithoutTruck: false,
   serviceSpecificSchedule: false,
+  serviceDebarras: false,
+  serviceDismantling: false,
   
+  accessNoElevator: false,
+  accessSmallElevator: false,
+  accessTruckDifficult: false,
+  
+  servicePiano: "none",
   hasPiano: false,
-  hasFragileItems: false,
+  
+  furnitureAmericanFridge: false,
+  furnitureSafe: false,
+  furnitureBilliard: false,
+  furnitureAquarium: false,
+  furnitureOver25kg: false,
   hasSpecificFurniture: false,
+  
+  hasFragileItems: false,
   specificNotes: "",
   
   leadId: null,
