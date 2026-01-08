@@ -65,6 +65,32 @@ export default function Step3Formules({
   const surface = parseInt(surfaceM2) || 60;
   const isSurfaceValid = surface >= 10 && surface <= 500;
 
+  // Pricing adjusté selon formule
+  const getPricing = () => {
+    const volumeM3 = Math.round(surface * 0.7);
+    let pricePerM2Min = 12;
+    let pricePerM2Max = 20;
+
+    if (formule === "ECONOMIQUE") {
+      pricePerM2Min = 10;
+      pricePerM2Max = 15;
+    } else if (formule === "STANDARD") {
+      pricePerM2Min = 15;
+      pricePerM2Max = 22;
+    } else if (formule === "PREMIUM") {
+      pricePerM2Min = 22;
+      pricePerM2Max = 35;
+    }
+
+    return {
+      volumeM3,
+      priceMin: Math.round(surface * pricePerM2Min),
+      priceMax: Math.round(surface * pricePerM2Max),
+    };
+  };
+
+  const pricing = getPricing();
+
   return (
     <div className="grid lg:grid-cols-2 gap-12 items-start">
       {/* Left: Form */}
@@ -209,15 +235,17 @@ export default function Step3Formules({
                   Estimation IA
                 </h3>
                 <p className="text-sm text-[#1E293B]/70">
-                  Volume estimé : <strong className="text-[#0F172A]">{Math.round(surface * 0.7)}m³</strong>
+                  Volume estimé : <strong className="text-[#0F172A]">{pricing.volumeM3}m³</strong>
                 </p>
               </div>
 
               {/* Price estimate */}
               <div className="p-4 rounded-2xl bg-[#6BCFCF]/10 border border-[#6BCFCF]/30">
-                <p className="text-xs text-[#1E293B]/60 mb-1">Fourchette indicative</p>
+                <p className="text-xs text-[#1E293B]/60 mb-1">
+                  Fourchette {formule === "ECONOMIQUE" ? "Éco" : formule === "STANDARD" ? "Standard" : "Premium"}
+                </p>
                 <p className="text-3xl font-bold text-[#0F172A]">
-                  {Math.round(surface * 15)} - {Math.round(surface * 25)}€
+                  {pricing.priceMin} - {pricing.priceMax}€
                 </p>
                 <p className="text-xs text-[#1E293B]/60 mt-2">
                   Prix final dans vos devis personnalisés

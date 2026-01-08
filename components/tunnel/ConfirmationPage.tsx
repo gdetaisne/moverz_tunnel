@@ -1,7 +1,9 @@
 "use client";
 
-import { Check, Clock, FileText, Smartphone } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, Clock, FileText, Smartphone, Upload } from "lucide-react";
 import WhatsAppCTA from "./WhatsAppCTA";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 interface ConfirmationPageProps {
   firstName: string;
@@ -14,6 +16,13 @@ export default function ConfirmationPage({
   email, 
   linkingCode 
 }: ConfirmationPageProps) {
+  const { isMobile } = useDeviceDetection();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <div className="max-w-3xl mx-auto text-center">
       {/* Success icon */}
@@ -42,13 +51,39 @@ export default function ConfirmationPage({
         </div>
       )}
 
-      {/* WhatsApp CTA */}
-      <div className="max-w-md mx-auto mb-12">
+      {/* Action buttons */}
+      <div className="max-w-md mx-auto mb-12 space-y-4">
+        {/* WhatsApp CTA (priority) */}
         <WhatsAppCTA 
           source="tunnel-confirmation" 
           linkingCode={linkingCode} 
           variant="primary"
         />
+
+        {/* Desktop upload option */}
+        {mounted && !isMobile && (
+          <>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[#E3E5E8]"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-[#1E293B]/60">ou</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                // TODO: Implement desktop upload flow
+                window.location.href = "/upload-photos?code=" + (linkingCode || "");
+              }}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white border-2 border-[#E3E5E8] px-8 py-4 text-base font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#6BCFCF]/5 transition-all duration-200"
+            >
+              <Upload className="w-5 h-5" />
+              <span>Ajouter mes photos depuis cet ordinateur</span>
+            </button>
+          </>
+        )}
       </div>
 
       {/* What happens next */}
