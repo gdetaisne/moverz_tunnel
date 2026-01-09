@@ -135,24 +135,6 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           {/* Appartement: ordre demandé */}
           {!isHouse && (
             <>
-              {/* Étage (dropdown) */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Étage</p>
-                </div>
-                <select
-                  value={floor || "0"}
-                  onChange={(e) => props.onFieldChange(`${prefix}Floor`, e.target.value)}
-                  className="w-36 rounded-xl border-2 border-[#E3E5E8] bg-white px-3 py-2 text-sm text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                >
-                  {FLOOR_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {/* Petit ascenseur / passages serrés */}
               <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
@@ -465,25 +447,22 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             )}
           </div>
 
-          {/* Étage + Ascenseur (N.A. pour Maison) */}
-          {!originIsHouse && props.originAccess !== "constrained" && (
+          {/* Étage + Ascenseur (Appartement uniquement) */}
+          {!originIsHouse && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
-                <input
-                  type="number"
-                  value={props.originFloor}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    if (raw === "") return props.onFieldChange("originFloor", "");
-                    const n = Number.parseInt(raw, 10);
-                    if (!Number.isFinite(n)) return props.onFieldChange("originFloor", "");
-                    props.onFieldChange("originFloor", String(Math.min(50, Math.max(0, n))));
-                  }}
-                  min="0"
-                  max="50"
+                <select
+                  value={props.originFloor || "0"}
+                  onChange={(e) => props.onFieldChange("originFloor", e.target.value)}
                   className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                />
+                >
+                  {FLOOR_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
@@ -648,25 +627,22 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   )}
               </div>
 
-              {/* Étage + Ascenseur (N.A. pour Maison) */}
-              {!destinationIsHouse && props.destinationAccess !== "constrained" && (
+              {/* Étage + Ascenseur (Appartement uniquement) */}
+              {!destinationIsHouse && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
-                    <input
-                      type="number"
-                      value={props.destinationFloor}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (raw === "") return props.onFieldChange("destinationFloor", "");
-                        const n = Number.parseInt(raw, 10);
-                        if (!Number.isFinite(n)) return props.onFieldChange("destinationFloor", "");
-                        props.onFieldChange("destinationFloor", String(Math.min(50, Math.max(0, n))));
-                      }}
-                      min="0"
-                      max="50"
+                    <select
+                      value={props.destinationFloor || "0"}
+                      onChange={(e) => props.onFieldChange("destinationFloor", e.target.value)}
                       className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                    />
+                    >
+                      {FLOOR_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
