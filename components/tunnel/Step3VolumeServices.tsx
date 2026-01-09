@@ -1,14 +1,51 @@
 "use client";
 
-import { FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { Package, Home, Sparkles, ArrowRight, Check } from "lucide-react";
 
 type FormuleType = "ECONOMIQUE" | "STANDARD" | "PREMIUM";
+
+type PricingDetails = {
+  surfaceM2: number;
+  housingType: string;
+  density: string;
+  distanceKm: number;
+  seasonFactor: number;
+  originFloor: number;
+  originElevator: string;
+  destinationFloor: number;
+  destinationElevator: string;
+  services: {
+    monteMeuble: boolean;
+    piano: string | null;
+    debarras: boolean;
+  };
+  constants: {
+    typeCoefficient: number;
+    densityCoefficient: number;
+    COEF_VOLUME: number;
+    COEF_DISTANCE: number;
+    PRIX_MIN_SOCLE: number;
+  };
+  intermediate: {
+    baseVolumeM3: number;
+    adjustedVolumeM3: number;
+    volumePartEur: number;
+    distancePartEur: number;
+    baseNoSeasonEur: number;
+    coeffEtage: number;
+    formuleMultiplier: number;
+    servicesTotalEur: number;
+    centreNoSeasonEur: number;
+    centreSeasonedEur: number;
+  };
+};
 
 interface Step3VolumeServicesProps {
   surfaceM2: string;
   formule: FormuleType;
   pricing: { volumeM3: number; priceMin: number; priceMax: number } | null;
+  pricingDetails?: PricingDetails | null;
   
   // Services en plus
   serviceFurnitureStorage: boolean;
@@ -92,6 +129,7 @@ const OTHER_NEEDS = [
 export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
   const surface = parseInt(props.surfaceM2) || 60;
   const isSurfaceValid = surface >= 10 && surface <= 500;
+  const [showDetails, setShowDetails] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -152,6 +190,112 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                 {props.pricing ? `${props.pricing.priceMin} - ${props.pricing.priceMax}€` : "—"}
               </strong>
             </p>
+
+            <div className="mt-3 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setShowDetails((v) => !v)}
+                className="text-xs font-medium text-[#0F172A]/60 underline-offset-2 hover:underline"
+              >
+                {showDetails ? "Masquer le détail du calcul" : "Détail du calcul"}
+              </button>
+              {props.pricingDetails?.housingType && (
+                <span className="text-xs text-[#1E293B]/50">
+                  type: <span className="font-mono">{props.pricingDetails.housingType}</span>
+                </span>
+              )}
+            </div>
+
+            {showDetails && props.pricingDetails && (
+              <div className="mt-3 rounded-xl border border-[#E3E5E8] bg-[#F8F9FA] p-3 text-xs text-[#0F172A]/80">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div>
+                    <div className="font-semibold">Entrées</div>
+                    <div className="mt-1 space-y-0.5">
+                      <div>
+                        surface: <span className="font-mono">{props.pricingDetails.surfaceM2}</span> m²
+                      </div>
+                      <div>
+                        housingType: <span className="font-mono">{props.pricingDetails.housingType}</span>{" "}
+                        (coef <span className="font-mono">{props.pricingDetails.constants.typeCoefficient}</span>)
+                      </div>
+                      <div>
+                        densité: <span className="font-mono">{props.pricingDetails.density}</span>{" "}
+                        (coef <span className="font-mono">{props.pricingDetails.constants.densityCoefficient}</span>)
+                      </div>
+                      <div>
+                        distanceKm: <span className="font-mono">{props.pricingDetails.distanceKm}</span>
+                      </div>
+                      <div>
+                        seasonFactor: <span className="font-mono">{props.pricingDetails.seasonFactor.toFixed(2)}</span>
+                      </div>
+                      <div>
+                        étages:{" "}
+                        <span className="font-mono">
+                          O={props.pricingDetails.originFloor} ({props.pricingDetails.originElevator}), D=
+                          {props.pricingDetails.destinationFloor} ({props.pricingDetails.destinationElevator})
+                        </span>
+                      </div>
+                      <div>
+                        services:{" "}
+                        <span className="font-mono">
+                          monteMeuble={String(props.pricingDetails.services.monteMeuble)}, piano=
+                          {props.pricingDetails.services.piano ?? "null"}, debarras=
+                          {String(props.pricingDetails.services.debarras)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="font-semibold">Calcul</div>
+                    <div className="mt-1 space-y-0.5">
+                      <div>
+                        baseVolume: <span className="font-mono">{props.pricingDetails.intermediate.baseVolumeM3}</span> m³
+                      </div>
+                      <div>
+                        adjustedVolume:{" "}
+                        <span className="font-mono">{props.pricingDetails.intermediate.adjustedVolumeM3}</span> m³
+                      </div>
+                      <div>
+                        volumePart:{" "}
+                        <span className="font-mono">{props.pricingDetails.intermediate.volumePartEur}</span> € (×{" "}
+                        {props.pricingDetails.constants.COEF_VOLUME})
+                      </div>
+                      <div>
+                        distancePart:{" "}
+                        <span className="font-mono">{props.pricingDetails.intermediate.distancePartEur}</span> € (×{" "}
+                        {props.pricingDetails.constants.COEF_DISTANCE})
+                      </div>
+                      <div>
+                        baseNoSeason:{" "}
+                        <span className="font-mono">{props.pricingDetails.intermediate.baseNoSeasonEur}</span> € (socle{" "}
+                        {props.pricingDetails.constants.PRIX_MIN_SOCLE})
+                      </div>
+                      <div>
+                        coeffEtage: <span className="font-mono">{props.pricingDetails.intermediate.coeffEtage}</span>
+                      </div>
+                      <div>
+                        formuleMultiplier:{" "}
+                        <span className="font-mono">{props.pricingDetails.intermediate.formuleMultiplier}</span>
+                      </div>
+                      <div>
+                        servicesTotal:{" "}
+                        <span className="font-mono">{props.pricingDetails.intermediate.servicesTotalEur}</span> €
+                      </div>
+                      <div>
+                        centreNoSeason:{" "}
+                        <span className="font-mono">{props.pricingDetails.intermediate.centreNoSeasonEur}</span> €
+                      </div>
+                      <div>
+                        centreSeasoned:{" "}
+                        <span className="font-mono">{props.pricingDetails.intermediate.centreSeasonedEur}</span> €
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -12,7 +12,16 @@ import {
   calculatePricing,
   type FormuleType as PricingFormuleType,
   type HousingType,
+  getEtageCoefficient,
 } from "@/lib/pricing/calculate";
+import {
+  COEF_DISTANCE,
+  COEF_VOLUME,
+  DENSITY_COEFFICIENTS,
+  FORMULE_MULTIPLIERS,
+  PRIX_MIN_SOCLE,
+  TYPE_COEFFICIENTS,
+} from "@/lib/pricing/constants";
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import TunnelHero from "@/components/tunnel/TunnelHero";
@@ -231,6 +240,128 @@ function DevisGratuitsV3Content() {
     if (!pricingByFormule) return null;
     return pricingByFormule[state.formule as PricingFormuleType] ?? null;
   }, [pricingByFormule, state.formule]);
+
+  const activePricingDetails = useMemo(() => {
+    if (!activePricing) return null;
+
+    const surface = parseInt(state.surfaceM2) || 60;
+    if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
+
+    const housingType = coerceHousingType(state.originHousingType || state.destinationHousingType);
+    const typeCoefficient = TYPE_COEFFICIENTS[housingType];
+    const densityCoefficient = DENSITY_COEFFICIENTS[state.density];
+
+    const distanceKm = state.destinationUnknown
+      ? 50
+      : estimateDistanceKm(state.originPostalCode, state.destinationPostalCode);
+
+    const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
+
+    const originIsHouse = isHouseType(state.originHousingType);
+    const destIsHouse = isHouseType(state.destinationHousingType);
+
+    const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
+    const destinationFloor = state.destinationUnknown
+      ? 0
+      : destIsHouse
+      ? 0
+      : parseInt(state.destinationFloor || "0", 10) || 0;
+
+    const originElevator = toPricingElevator(state.originElevator);
+    const destinationElevator = state.destinationUnknown
+      ? "yes"
+      : toPricingElevator(state.destinationElevator);
+
+    const monteMeuble =
+      state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
+
+    const piano =
+      state.servicePiano === "droit"
+        ? ("droit" as const)
+        : state.servicePiano === "quart"
+        ? ("quart" as const)
+        : null;
+
+    const formule = state.formule as PricingFormuleType;
+    const formuleMultiplier = FORMULE_MULTIPLIERS[formule];
+
+    const baseVolume = surface * typeCoefficient;
+    const adjustedVolume = baseVolume * densityCoefficient;
+    const volumeM3 = Math.round(adjustedVolume * 10) / 10;
+
+    const volumePartEur = volumeM3 * COEF_VOLUME;
+    const distancePartEur = distanceKm * COEF_DISTANCE;
+    const baseNoSeasonEur = Math.max(volumePartEur, distancePartEur, PRIX_MIN_SOCLE);
+
+    const coeffOrigin = getEtageCoefficient(originFloor, originElevator);
+    const coeffDest = getEtageCoefficient(destinationFloor, destinationElevator);
+    const coeffEtage = Math.max(coeffOrigin, coeffDest);
+
+    // Recomposition (miroir calculatePricing)
+    const centreNoSeasonSansServices = baseNoSeasonEur * formuleMultiplier * coeffEtage;
+    const centreSeasonedSansServices =
+      baseNoSeasonEur * seasonFactor * formuleMultiplier * coeffEtage;
+
+    // On ne ré-expose pas le détail des services depuis constants ici,
+    // mais on a déjà servicesTotal dans activePricing (issu de calculatePricing).
+    const servicesTotalEur = activePricing.servicesTotal;
+    const centreNoSeasonEur = centreNoSeasonSansServices + servicesTotalEur;
+    const centreSeasonedEur = centreSeasonedSansServices + servicesTotalEur;
+
+    return {
+      surfaceM2: surface,
+      housingType,
+      density: state.density,
+      distanceKm,
+      seasonFactor,
+      originFloor,
+      originElevator,
+      destinationFloor,
+      destinationElevator,
+      services: {
+        monteMeuble,
+        piano,
+        debarras: state.serviceDebarras,
+      },
+      constants: {
+        typeCoefficient,
+        densityCoefficient,
+        COEF_VOLUME,
+        COEF_DISTANCE,
+        PRIX_MIN_SOCLE,
+      },
+      intermediate: {
+        baseVolumeM3: Math.round(baseVolume * 10) / 10,
+        adjustedVolumeM3: volumeM3,
+        volumePartEur: Math.round(volumePartEur),
+        distancePartEur: Math.round(distancePartEur),
+        baseNoSeasonEur: Math.round(baseNoSeasonEur),
+        coeffEtage,
+        formuleMultiplier,
+        servicesTotalEur,
+        centreNoSeasonEur: Math.round(centreNoSeasonEur),
+        centreSeasonedEur: Math.round(centreSeasonedEur),
+      },
+    };
+  }, [
+    activePricing,
+    state.surfaceM2,
+    state.originHousingType,
+    state.destinationHousingType,
+    state.density,
+    state.destinationUnknown,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    state.movingDate,
+    state.originFloor,
+    state.destinationFloor,
+    state.originElevator,
+    state.destinationElevator,
+    state.originFurnitureLift,
+    state.destinationFurnitureLift,
+    state.servicePiano,
+    state.serviceDebarras,
+  ]);
 
   async function handleSubmitStep1(e: FormEvent) {
     e.preventDefault();
@@ -497,6 +628,7 @@ function DevisGratuitsV3Content() {
                     }
                   : null
               }
+              pricingDetails={activePricingDetails}
               serviceFurnitureStorage={state.serviceFurnitureStorage}
               serviceCleaning={state.serviceCleaning}
               serviceFullPacking={state.serviceFullPacking}
