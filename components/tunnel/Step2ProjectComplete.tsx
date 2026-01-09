@@ -519,7 +519,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           </div>
 
           {/* Checkbox: destination inconnue */}
-          <label className="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#E3E5E8] cursor-pointer hover:border-[#6BCFCF] transition-colors">
+          <label className="flex items-center gap-3 rounded-xl bg-white border border-[#E3E5E8] px-4 py-3 cursor-pointer hover:border-[#6BCFCF] transition-colors">
             <input
               type="checkbox"
               checked={props.destinationUnknown}
