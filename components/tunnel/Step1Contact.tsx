@@ -50,7 +50,7 @@ export default function Step1Contact({
   return (
     <div className="grid lg:grid-cols-2 gap-12 items-center">
       {/* Left: Form */}
-      <div className="order-2 lg:order-1">
+      <div className="order-1">
         <div className="mb-8">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
             <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
@@ -211,7 +211,7 @@ export default function Step1Contact({
       </div>
 
       {/* Right: Mockup illustration */}
-      <div className="order-1 lg:order-2 relative">
+      <div className="order-2 relative hidden lg:block">
         <div className="relative w-full max-w-[360px] mx-auto">
           {/* Decorative background */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#6BCFCF]/10 to-[#A8E8E8]/10 rounded-[3rem] blur-3xl" />

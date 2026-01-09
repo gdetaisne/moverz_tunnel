@@ -739,7 +739,7 @@ function DevisGratuitsV3Content() {
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Trust signals */}
         {state.currentStep < 4 && (
-          <div className="mb-12">
+          <div className="mb-12 hidden md:block">
             <TrustSignals />
           </div>
         )}

@@ -17,7 +17,7 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
   const progress = (currentStep / totalSteps) * 100;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] text-white py-12 md:py-16">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] text-white py-8 md:py-16">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -34,20 +34,20 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
       >
         <div className="text-center max-w-3xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold mb-6 backdrop-blur-sm">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold mb-4 md:mb-6 backdrop-blur-sm">
             <span className="h-2 w-2 rounded-full bg-[#6BCFCF] animate-pulse" />
             <span>Demande de devis gratuite</span>
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">
+          <h1 className="text-2xl md:text-5xl font-bold mb-3 md:mb-4 leading-tight">
             3 à 5 devis comparables
             <br />
             <span className="text-[#6BCFCF]">en 3 minutes</span>
           </h1>
 
           {/* Subtitle */}
-          <p className="text-lg text-white/70 mb-8 leading-relaxed">
+          <p className="text-base md:text-lg text-white/70 mb-5 md:mb-8 leading-relaxed">
             Des déménageurs locaux contrôlés • Estimation par photos • 0 spam
           </p>
 
