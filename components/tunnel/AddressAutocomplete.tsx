@@ -19,6 +19,7 @@ export interface AddressAutocompleteProps {
   onSelect: (value: AddressSuggestion) => void;
   disabled?: boolean;
   mode?: "fr" | "world" | "auto";
+  inputId?: string;
 }
 
 // --- Providers ---
@@ -101,6 +102,7 @@ export function AddressAutocomplete({
   onSelect,
   disabled,
   mode = "auto",
+  inputId,
 }: AddressAutocompleteProps) {
   const [input, setInput] = useState(initialValue ?? "");
   const [isLoading, setIsLoading] = useState(false);
@@ -208,6 +210,7 @@ export function AddressAutocomplete({
       <div className="relative">
         <input
           type="text"
+          id={inputId}
           value={input}
           disabled={disabled}
           onChange={(e) => {

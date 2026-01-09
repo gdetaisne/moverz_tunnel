@@ -47,6 +47,9 @@ function DevisGratuitsV3Content() {
   const from = searchParams.get("from") || "/devis-gratuits-v3";
 
   const [confirmationRequested, setConfirmationRequested] = useState(false);
+  const [showValidationStep1, setShowValidationStep1] = useState(false);
+  const [showValidationStep2, setShowValidationStep2] = useState(false);
+  const [showValidationStep3, setShowValidationStep3] = useState(false);
   
   const { trackStep, trackStepChange, trackCompletion, trackError } = useTunnelTracking({
     source,
@@ -443,11 +446,21 @@ function DevisGratuitsV3Content() {
     e.preventDefault();
 
     if (!state.firstName.trim() || state.firstName.trim().length < 2) {
+      setShowValidationStep1(true);
+      requestAnimationFrame(() => {
+        document.getElementById("contact-firstName")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById("contact-firstName") as any)?.focus?.();
+      });
       trackError("VALIDATION_ERROR", "Invalid firstName", 1, "CONTACT");
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) {
+      setShowValidationStep1(true);
+      requestAnimationFrame(() => {
+        document.getElementById("contact-email")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById("contact-email") as any)?.focus?.();
+      });
       trackError("VALIDATION_ERROR", "Invalid email", 1, "CONTACT");
       return;
     }
@@ -468,6 +481,7 @@ function DevisGratuitsV3Content() {
       // WhatsApp CTA a un fallback sans code.
       updateFields({ leadId: backofficeLeadId, linkingCode: null });
       setConfirmationRequested(false);
+      setShowValidationStep1(false);
 
       trackStepChange(1, 2, "CONTACT", "PROJECT", "forward");
       goToStep(2);
@@ -489,6 +503,36 @@ function DevisGratuitsV3Content() {
     const isDateValid = state.movingDate.length > 0;
 
     if (!isOriginValid || !isDestinationValid || !isDateValid) {
+      setShowValidationStep2(true);
+      requestAnimationFrame(() => {
+        const ids = [
+          state.originAddress.trim().length >= 5 ? null : "origin-address",
+          state.originHousingType.trim().length > 0 ? null : "origin-housingType",
+          state.destinationUnknown
+            ? null
+            : state.destinationAddress.trim().length >= 5
+            ? null
+            : "destination-address",
+          state.destinationUnknown
+            ? null
+            : state.destinationHousingType.trim().length > 0
+            ? null
+            : "destination-housingType",
+          state.movingDate.length > 0 ? null : "movingDate",
+        ].filter(Boolean) as string[];
+        const firstId = ids[0];
+        if (!firstId) return;
+        const el = document.getElementById(firstId);
+        if (!el) return;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        const focusable =
+          (el as any).focus
+            ? el
+            : (el.querySelector?.(
+                "input,textarea,select,button,[tabindex]:not([tabindex='-1'])"
+              ) as HTMLElement | null);
+        focusable?.focus?.();
+      });
       trackError("VALIDATION_ERROR", "Invalid project fields", 2, "PROJECT");
       return;
     }
@@ -577,6 +621,7 @@ function DevisGratuitsV3Content() {
       }
 
       trackStepChange(2, 3, "PROJECT", "RECAP", "forward");
+      setShowValidationStep2(false);
       goToStep(3);
     } catch (err: any) {
       console.error("Error updating lead:", err);
@@ -589,6 +634,11 @@ function DevisGratuitsV3Content() {
 
     const surface = parseInt(state.surfaceM2) || 60;
     if (surface < 10 || surface > 500) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        document.getElementById("surfaceM2")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById("surfaceM2") as any)?.focus?.();
+      });
       trackError("VALIDATION_ERROR", "Invalid surface", 3, "RECAP");
       return;
     }
@@ -670,6 +720,7 @@ function DevisGratuitsV3Content() {
 
       trackStepChange(3, 4, "RECAP", "THANK_YOU", "forward");
       trackCompletion();
+      setShowValidationStep3(false);
       goToStep(4);
     } catch (err: any) {
       console.error("Error finalizing lead:", err);
@@ -702,6 +753,7 @@ function DevisGratuitsV3Content() {
               onSubmit={handleSubmitStep1}
               isSubmitting={false}
               error={null}
+              showValidation={showValidationStep1}
             />
           )}
 
@@ -732,6 +784,7 @@ function DevisGratuitsV3Content() {
               onSubmit={handleSubmitStep2}
               isSubmitting={false}
               error={null}
+              showValidation={showValidationStep2}
             />
           )}
 
@@ -765,6 +818,7 @@ function DevisGratuitsV3Content() {
               onSubmit={handleSubmitStep3}
               isSubmitting={false}
               error={null}
+              showValidation={showValidationStep3}
             />
           )}
 

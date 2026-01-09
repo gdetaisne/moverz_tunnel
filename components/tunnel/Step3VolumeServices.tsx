@@ -67,6 +67,7 @@ interface Step3VolumeServicesProps {
   onSubmit: (e: FormEvent) => void;
   isSubmitting: boolean;
   error: string | null;
+  showValidation?: boolean;
 }
 
 const FORMULES: Array<{
@@ -130,6 +131,18 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
   const surface = parseInt(props.surfaceM2) || 60;
   const isSurfaceValid = surface >= 10 && surface <= 500;
   const [showDetails, setShowDetails] = useState(false);
+  const showErrors = Boolean(props.showValidation);
+  const isFormValid = isSurfaceValid;
+
+  const missingFields: Array<{ id: string; label: string }> = [];
+  if (!isSurfaceValid) missingFields.push({ id: "surfaceM2", label: "Surface" });
+
+  const focusField = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if ((el as any).focus) (el as any).focus();
+  };
 
   return (
     <div className="space-y-8">
@@ -156,6 +169,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
           </label>
           <div className="relative">
             <input
+              id="surfaceM2"
               type="number"
               value={props.surfaceM2}
               onChange={(e) => props.onFieldChange("surfaceM2", e.target.value)}
@@ -168,7 +182,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               m²
             </span>
           </div>
-          {!isSurfaceValid && (
+          {showErrors && !isSurfaceValid && (
             <p className="text-sm text-red-600 mt-2">Surface entre 10 et 500 m²</p>
           )}
           <div className="mt-4 p-4 rounded-xl bg-white border border-[#E3E5E8]">
@@ -410,11 +424,36 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
           </div>
         )}
 
+        {/* Validation summary */}
+        {showErrors && missingFields.length > 0 && (
+          <div className="rounded-xl border border-[#E3E5E8] bg-[#F8F9FA] px-4 py-3 text-sm text-[#0F172A]/80">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium">
+                {missingFields.length} champ{missingFields.length > 1 ? "s" : ""} manquant
+                {missingFields.length > 1 ? "s" : ""} :
+              </span>
+              {missingFields.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => focusField(f.id)}
+                  className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#0F172A]/70 border border-[#E3E5E8] hover:border-[#6BCFCF]"
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Submit button */}
         <button
           type="submit"
-          disabled={props.isSubmitting || !isSurfaceValid}
-          className="group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#1E293B] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          disabled={props.isSubmitting}
+          aria-disabled={props.isSubmitting || !isFormValid}
+          className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#1E293B] hover:shadow-xl transition-all duration-200 ${
+            !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           <span>{props.isSubmitting ? "Enregistrement..." : "Continuer vers les photos"}</span>
           {!props.isSubmitting && (

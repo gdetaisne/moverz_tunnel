@@ -12,6 +12,7 @@ interface Step1ContactProps {
   onSubmit: (e: FormEvent) => Promise<void>;
   isSubmitting: boolean;
   error: string | null;
+  showValidation?: boolean;
 }
 
 export default function Step1Contact({
@@ -22,6 +23,7 @@ export default function Step1Contact({
   onSubmit,
   isSubmitting,
   error,
+  showValidation,
 }: Step1ContactProps) {
   const [firstNameTouched, setFirstNameTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
@@ -29,6 +31,21 @@ export default function Step1Contact({
 
   const isFirstNameValid = firstName.trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isFormValid = isFirstNameValid && isEmailValid;
+
+  const missingFields: Array<{ id: string; label: string }> = [];
+  if (!isFirstNameValid) missingFields.push({ id: "contact-firstName", label: "Prénom" });
+  if (!isEmailValid) missingFields.push({ id: "contact-email", label: "Email" });
+
+  const showFirstNameError = (showValidation || firstNameTouched) && !isFirstNameValid;
+  const showEmailError = (showValidation || emailTouched) && !isEmailValid;
+
+  const focusField = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if ((el as any).focus) (el as any).focus();
+  };
 
   return (
     <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -59,6 +76,7 @@ export default function Step1Contact({
             </label>
             <div className="relative">
               <input
+                id="contact-firstName"
                 type="text"
                 value={firstName}
                 onChange={(e) => {
@@ -69,7 +87,7 @@ export default function Step1Contact({
                 placeholder="Prénom ou surnom"
                 autoComplete="given-name"
               />
-              {firstNameTouched && (
+              {(firstNameTouched || showValidation) && (
                 <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
                   {isFirstNameValid ? (
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100">
@@ -83,7 +101,7 @@ export default function Step1Contact({
                 </span>
               )}
             </div>
-            {firstNameTouched && !isFirstNameValid && (
+            {showFirstNameError && (
               <p className="text-sm text-red-600">
                 Un prénom, nom ou surnom (minimum 2 caractères)
               </p>
@@ -98,6 +116,7 @@ export default function Step1Contact({
             </label>
             <div className="relative">
               <input
+                id="contact-email"
                 type="email"
                 value={email}
                 onChange={(e) => {
@@ -108,7 +127,7 @@ export default function Step1Contact({
                 placeholder="vous@email.fr"
                 autoComplete="email"
               />
-              {emailTouched && (
+              {(emailTouched || showValidation) && (
                 <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
                   {isEmailValid ? (
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100">
@@ -122,7 +141,7 @@ export default function Step1Contact({
                 </span>
               )}
             </div>
-            {emailTouched && !isEmailValid && (
+            {showEmailError && (
               <p className="text-sm text-red-600">
                 Merci de saisir un email valide
               </p>
@@ -136,11 +155,36 @@ export default function Step1Contact({
             </div>
           )}
 
+          {/* Validation summary */}
+          {showValidation && missingFields.length > 0 && (
+            <div className="rounded-xl border border-[#E3E5E8] bg-[#F8F9FA] px-4 py-3 text-sm text-[#0F172A]/80">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">
+                  {missingFields.length} champ{missingFields.length > 1 ? "s" : ""} manquant
+                  {missingFields.length > 1 ? "s" : ""} :
+                </span>
+                {missingFields.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => focusField(f.id)}
+                    className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#0F172A]/70 border border-[#E3E5E8] hover:border-[#6BCFCF]"
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Submit button */}
           <button
             type="submit"
-            disabled={isSubmitting || !isFirstNameValid || !isEmailValid}
-            className="group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#1E293B] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            disabled={isSubmitting}
+            aria-disabled={isSubmitting || !isFormValid}
+            className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#1E293B] hover:shadow-xl transition-all duration-200 ${
+              !isFormValid && !isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+            } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <span>{isSubmitting ? "Création en cours..." : "Commencer ma demande"}</span>
             {!isSubmitting && (

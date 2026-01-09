@@ -36,6 +36,7 @@ interface Step2ProjectCompleteProps {
   onSubmit: (e: FormEvent) => void;
   isSubmitting: boolean;
   error: string | null;
+  showValidation?: boolean;
 }
 
 const HOUSING_TYPES = [
@@ -66,6 +67,31 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
       props.destinationHousingType.length > 0);
   
   const isDateValid = props.movingDate.length > 0;
+  const isFormValid = isOriginValid && isDestinationValid && isDateValid;
+
+  const missingFields: Array<{ id: string; label: string }> = [];
+  if (props.originAddress.trim().length < 5) missingFields.push({ id: "origin-address", label: "Adresse départ" });
+  if (!props.originHousingType) missingFields.push({ id: "origin-housingType", label: "Logement départ" });
+  if (!props.destinationUnknown) {
+    if (props.destinationAddress.trim().length < 5) missingFields.push({ id: "destination-address", label: "Adresse arrivée" });
+    if (!props.destinationHousingType) missingFields.push({ id: "destination-housingType", label: "Logement arrivée" });
+  }
+  if (!isDateValid) missingFields.push({ id: "movingDate", label: "Date" });
+
+  const showErrors = Boolean(props.showValidation);
+
+  const focusField = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    const focusable =
+      (el as any).focus
+        ? el
+        : (el.querySelector?.(
+            "input,textarea,select,button,[tabindex]:not([tabindex='-1'])"
+          ) as HTMLElement | null);
+    focusable?.focus?.();
+  };
 
   return (
     <div className="space-y-8">
@@ -96,6 +122,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           <AddressAutocomplete
             label="Adresse de départ *"
             placeholder="10 rue de la Paix, 33000 Bordeaux"
+            inputId="origin-address"
             initialValue={
               props.originAddress ||
               [props.originPostalCode, props.originCity].filter(Boolean).join(" ")
@@ -109,6 +136,12 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               props.onFieldChange("originLon", s.lon ?? null);
             }}
           />
+          {showErrors && props.originAddress.trim().length < 5 && (
+            <p className="text-sm text-red-600 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              Adresse obligatoire
+            </p>
+          )}
           {(props.originPostalCode || props.originCity) && (
             <p className="text-xs text-[#1E293B]/60">
               {props.originPostalCode} {props.originCity}
@@ -117,14 +150,17 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           )}
 
           {/* Type de logement */}
-          <div>
+          <div id="origin-housingType">
             <label className="block text-sm font-medium text-[#0F172A] mb-2">Type de logement *</label>
             <div className="grid grid-cols-4 gap-2">
               {HOUSING_TYPES.map((type) => (
                 <button
                   key={type.value}
                   type="button"
-                  onClick={() => props.onFieldChange("originHousingType", type.value)}
+                  onClick={() => {
+                    markTouched("originHousingType");
+                    props.onFieldChange("originHousingType", type.value);
+                  }}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                     props.originHousingType === type.value
                       ? "bg-[#6BCFCF] text-white"
@@ -135,6 +171,12 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 </button>
               ))}
             </div>
+            {(showErrors || touchedFields.has("originHousingType")) && !props.originHousingType && (
+              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                Type de logement obligatoire
+              </p>
+            )}
           </div>
 
           {/* Étage + Ascenseur */}
@@ -219,6 +261,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               <AddressAutocomplete
                 label="Adresse d'arrivée *"
                 placeholder="20 place Bellecour, 69002 Lyon"
+                inputId="destination-address"
                 initialValue={
                   props.destinationAddress ||
                   [props.destinationPostalCode, props.destinationCity]
@@ -234,6 +277,12 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   props.onFieldChange("destinationLon", s.lon ?? null);
                 }}
               />
+              {showErrors && props.destinationAddress.trim().length < 5 && (
+                <p className="text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  Adresse obligatoire
+                </p>
+              )}
               {(props.destinationPostalCode || props.destinationCity) && (
                 <p className="text-xs text-[#1E293B]/60">
                   {props.destinationPostalCode} {props.destinationCity}
@@ -242,14 +291,17 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               )}
 
               {/* Type de logement */}
-              <div>
+              <div id="destination-housingType">
                 <label className="block text-sm font-medium text-[#0F172A] mb-2">Type de logement *</label>
                 <div className="grid grid-cols-4 gap-2">
                   {HOUSING_TYPES.map((type) => (
                     <button
                       key={type.value}
                       type="button"
-                      onClick={() => props.onFieldChange("destinationHousingType", type.value)}
+                      onClick={() => {
+                        markTouched("destinationHousingType");
+                        props.onFieldChange("destinationHousingType", type.value);
+                      }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         props.destinationHousingType === type.value
                           ? "bg-[#6BCFCF] text-white"
@@ -260,6 +312,12 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     </button>
                   ))}
                 </div>
+                {(showErrors || touchedFields.has("destinationHousingType")) && !props.destinationHousingType && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    Type de logement obligatoire
+                  </p>
+                )}
               </div>
 
               {/* Étage + Ascenseur */}
@@ -331,6 +389,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           <div>
             <label className="block text-sm font-medium text-[#0F172A] mb-2">Date de déménagement *</label>
             <input
+              id="movingDate"
               type="date"
               value={props.movingDate}
               onChange={(e) => {
@@ -354,7 +413,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             </span>
           </label>
 
-          {touchedFields.has("movingDate") && !isDateValid && (
+          {(showErrors || touchedFields.has("movingDate")) && !isDateValid && (
             <p className="text-sm text-red-600 flex items-center gap-1">
               <AlertCircle className="w-4 h-4" />
               Date obligatoire
@@ -369,11 +428,36 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           </div>
         )}
 
+        {/* Validation summary */}
+        {showErrors && missingFields.length > 0 && (
+          <div className="rounded-xl border border-[#E3E5E8] bg-[#F8F9FA] px-4 py-3 text-sm text-[#0F172A]/80">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium">
+                {missingFields.length} champ{missingFields.length > 1 ? "s" : ""} manquant
+                {missingFields.length > 1 ? "s" : ""} :
+              </span>
+              {missingFields.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => focusField(f.id)}
+                  className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#0F172A]/70 border border-[#E3E5E8] hover:border-[#6BCFCF]"
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Submit button */}
         <button
           type="submit"
-          disabled={props.isSubmitting || !isOriginValid || !isDestinationValid || !isDateValid}
-          className="group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#1E293B] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          disabled={props.isSubmitting}
+          aria-disabled={props.isSubmitting || !isFormValid}
+          className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#1E293B] hover:shadow-xl transition-all duration-200 ${
+            !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           <span>{props.isSubmitting ? "Enregistrement..." : "Continuer"}</span>
           {!props.isSubmitting && (
