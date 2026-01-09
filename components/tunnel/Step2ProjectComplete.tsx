@@ -46,7 +46,6 @@ const HOUSING_TYPES = [
   { value: "t3", label: "T3" },
   { value: "t4", label: "T4" },
   { value: "t5", label: "T5+" },
-  { value: "house", label: "Maison" },
 ];
 
 export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
@@ -70,6 +69,32 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   const isFormValid = isOriginValid && isDestinationValid && isDateValid;
   const originIsHouse = props.originHousingType === "house";
   const destinationIsHouse = props.destinationHousingType === "house";
+  const originIsApartment = !originIsHouse && !!props.originHousingType;
+  const destinationIsApartment = !destinationIsHouse && !!props.destinationHousingType;
+
+  const setHousingCategory = (
+    which: "origin" | "destination",
+    category: "apartment" | "house"
+  ) => {
+    const prefix = which === "origin" ? "origin" : "destination";
+    const current =
+      which === "origin" ? props.originHousingType : props.destinationHousingType;
+
+    if (category === "house") {
+      markTouched(`${prefix}HousingType`);
+      props.onFieldChange(`${prefix}HousingType`, "house");
+      // N.A.
+      props.onFieldChange(`${prefix}Floor`, "");
+      props.onFieldChange(`${prefix}Elevator`, "");
+      return;
+    }
+
+    // apartment
+    markTouched(`${prefix}HousingType`);
+    if (current && current !== "house") return; // on conserve la taille si déjà choisie
+    // Valeur par défaut (rapide) si on bascule depuis Maison / vide
+    props.onFieldChange(`${prefix}HousingType`, "t2");
+  };
 
   const missingFields: Array<{ id: string; label: string }> = [];
   if (props.originAddress.trim().length < 5) missingFields.push({ id: "origin-address", label: "Adresse départ" });
@@ -154,30 +179,56 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           {/* Type de logement */}
           <div id="origin-housingType">
             <label className="block text-sm font-medium text-[#0F172A] mb-2">Type de logement *</label>
-            <div className="grid grid-cols-4 gap-2">
-              {HOUSING_TYPES.map((type) => (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => {
-                    markTouched("originHousingType");
-                    props.onFieldChange("originHousingType", type.value);
-                    // Si maison, les notions d'étage/ascenseur ne s'appliquent pas.
-                    if (type.value === "house") {
-                      props.onFieldChange("originFloor", "");
-                      props.onFieldChange("originElevator", "");
-                    }
-                  }}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    props.originHousingType === type.value
-                      ? "bg-[#6BCFCF] text-white"
-                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                  }`}
-                >
-                  {type.label}
-                </button>
-              ))}
+
+            {/* Catégorie */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setHousingCategory("origin", "apartment")}
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  originIsApartment
+                    ? "bg-[#6BCFCF] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                }`}
+              >
+                Appartement
+              </button>
+              <button
+                type="button"
+                onClick={() => setHousingCategory("origin", "house")}
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  originIsHouse
+                    ? "bg-[#6BCFCF] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                }`}
+              >
+                Maison
+              </button>
             </div>
+
+            {/* Taille (appartement) */}
+            {!originIsHouse && (
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {HOUSING_TYPES.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => {
+                      markTouched("originHousingType");
+                      props.onFieldChange("originHousingType", type.value);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                      props.originHousingType === type.value
+                        ? "bg-[#0F172A] text-white"
+                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {(showErrors || touchedFields.has("originHousingType")) && !props.originHousingType && (
               <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />
@@ -308,35 +359,63 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               {/* Type de logement */}
               <div id="destination-housingType">
                 <label className="block text-sm font-medium text-[#0F172A] mb-2">Type de logement *</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {HOUSING_TYPES.map((type) => (
-                    <button
-                      key={type.value}
-                      type="button"
-                      onClick={() => {
-                        markTouched("destinationHousingType");
-                        props.onFieldChange("destinationHousingType", type.value);
-                        if (type.value === "house") {
-                          props.onFieldChange("destinationFloor", "");
-                          props.onFieldChange("destinationElevator", "");
-                        }
-                      }}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                        props.destinationHousingType === type.value
-                          ? "bg-[#6BCFCF] text-white"
-                          : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                      }`}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
+
+                {/* Catégorie */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setHousingCategory("destination", "apartment")}
+                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                      destinationIsApartment
+                        ? "bg-[#6BCFCF] text-white"
+                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    }`}
+                  >
+                    Appartement
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHousingCategory("destination", "house")}
+                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                      destinationIsHouse
+                        ? "bg-[#6BCFCF] text-white"
+                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    }`}
+                  >
+                    Maison
+                  </button>
                 </div>
-                {(showErrors || touchedFields.has("destinationHousingType")) && !props.destinationHousingType && (
-                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    Type de logement obligatoire
-                  </p>
+
+                {/* Taille (appartement) */}
+                {!destinationIsHouse && (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {HOUSING_TYPES.map((type) => (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => {
+                          markTouched("destinationHousingType");
+                          props.onFieldChange("destinationHousingType", type.value);
+                        }}
+                        className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                          props.destinationHousingType === type.value
+                            ? "bg-[#0F172A] text-white"
+                            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                        }`}
+                      >
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
                 )}
+
+                {(showErrors || touchedFields.has("destinationHousingType")) &&
+                  !props.destinationHousingType && (
+                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      Type de logement obligatoire
+                    </p>
+                  )}
               </div>
 
               {/* Étage + Ascenseur (N.A. pour Maison) */}
