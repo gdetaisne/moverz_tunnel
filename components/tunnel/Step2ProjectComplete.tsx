@@ -112,7 +112,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
       <form onSubmit={props.onSubmit} noValidate className="space-y-8">
         {/* === DÉPART === */}
-        <div className="p-6 rounded-2xl bg-[#F8F9FA] border border-[#E3E5E8] space-y-6">
+        <div className="space-y-6 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
           <div className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-[#6BCFCF]" />
             <h3 className="text-lg font-bold text-[#0F172A]">Départ</h3>
@@ -243,7 +243,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
         </div>
 
         {/* === ARRIVÉE === */}
-        <div className="p-6 rounded-2xl bg-[#F8F9FA] border border-[#E3E5E8] space-y-6">
+        <div className="space-y-6 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
           <div className="flex items-center gap-2">
             <Home className="w-5 h-5 text-[#6BCFCF]" />
             <h3 className="text-lg font-bold text-[#0F172A]">Arrivée</h3>
@@ -392,7 +392,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
         </div>
 
         {/* === DATE === */}
-        <div className="p-6 rounded-2xl bg-[#F8F9FA] border border-[#E3E5E8] space-y-4">
+        <div className="space-y-4 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-[#6BCFCF]" />
             <h3 className="text-lg font-bold text-[#0F172A]">Date souhaitée</h3>

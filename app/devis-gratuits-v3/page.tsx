@@ -745,7 +745,7 @@ function DevisGratuitsV3Content() {
         )}
 
         {/* Step content */}
-        <div className="bg-white rounded-3xl shadow-lg p-8 md:p-12">
+        <div className="bg-white rounded-2xl md:rounded-3xl shadow-md md:shadow-lg p-4 sm:p-6 md:p-12">
           {state.currentStep === 1 && (
             <Step1Contact
               firstName={state.firstName}

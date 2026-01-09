@@ -163,7 +163,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
 
       <form onSubmit={props.onSubmit} noValidate className="space-y-6">
         {/* Surface */}
-        <div className="p-6 rounded-2xl bg-[#F8F9FA] border border-[#E3E5E8]">
+        <div className="md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
           <label className="block text-sm font-medium text-[#0F172A] mb-2">
             Surface approximative (m²) *
           </label>
@@ -366,7 +366,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
         </div>
 
         {/* Services en plus */}
-        <div className="p-6 rounded-2xl bg-[#F8F9FA] border border-[#E3E5E8]">
+        <div className="md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
           <h3 className="text-lg font-bold text-[#0F172A] mb-4">Services en plus (facultatif)</h3>
           <div className="grid grid-cols-2 gap-3">
             {SERVICES.map((service) => (
@@ -387,7 +387,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
         </div>
 
         {/* Autres besoins */}
-        <div className="p-6 rounded-2xl bg-[#F8F9FA] border border-[#E3E5E8]">
+        <div className="md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
           <h3 className="text-lg font-bold text-[#0F172A] mb-4">Autres besoins (facultatif)</h3>
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
