@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { Package, Home, Sparkles, ArrowRight, Check } from "lucide-react";
 
 type FormuleType = "ECONOMIQUE" | "STANDARD" | "PREMIUM";
@@ -133,9 +133,62 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
   const [showDetails, setShowDetails] = useState(false);
   const showErrors = Boolean(props.showValidation);
   const isFormValid = isSurfaceValid;
+  const [showOptions, setShowOptions] = useState(false);
 
   const missingFields: Array<{ id: string; label: string }> = [];
   if (!isSurfaceValid) missingFields.push({ id: "surfaceM2", label: "Surface" });
+
+  const selectedOptionsCount = useMemo(() => {
+    let n = 0;
+    for (const service of SERVICES) {
+      if (props[service.key as keyof Step3VolumeServicesProps] as boolean) n++;
+    }
+    for (const need of OTHER_NEEDS) {
+      if (props[need.key as keyof Step3VolumeServicesProps] as boolean) n++;
+    }
+    if (props.specificNotes?.trim()) n++;
+    return n;
+  }, [
+    props.serviceFurnitureStorage,
+    props.serviceCleaning,
+    props.serviceFullPacking,
+    props.serviceFurnitureAssembly,
+    props.serviceInsurance,
+    props.serviceWasteRemoval,
+    props.serviceHelpWithoutTruck,
+    props.serviceSpecificSchedule,
+    props.hasPiano,
+    props.hasFragileItems,
+    props.hasSpecificFurniture,
+    props.specificNotes,
+  ]);
+
+  const YesNo = (p: { value: boolean; onChange: (v: boolean) => void }) => (
+    <div className="grid w-44 grid-cols-2 gap-2">
+      <button
+        type="button"
+        onClick={() => p.onChange(false)}
+        className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+          p.value === false
+            ? "bg-[#0F172A] text-white"
+            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+        }`}
+      >
+        Non
+      </button>
+      <button
+        type="button"
+        onClick={() => p.onChange(true)}
+        className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+          p.value === true
+            ? "bg-[#6BCFCF] text-white"
+            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+        }`}
+      >
+        Oui
+      </button>
+    </div>
+  );
 
   const focusField = (id: string) => {
     const el = document.getElementById(id);
@@ -365,56 +418,79 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
           </div>
         </div>
 
-        {/* Services en plus */}
-        <div className="md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
-          <h3 className="text-lg font-bold text-[#0F172A] mb-4">Services en plus (facultatif)</h3>
+        {/* Options (facultatif) */}
+        <div>
+          <h3 className="text-lg font-bold text-[#0F172A] mb-2">Options (facultatif)</h3>
           <div className="grid grid-cols-2 gap-3">
-            {SERVICES.map((service) => (
-              <label
-                key={service.key}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#E3E5E8] cursor-pointer hover:border-[#6BCFCF] transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={props[service.key as keyof Step3VolumeServicesProps] as boolean}
-                  onChange={(e) => props.onFieldChange(service.key, e.target.checked)}
-                  className="w-4 h-4 rounded border-[#E3E5E8] text-[#6BCFCF] focus:ring-2 focus:ring-[#6BCFCF]/20"
-                />
-                <span className="text-sm text-[#0F172A]">{service.label}</span>
-              </label>
-            ))}
+            <button
+              type="button"
+              onClick={() => setShowOptions(false)}
+              className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                !showOptions
+                  ? "bg-[#6BCFCF] text-white"
+                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+              }`}
+            >
+              Aucune
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowOptions(true)}
+              className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                showOptions
+                  ? "bg-[#6BCFCF] text-white"
+                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+              }`}
+            >
+              Personnaliser
+              {selectedOptionsCount > 0 ? ` (${selectedOptionsCount})` : ""}
+            </button>
+          </div>
+
+          {showOptions && (
+            <div className="mt-4 space-y-6 rounded-2xl border border-[#E3E5E8] bg-white p-4">
+              <div>
+                <p className="text-sm font-semibold text-[#0F172A]">Services en plus</p>
+                <div className="mt-3 space-y-3">
+                  {SERVICES.map((service) => {
+                    const value = props[service.key as keyof Step3VolumeServicesProps] as boolean;
+                    return (
+                      <div key={service.key} className="flex items-center justify-between gap-4">
+                        <p className="text-sm font-medium text-[#0F172A]">{service.label}</p>
+                        <YesNo onChange={(v) => props.onFieldChange(service.key, v)} value={value} />
+                      </div>
+                    );
+                  })}
           </div>
         </div>
 
-        {/* Autres besoins */}
-        <div className="md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
-          <h3 className="text-lg font-bold text-[#0F172A] mb-4">Autres besoins (facultatif)</h3>
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
-              {OTHER_NEEDS.map((need) => (
-                <label
-                  key={need.key}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#E3E5E8] cursor-pointer hover:border-[#6BCFCF] transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={props[need.key as keyof Step3VolumeServicesProps] as boolean}
-                    onChange={(e) => props.onFieldChange(need.key, e.target.checked)}
-                    className="w-4 h-4 rounded border-[#E3E5E8] text-[#6BCFCF] focus:ring-2 focus:ring-[#6BCFCF]/20"
-                  />
-                  <span className="text-sm text-[#0F172A]">{need.label}</span>
-                </label>
-              ))}
+              <div>
+                <p className="text-sm font-semibold text-[#0F172A]">Autres besoins</p>
+                <div className="mt-3 space-y-3">
+                  {OTHER_NEEDS.map((need) => {
+                    const value = props[need.key as keyof Step3VolumeServicesProps] as boolean;
+                    return (
+                      <div key={need.key} className="flex items-center justify-between gap-4">
+                        <p className="text-sm font-medium text-[#0F172A]">{need.label}</p>
+                        <YesNo onChange={(v) => props.onFieldChange(need.key, v)} value={value} />
+                      </div>
+                    );
+                  })}
+                </div>
             </div>
             
+              <div>
+                <p className="text-sm font-semibold text-[#0F172A]">Précisions</p>
             <textarea
               value={props.specificNotes}
               onChange={(e) => props.onFieldChange("specificNotes", e.target.value)}
-              placeholder="Précisions supplémentaires..."
+                  placeholder="Ex: rue étroite, horaires, objets fragiles, contraintes particulières..."
               rows={3}
-              className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-sm text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                  className="mt-2 w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-sm text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
             />
           </div>
+            </div>
+          )}
         </div>
 
         {/* Error message */}
