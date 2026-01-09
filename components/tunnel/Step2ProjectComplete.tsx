@@ -54,17 +54,8 @@ const HOUSING_TYPES = [
   { value: "t5", label: "T5+" },
 ];
 
-const CARRY_DISTANCE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "10-20", label: "10–20 m" },
-  { value: "20-30", label: "20–30 m" },
-  { value: "30-40", label: "30–40 m" },
-  { value: "40-50", label: "40–50 m" },
-  { value: "50-60", label: "50–60 m" },
-  { value: "60-70", label: "60–70 m" },
-  { value: "70-80", label: "70–80 m" },
-  { value: "80-90", label: "80–90 m" },
-  { value: "90-100", label: "90–100 m" },
-];
+// V2 style: on évite les formats complexes; on capture juste "portage > 10m" (oui/non)
+const CARRY_DISTANCE_ON_VALUE = "10-20";
 
 export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   const renderConstrainedOptions = (which: "origin" | "destination") => {
@@ -76,8 +67,16 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
       which === "origin" ? props.originCarryDistance : props.destinationCarryDistance;
     const parkingAuth =
       which === "origin" ? props.originParkingAuth : props.destinationParkingAuth;
+    const housingType =
+      which === "origin" ? props.originHousingType : props.destinationHousingType;
+    const isHouse = housingType === "house";
+    const floor = which === "origin" ? props.originFloor : props.destinationFloor;
+    const elevator = which === "origin" ? props.originElevator : props.destinationElevator;
 
     if (access !== "constrained") return null;
+
+    const portageEnabled = carryDistance !== "";
+    const monteMeubleEnabled = furnitureLift === "yes";
 
     return (
       <div className="mt-4 space-y-4 rounded-xl border border-[#E3E5E8] bg-white p-4">
@@ -88,66 +87,111 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           </p>
         </div>
 
+        {/* Étage + Ascenseur (Appartement uniquement) */}
+        {!isHouse && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
+              <input
+                type="number"
+                value={floor}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "") return props.onFieldChange(`${prefix}Floor`, "");
+                  const n = Number.parseInt(raw, 10);
+                  if (!Number.isFinite(n)) return props.onFieldChange(`${prefix}Floor`, "");
+                  props.onFieldChange(`${prefix}Floor`, String(Math.min(50, Math.max(0, n))));
+                }}
+                min="0"
+                max="50"
+                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-3 py-2 text-sm text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => props.onFieldChange(`${prefix}Elevator`, "yes")}
+                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                    elevator === "yes"
+                      ? "bg-[#0F172A] text-white"
+                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                  }`}
+                >
+                  Oui
+                </button>
+                <button
+                  type="button"
+                  onClick={() => props.onFieldChange(`${prefix}Elevator`, "no")}
+                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                    elevator === "no"
+                      ? "bg-[#0F172A] text-white"
+                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                  }`}
+                >
+                  Non
+                </button>
+              </div>
+              <p className="mt-1 text-[11px] text-[#1E293B]/60">
+                Si “Non”, l’étage a un impact plus important sur le devis.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Monte-meuble */}
         <div>
-          <label className="block text-sm font-medium text-[#0F172A] mb-2">
-            Besoin d’un monte‑meuble ?
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { value: "unknown", label: "Je ne sais pas" },
-              { value: "no", label: "Non" },
-              { value: "yes", label: "Oui" },
-            ].map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => props.onFieldChange(`${prefix}FurnitureLift`, opt.value)}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                  furnitureLift === opt.value
-                    ? "bg-[#0F172A] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Portage >10m */}
-        <div>
-          <label className="block text-sm font-medium text-[#0F172A] mb-2">
-            Distance de portage (uniquement si &gt; 10 m)
-          </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-[#0F172A]">Monte‑meuble</p>
+              <p className="text-xs text-[#1E293B]/60">Ex: façade, cour, escaliers étroits.</p>
+            </div>
             <button
               type="button"
-              onClick={() => props.onFieldChange(`${prefix}CarryDistance`, "")}
-              className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                carryDistance === ""
-                  ? "bg-[#0F172A] text-white"
+              onClick={() =>
+                props.onFieldChange(
+                  `${prefix}FurnitureLift`,
+                  monteMeubleEnabled ? "no" : "yes"
+                )
+              }
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                monteMeubleEnabled
+                  ? "bg-[#6BCFCF] text-white"
                   : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
               }`}
             >
-              ≤ 10 m
+              {monteMeubleEnabled ? "Activé" : "Désactivé"}
             </button>
-            <select
-              value={carryDistance}
-              onChange={(e) => props.onFieldChange(`${prefix}CarryDistance`, e.target.value)}
-              className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-3 py-2 text-sm text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-            >
-              <option value="">Choisir &gt; 10 m…</option>
-              {CARRY_DISTANCE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
           </div>
-          <p className="mt-1 text-xs text-[#1E293B]/60">
-            Exemple: couloir long, cour intérieure, centre‑ville piéton.
-          </p>
+        </div>
+
+        {/* Portage > 10 m */}
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-[#0F172A]">Portage &gt; 10 m</p>
+              <p className="text-xs text-[#1E293B]/60">
+                Ex: couloir long, cour intérieure, centre‑ville piéton.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                props.onFieldChange(
+                  `${prefix}CarryDistance`,
+                  portageEnabled ? "" : CARRY_DISTANCE_ON_VALUE
+                )
+              }
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                portageEnabled
+                  ? "bg-[#6BCFCF] text-white"
+                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+              }`}
+            >
+              {portageEnabled ? "Activé" : "Désactivé"}
+            </button>
+          </div>
         </div>
 
         {/* Stationnement */}
@@ -360,7 +404,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           </div>
 
           {/* Étage + Ascenseur (N.A. pour Maison) */}
-          {!originIsHouse && (
+          {!originIsHouse && props.originAccess !== "constrained" && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
@@ -542,7 +586,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               </div>
 
               {/* Étage + Ascenseur (N.A. pour Maison) */}
-              {!destinationIsHouse && (
+              {!destinationIsHouse && props.destinationAccess !== "constrained" && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
