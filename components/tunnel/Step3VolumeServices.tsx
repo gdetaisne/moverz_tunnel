@@ -147,16 +147,16 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
   return (
     <div className="space-y-8">
       <div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
+        <div className="hidden md:inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
           <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
           Étape 3/4
         </div>
 
-        <h2 className="text-3xl md:text-4xl font-bold text-[#0F172A] mb-4 leading-tight">
+        <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] mb-3 md:mb-4 leading-tight">
           Volume, formule & services
         </h2>
         
-        <p className="text-lg text-[#1E293B]/70 leading-relaxed">
+        <p className="hidden md:block text-lg text-[#1E293B]/70 leading-relaxed">
           Derniers détails pour un devis sur-mesure.
         </p>
       </div>
