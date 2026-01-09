@@ -95,6 +95,35 @@ function DevisGratuitsV3Content() {
     return d.toISOString();
   };
 
+  // S'assure qu'un lead existe bien dans le Back Office et retourne son id.
+  // Utile quand l'utilisateur reprend une session locale avec un lead supprimé/expiré (404).
+  const ensureBackofficeLeadId = async (options?: { forceNew?: boolean }) => {
+    if (state.leadId && !options?.forceNew) return state.leadId;
+
+    const trimmedFirstName = state.firstName.trim();
+    const trimmedEmail = state.email.trim().toLowerCase();
+    if (!trimmedFirstName || !trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
+      return null;
+    }
+
+    try {
+      const payload = {
+        firstName: trimmedFirstName,
+        email: trimmedEmail,
+        lastName: state.lastName.trim() || undefined,
+        phone: state.phone.trim() || undefined,
+        source,
+        estimationMethod: "FORM" as const,
+      };
+      const { id } = await createBackofficeLead(payload);
+      updateFields({ leadId: id });
+      return id;
+    } catch (err) {
+      console.warn("⚠️ ensureBackofficeLeadId failed:", err);
+      return null;
+    }
+  };
+
   // --- helpers pricing (copiés de la V2, puis ajustés pour la V3) ---
   const estimateDistanceKm = (
     originPostalCode: string,
@@ -465,7 +494,8 @@ function DevisGratuitsV3Content() {
     }
 
     try {
-      if (state.leadId) {
+      const effectiveLeadId = await ensureBackofficeLeadId();
+      if (effectiveLeadId) {
         const tunnelOptions = {
           access: {
             origin: {
@@ -483,7 +513,7 @@ function DevisGratuitsV3Content() {
           },
         };
 
-        await updateBackofficeLead(state.leadId, {
+        const payload = {
           // Adresses (schéma BO)
           originAddress: state.originAddress || undefined,
           originCity: state.originCity || undefined,
@@ -528,7 +558,22 @@ function DevisGratuitsV3Content() {
 
           // Archivage (options non strictement mappées)
           tunnelOptions,
-        });
+        };
+
+        try {
+          await updateBackofficeLead(effectiveLeadId, payload);
+        } catch (err: any) {
+          if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
+            const newId = await ensureBackofficeLeadId({ forceNew: true });
+            if (newId) {
+              await updateBackofficeLead(newId, payload);
+            } else {
+              throw err;
+            }
+          } else {
+            throw err;
+          }
+        }
       }
 
       trackStepChange(2, 3, "PROJECT", "RECAP", "forward");
@@ -549,7 +594,8 @@ function DevisGratuitsV3Content() {
     }
 
     try {
-      if (state.leadId) {
+      const effectiveLeadId = await ensureBackofficeLeadId();
+      if (effectiveLeadId) {
         if (!activePricing) {
           throw new Error("PRICING_NOT_READY");
         }
@@ -583,7 +629,7 @@ function DevisGratuitsV3Content() {
           notes: state.specificNotes || undefined,
         };
 
-        await updateBackofficeLead(state.leadId, {
+        const payload = {
           surfaceM2: surface,
           estimatedVolume: activePricing.volumeM3,
           density: mapDensity(state.density),
@@ -592,11 +638,29 @@ function DevisGratuitsV3Content() {
           estimatedPriceAvg: Math.round((activePricing.prixMin + activePricing.prixMax) / 2),
           estimatedPriceMax: activePricing.prixMax,
           tunnelOptions,
-        });
+        };
+
+        try {
+          await updateBackofficeLead(effectiveLeadId, payload);
+        } catch (err: any) {
+          if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
+            const newId = await ensureBackofficeLeadId({ forceNew: true });
+            if (newId) {
+              await updateBackofficeLead(newId, payload);
+              // On bascule l'id utilisé pour la confirmation ci-dessous.
+              updateFields({ leadId: newId });
+            } else {
+              throw err;
+            }
+          } else {
+            throw err;
+          }
+        }
 
         // Email de confirmation (évite de mentir sur l'écran final)
         try {
-          await requestBackofficeConfirmation(state.leadId);
+          const idForConfirmation = (await ensureBackofficeLeadId()) ?? effectiveLeadId;
+          await requestBackofficeConfirmation(idForConfirmation);
           setConfirmationRequested(true);
         } catch (confirmErr) {
           console.warn("Backoffice confirmation request failed:", confirmErr);
