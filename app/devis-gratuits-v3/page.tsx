@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, Suspense, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ga4Event } from "@/lib/analytics/ga4";
 import {
@@ -8,6 +8,11 @@ import {
   requestBackofficeConfirmation,
   updateBackofficeLead,
 } from "@/lib/api/client";
+import {
+  calculatePricing,
+  type FormuleType as PricingFormuleType,
+  type HousingType,
+} from "@/lib/pricing/calculate";
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import TunnelHero from "@/components/tunnel/TunnelHero";
@@ -80,6 +85,152 @@ function DevisGratuitsV3Content() {
     if (!Number.isFinite(d.getTime())) return undefined;
     return d.toISOString();
   };
+
+  // --- helpers pricing (copiés de la V2, puis ajustés pour la V3) ---
+  const estimateDistanceKm = (originPostalCode: string, destinationPostalCode: string) => {
+    if (!originPostalCode || !destinationPostalCode) return 50;
+    if (originPostalCode === destinationPostalCode) return 10;
+    const o = parseInt(originPostalCode.slice(0, 2), 10);
+    const d = parseInt(destinationPostalCode.slice(0, 2), 10);
+    if (Number.isNaN(o) || Number.isNaN(d)) return 50;
+    const diff = Math.abs(o - d);
+    return Math.min(1000, 40 + diff * 40);
+  };
+
+  const getSeasonFactor = (dateStr: string | null | undefined): number => {
+    if (!dateStr) return 1;
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return 1;
+    const month = d.getMonth() + 1;
+    if ((month >= 6 && month <= 9) || month === 12) return 1.3;
+    if (month === 1 || month === 2 || month === 11) return 0.85;
+    return 1.0;
+  };
+
+  const getUrgencyFactor = (dateStr: string | null | undefined): number => {
+    if (!dateStr) return 1;
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return 1;
+
+    const now = new Date();
+    const diffMs = d.getTime() - now.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    if (diffDays <= 0 || diffDays > 365) return 1;
+    if (diffDays <= 30) return 1.15;
+    return 1;
+  };
+
+  const isHouseType = (t: string | null | undefined) =>
+    !!t && (t === "house" || t.startsWith("house_"));
+
+  const toPricingElevator = (e: string): "yes" | "no" | "partial" =>
+    e === "none" ? "no" : e === "small" ? "partial" : "yes";
+
+  const coerceHousingType = (t: string | null | undefined): HousingType => {
+    const v = (t || "").trim();
+    if (
+      v === "studio" ||
+      v === "t1" ||
+      v === "t2" ||
+      v === "t3" ||
+      v === "t4" ||
+      v === "t5" ||
+      v === "house" ||
+      v === "house_1floor" ||
+      v === "house_2floors" ||
+      v === "house_3floors"
+    ) {
+      return v;
+    }
+    return "t2";
+  };
+
+  const pricingByFormule = useMemo(() => {
+    const surface = parseInt(state.surfaceM2) || 60;
+    if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
+
+    const housingType = coerceHousingType(state.originHousingType || state.destinationHousingType);
+    const density = state.density;
+
+    const distanceKm = state.destinationUnknown
+      ? 50
+      : estimateDistanceKm(state.originPostalCode, state.destinationPostalCode);
+
+    const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
+
+    const originIsHouse = isHouseType(state.originHousingType);
+    const destIsHouse = isHouseType(state.destinationHousingType);
+
+    const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
+    const destinationFloor = state.destinationUnknown
+      ? 0
+      : destIsHouse
+      ? 0
+      : parseInt(state.destinationFloor || "0", 10) || 0;
+
+    const originElevator = toPricingElevator(state.originElevator);
+    const destinationElevator = state.destinationUnknown
+      ? "yes"
+      : toPricingElevator(state.destinationElevator);
+
+    const monteMeuble =
+      state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
+
+    const piano =
+      state.servicePiano === "droit"
+        ? ("droit" as const)
+        : state.servicePiano === "quart"
+        ? ("quart" as const)
+        : null;
+
+    const baseInput = {
+      surfaceM2: surface,
+      housingType,
+      density,
+      distanceKm,
+      seasonFactor,
+      originFloor,
+      originElevator,
+      destinationFloor,
+      destinationElevator,
+      services: {
+        monteMeuble,
+        piano,
+        debarras: state.serviceDebarras,
+      },
+    };
+
+    const formules: PricingFormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
+    return formules.reduce<Record<PricingFormuleType, ReturnType<typeof calculatePricing>>>(
+      (acc, formule) => {
+        acc[formule] = calculatePricing({ ...baseInput, formule });
+        return acc;
+      },
+      {} as any
+    );
+  }, [
+    state.surfaceM2,
+    state.originHousingType,
+    state.destinationHousingType,
+    state.density,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    state.destinationUnknown,
+    state.movingDate,
+    state.originFloor,
+    state.originElevator,
+    state.destinationFloor,
+    state.destinationElevator,
+    state.originFurnitureLift,
+    state.destinationFurnitureLift,
+    state.servicePiano,
+    state.serviceDebarras,
+  ]);
+
+  const activePricing = useMemo(() => {
+    if (!pricingByFormule) return null;
+    return pricingByFormule[state.formule as PricingFormuleType] ?? null;
+  }, [pricingByFormule, state.formule]);
 
   async function handleSubmitStep1(e: FormEvent) {
     e.preventDefault();
@@ -218,11 +369,10 @@ function DevisGratuitsV3Content() {
 
     try {
       if (state.leadId) {
-        const volumeM3 = Math.round(surface * 0.7);
-        const distanceKm = 450; // Placeholder - would calculate from cities
-        const priceMin = Math.round(surface * 15);
-        const priceMax = Math.round(surface * 25);
-        
+        if (!activePricing) {
+          throw new Error("PRICING_NOT_READY");
+        }
+
         const tunnelOptions = {
           services: {
             furnitureStorage: state.serviceFurnitureStorage || undefined,
@@ -250,17 +400,16 @@ function DevisGratuitsV3Content() {
             over25kg: state.furnitureOver25kg || undefined,
           },
           notes: state.specificNotes || undefined,
-          debug: { distanceKmPlaceholder: distanceKm },
         };
 
         await updateBackofficeLead(state.leadId, {
           surfaceM2: surface,
-          estimatedVolume: volumeM3,
+          estimatedVolume: activePricing.volumeM3,
           density: mapDensity(state.density),
           formule: state.formule,
-          estimatedPriceMin: priceMin,
-          estimatedPriceAvg: Math.round((priceMin + priceMax) / 2),
-          estimatedPriceMax: priceMax,
+          estimatedPriceMin: activePricing.prixMin,
+          estimatedPriceAvg: Math.round((activePricing.prixMin + activePricing.prixMax) / 2),
+          estimatedPriceMax: activePricing.prixMax,
           tunnelOptions,
         });
 
@@ -339,6 +488,15 @@ function DevisGratuitsV3Content() {
             <Step3VolumeServices
               surfaceM2={state.surfaceM2}
               formule={state.formule}
+              pricing={
+                activePricing
+                  ? {
+                      volumeM3: activePricing.volumeM3,
+                      priceMin: activePricing.prixMin,
+                      priceMax: activePricing.prixMax,
+                    }
+                  : null
+              }
               serviceFurnitureStorage={state.serviceFurnitureStorage}
               serviceCleaning={state.serviceCleaning}
               serviceFullPacking={state.serviceFullPacking}

@@ -8,6 +8,7 @@ type FormuleType = "ECONOMIQUE" | "STANDARD" | "PREMIUM";
 interface Step3VolumeServicesProps {
   surfaceM2: string;
   formule: FormuleType;
+  pricing: { volumeM3: number; priceMin: number; priceMax: number } | null;
   
   // Services en plus
   serviceFurnitureStorage: boolean;
@@ -92,32 +93,6 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
   const surface = parseInt(props.surfaceM2) || 60;
   const isSurfaceValid = surface >= 10 && surface <= 500;
 
-  // Pricing ajusté selon formule
-  const getPricing = () => {
-    const volumeM3 = Math.round(surface * 0.7);
-    let pricePerM2Min = 12;
-    let pricePerM2Max = 20;
-
-    if (props.formule === "ECONOMIQUE") {
-      pricePerM2Min = 10;
-      pricePerM2Max = 15;
-    } else if (props.formule === "STANDARD") {
-      pricePerM2Min = 15;
-      pricePerM2Max = 22;
-    } else if (props.formule === "PREMIUM") {
-      pricePerM2Min = 22;
-      pricePerM2Max = 35;
-    }
-
-    return {
-      volumeM3,
-      priceMin: Math.round(surface * pricePerM2Min),
-      priceMax: Math.round(surface * pricePerM2Max),
-    };
-  };
-
-  const pricing = getPricing();
-
   return (
     <div className="space-y-8">
       <div>
@@ -160,10 +135,22 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
           )}
           <div className="mt-4 p-4 rounded-xl bg-white border border-[#E3E5E8]">
             <p className="text-sm text-[#1E293B]/70">
-              📦 Volume estimé : <strong className="text-[#0F172A]">{pricing.volumeM3}m³</strong>
+              📦 Volume estimé :{" "}
+              <strong className="text-[#0F172A]">
+                {props.pricing ? `${props.pricing.volumeM3}m³` : "—"}
+              </strong>
             </p>
             <p className="text-sm text-[#1E293B]/70 mt-1">
-              💰 Fourchette {props.formule === "ECONOMIQUE" ? "Éco" : props.formule === "STANDARD" ? "Standard" : "Premium"} : <strong className="text-[#0F172A]">{pricing.priceMin} - {pricing.priceMax}€</strong>
+              💰 Fourchette{" "}
+              {props.formule === "ECONOMIQUE"
+                ? "Éco"
+                : props.formule === "STANDARD"
+                ? "Standard"
+                : "Premium"}{" "}
+              :{" "}
+              <strong className="text-[#0F172A]">
+                {props.pricing ? `${props.pricing.priceMin} - ${props.pricing.priceMax}€` : "—"}
+              </strong>
             </p>
           </div>
         </div>
