@@ -583,16 +583,17 @@ function DevisGratuitsV3Content() {
 
           // Logement / accès
           originHousingType: state.originHousingType || undefined,
+          // Maison: N.A. -> 0 + NON (compatible validation BO)
           originFloor: originIsHouse
-            ? null
+            ? 0
             : state.originFloor
             ? Math.max(0, parseInt(state.originFloor, 10))
-            : null,
+            : undefined,
           originElevator: originIsHouse
-            ? null
+            ? "NON"
             : state.originElevator
             ? mapElevator(state.originElevator)
-            : null,
+            : undefined,
           originFurnitureLift: state.originFurnitureLift || undefined,
           originCarryDistance: state.originCarryDistance || undefined,
           originParkingAuth: state.originParkingAuth,
@@ -603,17 +604,17 @@ function DevisGratuitsV3Content() {
           destFloor: state.destinationUnknown
             ? undefined
             : destIsHouse
-            ? null
+            ? 0
             : state.destinationFloor
             ? Math.max(0, parseInt(state.destinationFloor, 10))
-            : null,
+            : undefined,
           destElevator: state.destinationUnknown
             ? undefined
             : destIsHouse
-            ? null
+            ? "NON"
             : state.destinationElevator
             ? mapElevator(state.destinationElevator)
-            : null,
+            : undefined,
           destFurnitureLift: state.destinationUnknown
             ? undefined
             : state.destinationFurnitureLift || undefined,
