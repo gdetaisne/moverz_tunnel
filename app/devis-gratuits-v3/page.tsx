@@ -1,12 +1,12 @@
 'use client';
 
-import { FormEvent, Suspense, useEffect } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ga4Event } from "@/lib/analytics/ga4";
 import {
-  createLead,
-  updateLead,
-  type LeadTunnelCreatePayload,
+  createBackofficeLead,
+  requestBackofficeConfirmation,
+  updateBackofficeLead,
 } from "@/lib/api/client";
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
@@ -31,6 +31,8 @@ function DevisGratuitsV3Content() {
   const { state, updateField, updateFields, goToStep } = useTunnelState();
   const source = searchParams.get("source") || searchParams.get("src") || "direct";
   const from = searchParams.get("from") || "/devis-gratuits-v3";
+
+  const [confirmationRequested, setConfirmationRequested] = useState(false);
   
   const { trackStep, trackStepChange, trackCompletion, trackError } = useTunnelTracking({
     source,
@@ -66,6 +68,19 @@ function DevisGratuitsV3Content() {
     }
   }, [state.currentStep]);
 
+  const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" =>
+    d === "light" ? "LIGHT" : d === "dense" ? "HEAVY" : "MEDIUM";
+
+  const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" =>
+    e === "none" ? "NON" : e === "small" ? "PARTIEL" : "OUI";
+
+  const toIsoDate = (raw: string | null | undefined): string | undefined => {
+    if (!raw) return undefined;
+    const d = new Date(raw);
+    if (!Number.isFinite(d.getTime())) return undefined;
+    return d.toISOString();
+  };
+
   async function handleSubmitStep1(e: FormEvent) {
     e.preventDefault();
 
@@ -80,17 +95,21 @@ function DevisGratuitsV3Content() {
     }
 
     try {
-      const payload: LeadTunnelCreatePayload = {
+      const payload = {
         firstName: state.firstName.trim(),
-        lastName: state.lastName.trim(),
-        email: state.email.trim(),
-        phone: state.phone.trim(),
+        email: state.email.trim().toLowerCase(),
+        lastName: state.lastName.trim() || undefined,
+        phone: state.phone.trim() || undefined,
         source,
-        primaryChannel: "web",
+        estimationMethod: "FORM" as const,
       };
 
-      const response = await createLead(payload);
-      updateFields({ leadId: response.id, linkingCode: response.linkingToken || null });
+      const { id: backofficeLeadId } = await createBackofficeLead(payload);
+      // V3: on utilise maintenant l'id Back Office (Neon) comme `leadId` dans le state.
+      // `linkingCode` (anciennement via SQLite /api/leads) n'est pas requis pour créer le lead BO;
+      // WhatsApp CTA a un fallback sans code.
+      updateFields({ leadId: backofficeLeadId, linkingCode: null });
+      setConfirmationRequested(false);
 
       trackStepChange(1, 2, "CONTACT", "PROJECT", "forward");
       goToStep(2);
@@ -115,14 +134,68 @@ function DevisGratuitsV3Content() {
 
     try {
       if (state.leadId) {
-        await updateLead(state.leadId, {
-          originPostalCode: state.originPostalCode,
-          originCity: state.originCity,
-          originAddress: state.originAddress,
-          destinationPostalCode: state.destinationUnknown ? null : state.destinationPostalCode,
-          destinationCity: state.destinationUnknown ? null : state.destinationCity,
-          destinationAddress: state.destinationUnknown ? null : state.destinationAddress,
-          movingDate: state.movingDate,
+        const tunnelOptions = {
+          access: {
+            origin: {
+              accessKind: state.originAccess || undefined,
+              furnitureLift: state.originFurnitureLift || undefined,
+              carryDistance: state.originCarryDistance || undefined,
+            },
+            destination: state.destinationUnknown
+              ? undefined
+              : {
+                  accessKind: state.destinationAccess || undefined,
+                  furnitureLift: state.destinationFurnitureLift || undefined,
+                  carryDistance: state.destinationCarryDistance || undefined,
+                },
+          },
+        };
+
+        await updateBackofficeLead(state.leadId, {
+          // Adresses (schéma BO)
+          originAddress: state.originAddress || undefined,
+          originCity: state.originCity || undefined,
+          originPostalCode: state.originPostalCode || undefined,
+          destAddress: state.destinationUnknown ? undefined : state.destinationAddress || undefined,
+          destCity: state.destinationUnknown ? undefined : state.destinationCity || undefined,
+          destPostalCode:
+            state.destinationUnknown ? undefined : state.destinationPostalCode || undefined,
+
+          // Date
+          movingDate: toIsoDate(state.movingDate),
+          dateFlexible: state.dateFlexible,
+
+          // Logement / accès
+          originHousingType: state.originHousingType || undefined,
+          originFloor: state.originFloor ? parseInt(state.originFloor, 10) : undefined,
+          originElevator: state.originElevator ? mapElevator(state.originElevator) : undefined,
+          originFurnitureLift: state.originFurnitureLift || undefined,
+          originCarryDistance: state.originCarryDistance || undefined,
+          originParkingAuth: state.originParkingAuth,
+
+          destHousingType: state.destinationUnknown
+            ? undefined
+            : state.destinationHousingType || undefined,
+          destFloor: state.destinationUnknown
+            ? undefined
+            : state.destinationFloor
+            ? parseInt(state.destinationFloor, 10)
+            : undefined,
+          destElevator: state.destinationUnknown
+            ? undefined
+            : state.destinationElevator
+            ? mapElevator(state.destinationElevator)
+            : undefined,
+          destFurnitureLift: state.destinationUnknown
+            ? undefined
+            : state.destinationFurnitureLift || undefined,
+          destCarryDistance: state.destinationUnknown
+            ? undefined
+            : state.destinationCarryDistance || undefined,
+          destParkingAuth: state.destinationUnknown ? undefined : state.destinationParkingAuth,
+
+          // Archivage (options non strictement mappées)
+          tunnelOptions,
         });
       }
 
@@ -150,15 +223,55 @@ function DevisGratuitsV3Content() {
         const priceMin = Math.round(surface * 15);
         const priceMax = Math.round(surface * 25);
         
-        await updateLead(state.leadId, {
+        const tunnelOptions = {
+          services: {
+            furnitureStorage: state.serviceFurnitureStorage || undefined,
+            cleaning: state.serviceCleaning || undefined,
+            fullPacking: state.serviceFullPacking || undefined,
+            furnitureAssembly: state.serviceFurnitureAssembly || undefined,
+            insurance: state.serviceInsurance || undefined,
+            wasteRemoval: state.serviceWasteRemoval || undefined,
+            helpWithoutTruck: state.serviceHelpWithoutTruck || undefined,
+            specificSchedule: state.serviceSpecificSchedule || undefined,
+            debarras: state.serviceDebarras || undefined,
+            dismantling: state.serviceDismantling || undefined,
+            piano: state.servicePiano || undefined,
+          },
+          accessDetails: {
+            noElevator: state.accessNoElevator || undefined,
+            smallElevator: state.accessSmallElevator || undefined,
+            truckDifficult: state.accessTruckDifficult || undefined,
+          },
+          heavyFurniture: {
+            americanFridge: state.furnitureAmericanFridge || undefined,
+            safe: state.furnitureSafe || undefined,
+            billiard: state.furnitureBilliard || undefined,
+            aquarium: state.furnitureAquarium || undefined,
+            over25kg: state.furnitureOver25kg || undefined,
+          },
+          notes: state.specificNotes || undefined,
+          debug: { distanceKmPlaceholder: distanceKm },
+        };
+
+        await updateBackofficeLead(state.leadId, {
           surfaceM2: surface,
-          volumeM3: volumeM3,
-          density: state.density,
+          estimatedVolume: volumeM3,
+          density: mapDensity(state.density),
           formule: state.formule,
-          priceMin: priceMin,
-          priceMax: priceMax,
-          distanceKm: distanceKm,
+          estimatedPriceMin: priceMin,
+          estimatedPriceAvg: Math.round((priceMin + priceMax) / 2),
+          estimatedPriceMax: priceMax,
+          tunnelOptions,
         });
+
+        // Email de confirmation (évite de mentir sur l'écran final)
+        try {
+          await requestBackofficeConfirmation(state.leadId);
+          setConfirmationRequested(true);
+        } catch (confirmErr) {
+          console.warn("Backoffice confirmation request failed:", confirmErr);
+          setConfirmationRequested(false);
+        }
       }
 
       trackStepChange(3, 4, "RECAP", "THANK_YOU", "forward");
@@ -250,6 +363,7 @@ function DevisGratuitsV3Content() {
               firstName={state.firstName}
               email={state.email}
               linkingCode={state.linkingCode || undefined}
+              confirmationRequested={confirmationRequested}
             />
           )}
         </div>

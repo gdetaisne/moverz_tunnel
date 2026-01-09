@@ -9,12 +9,14 @@ interface ConfirmationPageProps {
   firstName: string;
   email: string;
   linkingCode?: string;
+  confirmationRequested?: boolean;
 }
 
 export default function ConfirmationPage({ 
   firstName, 
   email, 
-  linkingCode 
+  linkingCode,
+  confirmationRequested = false,
 }: ConfirmationPageProps) {
   const { isMobile } = useDeviceDetection();
   const [mounted, setMounted] = useState(false);
@@ -143,14 +145,16 @@ export default function ConfirmationPage({
       </div>
 
       {/* Email confirmation */}
-      <div className="mt-8 p-4 rounded-xl bg-blue-50 border border-blue-200">
-        <div className="flex items-center justify-center gap-2 text-sm text-blue-900">
-          <Clock className="w-4 h-4" />
-          <p>
-            Un email de confirmation a été envoyé à <strong>{email}</strong>
-          </p>
+      {confirmationRequested && (
+        <div className="mt-8 p-4 rounded-xl bg-blue-50 border border-blue-200">
+          <div className="flex items-center justify-center gap-2 text-sm text-blue-900">
+            <Clock className="w-4 h-4" />
+            <p>
+              Un email de confirmation a été envoyé à <strong>{email}</strong>
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <style jsx>{`
         @keyframes scale-in {
