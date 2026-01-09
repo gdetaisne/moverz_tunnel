@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { MapPin, Home, Calendar, Building2, Layers, ArrowRight, Check, AlertCircle } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 
@@ -67,6 +67,15 @@ const FLOOR_OPTIONS: Array<{ value: string; label: string }> = [
 ];
 
 export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
+  // Destination obligatoire: si une session persistée avait destinationUnknown=true,
+  // on la remet à false pour éviter un formulaire incohérent.
+  useEffect(() => {
+    if (props.destinationUnknown) {
+      props.onFieldChange("destinationUnknown", false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.destinationUnknown]);
+
   const renderConstrainedOptions = (which: "origin" | "destination") => {
     const prefix = which === "origin" ? "origin" : "destination";
     const access = which === "origin" ? props.originAccess : props.destinationAccess;
@@ -270,9 +279,8 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     props.originAddress.trim().length >= 5 && props.originHousingType.length > 0;
     
   const isDestinationValid =
-    props.destinationUnknown ||
-    (props.destinationAddress.trim().length >= 5 &&
-      props.destinationHousingType.length > 0);
+    props.destinationAddress.trim().length >= 5 &&
+    props.destinationHousingType.length > 0;
   
   const isDateValid = props.movingDate.length > 0;
   const isFormValid = isOriginValid && isDestinationValid && isDateValid;
@@ -518,21 +526,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             <h3 className="text-lg font-bold text-[#0F172A]">Arrivée</h3>
           </div>
 
-          {/* Checkbox: destination inconnue */}
-          <label className="flex items-center gap-3 rounded-xl bg-white border border-[#E3E5E8] px-4 py-3 cursor-pointer hover:border-[#6BCFCF] transition-colors">
-            <input
-              type="checkbox"
-              checked={props.destinationUnknown}
-              onChange={(e) => props.onFieldChange("destinationUnknown", e.target.checked)}
-              className="w-5 h-5 rounded border-[#E3E5E8] text-[#6BCFCF] focus:ring-2 focus:ring-[#6BCFCF]/20"
-            />
-            <span className="text-sm text-[#0F172A]">
-              Je ne connais pas encore mon adresse d'arrivée
-            </span>
-          </label>
-
-          {!props.destinationUnknown && (
-            <>
+          <>
               <AddressAutocomplete
                 label="Adresse d'arrivée *"
                 placeholder="20 place Bellecour, 69002 Lyon"
@@ -689,8 +683,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
                 {renderConstrainedOptions("destination")}
               </div>
-            </>
-          )}
+          </>
         </div>
 
         {/* === DATE === */}
