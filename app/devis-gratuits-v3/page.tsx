@@ -750,15 +750,16 @@ function DevisGratuitsV3Content() {
           }
         }
 
-        // Email de confirmation (évite de mentir sur l'écran final)
-        try {
-          const idForConfirmation = (await ensureBackofficeLeadId()) ?? effectiveLeadId;
-          await requestBackofficeConfirmation(idForConfirmation);
-          setConfirmationRequested(true);
-        } catch (confirmErr) {
-          console.warn("Backoffice confirmation request failed:", confirmErr);
-          setConfirmationRequested(false);
-        }
+        // Email de confirmation (best-effort)
+        // IMPORTANT PERF: ne pas bloquer la navigation Step3→Step4 sur cet appel réseau,
+        // car /public/leads/:id/request-confirmation peut attendre des documents (DOCS_NOT_READY).
+        const idForConfirmation = (await ensureBackofficeLeadId()) ?? effectiveLeadId;
+        requestBackofficeConfirmation(idForConfirmation)
+          .then(() => setConfirmationRequested(true))
+          .catch((confirmErr) => {
+            console.warn("Backoffice confirmation request failed:", confirmErr);
+            setConfirmationRequested(false);
+          });
       }
 
       trackStepChange(3, 4, "RECAP", "THANK_YOU", "forward");
