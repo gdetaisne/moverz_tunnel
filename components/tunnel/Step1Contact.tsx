@@ -67,7 +67,7 @@ export default function Step1Contact({
           </p>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-5">
+        <form onSubmit={onSubmit} noValidate className="space-y-5">
           {/* Prénom */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">

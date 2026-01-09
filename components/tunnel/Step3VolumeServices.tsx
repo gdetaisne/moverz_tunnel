@@ -161,7 +161,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
         </p>
       </div>
 
-      <form onSubmit={props.onSubmit} className="space-y-6">
+      <form onSubmit={props.onSubmit} noValidate className="space-y-6">
         {/* Surface */}
         <div className="p-6 rounded-2xl bg-[#F8F9FA] border border-[#E3E5E8]">
           <label className="block text-sm font-medium text-[#0F172A] mb-2">

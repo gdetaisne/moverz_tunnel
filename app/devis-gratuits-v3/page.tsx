@@ -573,7 +573,9 @@ function DevisGratuitsV3Content() {
 
           // Logement / accès
           originHousingType: state.originHousingType || undefined,
-          originFloor: state.originFloor ? parseInt(state.originFloor, 10) : undefined,
+          originFloor: state.originFloor
+            ? Math.max(0, parseInt(state.originFloor, 10))
+            : undefined,
           originElevator: state.originElevator ? mapElevator(state.originElevator) : undefined,
           originFurnitureLift: state.originFurnitureLift || undefined,
           originCarryDistance: state.originCarryDistance || undefined,
@@ -585,7 +587,7 @@ function DevisGratuitsV3Content() {
           destFloor: state.destinationUnknown
             ? undefined
             : state.destinationFloor
-            ? parseInt(state.destinationFloor, 10)
+            ? Math.max(0, parseInt(state.destinationFloor, 10))
             : undefined,
           destElevator: state.destinationUnknown
             ? undefined

@@ -110,7 +110,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
         </p>
       </div>
 
-      <form onSubmit={props.onSubmit} className="space-y-8">
+      <form onSubmit={props.onSubmit} noValidate className="space-y-8">
         {/* === DÉPART === */}
         <div className="p-6 rounded-2xl bg-[#F8F9FA] border border-[#E3E5E8] space-y-6">
           <div className="flex items-center gap-2">
@@ -186,7 +186,13 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               <input
                 type="number"
                 value={props.originFloor}
-                onChange={(e) => props.onFieldChange("originFloor", e.target.value)}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "") return props.onFieldChange("originFloor", "");
+                  const n = Number.parseInt(raw, 10);
+                  if (!Number.isFinite(n)) return props.onFieldChange("originFloor", "");
+                  props.onFieldChange("originFloor", String(Math.min(50, Math.max(0, n))));
+                }}
                 min="0"
                 max="50"
                 className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
@@ -327,7 +333,13 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   <input
                     type="number"
                     value={props.destinationFloor}
-                    onChange={(e) => props.onFieldChange("destinationFloor", e.target.value)}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === "") return props.onFieldChange("destinationFloor", "");
+                      const n = Number.parseInt(raw, 10);
+                      if (!Number.isFinite(n)) return props.onFieldChange("destinationFloor", "");
+                      props.onFieldChange("destinationFloor", String(Math.min(50, Math.max(0, n))));
+                    }}
                     min="0"
                     max="50"
                     className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
