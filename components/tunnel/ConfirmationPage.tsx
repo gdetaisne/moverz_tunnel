@@ -10,6 +10,7 @@ interface ConfirmationPageProps {
   email: string;
   linkingCode?: string;
   confirmationRequested?: boolean;
+  leadId?: string;
 }
 
 export default function ConfirmationPage({ 
@@ -17,6 +18,7 @@ export default function ConfirmationPage({
   email, 
   linkingCode,
   confirmationRequested = false,
+  leadId,
 }: ConfirmationPageProps) {
   const { isMobile } = useDeviceDetection();
   const [mounted, setMounted] = useState(false);
@@ -76,9 +78,13 @@ export default function ConfirmationPage({
 
             <button
               onClick={() => {
-                // TODO: Implement desktop upload flow
-                window.location.href = "/upload-photos?code=" + (linkingCode || "");
+                // Desktop upload: on passe l'id Back Office (source de vérité)
+                const url = new URL("/upload-photos", window.location.origin);
+                if (leadId) url.searchParams.set("leadId", leadId);
+                if (linkingCode) url.searchParams.set("code", linkingCode); // affichage uniquement
+                window.location.href = url.toString();
               }}
+              disabled={!leadId}
               className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white border-2 border-[#E3E5E8] px-8 py-4 text-base font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#6BCFCF]/5 transition-all duration-200"
             >
               <Upload className="w-5 h-5" />

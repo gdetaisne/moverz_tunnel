@@ -3,15 +3,23 @@
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Upload, Check, X, Image as ImageIcon } from "lucide-react";
+import { uploadBackofficePhotos } from "@/lib/api/client";
 
 function UploadPhotosContent() {
   const searchParams = useSearchParams();
   const linkingCode = searchParams.get("code") || "";
+  const leadId = searchParams.get("leadId") || "";
   
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [uploadSummary, setUploadSummary] = useState<{
+    uploadedCount: number;
+    totalPhotos: number;
+    errors: { originalFilename: string; reason: string }[];
+  } | null>(null);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -37,14 +45,35 @@ function UploadPhotosContent() {
   };
 
   const handleUpload = async () => {
+    setError(null);
+    setUploadSummary(null);
+
+    if (!leadId) {
+      setError("Impossible d'envoyer vos photos: identifiant dossier manquant.");
+      return;
+    }
+    if (files.length === 0) {
+      setError("Aucune photo sélectionnée.");
+      return;
+    }
+
     setUploading(true);
-    
-    // TODO: Implement actual upload to server
-    // For now, just simulate upload
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setUploaded(true);
-    setUploading(false);
+    try {
+      const res = await uploadBackofficePhotos(leadId, files);
+      const uploadedCount = res.data.uploaded?.length ?? 0;
+      setUploadSummary({
+        uploadedCount,
+        totalPhotos: res.data.totalPhotos ?? 0,
+        errors: res.data.errors ?? [],
+      });
+      setUploaded(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur inconnue lors de l'upload.";
+      setError(msg);
+      setUploaded(false);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -56,7 +85,23 @@ function UploadPhotosContent() {
             <div>
               <h1 className="text-2xl font-bold text-white">Upload vos photos</h1>
               <p className="text-sm text-white/60 mt-1">
-                Code dossier : <span className="font-mono text-[#6BCFCF]">{linkingCode || "Non fourni"}</span>
+                {leadId ? (
+                  <>
+                    Dossier : <span className="font-mono text-[#6BCFCF]">{leadId}</span>
+                    {linkingCode ? (
+                      <>
+                        {" "}
+                        · Code :{" "}
+                        <span className="font-mono text-[#6BCFCF]">{linkingCode}</span>
+                      </>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    Dossier :{" "}
+                    <span className="font-mono text-amber-300">Non fourni</span>
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -85,6 +130,12 @@ function UploadPhotosContent() {
                 💡 Plus de photos = devis plus justes (±5%)
               </p>
             </div>
+
+            {error && (
+              <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-100">
+                {error}
+              </div>
+            )}
 
             {/* Drop zone */}
             <div
@@ -160,7 +211,7 @@ function UploadPhotosContent() {
 
                 <button
                   onClick={handleUpload}
-                  disabled={uploading}
+                  disabled={uploading || !leadId}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#6BCFCF] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#5BBFBF] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {uploading ? (
@@ -175,6 +226,11 @@ function UploadPhotosContent() {
                     </>
                   )}
                 </button>
+                {!leadId && (
+                  <p className="text-xs text-amber-200/80">
+                    Identifiant dossier manquant: revenez depuis la page de confirmation.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -192,6 +248,21 @@ function UploadPhotosContent() {
             <p className="text-xl text-white/70 mb-8">
               Vous allez recevoir vos devis sous 48-72h par email.
             </p>
+
+            {uploadSummary && uploadSummary.errors.length > 0 && (
+              <div className="mb-8 bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 max-w-md mx-auto text-left">
+                <h3 className="text-lg font-bold text-white mb-2">
+                  Certaines photos n'ont pas pu être envoyées
+                </h3>
+                <ul className="space-y-2 text-sm text-white/70">
+                  {uploadSummary.errors.slice(0, 5).map((e, idx) => (
+                    <li key={idx}>
+                      <span className="font-mono">{e.originalFilename}</span>: {e.reason}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 max-w-md mx-auto">
               <h3 className="text-lg font-bold text-white mb-4">Que se passe-t-il maintenant ?</h3>
