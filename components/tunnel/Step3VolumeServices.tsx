@@ -121,12 +121,6 @@ const SERVICES = [
   { key: "serviceSpecificSchedule", label: "Horaires spécifiques" },
 ];
 
-const OTHER_NEEDS = [
-  { key: "hasPiano", label: "Piano" },
-  { key: "hasFragileItems", label: "Objets fragiles" },
-  { key: "hasSpecificFurniture", label: "Mobilier spécifique" },
-];
-
 export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
   const surface = parseInt(props.surfaceM2) || 60;
   const isSurfaceValid = surface >= 10 && surface <= 500;
@@ -143,9 +137,6 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
     for (const service of SERVICES) {
       if (props[service.key as keyof Step3VolumeServicesProps] as boolean) n++;
     }
-    for (const need of OTHER_NEEDS) {
-      if (props[need.key as keyof Step3VolumeServicesProps] as boolean) n++;
-    }
     if (props.specificNotes?.trim()) n++;
     return n;
   }, [
@@ -157,9 +148,6 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
     props.serviceWasteRemoval,
     props.serviceHelpWithoutTruck,
     props.serviceSpecificSchedule,
-    props.hasPiano,
-    props.hasFragileItems,
-    props.hasSpecificFurniture,
     props.specificNotes,
   ]);
 
@@ -464,21 +452,6 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
           </div>
         </div>
 
-              <div>
-                <p className="text-sm font-semibold text-[#0F172A]">Autres besoins</p>
-                <div className="mt-3 space-y-3">
-                  {OTHER_NEEDS.map((need) => {
-                    const value = props[need.key as keyof Step3VolumeServicesProps] as boolean;
-                    return (
-                      <div key={need.key} className="flex items-center justify-between gap-4">
-                        <p className="text-sm font-medium text-[#0F172A]">{need.label}</p>
-                        <YesNo onChange={(v) => props.onFieldChange(need.key, v)} value={value} />
-                      </div>
-                    );
-                  })}
-                </div>
-            </div>
-            
               <div>
                 <p className="text-sm font-semibold text-[#0F172A]">Précisions</p>
             <textarea
