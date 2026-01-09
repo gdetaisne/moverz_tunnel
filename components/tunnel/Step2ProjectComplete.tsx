@@ -57,6 +57,13 @@ const HOUSING_TYPES = [
 // V2 style: on évite les formats complexes; on capture juste "portage > 10m" (oui/non)
 const CARRY_DISTANCE_ON_VALUE = "10-20";
 
+const FLOOR_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "0", label: "RDC" },
+  { value: "1", label: "1er" },
+  { value: "2", label: "2e" },
+  { value: "3", label: "Au‑delà" }, // 3+ étages
+];
+
 export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   const renderConstrainedOptions = (which: "origin" | "destination") => {
     const prefix = which === "origin" ? "origin" : "destination";
@@ -92,20 +99,17 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
-              <input
-                type="number"
-                value={floor}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  if (raw === "") return props.onFieldChange(`${prefix}Floor`, "");
-                  const n = Number.parseInt(raw, 10);
-                  if (!Number.isFinite(n)) return props.onFieldChange(`${prefix}Floor`, "");
-                  props.onFieldChange(`${prefix}Floor`, String(Math.min(50, Math.max(0, n))));
-                }}
-                min="0"
-                max="50"
+              <select
+                value={floor || "0"}
+                onChange={(e) => props.onFieldChange(`${prefix}Floor`, e.target.value)}
                 className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-3 py-2 text-sm text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-              />
+              >
+                {FLOOR_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
@@ -139,32 +143,6 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             </div>
           </div>
         )}
-
-        {/* Monte-meuble */}
-        <div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-[#0F172A]">Monte‑meuble</p>
-              <p className="text-xs text-[#1E293B]/60">Ex: façade, cour, escaliers étroits.</p>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                props.onFieldChange(
-                  `${prefix}FurnitureLift`,
-                  monteMeubleEnabled ? "no" : "yes"
-                )
-              }
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                monteMeubleEnabled
-                  ? "bg-[#6BCFCF] text-white"
-                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-              }`}
-            >
-              {monteMeubleEnabled ? "Activé" : "Désactivé"}
-            </button>
-          </div>
-        </div>
 
         {/* Portage > 10 m */}
         <div>
@@ -465,6 +443,39 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 Contraint
               </button>
             </div>
+
+            {/* Monte-meuble (simple ON/OFF) */}
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[#E3E5E8] bg-white p-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-[#0F172A]">Besoin d’un monte‑meuble</p>
+                <p className="text-xs text-[#1E293B]/60">Ex: façade, cour, escaliers étroits.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => props.onFieldChange("originFurnitureLift", "no")}
+                  className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    props.originFurnitureLift !== "yes"
+                      ? "bg-[#0F172A] text-white"
+                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                  }`}
+                >
+                  Non
+                </button>
+                <button
+                  type="button"
+                  onClick={() => props.onFieldChange("originFurnitureLift", "yes")}
+                  className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    props.originFurnitureLift === "yes"
+                      ? "bg-[#6BCFCF] text-white"
+                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                  }`}
+                >
+                  Oui
+                </button>
+              </div>
+            </div>
+
             {renderConstrainedOptions("origin")}
           </div>
         </div>
@@ -647,6 +658,39 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     Contraint
                   </button>
                 </div>
+
+                {/* Monte-meuble (simple ON/OFF) */}
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[#E3E5E8] bg-white p-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#0F172A]">Besoin d’un monte‑meuble</p>
+                    <p className="text-xs text-[#1E293B]/60">Ex: façade, cour, escaliers étroits.</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => props.onFieldChange("destinationFurnitureLift", "no")}
+                      className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                        props.destinationFurnitureLift !== "yes"
+                          ? "bg-[#0F172A] text-white"
+                          : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                      }`}
+                    >
+                      Non
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => props.onFieldChange("destinationFurnitureLift", "yes")}
+                      className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                        props.destinationFurnitureLift === "yes"
+                          ? "bg-[#6BCFCF] text-white"
+                          : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                      }`}
+                    >
+                      Oui
+                    </button>
+                  </div>
+                </div>
+
                 {renderConstrainedOptions("destination")}
               </div>
             </>
