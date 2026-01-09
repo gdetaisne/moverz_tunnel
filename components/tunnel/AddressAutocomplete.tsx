@@ -18,9 +18,12 @@ export interface AddressAutocompleteProps {
   initialValue?: string;
   onSelect: (value: AddressSuggestion) => void;
   disabled?: boolean;
+  mode?: "fr" | "world" | "auto";
 }
 
-// Version "FR-first" : BAN api-adresse.data.gouv.fr (pas de grosse dépendance).
+// --- Providers ---
+
+// FR (BAN api-adresse.data.gouv.fr)
 async function fetchBanSuggestions(
   query: string,
   signal?: AbortSignal
@@ -51,12 +54,53 @@ async function fetchBanSuggestions(
   }));
 }
 
+// World/Europe (Nominatim OSM)
+async function fetchNominatimSuggestions(
+  query: string,
+  signal?: AbortSignal
+): Promise<AddressSuggestion[]> {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+    query
+  )}&format=json&addressdetails=1&limit=5`;
+  const res = await fetch(url, {
+    signal,
+  });
+  if (!res.ok) return [];
+  const data = (await res.json()) as {
+    display_name: string;
+    lat: string;
+    lon: string;
+    address?: {
+      city?: string;
+      town?: string;
+      village?: string;
+      hamlet?: string;
+      postcode?: string;
+      country_code?: string;
+    };
+  }[];
+  return (data ?? []).map((item) => {
+    const addr = item.address ?? {};
+    const city = addr.city || addr.town || addr.village || addr.hamlet || undefined;
+    return {
+      label: item.display_name,
+      addressLine: item.display_name,
+      city,
+      postalCode: addr.postcode,
+      countryCode: addr.country_code,
+      lat: Number.parseFloat(item.lat),
+      lon: Number.parseFloat(item.lon),
+    };
+  });
+}
+
 export function AddressAutocomplete({
   label,
   placeholder,
   initialValue,
   onSelect,
   disabled,
+  mode = "auto",
 }: AddressAutocompleteProps) {
   const [input, setInput] = useState(initialValue ?? "");
   const [isLoading, setIsLoading] = useState(false);
@@ -98,7 +142,20 @@ export function AddressAutocomplete({
     controllerRef.current = ctrl;
     setIsLoading(true);
     try {
-      const suggestions = await fetchBanSuggestions(trimmed, ctrl.signal);
+      let suggestions: AddressSuggestion[] = [];
+
+      if (mode === "fr") {
+        suggestions = await fetchBanSuggestions(trimmed, ctrl.signal);
+      } else if (mode === "world") {
+        suggestions = await fetchNominatimSuggestions(trimmed, ctrl.signal);
+      } else {
+        // auto: BAN d'abord, puis Nominatim si aucun résultat
+        suggestions = await fetchBanSuggestions(trimmed, ctrl.signal);
+        if (suggestions.length === 0) {
+          suggestions = await fetchNominatimSuggestions(trimmed, ctrl.signal);
+        }
+      }
+
       cacheRef.current[trimmed] = suggestions;
       if (!ctrl.signal.aborted) setResults(suggestions);
     } catch {
@@ -128,7 +185,14 @@ export function AddressAutocomplete({
     if (trimmed.length < 5) return;
     try {
       const ctrl = new AbortController();
-      const list = await fetchBanSuggestions(trimmed, ctrl.signal);
+      const list =
+        mode === "world"
+          ? await fetchNominatimSuggestions(trimmed, ctrl.signal)
+          : mode === "fr"
+          ? await fetchBanSuggestions(trimmed, ctrl.signal)
+          : (await fetchBanSuggestions(trimmed, ctrl.signal)).length
+          ? await fetchBanSuggestions(trimmed, ctrl.signal)
+          : await fetchNominatimSuggestions(trimmed, ctrl.signal);
       const first = list[0];
       if (first?.postalCode && first?.city) {
         commitSelection(first);
