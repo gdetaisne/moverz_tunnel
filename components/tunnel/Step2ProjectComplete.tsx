@@ -2,11 +2,15 @@
 
 import { useState, FormEvent } from "react";
 import { MapPin, Home, Calendar, Building2, Layers, ArrowRight, Check, AlertCircle } from "lucide-react";
+import { AddressAutocomplete } from "./AddressAutocomplete";
 
 interface Step2ProjectCompleteProps {
   // Départ
   originPostalCode: string;
   originCity: string;
+  originAddress: string;
+  originLat: number | null;
+  originLon: number | null;
   originHousingType: string;
   originFloor: string;
   originElevator: string;
@@ -15,6 +19,9 @@ interface Step2ProjectCompleteProps {
   // Arrivée
   destinationPostalCode: string;
   destinationCity: string;
+  destinationAddress: string;
+  destinationLat: number | null;
+  destinationLon: number | null;
   destinationHousingType: string;
   destinationFloor: string;
   destinationElevator: string;
@@ -86,36 +93,29 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             <h3 className="text-lg font-bold text-[#0F172A]">Départ</h3>
           </div>
 
-          {/* Code postal + Ville */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-[#0F172A] mb-2">Code postal *</label>
-              <input
-                type="text"
-                value={props.originPostalCode}
-                onChange={(e) => {
-                  markTouched("originPostalCode");
-                  props.onFieldChange("originPostalCode", e.target.value);
-                }}
-                maxLength={5}
-                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                placeholder="75001"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#0F172A] mb-2">Ville *</label>
-              <input
-                type="text"
-                value={props.originCity}
-                onChange={(e) => {
-                  markTouched("originCity");
-                  props.onFieldChange("originCity", e.target.value);
-                }}
-                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                placeholder="Paris"
-              />
-            </div>
-          </div>
+          {/* Adresse (1 champ) */}
+          <AddressAutocomplete
+            label="Adresse de départ *"
+            placeholder="10 rue de la Paix, 33000 Bordeaux"
+            initialValue={
+              props.originAddress ||
+              [props.originPostalCode, props.originCity].filter(Boolean).join(" ")
+            }
+            onSelect={(s) => {
+              markTouched("originAddress");
+              props.onFieldChange("originAddress", s.addressLine ?? s.label);
+              props.onFieldChange("originPostalCode", s.postalCode ?? "");
+              props.onFieldChange("originCity", s.city ?? "");
+              props.onFieldChange("originLat", s.lat ?? null);
+              props.onFieldChange("originLon", s.lon ?? null);
+            }}
+          />
+          {(props.originPostalCode || props.originCity) && (
+            <p className="text-xs text-[#1E293B]/60">
+              {props.originPostalCode} {props.originCity}
+              {props.originLat != null && props.originLon != null ? " · coords OK" : " · coords manquantes"}
+            </p>
+          )}
 
           {/* Type de logement */}
           <div>
@@ -217,36 +217,30 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
           {!props.destinationUnknown && (
             <>
-              {/* Code postal + Ville */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-[#0F172A] mb-2">Code postal *</label>
-                  <input
-                    type="text"
-                    value={props.destinationPostalCode}
-                    onChange={(e) => {
-                      markTouched("destinationPostalCode");
-                      props.onFieldChange("destinationPostalCode", e.target.value);
-                    }}
-                    maxLength={5}
-                    className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                    placeholder="69001"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#0F172A] mb-2">Ville *</label>
-                  <input
-                    type="text"
-                    value={props.destinationCity}
-                    onChange={(e) => {
-                      markTouched("destinationCity");
-                      props.onFieldChange("destinationCity", e.target.value);
-                    }}
-                    className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                    placeholder="Lyon"
-                  />
-                </div>
-              </div>
+              <AddressAutocomplete
+                label="Adresse d'arrivée *"
+                placeholder="20 place Bellecour, 69002 Lyon"
+                initialValue={
+                  props.destinationAddress ||
+                  [props.destinationPostalCode, props.destinationCity]
+                    .filter(Boolean)
+                    .join(" ")
+                }
+                onSelect={(s) => {
+                  markTouched("destinationAddress");
+                  props.onFieldChange("destinationAddress", s.addressLine ?? s.label);
+                  props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
+                  props.onFieldChange("destinationCity", s.city ?? "");
+                  props.onFieldChange("destinationLat", s.lat ?? null);
+                  props.onFieldChange("destinationLon", s.lon ?? null);
+                }}
+              />
+              {(props.destinationPostalCode || props.destinationCity) && (
+                <p className="text-xs text-[#1E293B]/60">
+                  {props.destinationPostalCode} {props.destinationCity}
+                  {props.destinationLat != null && props.destinationLon != null ? " · coords OK" : " · coords manquantes"}
+                </p>
+              )}
 
               {/* Type de logement */}
               <div>

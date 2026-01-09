@@ -96,7 +96,40 @@ function DevisGratuitsV3Content() {
   };
 
   // --- helpers pricing (copiés de la V2, puis ajustés pour la V3) ---
-  const estimateDistanceKm = (originPostalCode: string, destinationPostalCode: string) => {
+  const estimateDistanceKm = (
+    originPostalCode: string,
+    destinationPostalCode: string,
+    originLat: number | null,
+    originLon: number | null,
+    destinationLat: number | null,
+    destinationLon: number | null
+  ) => {
+    // Si on dispose de coordonnées précises (BAN), on calcule une distance Haversine.
+    if (
+      originLat != null &&
+      originLon != null &&
+      destinationLat != null &&
+      destinationLon != null
+    ) {
+      const R = 6371;
+      const toRad = (deg: number) => (deg * Math.PI) / 180;
+      const dLat = toRad(destinationLat - originLat);
+      const dLon = toRad(destinationLon - originLon);
+      const la1 = toRad(originLat);
+      const la2 = toRad(destinationLat);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(la1) *
+          Math.cos(la2) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const dist = R * c;
+      if (Number.isFinite(dist) && dist > 0) {
+        return Math.min(1200, Math.round(dist));
+      }
+    }
+
     if (!originPostalCode || !destinationPostalCode) return 50;
     if (originPostalCode === destinationPostalCode) return 10;
     const o = parseInt(originPostalCode.slice(0, 2), 10);
@@ -163,7 +196,14 @@ function DevisGratuitsV3Content() {
 
     const distanceKm = state.destinationUnknown
       ? 50
-      : estimateDistanceKm(state.originPostalCode, state.destinationPostalCode);
+      : estimateDistanceKm(
+          state.originPostalCode,
+          state.destinationPostalCode,
+          state.originLat,
+          state.originLon,
+          state.destinationLat,
+          state.destinationLon
+        );
 
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
 
@@ -253,7 +293,14 @@ function DevisGratuitsV3Content() {
 
     const distanceKm = state.destinationUnknown
       ? 50
-      : estimateDistanceKm(state.originPostalCode, state.destinationPostalCode);
+      : estimateDistanceKm(
+          state.originPostalCode,
+          state.destinationPostalCode,
+          state.originLat,
+          state.originLon,
+          state.destinationLat,
+          state.destinationLon
+        );
 
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
 
@@ -595,12 +642,18 @@ function DevisGratuitsV3Content() {
             <Step2ProjectComplete
               originPostalCode={state.originPostalCode}
               originCity={state.originCity}
+              originAddress={state.originAddress}
+              originLat={state.originLat}
+              originLon={state.originLon}
               originHousingType={state.originHousingType}
               originFloor={state.originFloor}
               originElevator={state.originElevator}
               originAccess={state.originAccess}
               destinationPostalCode={state.destinationPostalCode}
               destinationCity={state.destinationCity}
+              destinationAddress={state.destinationAddress}
+              destinationLat={state.destinationLat}
+              destinationLon={state.destinationLon}
               destinationHousingType={state.destinationHousingType}
               destinationFloor={state.destinationFloor}
               destinationElevator={state.destinationElevator}

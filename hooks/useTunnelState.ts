@@ -13,6 +13,8 @@ export interface TunnelFormState {
   originPostalCode: string;
   originCity: string;
   originAddress: string;
+  originLat: number | null;
+  originLon: number | null;
   originHousingType: string;
   originFloor: string;
   originElevator: string;
@@ -24,6 +26,8 @@ export interface TunnelFormState {
   destinationPostalCode: string;
   destinationCity: string;
   destinationAddress: string;
+  destinationLat: number | null;
+  destinationLon: number | null;
   destinationHousingType: string;
   destinationFloor: string;
   destinationElevator: string;
@@ -90,6 +94,8 @@ const INITIAL_STATE: TunnelFormState = {
   originPostalCode: "",
   originCity: "",
   originAddress: "",
+  originLat: null,
+  originLon: null,
   originHousingType: "",
   originFloor: "0",
   originElevator: "none",
@@ -101,6 +107,8 @@ const INITIAL_STATE: TunnelFormState = {
   destinationPostalCode: "",
   destinationCity: "",
   destinationAddress: "",
+  destinationLat: null,
+  destinationLon: null,
   destinationHousingType: "",
   destinationFloor: "0",
   destinationElevator: "none",
