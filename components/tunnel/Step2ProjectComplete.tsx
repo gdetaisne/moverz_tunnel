@@ -15,6 +15,9 @@ interface Step2ProjectCompleteProps {
   originFloor: string;
   originElevator: string;
   originAccess: string;
+  originFurnitureLift: string; // unknown/no/yes
+  originCarryDistance: string; // "" or "10-20"..."90-100"
+  originParkingAuth: boolean;
   
   // Arrivée
   destinationPostalCode: string;
@@ -26,6 +29,9 @@ interface Step2ProjectCompleteProps {
   destinationFloor: string;
   destinationElevator: string;
   destinationAccess: string;
+  destinationFurnitureLift: string;
+  destinationCarryDistance: string;
+  destinationParkingAuth: boolean;
   destinationUnknown: boolean;
   
   // Date
@@ -48,7 +54,123 @@ const HOUSING_TYPES = [
   { value: "t5", label: "T5+" },
 ];
 
+const CARRY_DISTANCE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "10-20", label: "10–20 m" },
+  { value: "20-30", label: "20–30 m" },
+  { value: "30-40", label: "30–40 m" },
+  { value: "40-50", label: "40–50 m" },
+  { value: "50-60", label: "50–60 m" },
+  { value: "60-70", label: "60–70 m" },
+  { value: "70-80", label: "70–80 m" },
+  { value: "80-90", label: "80–90 m" },
+  { value: "90-100", label: "90–100 m" },
+];
+
 export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
+  const renderConstrainedOptions = (which: "origin" | "destination") => {
+    const prefix = which === "origin" ? "origin" : "destination";
+    const access = which === "origin" ? props.originAccess : props.destinationAccess;
+    const furnitureLift =
+      which === "origin" ? props.originFurnitureLift : props.destinationFurnitureLift;
+    const carryDistance =
+      which === "origin" ? props.originCarryDistance : props.destinationCarryDistance;
+    const parkingAuth =
+      which === "origin" ? props.originParkingAuth : props.destinationParkingAuth;
+
+    if (access !== "constrained") return null;
+
+    return (
+      <div className="mt-4 space-y-4 rounded-xl border border-[#E3E5E8] bg-white p-4">
+        <div>
+          <p className="text-sm font-semibold text-[#0F172A]">Détails d’accès</p>
+          <p className="text-xs text-[#1E293B]/60">
+            Uniquement si l’accès est difficile (pour affiner le devis).
+          </p>
+        </div>
+
+        {/* Monte-meuble */}
+        <div>
+          <label className="block text-sm font-medium text-[#0F172A] mb-2">
+            Besoin d’un monte‑meuble ?
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { value: "unknown", label: "Je ne sais pas" },
+              { value: "no", label: "Non" },
+              { value: "yes", label: "Oui" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => props.onFieldChange(`${prefix}FurnitureLift`, opt.value)}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                  furnitureLift === opt.value
+                    ? "bg-[#0F172A] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Portage >10m */}
+        <div>
+          <label className="block text-sm font-medium text-[#0F172A] mb-2">
+            Distance de portage (uniquement si &gt; 10 m)
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => props.onFieldChange(`${prefix}CarryDistance`, "")}
+              className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                carryDistance === ""
+                  ? "bg-[#0F172A] text-white"
+                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+              }`}
+            >
+              ≤ 10 m
+            </button>
+            <select
+              value={carryDistance}
+              onChange={(e) => props.onFieldChange(`${prefix}CarryDistance`, e.target.value)}
+              className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-3 py-2 text-sm text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+            >
+              <option value="">Choisir &gt; 10 m…</option>
+              {CARRY_DISTANCE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="mt-1 text-xs text-[#1E293B]/60">
+            Exemple: couloir long, cour intérieure, centre‑ville piéton.
+          </p>
+        </div>
+
+        {/* Stationnement */}
+        <label className="flex items-start gap-3 p-3 rounded-xl bg-[#F8F9FA] border border-[#E3E5E8] cursor-pointer hover:border-[#6BCFCF] transition-colors">
+          <input
+            type="checkbox"
+            checked={Boolean(parkingAuth)}
+            onChange={(e) => props.onFieldChange(`${prefix}ParkingAuth`, e.target.checked)}
+            className="mt-0.5 w-5 h-5 rounded border-[#E3E5E8] text-[#6BCFCF] focus:ring-2 focus:ring-[#6BCFCF]/20"
+          />
+          <div>
+            <div className="text-sm font-medium text-[#0F172A]">
+              Autorisation / réservation de stationnement nécessaire
+            </div>
+            <div className="text-xs text-[#1E293B]/60">
+              Ex: parking payant, demande mairie, accès régulé.
+            </div>
+          </div>
+        </label>
+      </div>
+    );
+  };
+
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
 
   function markTouched(field: string) {
@@ -299,6 +421,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 Contraint
               </button>
             </div>
+            {renderConstrainedOptions("origin")}
           </div>
         </div>
 
@@ -480,6 +603,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     Contraint
                   </button>
                 </div>
+                {renderConstrainedOptions("destination")}
               </div>
             </>
           )}

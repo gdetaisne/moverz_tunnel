@@ -100,7 +100,8 @@ const INITIAL_STATE: TunnelFormState = {
   originFloor: "0",
   originElevator: "none",
   originFurnitureLift: "unknown",
-  originCarryDistance: "0-10",
+  // On ne stocke que >10m (sinon "") pour éviter du bruit inutile.
+  originCarryDistance: "",
   originParkingAuth: false,
   originAccess: "easy",
   
@@ -113,7 +114,8 @@ const INITIAL_STATE: TunnelFormState = {
   destinationFloor: "0",
   destinationElevator: "none",
   destinationFurnitureLift: "unknown",
-  destinationCarryDistance: "0-10",
+  // On ne stocke que >10m (sinon "") pour éviter du bruit inutile.
+  destinationCarryDistance: "",
   destinationParkingAuth: false,
   destinationAccess: "easy",
   destinationUnknown: false,

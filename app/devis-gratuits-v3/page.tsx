@@ -790,6 +790,9 @@ function DevisGratuitsV3Content() {
               originFloor={state.originFloor}
               originElevator={state.originElevator}
               originAccess={state.originAccess}
+              originFurnitureLift={state.originFurnitureLift}
+              originCarryDistance={state.originCarryDistance}
+              originParkingAuth={state.originParkingAuth}
               destinationPostalCode={state.destinationPostalCode}
               destinationCity={state.destinationCity}
               destinationAddress={state.destinationAddress}
@@ -799,6 +802,9 @@ function DevisGratuitsV3Content() {
               destinationFloor={state.destinationFloor}
               destinationElevator={state.destinationElevator}
               destinationAccess={state.destinationAccess}
+              destinationFurnitureLift={state.destinationFurnitureLift}
+              destinationCarryDistance={state.destinationCarryDistance}
+              destinationParkingAuth={state.destinationParkingAuth}
               destinationUnknown={state.destinationUnknown}
               movingDate={state.movingDate}
               dateFlexible={state.dateFlexible}
