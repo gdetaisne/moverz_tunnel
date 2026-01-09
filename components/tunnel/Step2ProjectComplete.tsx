@@ -55,16 +55,15 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     setTouchedFields((prev) => new Set(prev).add(field));
   }
 
-  const isOriginValid = 
-    props.originPostalCode.length === 5 && 
-    props.originCity.trim().length > 0 &&
-    props.originHousingType.length > 0;
+  // Avec l'autocomplete adresse (FR + Europe), on valide d'abord l'adresse + le logement.
+  // Le CP/ville peuvent être absents/incomplets (cas étranger) sans bloquer le parcours.
+  const isOriginValid =
+    props.originAddress.trim().length >= 5 && props.originHousingType.length > 0;
     
-  const isDestinationValid = props.destinationUnknown || (
-    props.destinationPostalCode.length === 5 && 
-    props.destinationCity.trim().length > 0 &&
-    props.destinationHousingType.length > 0
-  );
+  const isDestinationValid =
+    props.destinationUnknown ||
+    (props.destinationAddress.trim().length >= 5 &&
+      props.destinationHousingType.length > 0);
   
   const isDateValid = props.movingDate.length > 0;
 

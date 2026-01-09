@@ -451,9 +451,12 @@ function DevisGratuitsV3Content() {
   async function handleSubmitStep2(e: FormEvent) {
     e.preventDefault();
 
-    const isOriginValid = state.originPostalCode.length === 5 && state.originCity.trim().length > 0;
-    const isDestinationValid = state.destinationUnknown || 
-      (state.destinationPostalCode.length === 5 && state.destinationCity.trim().length > 0);
+    const isOriginValid =
+      state.originAddress.trim().length >= 5 && state.originHousingType.trim().length > 0;
+    const isDestinationValid =
+      state.destinationUnknown ||
+      (state.destinationAddress.trim().length >= 5 &&
+        state.destinationHousingType.trim().length > 0);
     const isDateValid = state.movingDate.length > 0;
 
     if (!isOriginValid || !isDestinationValid || !isDateValid) {

@@ -194,9 +194,9 @@ export function AddressAutocomplete({
           ? await fetchBanSuggestions(trimmed, ctrl.signal)
           : await fetchNominatimSuggestions(trimmed, ctrl.signal);
       const first = list[0];
-      if (first?.postalCode && first?.city) {
-        commitSelection(first);
-      }
+      // En "world"/étranger, on peut ne pas avoir de CP/ville au format FR.
+      // Si on a au moins une suggestion (et idéalement des coords), on la prend.
+      if (first) commitSelection(first);
     } catch {
       // ignore
     }
