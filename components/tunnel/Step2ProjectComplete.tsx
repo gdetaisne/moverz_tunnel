@@ -18,6 +18,7 @@ interface Step2ProjectCompleteProps {
   originFurnitureLift: string; // unknown/no/yes
   originCarryDistance: string; // "" or "10-20"..."90-100"
   originParkingAuth: boolean;
+  originTightAccess: boolean;
   
   // Arrivée
   destinationPostalCode: string;
@@ -32,6 +33,7 @@ interface Step2ProjectCompleteProps {
   destinationFurnitureLift: string;
   destinationCarryDistance: string;
   destinationParkingAuth: boolean;
+  destinationTightAccess: boolean;
   destinationUnknown: boolean;
   
   // Date
@@ -74,6 +76,8 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
       which === "origin" ? props.originCarryDistance : props.destinationCarryDistance;
     const parkingAuth =
       which === "origin" ? props.originParkingAuth : props.destinationParkingAuth;
+    const tightAccess =
+      which === "origin" ? props.originTightAccess : props.destinationTightAccess;
     const housingType =
       which === "origin" ? props.originHousingType : props.destinationHousingType;
     const isHouse = housingType === "house";
@@ -85,6 +89,38 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     const portageEnabled = carryDistance !== "";
     const monteMeubleEnabled = furnitureLift === "yes";
 
+    const YesNo = (props2: {
+      value: boolean;
+      onChange: (v: boolean) => void;
+      yesLabel?: string;
+      noLabel?: string;
+    }) => (
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => props2.onChange(false)}
+          className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+            props2.value === false
+              ? "bg-[#0F172A] text-white"
+              : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+          }`}
+        >
+          {props2.noLabel ?? "Non"}
+        </button>
+        <button
+          type="button"
+          onClick={() => props2.onChange(true)}
+          className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+            props2.value === true
+              ? "bg-[#6BCFCF] text-white"
+              : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+          }`}
+        >
+          {props2.yesLabel ?? "Oui"}
+        </button>
+      </div>
+    );
+
     return (
       <div className="mt-4 space-y-4 rounded-xl border border-[#E3E5E8] bg-white p-4">
         <div>
@@ -94,101 +130,148 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           </p>
         </div>
 
-        {/* Étage + Ascenseur (Appartement uniquement) */}
-        {!isHouse && (
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
-              <select
-                value={floor || "0"}
-                onChange={(e) => props.onFieldChange(`${prefix}Floor`, e.target.value)}
-                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-3 py-2 text-sm text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-              >
-                {FLOOR_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => props.onFieldChange(`${prefix}Elevator`, "yes")}
-                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                    elevator === "yes"
-                      ? "bg-[#0F172A] text-white"
-                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                  }`}
+        {/* 1 option par ligne */}
+        <div className="space-y-3">
+          {/* Appartement: ordre demandé */}
+          {!isHouse && (
+            <>
+              {/* Étage (dropdown) */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#0F172A]">Étage</p>
+                </div>
+                <select
+                  value={floor || "0"}
+                  onChange={(e) => props.onFieldChange(`${prefix}Floor`, e.target.value)}
+                  className="w-36 rounded-xl border-2 border-[#E3E5E8] bg-white px-3 py-2 text-sm text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
                 >
-                  Oui
-                </button>
-                <button
-                  type="button"
-                  onClick={() => props.onFieldChange(`${prefix}Elevator`, "no")}
-                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                    elevator === "no"
-                      ? "bg-[#0F172A] text-white"
-                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                  }`}
-                >
-                  Non
-                </button>
+                  {FLOOR_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <p className="mt-1 text-[11px] text-[#1E293B]/60">
-                Si “Non”, l’étage a un impact plus important sur le devis.
-              </p>
-            </div>
-          </div>
-        )}
 
-        {/* Portage > 10 m */}
-        <div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-[#0F172A]">Portage &gt; 10 m</p>
-              <p className="text-xs text-[#1E293B]/60">
-                Ex: couloir long, cour intérieure, centre‑ville piéton.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                props.onFieldChange(
-                  `${prefix}CarryDistance`,
-                  portageEnabled ? "" : CARRY_DISTANCE_ON_VALUE
-                )
-              }
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                portageEnabled
-                  ? "bg-[#6BCFCF] text-white"
-                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-              }`}
-            >
-              {portageEnabled ? "Activé" : "Désactivé"}
-            </button>
-          </div>
+              {/* Petit ascenseur / passages serrés */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#0F172A]">
+                    Petit ascenseur / passages serrés
+                  </p>
+                </div>
+                <div className="w-44">
+                  <YesNo
+                    value={Boolean(tightAccess)}
+                    onChange={(v) => props.onFieldChange(`${prefix}TightAccess`, v)}
+                  />
+                </div>
+              </div>
+
+              {/* Monte-meuble (ouvre seulement si passages serrés = Oui) */}
+              {tightAccess && (
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#0F172A]">Besoin d’un monte‑meuble</p>
+                  </div>
+                  <div className="w-44">
+                    <YesNo
+                      value={monteMeubleEnabled}
+                      onChange={(v) =>
+                        props.onFieldChange(`${prefix}FurnitureLift`, v ? "yes" : "no")
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Portage > 10m */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#0F172A]">Portage &gt; 10 m</p>
+                </div>
+                <div className="w-44">
+                  <YesNo
+                    value={portageEnabled}
+                    onChange={(v) =>
+                      props.onFieldChange(`${prefix}CarryDistance`, v ? CARRY_DISTANCE_ON_VALUE : "")
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Stationnement compliqué */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#0F172A]">Stationnement compliqué</p>
+                </div>
+                <div className="w-44">
+                  <YesNo
+                    value={Boolean(parkingAuth)}
+                    onChange={(v) => props.onFieldChange(`${prefix}ParkingAuth`, v)}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Maison: ordre demandé */}
+          {isHouse && (
+            <>
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#0F172A]">Portage &gt; 10 m</p>
+                </div>
+                <div className="w-44">
+                  <YesNo
+                    value={portageEnabled}
+                    onChange={(v) =>
+                      props.onFieldChange(`${prefix}CarryDistance`, v ? CARRY_DISTANCE_ON_VALUE : "")
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#0F172A]">Stationnement compliqué</p>
+                </div>
+                <div className="w-44">
+                  <YesNo
+                    value={Boolean(parkingAuth)}
+                    onChange={(v) => props.onFieldChange(`${prefix}ParkingAuth`, v)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#0F172A]">Passages serrés</p>
+                </div>
+                <div className="w-44">
+                  <YesNo
+                    value={Boolean(tightAccess)}
+                    onChange={(v) => props.onFieldChange(`${prefix}TightAccess`, v)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#0F172A]">Besoin d’un monte‑meuble</p>
+                </div>
+                <div className="w-44">
+                  <YesNo
+                    value={monteMeubleEnabled}
+                    onChange={(v) =>
+                      props.onFieldChange(`${prefix}FurnitureLift`, v ? "yes" : "no")
+                    }
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
-
-        {/* Stationnement */}
-        <label className="flex items-start gap-3 p-3 rounded-xl bg-[#F8F9FA] border border-[#E3E5E8] cursor-pointer hover:border-[#6BCFCF] transition-colors">
-          <input
-            type="checkbox"
-            checked={Boolean(parkingAuth)}
-            onChange={(e) => props.onFieldChange(`${prefix}ParkingAuth`, e.target.checked)}
-            className="mt-0.5 w-5 h-5 rounded border-[#E3E5E8] text-[#6BCFCF] focus:ring-2 focus:ring-[#6BCFCF]/20"
-          />
-          <div>
-            <div className="text-sm font-medium text-[#0F172A]">
-              Autorisation / réservation de stationnement nécessaire
-            </div>
-            <div className="text-xs text-[#1E293B]/60">
-              Ex: parking payant, demande mairie, accès régulé.
-            </div>
-          </div>
-        </label>
       </div>
     );
   };
@@ -230,6 +313,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
       // N.A.
       props.onFieldChange(`${prefix}Floor`, "");
       props.onFieldChange(`${prefix}Elevator`, "");
+      props.onFieldChange(`${prefix}TightAccess`, false);
       return;
     }
 
@@ -444,38 +528,6 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               </button>
             </div>
 
-            {/* Monte-meuble (simple ON/OFF) */}
-            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[#E3E5E8] bg-white p-4">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-[#0F172A]">Besoin d’un monte‑meuble</p>
-                <p className="text-xs text-[#1E293B]/60">Ex: façade, cour, escaliers étroits.</p>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => props.onFieldChange("originFurnitureLift", "no")}
-                  className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                    props.originFurnitureLift !== "yes"
-                      ? "bg-[#0F172A] text-white"
-                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                  }`}
-                >
-                  Non
-                </button>
-                <button
-                  type="button"
-                  onClick={() => props.onFieldChange("originFurnitureLift", "yes")}
-                  className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                    props.originFurnitureLift === "yes"
-                      ? "bg-[#6BCFCF] text-white"
-                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                  }`}
-                >
-                  Oui
-                </button>
-              </div>
-            </div>
-
             {renderConstrainedOptions("origin")}
           </div>
         </div>
@@ -657,38 +709,6 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   >
                     Contraint
                   </button>
-                </div>
-
-                {/* Monte-meuble (simple ON/OFF) */}
-                <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[#E3E5E8] bg-white p-4">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#0F172A]">Besoin d’un monte‑meuble</p>
-                    <p className="text-xs text-[#1E293B]/60">Ex: façade, cour, escaliers étroits.</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => props.onFieldChange("destinationFurnitureLift", "no")}
-                      className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                        props.destinationFurnitureLift !== "yes"
-                          ? "bg-[#0F172A] text-white"
-                          : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                      }`}
-                    >
-                      Non
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => props.onFieldChange("destinationFurnitureLift", "yes")}
-                      className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                        props.destinationFurnitureLift === "yes"
-                          ? "bg-[#6BCFCF] text-white"
-                          : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                      }`}
-                    >
-                      Oui
-                    </button>
-                  </div>
                 </div>
 
                 {renderConstrainedOptions("destination")}

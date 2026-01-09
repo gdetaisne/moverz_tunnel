@@ -21,6 +21,7 @@ export interface TunnelFormState {
   originFurnitureLift: string; // Monte-meuble (unknown/no/yes)
   originCarryDistance: string; // Distance portage (0-10, 10-20, etc.)
   originParkingAuth: boolean; // Autorisation stationnement
+  originTightAccess: boolean; // Passages serrés / petit ascenseur
   originAccess: string;
   
   destinationPostalCode: string;
@@ -34,6 +35,7 @@ export interface TunnelFormState {
   destinationFurnitureLift: string; // Monte-meuble
   destinationCarryDistance: string; // Distance portage
   destinationParkingAuth: boolean; // Autorisation stationnement
+  destinationTightAccess: boolean; // Passages serrés / petit ascenseur
   destinationAccess: string;
   destinationUnknown: boolean;
   
@@ -103,6 +105,7 @@ const INITIAL_STATE: TunnelFormState = {
   // On ne stocke que >10m (sinon "") pour éviter du bruit inutile.
   originCarryDistance: "",
   originParkingAuth: false,
+  originTightAccess: false,
   originAccess: "easy",
   
   destinationPostalCode: "",
@@ -117,6 +120,7 @@ const INITIAL_STATE: TunnelFormState = {
   // On ne stocke que >10m (sinon "") pour éviter du bruit inutile.
   destinationCarryDistance: "",
   destinationParkingAuth: false,
+  destinationTightAccess: false,
   destinationAccess: "easy",
   destinationUnknown: false,
   

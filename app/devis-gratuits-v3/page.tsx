@@ -556,6 +556,7 @@ function DevisGratuitsV3Content() {
               accessKind: state.originAccess || undefined,
               furnitureLift: state.originFurnitureLift || undefined,
               carryDistance: state.originCarryDistance || undefined,
+              tightAccess: state.originTightAccess || undefined,
             },
             destination: state.destinationUnknown
               ? undefined
@@ -563,6 +564,7 @@ function DevisGratuitsV3Content() {
                   accessKind: state.destinationAccess || undefined,
                   furnitureLift: state.destinationFurnitureLift || undefined,
                   carryDistance: state.destinationCarryDistance || undefined,
+                  tightAccess: state.destinationTightAccess || undefined,
                 },
           },
         };
@@ -794,6 +796,7 @@ function DevisGratuitsV3Content() {
               originFurnitureLift={state.originFurnitureLift}
               originCarryDistance={state.originCarryDistance}
               originParkingAuth={state.originParkingAuth}
+              originTightAccess={state.originTightAccess}
               destinationPostalCode={state.destinationPostalCode}
               destinationCity={state.destinationCity}
               destinationAddress={state.destinationAddress}
@@ -806,6 +809,7 @@ function DevisGratuitsV3Content() {
               destinationFurnitureLift={state.destinationFurnitureLift}
               destinationCarryDistance={state.destinationCarryDistance}
               destinationParkingAuth={state.destinationParkingAuth}
+              destinationTightAccess={state.destinationTightAccess}
               destinationUnknown={state.destinationUnknown}
               movingDate={state.movingDate}
               dateFlexible={state.dateFlexible}
