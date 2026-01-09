@@ -51,17 +51,17 @@ export default function Step1Contact({
     <div className="grid lg:grid-cols-2 gap-12 items-center">
       {/* Left: Form */}
       <div className="order-1">
-        <div className="mb-8">
+        <div className="mb-4 md:mb-8">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
             <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
             Étape 1/4
           </div>
 
-          <h2 className="text-3xl md:text-4xl font-bold text-[#0F172A] mb-4 leading-tight">
-            On commence par vos infos de contact
+          <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] mb-3 md:mb-4 leading-tight">
+            Vos infos de contact
           </h2>
           
-          <p className="text-lg text-[#1E293B]/70 leading-relaxed">
+          <p className="hidden md:block text-lg text-[#1E293B]/70 leading-relaxed">
             Pour vous envoyer vos devis et suivre votre dossier.{" "}
             <span className="text-[#1E293B] font-medium">Jamais partagé ni revendu.</span>
           </p>

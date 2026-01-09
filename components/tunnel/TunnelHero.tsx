@@ -39,17 +39,17 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
             <span>Demande de devis gratuite</span>
           </div>
 
-          {/* Title */}
-          <h1 className="text-2xl md:text-5xl font-bold mb-3 md:mb-4 leading-tight">
-            3 à 5 devis comparables
-            <br />
-            <span className="text-[#6BCFCF]">en 3 minutes</span>
-          </h1>
-
-          {/* Subtitle */}
-          <p className="text-base md:text-lg text-white/70 mb-5 md:mb-8 leading-relaxed">
-            Des déménageurs locaux contrôlés • Estimation par photos • 0 spam
-          </p>
+          {/* Marketing copy (desktop only) */}
+          <div className="hidden md:block">
+            <h1 className="text-5xl font-bold mb-4 leading-tight">
+              3 à 5 devis comparables
+              <br />
+              <span className="text-[#6BCFCF]">en 3 minutes</span>
+            </h1>
+            <p className="text-lg text-white/70 mb-8 leading-relaxed">
+              Des déménageurs locaux contrôlés • Estimation par photos • 0 spam
+            </p>
+          </div>
 
           {/* Progress bar */}
           <div className="max-w-md mx-auto">
