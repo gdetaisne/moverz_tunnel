@@ -387,16 +387,18 @@ export interface UpdateBackofficeLeadPayload {
 
   // Détails logement origine
   originHousingType?: string;
-  originFloor?: number;
-  originElevator?: "OUI" | "NON" | "PARTIEL";
+  // NB: sur "Maison", ces champs peuvent être N.A. -> null
+  originFloor?: number | null;
+  originElevator?: "OUI" | "NON" | "PARTIEL" | null;
   originFurnitureLift?: string;
   originCarryDistance?: string;
   originParkingAuth?: boolean;
 
   // Détails logement destination
   destHousingType?: string;
-  destFloor?: number;
-  destElevator?: "OUI" | "NON" | "PARTIEL";
+  // NB: sur "Maison", ces champs peuvent être N.A. -> null
+  destFloor?: number | null;
+  destElevator?: "OUI" | "NON" | "PARTIEL" | null;
   destFurnitureLift?: string;
   destCarryDistance?: string;
   destParkingAuth?: boolean;

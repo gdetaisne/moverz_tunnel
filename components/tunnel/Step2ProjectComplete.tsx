@@ -68,6 +68,8 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   
   const isDateValid = props.movingDate.length > 0;
   const isFormValid = isOriginValid && isDestinationValid && isDateValid;
+  const originIsHouse = props.originHousingType === "house";
+  const destinationIsHouse = props.destinationHousingType === "house";
 
   const missingFields: Array<{ id: string; label: string }> = [];
   if (props.originAddress.trim().length < 5) missingFields.push({ id: "origin-address", label: "Adresse départ" });
@@ -160,6 +162,11 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   onClick={() => {
                     markTouched("originHousingType");
                     props.onFieldChange("originHousingType", type.value);
+                    // Si maison, les notions d'étage/ascenseur ne s'appliquent pas.
+                    if (type.value === "house") {
+                      props.onFieldChange("originFloor", "");
+                      props.onFieldChange("originElevator", "");
+                    }
                   }}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                     props.originHousingType === type.value
@@ -179,38 +186,40 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             )}
           </div>
 
-          {/* Étage + Ascenseur */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
-              <input
-                type="number"
-                value={props.originFloor}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  if (raw === "") return props.onFieldChange("originFloor", "");
-                  const n = Number.parseInt(raw, 10);
-                  if (!Number.isFinite(n)) return props.onFieldChange("originFloor", "");
-                  props.onFieldChange("originFloor", String(Math.min(50, Math.max(0, n))));
-                }}
-                min="0"
-                max="50"
-                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-              />
+          {/* Étage + Ascenseur (N.A. pour Maison) */}
+          {!originIsHouse && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
+                <input
+                  type="number"
+                  value={props.originFloor}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === "") return props.onFieldChange("originFloor", "");
+                    const n = Number.parseInt(raw, 10);
+                    if (!Number.isFinite(n)) return props.onFieldChange("originFloor", "");
+                    props.onFieldChange("originFloor", String(Math.min(50, Math.max(0, n))));
+                  }}
+                  min="0"
+                  max="50"
+                  className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
+                <select
+                  value={props.originElevator}
+                  onChange={(e) => props.onFieldChange("originElevator", e.target.value)}
+                  className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                >
+                  <option value="none">Non renseigné</option>
+                  <option value="yes">Oui</option>
+                  <option value="no">Non</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
-              <select
-                value={props.originElevator}
-                onChange={(e) => props.onFieldChange("originElevator", e.target.value)}
-                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-              >
-                <option value="none">Non renseigné</option>
-                <option value="yes">Oui</option>
-                <option value="no">Non</option>
-              </select>
-            </div>
-          </div>
+          )}
 
           {/* Accès */}
           <div>
@@ -307,6 +316,10 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                       onClick={() => {
                         markTouched("destinationHousingType");
                         props.onFieldChange("destinationHousingType", type.value);
+                        if (type.value === "house") {
+                          props.onFieldChange("destinationFloor", "");
+                          props.onFieldChange("destinationElevator", "");
+                        }
                       }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         props.destinationHousingType === type.value
@@ -326,38 +339,40 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 )}
               </div>
 
-              {/* Étage + Ascenseur */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
-                  <input
-                    type="number"
-                    value={props.destinationFloor}
-                    onChange={(e) => {
-                      const raw = e.target.value;
-                      if (raw === "") return props.onFieldChange("destinationFloor", "");
-                      const n = Number.parseInt(raw, 10);
-                      if (!Number.isFinite(n)) return props.onFieldChange("destinationFloor", "");
-                      props.onFieldChange("destinationFloor", String(Math.min(50, Math.max(0, n))));
-                    }}
-                    min="0"
-                    max="50"
-                    className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                  />
+              {/* Étage + Ascenseur (N.A. pour Maison) */}
+              {!destinationIsHouse && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
+                    <input
+                      type="number"
+                      value={props.destinationFloor}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") return props.onFieldChange("destinationFloor", "");
+                        const n = Number.parseInt(raw, 10);
+                        if (!Number.isFinite(n)) return props.onFieldChange("destinationFloor", "");
+                        props.onFieldChange("destinationFloor", String(Math.min(50, Math.max(0, n))));
+                      }}
+                      min="0"
+                      max="50"
+                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
+                    <select
+                      value={props.destinationElevator}
+                      onChange={(e) => props.onFieldChange("destinationElevator", e.target.value)}
+                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                    >
+                      <option value="none">Non renseigné</option>
+                      <option value="yes">Oui</option>
+                      <option value="no">Non</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
-                  <select
-                    value={props.destinationElevator}
-                    onChange={(e) => props.onFieldChange("destinationElevator", e.target.value)}
-                    className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                  >
-                    <option value="none">Non renseigné</option>
-                    <option value="yes">Oui</option>
-                    <option value="no">Non</option>
-                  </select>
-                </div>
-              </div>
+              )}
 
               {/* Accès */}
               <div>

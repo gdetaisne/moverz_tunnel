@@ -88,8 +88,12 @@ function DevisGratuitsV3Content() {
   const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" =>
     d === "light" ? "LIGHT" : d === "dense" ? "HEAVY" : "MEDIUM";
 
-  const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" =>
-    e === "none" ? "NON" : e === "small" ? "PARTIEL" : "OUI";
+  const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" => {
+    // UI values: "", "none", "no", "yes" (et potentiellement "small" / "partial")
+    if (!e || e === "none" || e === "no") return "NON";
+    if (e === "small" || e === "partial") return "PARTIEL";
+    return "OUI";
+  };
 
   const toIsoDate = (raw: string | null | undefined): string | undefined => {
     if (!raw) return undefined;
@@ -197,8 +201,11 @@ function DevisGratuitsV3Content() {
   const isHouseType = (t: string | null | undefined) =>
     !!t && (t === "house" || t.startsWith("house_"));
 
-  const toPricingElevator = (e: string): "yes" | "no" | "partial" =>
-    e === "none" ? "no" : e === "small" ? "partial" : "yes";
+  const toPricingElevator = (e: string): "yes" | "no" | "partial" => {
+    if (!e || e === "none" || e === "no") return "no";
+    if (e === "small" || e === "partial") return "partial";
+    return "yes";
+  };
 
   const coerceHousingType = (t: string | null | undefined): HousingType => {
     const v = (t || "").trim();
@@ -540,6 +547,9 @@ function DevisGratuitsV3Content() {
     try {
       const effectiveLeadId = await ensureBackofficeLeadId();
       if (effectiveLeadId) {
+        const originIsHouse = isHouseType(state.originHousingType);
+        const destIsHouse = isHouseType(state.destinationHousingType);
+
         const tunnelOptions = {
           access: {
             origin: {
@@ -573,10 +583,16 @@ function DevisGratuitsV3Content() {
 
           // Logement / accès
           originHousingType: state.originHousingType || undefined,
-          originFloor: state.originFloor
+          originFloor: originIsHouse
+            ? null
+            : state.originFloor
             ? Math.max(0, parseInt(state.originFloor, 10))
-            : undefined,
-          originElevator: state.originElevator ? mapElevator(state.originElevator) : undefined,
+            : null,
+          originElevator: originIsHouse
+            ? null
+            : state.originElevator
+            ? mapElevator(state.originElevator)
+            : null,
           originFurnitureLift: state.originFurnitureLift || undefined,
           originCarryDistance: state.originCarryDistance || undefined,
           originParkingAuth: state.originParkingAuth,
@@ -586,14 +602,18 @@ function DevisGratuitsV3Content() {
             : state.destinationHousingType || undefined,
           destFloor: state.destinationUnknown
             ? undefined
+            : destIsHouse
+            ? null
             : state.destinationFloor
             ? Math.max(0, parseInt(state.destinationFloor, 10))
-            : undefined,
+            : null,
           destElevator: state.destinationUnknown
             ? undefined
+            : destIsHouse
+            ? null
             : state.destinationElevator
             ? mapElevator(state.destinationElevator)
-            : undefined,
+            : null,
           destFurnitureLift: state.destinationUnknown
             ? undefined
             : state.destinationFurnitureLift || undefined,
