@@ -38,6 +38,13 @@ export interface TunnelFormState {
   destinationTightAccess: boolean; // Passages serrés / petit ascenseur
   destinationAccess: string;
   destinationUnknown: boolean;
+
+  // Meta: permet de distinguer "valeur par défaut UI" vs "choix explicite utilisateur"
+  // (sans changer l'UI). Utilisé pour éviter d'envoyer des valeurs inventées au Back Office.
+  originFloorTouched: boolean;
+  originElevatorTouched: boolean;
+  destinationFloorTouched: boolean;
+  destinationElevatorTouched: boolean;
   
   movingDate: string;
   movingDateEnd: string;
@@ -123,6 +130,11 @@ const INITIAL_STATE: TunnelFormState = {
   destinationTightAccess: false,
   destinationAccess: "easy",
   destinationUnknown: false,
+
+  originFloorTouched: false,
+  originElevatorTouched: false,
+  destinationFloorTouched: false,
+  destinationElevatorTouched: false,
   
   movingDate: "",
   movingDateEnd: "",
@@ -172,7 +184,29 @@ export function useTunnelState() {
       const saved = localStorage.getItem("moverz_tunnel_state");
       if (saved) {
         try {
-          return { ...INITIAL_STATE, ...JSON.parse(saved) };
+          const parsed = JSON.parse(saved) as Partial<TunnelFormState>;
+          const merged: TunnelFormState = { ...INITIAL_STATE, ...parsed };
+
+          // Backward compat: si les flags n'existaient pas, on les déduit
+          // quand la valeur diffère de la valeur par défaut.
+          merged.originFloorTouched =
+            typeof parsed.originFloorTouched === "boolean"
+              ? parsed.originFloorTouched
+              : merged.originFloor !== INITIAL_STATE.originFloor;
+          merged.originElevatorTouched =
+            typeof parsed.originElevatorTouched === "boolean"
+              ? parsed.originElevatorTouched
+              : merged.originElevator !== INITIAL_STATE.originElevator;
+          merged.destinationFloorTouched =
+            typeof parsed.destinationFloorTouched === "boolean"
+              ? parsed.destinationFloorTouched
+              : merged.destinationFloor !== INITIAL_STATE.destinationFloor;
+          merged.destinationElevatorTouched =
+            typeof parsed.destinationElevatorTouched === "boolean"
+              ? parsed.destinationElevatorTouched
+              : merged.destinationElevator !== INITIAL_STATE.destinationElevator;
+
+          return merged;
         } catch (e) {
           console.error("Failed to parse saved state:", e);
         }
@@ -187,6 +221,13 @@ export function useTunnelState() {
   ) => {
     setState((prev) => {
       const next = { ...prev, [field]: value };
+
+      // Marquer certains champs "touched" dès qu'ils sont modifiés via updateField
+      // (appelé depuis l'UI via onChange).
+      if (field === "originFloor") next.originFloorTouched = true;
+      if (field === "originElevator") next.originElevatorTouched = true;
+      if (field === "destinationFloor") next.destinationFloorTouched = true;
+      if (field === "destinationElevator") next.destinationElevatorTouched = true;
       
       // Auto-save to localStorage
       if (typeof window !== "undefined") {

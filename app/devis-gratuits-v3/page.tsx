@@ -585,15 +585,14 @@ function DevisGratuitsV3Content() {
 
           // Logement / accès
           originHousingType: state.originHousingType || undefined,
-          // Maison: N.A. -> 0 + NON (compatible validation BO)
           originFloor: originIsHouse
-            ? 0
-            : state.originFloor
+            ? undefined
+            : state.originFloorTouched
             ? Math.max(0, parseInt(state.originFloor, 10))
             : undefined,
           originElevator: originIsHouse
-            ? "NON"
-            : state.originElevator
+            ? undefined
+            : state.originElevatorTouched && state.originElevator && state.originElevator !== "none"
             ? mapElevator(state.originElevator)
             : undefined,
           originFurnitureLift: state.originFurnitureLift || undefined,
@@ -606,15 +605,17 @@ function DevisGratuitsV3Content() {
           destFloor: state.destinationUnknown
             ? undefined
             : destIsHouse
-            ? 0
-            : state.destinationFloor
+            ? undefined
+            : state.destinationFloorTouched
             ? Math.max(0, parseInt(state.destinationFloor, 10))
             : undefined,
           destElevator: state.destinationUnknown
             ? undefined
             : destIsHouse
-            ? "NON"
-            : state.destinationElevator
+            ? undefined
+            : state.destinationElevatorTouched &&
+              state.destinationElevator &&
+              state.destinationElevator !== "none"
             ? mapElevator(state.destinationElevator)
             : undefined,
           destFurnitureLift: state.destinationUnknown
@@ -676,6 +677,23 @@ function DevisGratuitsV3Content() {
         }
 
         const tunnelOptions = {
+          // Important: conserver la structure envoyée en Step 2 (sinon Step 3 écrase et on perd l'accès)
+          access: {
+            origin: {
+              accessKind: state.originAccess || undefined,
+              furnitureLift: state.originFurnitureLift || undefined,
+              carryDistance: state.originCarryDistance || undefined,
+              tightAccess: state.originTightAccess || undefined,
+            },
+            destination: state.destinationUnknown
+              ? undefined
+              : {
+                  accessKind: state.destinationAccess || undefined,
+                  furnitureLift: state.destinationFurnitureLift || undefined,
+                  carryDistance: state.destinationCarryDistance || undefined,
+                  tightAccess: state.destinationTightAccess || undefined,
+                },
+          },
           services: {
             furnitureStorage: state.serviceFurnitureStorage || undefined,
             cleaning: state.serviceCleaning || undefined,

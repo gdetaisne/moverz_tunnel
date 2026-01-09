@@ -3366,8 +3366,18 @@ function DevisGratuitsPageInner() {
 
             // Détails logement origine - undefined si non rempli
             originHousingType: form.originHousingType || undefined,
-            originFloor: form.originFloor ? parseInt(form.originFloor, 10) : undefined,
-            originElevator: form.originElevator ? mapElevator(form.originElevator) : undefined,
+            originFloor:
+              form.originHousingType && form.originHousingType.startsWith("house")
+                ? undefined
+                : form.originFloor
+                ? parseInt(form.originFloor, 10)
+                : undefined,
+            originElevator:
+              form.originHousingType && form.originHousingType.startsWith("house")
+                ? undefined
+                : form.originElevator
+                ? mapElevator(form.originElevator)
+                : undefined,
             originParkingAuth: form.originParkingAuth,
 
             // Détails logement destination - undefined si destination inconnue ou non rempli
@@ -3376,10 +3386,16 @@ function DevisGratuitsPageInner() {
               : form.destinationHousingType || undefined,
             destFloor: form.destinationUnknown
               ? undefined
+              : form.destinationHousingType &&
+                form.destinationHousingType.startsWith("house")
+              ? undefined
               : form.destinationFloor
               ? parseInt(form.destinationFloor, 10)
               : undefined,
             destElevator: form.destinationUnknown
+              ? undefined
+              : form.destinationHousingType &&
+                form.destinationHousingType.startsWith("house")
               ? undefined
               : form.destinationElevator
               ? mapElevator(form.destinationElevator)
