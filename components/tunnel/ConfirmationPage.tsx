@@ -69,58 +69,24 @@ export default function ConfirmationPage({
             Plus vous envoyez de photos détaillées, plus les déménageurs peuvent estimer précisément <strong>le volume et le temps nécessaire</strong>
           </p>
 
-          {/* Estimate impact - PROMINENT & PREMIUM */}
+          {/* Estimate impact - ULTRA SIMPLE */}
           {hasEstimate && (
-            <div className="relative rounded-3xl bg-white border border-[#E3E5E8] p-8 md:p-10 mb-10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden">
-              {/* Subtle accent bar */}
+            <div className="relative rounded-3xl bg-white border border-[#E3E5E8] p-8 md:p-10 mb-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#6BCFCF]" />
               
               <div className="relative">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6BCFCF] mb-4">
-                  Économies potentielles
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6BCFCF] mb-2">
+                  Vous économisez
                 </p>
-                <div className="flex items-baseline gap-3 mb-3">
-                  <p className="text-5xl md:text-6xl font-black text-[#0F172A] tracking-tight">
-                    {euro(savingsMax)}
-                  </p>
-                </div>
-                <p className="text-base text-[#1E293B]/70 leading-relaxed">
-                  En envoyant vos photos dès maintenant, vous permettez aux déménageurs d'affiner leur estimation et de réduire leur marge de sécurité.
+                <p className="text-5xl md:text-6xl font-black text-[#0F172A] tracking-tight mb-1">
+                  {euro(savingsMax)}
+                </p>
+                <p className="text-sm text-[#1E293B]/60">
+                  en envoyant vos photos maintenant
                 </p>
               </div>
             </div>
           )}
-
-          {/* Clean checklist like moverz.fr */}
-          <div className="space-y-4 mb-10">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center mt-0.5">
-                <Check className="w-3 h-3 text-white" strokeWidth={3} />
-              </div>
-              <p className="text-sm md:text-base text-[#0F172A]">
-                <strong>Toutes les pièces</strong><br/>
-                <span className="text-[#1E293B]/60">Salon, chambres, cuisine, cave, garage, grenier... chaque espace compte.</span>
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center mt-0.5">
-                <Check className="w-3 h-3 text-white" strokeWidth={3} />
-              </div>
-              <p className="text-sm md:text-base text-[#0F172A]">
-                <strong>Les accès</strong><br/>
-                <span className="text-[#1E293B]/60">Entrée, escaliers, ascenseur, stationnement... pour anticiper la logistique.</span>
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center mt-0.5">
-                <Check className="w-3 h-3 text-white" strokeWidth={3} />
-              </div>
-              <p className="text-sm md:text-base text-[#0F172A]">
-                <strong>Ø surprise</strong><br/>
-                <span className="text-[#1E293B]/60">Des photos complètes = un devis juste + pas de supplément le jour J.</span>
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Right: Realistic iPhone mockup - moverz.fr style */}
