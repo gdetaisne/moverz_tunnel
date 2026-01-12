@@ -69,6 +69,28 @@ export default function ConfirmationPage({
             Plus vous envoyez de photos détaillées, plus les déménageurs peuvent estimer précisément <strong>le volume et le temps nécessaire</strong>
           </p>
 
+          {/* Estimate impact - PROMINENT */}
+          {hasEstimate && (
+            <div className="rounded-3xl bg-gradient-to-br from-[#E0F7F4] to-[#F0FFFE] border-2 border-[#6BCFCF]/30 p-6 md:p-8 mb-10 shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#6BCFCF] flex items-center justify-center">
+                  <span className="text-2xl">💡</span>
+                </div>
+                <p className="text-sm md:text-base font-semibold text-[#0F172A]">
+                  Économisez jusqu'à
+                </p>
+              </div>
+              <div className="flex items-baseline gap-2 mb-2">
+                <p className="text-4xl md:text-5xl font-black text-[#0F172A]">
+                  {euro(savingsMax)}
+                </p>
+              </div>
+              <p className="text-sm text-[#1E293B]/70">
+                en envoyant vos photos dès maintenant
+              </p>
+            </div>
+          )}
+
           {/* Clean checklist like moverz.fr */}
           <div className="space-y-4 mb-10">
             <div className="flex items-start gap-3">
@@ -99,14 +121,6 @@ export default function ConfirmationPage({
               </p>
             </div>
           </div>
-
-          {/* Estimate impact - subtle */}
-          {hasEstimate && (
-            <div className="inline-flex items-center gap-3 bg-[#E0F7F4] rounded-2xl px-6 py-3 text-sm">
-              <span className="text-[#1E293B]/60">💡 Prenez vos photos maintenant pour gagner jusqu'à</span>
-              <span className="font-bold text-[#0F172A] text-base">{euro(savingsMax)}</span>
-            </div>
-          )}
         </div>
 
         {/* Right: Realistic iPhone mockup - moverz.fr style */}
