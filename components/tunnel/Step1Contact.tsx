@@ -269,7 +269,7 @@ export default function Step1Contact({
               {/* Footer */}
               <div className="pt-4 border-t border-[#E3E5E8] text-center">
                 <p className="text-xs text-[#1E293B]/60">
-                  🔒 Connexion sécurisée • RGPD conforme
+                  Connexion sécurisée • RGPD conforme
                 </p>
               </div>
             </div>

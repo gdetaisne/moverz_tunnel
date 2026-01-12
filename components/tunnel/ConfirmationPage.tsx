@@ -59,7 +59,7 @@ export default function ConfirmationPage({
 
       {/* Title */}
       <h2 className="text-3xl md:text-4xl font-bold text-[#0F172A] mb-3">
-        Merci {firstName} ! 🎉
+        Merci {firstName}
       </h2>
       
       <p className="text-lg text-[#1E293B]/70 mb-10 max-w-md mx-auto">
@@ -72,7 +72,7 @@ export default function ConfirmationPage({
           <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-[#6BCFCF]/20 blur-3xl" />
           <div className="relative">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#2B7A78]">
-              💡 Avec photos
+              Avec photos
             </p>
             <p className="mt-3 text-5xl font-bold text-[#0F172A]">
               jusqu'à {euro(savingsMax)}
@@ -134,9 +134,18 @@ export default function ConfirmationPage({
           Prochaines étapes
         </p>
         <div className="mt-4 space-y-3 text-sm text-[#1E293B]/70">
-          <p>✓ Vous envoyez vos photos</p>
-          <p>✓ Notre IA prépare votre dossier en 30s</p>
-          <p>✓ Vous recevez 3-5 devis sous 48-72h</p>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-[#6BCFCF]" />
+            <p>Vous envoyez vos photos</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-[#6BCFCF]" />
+            <p>Notre IA prépare votre dossier en 30s</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-[#6BCFCF]" />
+            <p>Vous recevez 3-5 devis sous 48-72h</p>
+          </div>
         </div>
       </div>
 

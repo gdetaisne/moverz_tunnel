@@ -25,7 +25,7 @@ export default function WhatsAppCTA({
   
   const message = linkingCode 
     ? `Bonjour, je veux compléter mon dossier avec des photos.\n\nMon code dossier : ${linkingCode}`
-    : `Bonjour, je voudrais obtenir 3 à 5 devis pour mon déménagement.\n\n📍 Ville de départ :\n📍 Ville d'arrivée :\n📅 Date souhaitée :\n\nJe vais envoyer des photos de TOUTES les pièces 📸\n\n⚡ 1 message/jour max • 0 spam`;
+    : `Bonjour, je voudrais obtenir 3 à 5 devis pour mon déménagement.\n\nVille de départ :\nVille d'arrivée :\nDate souhaitée :\n\nJe vais envoyer des photos de TOUTES les pièces.\n\n1 message/jour max • 0 spam`;
 
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
   const whatsappDeepLink = `whatsapp://send?phone=${whatsappNumber}&text=${encodeURIComponent(message)}`;
@@ -125,15 +125,33 @@ export default function WhatsAppCTA({
               {/* Checklist */}
               <div className="bg-[#F8F9FA] rounded-2xl p-4 mb-6 text-left">
                 <p className="text-sm font-semibold text-[#0F172A] mb-3">
-                  📸 Toutes les pièces :
+                  Photos recommandées
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-xs text-[#1E293B]/70">
-                  <div>✓ Salon</div>
-                  <div>✓ Chambres</div>
-                  <div>✓ Cuisine</div>
-                  <div>✓ Cave/Garage</div>
-                  <div>✓ Entrée</div>
-                  <div>✓ Escaliers</div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    Salon
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    Chambres
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    Cuisine
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    Cave/Garage
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    Entrée
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    Escaliers
+                  </div>
                 </div>
               </div>
 

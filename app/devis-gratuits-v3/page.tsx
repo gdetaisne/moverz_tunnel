@@ -30,7 +30,6 @@ import Step2ProjectComplete from "@/components/tunnel/Step2ProjectComplete";
 import Step3VolumeServices from "@/components/tunnel/Step3VolumeServices";
 import ConfirmationPage from "@/components/tunnel/ConfirmationPage";
 import TrustSignals from "@/components/tunnel/TrustSignals";
-import PricingRibbon from "@/components/tunnel/PricingRibbon";
 
 const STEPS = [
   { id: 1, label: "Contact" },
@@ -804,12 +803,6 @@ function DevisGratuitsV3Content() {
 
       {/* Main content */}
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <PricingRibbon
-          minEur={estimateRange?.minEur ?? null}
-          maxEur={estimateRange?.maxEur ?? null}
-          isIndicative={estimateIsIndicative}
-        />
-
         {/* Trust signals */}
         {state.currentStep < 4 && (
           <div className="mb-12 hidden md:block">
