@@ -3,6 +3,7 @@
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { trackTunnelEvent } from "@/lib/api/client";
+import PremiumShell from "@/components/tunnel/PremiumShell";
 
 function MerciPageInner() {
   const searchParams = useSearchParams();
@@ -24,55 +25,63 @@ function MerciPageInner() {
   }, [source, email]);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center text-center">
-      {/* Logo Moverz en haut */}
-      <div className="mb-8">
-        <img src="/icon.png" alt="Moverz" className="h-10 w-auto" />
-      </div>
-      
-      <div className="w-full max-w-md space-y-5 rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] sm:p-8">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white">
-          <span className="text-2xl">✓</span>
+    <PremiumShell containerClassName="flex items-center justify-center">
+      <div className="w-full max-w-md text-center moverz-animate-fade-in">
+        {/* Logo Moverz en haut */}
+        <div className="mb-8">
+          <img src="/icon.png" alt="Moverz" className="h-10 w-auto mx-auto" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-          Merci pour votre demande !
-        </h1>
-        <p className="text-sm text-slate-600 sm:text-base">
-          Votre dossier est créé. On s'occupe du reste.
-        </p>
 
-        <div className="space-y-3 rounded-2xl bg-slate-50 p-4 text-left border border-slate-100">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Prochaines étapes
+        <div className="w-full space-y-5 rounded-3xl border border-[#E3E5E8] bg-white/85 p-6 shadow-brand moverz-glass sm:p-8">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-sm">
+            <span className="text-2xl">✓</span>
+          </div>
+          <h1 className="text-2xl font-bold text-[#0F172A] sm:text-3xl">
+            Merci pour votre demande !
+          </h1>
+          <p className="text-sm text-[#1E293B]/70 sm:text-base">
+            Votre dossier est créé. On s'occupe du reste.
           </p>
-          <ul className="space-y-2 text-sm text-slate-700">
-            <li>
-              <span className="font-semibold text-slate-900">1)</span> Ouvrez l’email
-              de confirmation
-            </li>
-            <li>
-              <span className="font-semibold text-slate-900">2)</span> Cliquez sur le
-              lien pour valider votre adresse
-            </li>
-            <li>
-              <span className="font-semibold text-slate-900">3)</span> (Optionnel)
-              Ajoutez des photos pour des devis plus justes
-            </li>
-          </ul>
-        </div>
 
-        <p className="text-[11px] text-slate-500 sm:text-xs">
-          Pas reçu l’email ? Vérifiez vos spams. Sinon, répondez à l’email de bienvenue ou
-          contactez‑nous pour corriger l’adresse.
-        </p>
+          <div className="space-y-3 rounded-2xl bg-[#F8F9FA] p-4 text-left border border-[#E3E5E8]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+              Prochaines étapes
+            </p>
+            <ul className="space-y-2 text-sm text-[#1E293B]/75">
+              <li>
+                <span className="font-semibold text-[#0F172A]">1)</span> Ouvrez l’email
+                de confirmation
+              </li>
+              <li>
+                <span className="font-semibold text-[#0F172A]">2)</span> Cliquez sur le
+                lien pour valider votre adresse
+              </li>
+              <li>
+                <span className="font-semibold text-[#0F172A]">3)</span> (Optionnel)
+                Ajoutez des photos pour des devis plus justes
+              </li>
+            </ul>
+          </div>
+
+          <p className="text-[11px] text-[#1E293B]/60 sm:text-xs">
+            Pas reçu l’email ? Vérifiez vos spams. Sinon, répondez à l’email de bienvenue ou
+            contactez‑nous pour corriger l’adresse.
+          </p>
+        </div>
       </div>
-    </div>
+    </PremiumShell>
   );
 }
 
 export default function MerciPage() {
   return (
-    <Suspense fallback={<div className="p-4 text-slate-600">Chargement…</div>}>
+    <Suspense
+      fallback={
+        <PremiumShell containerClassName="flex items-center justify-center">
+          <div className="p-4 text-[#1E293B]/70">Chargement…</div>
+        </PremiumShell>
+      }
+    >
       <MerciPageInner />
     </Suspense>
   );
