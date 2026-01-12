@@ -276,7 +276,7 @@ export default function Step1Contact({
           </div>
 
           {/* Floating badge */}
-          <div className="absolute -right-4 top-20 bg-white rounded-xl shadow-xl px-4 py-2 rotate-6 border border-[#6BCFCF]/30">
+          <div className="absolute -right-4 top-20 bg-white rounded-xl shadow-xl px-4 py-2 border border-[#6BCFCF]/30">
             <p className="text-xs font-bold text-[#0F172A]">1200+</p>
             <p className="text-xs text-[#1E293B]/60">déménagements</p>
           </div>

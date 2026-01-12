@@ -190,7 +190,7 @@ export default function ConfirmationPage({
             </div>
             
             {/* Floating badge - simpler */}
-            <div className="absolute -right-6 top-20 bg-white rounded-xl shadow-md px-3 py-2 border border-gray-100 rotate-3">
+            <div className="absolute -right-6 top-20 bg-white rounded-xl shadow-md px-3 py-2 border border-gray-100">
               <p className="text-[10px] font-bold text-[#0F172A]">3 min</p>
             </div>
           </div>
