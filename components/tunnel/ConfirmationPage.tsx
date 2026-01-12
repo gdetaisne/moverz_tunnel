@@ -69,25 +69,25 @@ export default function ConfirmationPage({
             Plus vous envoyez de photos détaillées, plus les déménageurs peuvent estimer précisément <strong>le volume et le temps nécessaire</strong>
           </p>
 
-          {/* Estimate impact - PROMINENT */}
+          {/* Estimate impact - PROMINENT & PREMIUM */}
           {hasEstimate && (
-            <div className="rounded-3xl bg-gradient-to-br from-[#E0F7F4] to-[#F0FFFE] border-2 border-[#6BCFCF]/30 p-6 md:p-8 mb-10 shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#6BCFCF] flex items-center justify-center">
-                  <span className="text-2xl">💡</span>
+            <div className="relative rounded-3xl bg-white border border-[#E3E5E8] p-8 md:p-10 mb-10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden">
+              {/* Subtle accent bar */}
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#6BCFCF]" />
+              
+              <div className="relative">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6BCFCF] mb-4">
+                  Économies potentielles
+                </p>
+                <div className="flex items-baseline gap-3 mb-3">
+                  <p className="text-5xl md:text-6xl font-black text-[#0F172A] tracking-tight">
+                    {euro(savingsMax)}
+                  </p>
                 </div>
-                <p className="text-sm md:text-base font-semibold text-[#0F172A]">
-                  Économisez jusqu'à
+                <p className="text-base text-[#1E293B]/70 leading-relaxed">
+                  En envoyant vos photos dès maintenant, vous permettez aux déménageurs d'affiner leur estimation et de réduire leur marge de sécurité.
                 </p>
               </div>
-              <div className="flex items-baseline gap-2 mb-2">
-                <p className="text-4xl md:text-5xl font-black text-[#0F172A]">
-                  {euro(savingsMax)}
-                </p>
-              </div>
-              <p className="text-sm text-[#1E293B]/70">
-                en envoyant vos photos dès maintenant
-              </p>
             </div>
           )}
 
