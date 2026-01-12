@@ -72,8 +72,8 @@ export default function WhatsAppCTA({
         onClick={handleClick}
         className={`group w-full inline-flex items-center justify-center gap-3 rounded-full px-8 py-4 text-base font-semibold transition-all duration-200 ${
           isPrimary
-            ? "bg-[#25D366] text-white hover:bg-[#20BA5A] shadow-sm"
-            : "bg-white text-[#0F172A] border-2 border-[#E3E5E8] hover:border-[#B7EAE3] shadow-sm"
+            ? "bg-[#25D366] text-white hover:bg-[#20BA5A]"
+            : "bg-white text-[#0F172A] border-2 border-[#E3E5E8] hover:border-[#B7EAE3]"
         }`}
       >
         <Smartphone className="w-5 h-5" />
@@ -91,7 +91,7 @@ export default function WhatsAppCTA({
       {/* QR Code Modal (Desktop only) */}
       {showQRModal && !isMobile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-scale-in">
+          <div className="relative bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] max-w-md w-full p-8 animate-scale-in">
             {/* Close button */}
             <button
               onClick={() => setShowQRModal(false)}

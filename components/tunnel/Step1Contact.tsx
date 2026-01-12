@@ -182,7 +182,7 @@ export default function Step1Contact({
             type="submit"
             disabled={isSubmitting}
             aria-disabled={isSubmitting || !isFormValid}
-            className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-sm hover:bg-[#1E293B] transition-all duration-200 ${
+            className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white hover:bg-[#1E293B] transition-all duration-200 ${
               !isFormValid && !isSubmitting ? "opacity-50 cursor-not-allowed" : ""
             } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
           >
@@ -214,13 +214,13 @@ export default function Step1Contact({
       <div className="order-2 relative hidden lg:block">
         <div className="relative w-full max-w-[360px] mx-auto">
           {/* Decorative background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#6BCFCF]/10 to-[#A8E8E8]/10 rounded-[3rem] blur-3xl" />
+          <div className="absolute inset-0 bg-[#6BCFCF]/5 rounded-[3rem] blur-3xl" />
           
           {/* Card mockup */}
-          <div className="relative bg-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] p-8 border border-[#E3E5E8]">
+          <div className="relative bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-8 border border-[#E3E5E8]">
             <div className="space-y-6">
               {/* Icon */}
-              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#6BCFCF] to-[#A8E8E8] mx-auto">
+              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-[#6BCFCF] mx-auto">
                 <Check className="w-8 h-8 text-white" strokeWidth={3} />
               </div>
 
@@ -276,7 +276,7 @@ export default function Step1Contact({
           </div>
 
           {/* Floating badge */}
-          <div className="absolute -right-4 top-20 bg-white rounded-xl shadow-xl px-4 py-2 border border-[#6BCFCF]/30">
+          <div className="absolute -right-4 top-20 bg-white rounded-xl shadow-md px-4 py-2 border border-gray-100">
             <p className="text-xs font-bold text-[#0F172A]">1200+</p>
             <p className="text-xs text-[#1E293B]/60">déménagements</p>
           </div>

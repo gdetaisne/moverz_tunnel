@@ -366,13 +366,13 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                 onClick={() => props.onFieldChange("formule", f.id)}
                 className={`relative p-6 rounded-2xl border-2 transition-all text-left ${
                   props.formule === f.id
-                    ? "border-[#6BCFCF] bg-[#6BCFCF]/5 shadow-lg"
+                    ? "border-[#6BCFCF] bg-[#6BCFCF]/5"
                     : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]/50"
                 }`}
               >
                 {f.recommended && (
-                  <div className="absolute -top-3 left-6 bg-gradient-to-r from-[#6BCFCF] to-[#A8E8E8] text-white px-3 py-1 rounded-full text-xs font-bold">
-                    ⭐ Recommandé
+                  <div className="absolute -top-3 left-6 bg-[#6BCFCF] text-white px-3 py-1 rounded-full text-xs font-bold">
+                    Recommandé
                   </div>
                 )}
                 
@@ -500,7 +500,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
           type="submit"
           disabled={props.isSubmitting}
           aria-disabled={props.isSubmitting || !isFormValid}
-          className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#1E293B] hover:shadow-xl transition-all duration-200 ${
+          className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white hover:bg-[#1E293B] transition-all duration-200 ${
             !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
         >

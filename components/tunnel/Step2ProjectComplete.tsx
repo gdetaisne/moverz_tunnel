@@ -762,7 +762,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           type="submit"
           disabled={props.isSubmitting}
           aria-disabled={props.isSubmitting || !isFormValid}
-          className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#1E293B] hover:shadow-xl transition-all duration-200 ${
+          className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white hover:bg-[#1E293B] transition-all duration-200 ${
             !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
         >
