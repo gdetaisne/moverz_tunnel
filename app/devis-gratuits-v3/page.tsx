@@ -30,6 +30,7 @@ import Step2ProjectComplete from "@/components/tunnel/Step2ProjectComplete";
 import Step3VolumeServices from "@/components/tunnel/Step3VolumeServices";
 import ConfirmationPage from "@/components/tunnel/ConfirmationPage";
 import TrustSignals from "@/components/tunnel/TrustSignals";
+import PricingRibbon from "@/components/tunnel/PricingRibbon";
 
 const STEPS = [
   { id: 1, label: "Contact" },
@@ -319,6 +320,30 @@ function DevisGratuitsV3Content() {
     if (!pricingByFormule) return null;
     return pricingByFormule[state.formule as PricingFormuleType] ?? null;
   }, [pricingByFormule, state.formule]);
+
+  const estimateRange = useMemo(() => {
+    if (!pricingByFormule) return null;
+    const values = Object.values(pricingByFormule);
+    const min = Math.min(...values.map((v) => v.prixMin));
+    const max = Math.max(...values.map((v) => v.prixMax));
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+    return { minEur: min, maxEur: max };
+  }, [pricingByFormule]);
+
+  const estimateIsIndicative = useMemo(() => {
+    const hasHousing = !!(state.originHousingType || state.destinationHousingType);
+    const hasDate = !!state.movingDate;
+    const hasOriginZip = !!state.originPostalCode;
+    const hasDestZip = state.destinationUnknown ? true : !!state.destinationPostalCode;
+    return !(hasHousing && hasDate && hasOriginZip && hasDestZip);
+  }, [
+    state.originHousingType,
+    state.destinationHousingType,
+    state.movingDate,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    state.destinationUnknown,
+  ]);
 
   const activePricingDetails = useMemo(() => {
     if (!activePricing) return null;
@@ -778,7 +803,7 @@ function DevisGratuitsV3Content() {
       <TunnelHero currentStep={state.currentStep} totalSteps={STEPS.length} />
 
       {/* Main content */}
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-28 sm:pb-24">
         {/* Trust signals */}
         {state.currentStep < 4 && (
           <div className="mb-12 hidden md:block">
@@ -881,6 +906,9 @@ function DevisGratuitsV3Content() {
               linkingCode={state.linkingCode || undefined}
               confirmationRequested={confirmationRequested}
               leadId={state.leadId || undefined}
+              estimateMinEur={estimateRange?.minEur ?? null}
+              estimateMaxEur={estimateRange?.maxEur ?? null}
+              estimateIsIndicative={estimateIsIndicative}
             />
           )}
         </div>
@@ -939,6 +967,12 @@ function DevisGratuitsV3Content() {
           </div>
         )}
       </div>
+
+      <PricingRibbon
+        minEur={estimateRange?.minEur ?? null}
+        maxEur={estimateRange?.maxEur ?? null}
+        isIndicative={estimateIsIndicative}
+      />
     </main>
   );
 }

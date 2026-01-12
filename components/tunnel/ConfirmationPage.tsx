@@ -11,6 +11,9 @@ interface ConfirmationPageProps {
   linkingCode?: string;
   confirmationRequested?: boolean;
   leadId?: string;
+  estimateMinEur?: number | null;
+  estimateMaxEur?: number | null;
+  estimateIsIndicative?: boolean;
 }
 
 export default function ConfirmationPage({ 
@@ -19,6 +22,9 @@ export default function ConfirmationPage({
   linkingCode,
   confirmationRequested = false,
   leadId,
+  estimateMinEur = null,
+  estimateMaxEur = null,
+  estimateIsIndicative = false,
 }: ConfirmationPageProps) {
   const { isMobile } = useDeviceDetection();
   const [mounted, setMounted] = useState(false);
@@ -26,6 +32,23 @@ export default function ConfirmationPage({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const hasEstimate =
+    typeof estimateMinEur === "number" &&
+    typeof estimateMaxEur === "number" &&
+    Number.isFinite(estimateMinEur) &&
+    Number.isFinite(estimateMaxEur) &&
+    estimateMaxEur > 0;
+
+  const euro = (n: number) =>
+    new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 0,
+    }).format(Math.round(n));
+
+  const savingsMin = hasEstimate ? Math.round(estimateMaxEur * 0.03) : 0;
+  const savingsMax = hasEstimate ? Math.round(estimateMaxEur * 0.08) : 0;
 
   return (
     <div className="max-w-3xl mx-auto text-center">
@@ -54,6 +77,53 @@ export default function ConfirmationPage({
           </div>
         </div>
       )}
+
+      {/* Pricing incentive */}
+      <div className="max-w-2xl mx-auto mb-8">
+        <div className="rounded-2xl border border-[#E3E5E8] bg-white p-6 shadow-sm text-left">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+                Votre estimation {estimateIsIndicative ? "indicative" : "actuelle"}
+              </p>
+              <p className="mt-1 text-2xl font-bold text-[#0F172A]">
+                {hasEstimate ? (
+                  <>
+                    {euro(estimateMinEur)} – {euro(estimateMaxEur)}
+                  </>
+                ) : (
+                  <>Fourchette en cours de calcul</>
+                )}
+              </p>
+              <p className="mt-1 text-sm text-[#1E293B]/70">
+                Les photos réduisent l’incertitude → on évite les marges “au cas où”.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-[#0F172A] px-5 py-4 text-white">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
+                Impact photos
+              </p>
+              <p className="mt-1 text-lg font-bold">
+                {hasEstimate ? (
+                  <>
+                    jusqu’à {euro(savingsMax)}
+                    <span className="text-sm font-semibold text-white/70">
+                      {" "}
+                      potentiel
+                    </span>
+                  </>
+                ) : (
+                  <>Plus de précision</>
+                )}
+              </p>
+              <p className="mt-1 text-[11px] text-white/55">
+                Indicatif (souvent ~{euro(savingsMin)}–{euro(savingsMax)}).
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Action buttons */}
       <div className="max-w-md mx-auto mb-12 space-y-4">
