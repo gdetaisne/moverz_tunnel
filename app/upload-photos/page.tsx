@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Upload, Check, X, Image as ImageIcon } from "lucide-react";
+import { Upload, Check, X } from "lucide-react";
 import { uploadBackofficePhotos } from "@/lib/api/client";
 import PremiumShell from "@/components/tunnel/PremiumShell";
 
@@ -12,6 +12,7 @@ function UploadPhotosContent() {
   const leadId = searchParams.get("leadId") || "";
   
   const [files, setFiles] = useState<File[]>([]);
+  const [budgetEur, setBudgetEur] = useState<string>("2000");
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
@@ -77,6 +78,22 @@ function UploadPhotosContent() {
     }
   };
 
+  const TARGET_PHOTOS = 12;
+  const photoCount = files.length;
+  const progress = Math.min(1, photoCount / TARGET_PHOTOS);
+  const score = Math.round(35 + progress * 65); // 35–100
+
+  const scoreLabel =
+    score >= 90 ? "Très élevé" : score >= 75 ? "Élevé" : score >= 55 ? "Correct" : "Faible";
+
+  const parsedBudget = Math.max(0, Math.round(Number(budgetEur || 0)));
+  const hasBudget = Number.isFinite(parsedBudget) && parsedBudget > 0;
+  // Incentive: show a range (avoid absolute claims; keep as indicative).
+  const savingsMin = hasBudget ? Math.round(parsedBudget * 0.03) : 0;
+  const savingsMax = hasBudget ? Math.round(parsedBudget * 0.08) : 0;
+  const euro = (n: number) =>
+    new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
+
   return (
     <PremiumShell>
       {/* Header */}
@@ -118,6 +135,99 @@ function UploadPhotosContent() {
       {/* Main content */}
         {!uploaded ? (
           <div className="space-y-8">
+            {/* Value / incentive */}
+            <section className="moverz-animate-fade-in rounded-3xl border border-[#E3E5E8] bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+                    Le hack pour des devis vraiment comparables
+                  </p>
+                  <h2 className="text-2xl font-bold text-[#0F172A]">
+                    Ajoutez des photos → moins de marge “au cas où”
+                  </h2>
+                  <p className="text-sm text-[#1E293B]/70 max-w-xl">
+                    Les déménageurs sur-estiment quand il manque des infos. Avec des photos, on
+                    réduit l’incertitude (volume + accès), donc les prix sont plus justes et
+                    les devis arrivent plus vite.
+                  </p>
+
+                  <div className="grid gap-2 text-sm text-[#1E293B]/75 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-[#E3E5E8] bg-[#F8F9FA] px-4 py-3">
+                      <p className="font-semibold text-[#0F172A]">+ de réponses</p>
+                      <p className="text-xs text-[#1E293B]/60">Dossier plus “actionnable”</p>
+                    </div>
+                    <div className="rounded-2xl border border-[#E3E5E8] bg-[#F8F9FA] px-4 py-3">
+                      <p className="font-semibold text-[#0F172A]">Prix plus justes</p>
+                      <p className="text-xs text-[#1E293B]/60">Moins de marge de sécurité</p>
+                    </div>
+                    <div className="rounded-2xl border border-[#E3E5E8] bg-[#F8F9FA] px-4 py-3">
+                      <p className="font-semibold text-[#0F172A]">Moins d’aller‑retours</p>
+                      <p className="text-xs text-[#1E293B]/60">Moins de questions ensuite</p>
+                    </div>
+                  </div>
+                </div>
+
+                <aside className="w-full rounded-3xl border border-[#E3E5E8] bg-[#0F172A] p-5 text-white shadow-brand md:max-w-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                      Score de précision
+                    </p>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/90">
+                      {scoreLabel}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline justify-between">
+                    <p className="text-3xl font-bold">{score}</p>
+                    <p className="text-xs text-white/60">
+                      Objectif : {TARGET_PHOTOS} photos
+                    </p>
+                  </div>
+                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#6BCFCF] to-emerald-400 moverz-transition-fast"
+                      style={{ width: `${Math.round(progress * 100)}%` }}
+                    />
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    <label className="block text-xs font-semibold text-white/80">
+                      Votre budget estimé (optionnel)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={budgetEur}
+                        onChange={(e) => setBudgetEur(e.target.value.replace(/[^\d]/g, "").slice(0, 6))}
+                        className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/30"
+                        placeholder="2000"
+                        aria-label="Budget estimé en euros"
+                      />
+                      <span className="text-sm text-white/70">€</span>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-xs font-semibold text-white/80">
+                        Économie potentielle
+                      </p>
+                      {hasBudget ? (
+                        <p className="mt-1 text-lg font-bold text-white">
+                          {euro(savingsMin)} – {euro(savingsMax)}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-sm text-white/70">
+                          Renseignez un budget pour voir une estimation.
+                        </p>
+                      )}
+                      <p className="mt-1 text-[11px] text-white/50">
+                        Estimation indicative: l’ajout de photos réduit l’incertitude et donc la marge “au cas où”.
+                      </p>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </section>
+
             {/* Instructions */}
             <div className="moverz-animate-fade-in rounded-3xl border border-[#E3E5E8] bg-white p-6 shadow-sm">
               <h2 className="mb-4 text-xl font-bold text-[#0F172A]">
