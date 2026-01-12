@@ -774,16 +774,9 @@ function DevisGratuitsV3Content() {
           }
         }
 
-        // Email de confirmation (best-effort)
-        // IMPORTANT PERF: ne pas bloquer la navigation Step3→Step4 sur cet appel réseau,
-        // car /public/leads/:id/request-confirmation peut attendre des documents (DOCS_NOT_READY).
-        const idForConfirmation = (await ensureBackofficeLeadId()) ?? effectiveLeadId;
-        requestBackofficeConfirmation(idForConfirmation)
-          .then(() => setConfirmationRequested(true))
-          .catch((confirmErr) => {
-            console.warn("Backoffice confirmation request failed:", confirmErr);
-            setConfirmationRequested(false);
-          });
+        // Email de confirmation:
+        // Désactivé ici. On n'envoie l'email de confirmation que lorsque des photos arrivent
+        // côté Back Office (Option A).
       }
 
       trackStepChange(3, 4, "RECAP", "THANK_YOU", "forward");

@@ -49,7 +49,8 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
     // Custom tracking
     trackTunnelEvent({
       eventType: "TUNNEL_STEP_VIEWED",
-      leadTunnelId: leadId || undefined,
+      // leadId ici = Lead Back Office (Postgres)
+      backofficeLeadId: leadId || undefined,
       source,
       logicalStep,
       screenId,
@@ -73,7 +74,8 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
 
     trackTunnelEvent({
       eventType: "TUNNEL_STEP_CHANGED",
-      leadTunnelId: leadId || undefined,
+      // leadId ici = Lead Back Office (Postgres)
+      backofficeLeadId: leadId || undefined,
       source,
       logicalStep: toLogicalStep,
       screenId: `step_${toStep}_v3`,
@@ -101,7 +103,8 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
 
     trackTunnelEvent({
       eventType: "TUNNEL_COMPLETED",
-      leadTunnelId: leadId || undefined,
+      // leadId ici = Lead Back Office (Postgres)
+      backofficeLeadId: leadId || undefined,
       source,
       logicalStep: "THANK_YOU",
       screenId: "confirmation_v3",
@@ -122,7 +125,8 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
   ) => {
     trackTunnelEvent({
       eventType: "TUNNEL_ERROR",
-      leadTunnelId: leadId || undefined,
+      // leadId ici = Lead Back Office (Postgres)
+      backofficeLeadId: leadId || undefined,
       source,
       logicalStep,
       screenId: `step_${currentStep}_v3`,

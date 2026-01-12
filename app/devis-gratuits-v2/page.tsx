@@ -3451,14 +3451,9 @@ function DevisGratuitsPageInner() {
           }
           console.log("✅ Lead mis à jour dans le Back Office");
 
-          // Demander l'envoi de l'email de confirmation
-          try {
-            // effectiveBackofficeLeadId est garanti non-null ici
-            await requestBackofficeConfirmation(effectiveBackofficeLeadId);
-            console.log("✅ Email de confirmation demandé");
-          } catch (confirmErr) {
-            console.warn("⚠️ Email de confirmation non envoyé:", confirmErr);
-          }
+          // Email de confirmation:
+          // Désactivé ici. On n'envoie l'email de confirmation que lorsque des photos arrivent
+          // côté Back Office (Option A).
         } catch (boErr) {
           console.warn("⚠️ Impossible de synchroniser avec le Back Office:", boErr);
           // En dev on expose la raison (sinon on se retrouve avec des leads "vides" sans signal).
