@@ -104,7 +104,7 @@ function UploadPhotosContent() {
   return (
     <PremiumShell>
       {/* Header */}
-      <header className="moverz-animate-fade-in mb-8 rounded-3xl border border-[#E3E5E8] bg-white/80 p-6 shadow-brand moverz-glass">
+      <header className="moverz-animate-fade-in mb-8 rounded-3xl border border-[#E3E5E8] bg-white/80 p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] moverz-glass">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <img src="/icon.png" alt="Moverz" className="h-10 w-auto" />
@@ -143,7 +143,7 @@ function UploadPhotosContent() {
         {!uploaded ? (
           <div className="space-y-8">
             {/* Compact incentive */}
-            <section className="moverz-animate-fade-in rounded-3xl border border-[#E3E5E8] bg-white p-5 shadow-sm">
+            <section className="moverz-animate-fade-in rounded-3xl border border-[#E3E5E8] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
@@ -154,7 +154,7 @@ function UploadPhotosContent() {
                   </p>
                 </div>
 
-                <div className="flex-shrink-0 rounded-2xl bg-[#0F172A] px-4 py-3 text-white shadow-brand">
+                <div className="flex-shrink-0 rounded-2xl bg-[#0F172A] px-4 py-3 text-white">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
                       Score
@@ -171,7 +171,7 @@ function UploadPhotosContent() {
                   </div>
                   <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#6BCFCF] to-emerald-400 moverz-transition-fast"
+                      className="h-full rounded-full bg-[#6BCFCF] moverz-transition-fast"
                       style={{ width: `${Math.round(progress * 100)}%` }}
                     />
                   </div>
@@ -183,9 +183,9 @@ function UploadPhotosContent() {
             </section>
 
             {/* Instructions */}
-            <div className="moverz-animate-fade-in rounded-3xl border border-[#E3E5E8] bg-white p-6 shadow-sm">
+            <div className="moverz-animate-fade-in rounded-3xl border border-[#E3E5E8] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
               <h2 className="mb-4 text-xl font-bold text-[#0F172A]">
-                📸 Quoi prendre en photo (rapide)
+                Quoi photographier
               </h2>
               <div className="flex flex-wrap gap-2 text-sm text-[#1E293B]/75">
                 {[
@@ -271,7 +271,7 @@ function UploadPhotosContent() {
                 <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
                   {files.map((file, index) => (
                     <div key={index} className="relative group">
-                      <div className="aspect-square overflow-hidden rounded-2xl border border-[#E3E5E8] bg-white shadow-sm">
+                      <div className="aspect-square overflow-hidden rounded-2xl border border-[#E3E5E8] bg-white">
                         <img
                           src={URL.createObjectURL(file)}
                           alt={file.name}
@@ -280,7 +280,7 @@ function UploadPhotosContent() {
                       </div>
                       <button
                         onClick={() => removeFile(index)}
-                        className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
+                        className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white opacity-0 transition-opacity group-hover:opacity-100"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -294,7 +294,7 @@ function UploadPhotosContent() {
                 <button
                   onClick={handleUpload}
                   disabled={uploading || !leadId}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#6BCFCF] px-8 py-4 text-base font-semibold text-[#0F172A] shadow-brand hover:bg-[#5BBFBF] disabled:opacity-50 disabled:cursor-not-allowed moverz-transition-fast"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#6BCFCF] px-8 py-4 text-base font-semibold text-[#0F172A] hover:bg-[#5BBFBF] disabled:opacity-50 disabled:cursor-not-allowed moverz-transition-fast"
                 >
                   {uploading ? (
                     <>
@@ -319,12 +319,12 @@ function UploadPhotosContent() {
         ) : (
           // Success state
           <div className="text-center py-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 mx-auto mb-6 shadow-sm">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500 mx-auto mb-6">
               <Check className="w-10 h-10 text-white" strokeWidth={3} />
             </div>
             
             <h2 className="text-3xl font-bold text-[#0F172A] mb-4">
-              Photos envoyées ! 🎉
+              Photos envoyées
             </h2>
             
             <p className="text-xl text-[#1E293B]/70 mb-8">
@@ -332,7 +332,7 @@ function UploadPhotosContent() {
             </p>
 
             {uploadSummary && uploadSummary.errors.length > 0 && (
-              <div className="mb-8 rounded-3xl bg-white p-6 border border-[#E3E5E8] max-w-md mx-auto text-left shadow-sm">
+              <div className="mb-8 rounded-3xl bg-white p-6 border border-[#E3E5E8] max-w-md mx-auto text-left shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
                 <h3 className="text-lg font-bold text-[#0F172A] mb-2">
                   Certaines photos n'ont pas pu être envoyées
                 </h3>
@@ -346,7 +346,7 @@ function UploadPhotosContent() {
               </div>
             )}
 
-            <div className="rounded-3xl bg-white p-6 border border-[#E3E5E8] max-w-md mx-auto shadow-sm">
+            <div className="rounded-3xl bg-white p-6 border border-[#E3E5E8] max-w-md mx-auto shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
               <h3 className="text-lg font-bold text-[#0F172A] mb-4">Que se passe-t-il maintenant ?</h3>
               <div className="space-y-4 text-left">
                 <div className="flex items-start gap-3">
@@ -391,7 +391,7 @@ function UploadPhotosContent() {
       {/* Footer note */}
       <div className="mt-10">
         <p className="text-center text-sm text-[#1E293B]/55">
-          🔒 Vos photos sont sécurisées et ne seront utilisées que pour votre devis
+          Vos photos sont sécurisées et ne seront utilisées que pour votre devis
         </p>
       </div>
     </PremiumShell>
