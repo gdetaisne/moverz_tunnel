@@ -803,7 +803,13 @@ function DevisGratuitsV3Content() {
       <TunnelHero currentStep={state.currentStep} totalSteps={STEPS.length} />
 
       {/* Main content */}
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-28 sm:pb-24">
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <PricingRibbon
+          minEur={estimateRange?.minEur ?? null}
+          maxEur={estimateRange?.maxEur ?? null}
+          isIndicative={estimateIsIndicative}
+        />
+
         {/* Trust signals */}
         {state.currentStep < 4 && (
           <div className="mb-12 hidden md:block">
@@ -967,12 +973,6 @@ function DevisGratuitsV3Content() {
           </div>
         )}
       </div>
-
-      <PricingRibbon
-        minEur={estimateRange?.minEur ?? null}
-        maxEur={estimateRange?.maxEur ?? null}
-        isIndicative={estimateIsIndicative}
-      />
     </main>
   );
 }
