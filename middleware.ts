@@ -4,12 +4,21 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const url = request.nextUrl;
 
-  const host =
+  // Behind proxies/CDNs, x-forwarded-host can be a comma-separated list.
+  const hostHeader =
     request.headers.get("x-forwarded-host") ??
     request.headers.get("host") ??
     "";
-  const hostname = host.split(":")[0]?.toLowerCase() ?? "";
+  const firstHost = hostHeader.split(",")[0]?.trim() ?? "";
+  const hostname = firstHost.split(":")[0]?.trim().toLowerCase() ?? "";
   const isTunnelHost = hostname === "devis.moverz.fr";
+
+  const withNoIndex = (res: NextResponse) => {
+    if (isTunnelHost) {
+      res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    }
+    return res;
+  };
 
   // Rediriger toute arrivée sur la racine vers le tunnel, avec src=landing par défaut.
   if (url.pathname === "/") {
@@ -21,18 +30,10 @@ export function middleware(request: NextRequest) {
       redirectUrl.searchParams.set("src", "landing");
     }
 
-    const res = NextResponse.redirect(redirectUrl);
-    if (isTunnelHost) {
-      res.headers.set("X-Robots-Tag", "noindex, nofollow");
-    }
-    return res;
+    return withNoIndex(NextResponse.redirect(redirectUrl));
   }
 
-  const res = NextResponse.next();
-  if (isTunnelHost) {
-    res.headers.set("X-Robots-Tag", "noindex, nofollow");
-  }
-  return res;
+  return withNoIndex(NextResponse.next());
 }
 
 export const config = {
