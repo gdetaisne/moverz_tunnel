@@ -51,82 +51,47 @@ export default function ConfirmationPage({
   const savingsMax = hasEstimate ? Math.round(estimateMaxEur * 0.08) : 0;
 
   return (
-    <div className="max-w-3xl mx-auto text-center">
+    <div className="max-w-2xl mx-auto text-center">
       {/* Success icon */}
-      <div className="flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 mx-auto mb-8 animate-scale-in">
+      <div className="flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 mx-auto mb-6 animate-scale-in shadow-lg">
         <Check className="w-10 h-10 text-white" strokeWidth={3} />
       </div>
 
       {/* Title */}
-      <h2 className="text-3xl md:text-4xl font-bold text-[#0F172A] mb-4">
+      <h2 className="text-3xl md:text-4xl font-bold text-[#0F172A] mb-3">
         Merci {firstName} ! 🎉
       </h2>
       
-      <p className="text-xl text-[#1E293B]/70 mb-8 leading-relaxed">
-        Votre dossier est créé. Pour recevoir des devis <strong className="text-[#0F172A]">vraiment comparables</strong>,
-        envoyez-nous des photos de <strong className="text-[#0F172A]">toutes vos pièces</strong>.
+      <p className="text-lg text-[#1E293B]/70 mb-10 max-w-md mx-auto">
+        Dernière étape : ajoutez vos photos pour des devis vraiment justes.
       </p>
 
-      {/* Linking code (if available) */}
-      {linkingCode && (
-        <div className="inline-flex items-center gap-3 bg-[#F8F9FA] rounded-2xl px-6 py-4 mb-8 border border-[#E3E5E8]">
-          <FileText className="w-5 h-5 text-[#6BCFCF]" />
-          <div className="text-left">
-            <p className="text-xs text-[#1E293B]/60 font-medium">Votre code dossier</p>
-            <p className="text-lg font-bold text-[#0F172A] tracking-wider">{linkingCode}</p>
+      {/* HERO INCENTIVE - Photos impact */}
+      {hasEstimate && (
+        <div className="relative mb-10 overflow-hidden rounded-3xl border-2 border-[#6BCFCF] bg-gradient-to-br from-[#6BCFCF]/10 via-white to-white p-8 shadow-brand">
+          <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-[#6BCFCF]/20 blur-3xl" />
+          <div className="relative">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#2B7A78]">
+              💡 Avec photos
+            </p>
+            <p className="mt-3 text-5xl font-bold text-[#0F172A]">
+              jusqu'à {euro(savingsMax)}
+            </p>
+            <p className="mt-2 text-base text-[#1E293B]/70">
+              d'économies potentielles sur votre déménagement
+            </p>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm text-[#1E293B]/70 backdrop-blur">
+              <span className="font-mono text-xs text-[#2B7A78]">
+                {euro(estimateMinEur)} – {euro(estimateMaxEur)}
+              </span>
+              → marge réduite grâce à vos photos
+            </div>
           </div>
         </div>
       )}
 
-      {/* Pricing incentive */}
-      <div className="max-w-2xl mx-auto mb-8">
-        <div className="rounded-2xl border border-[#E3E5E8] bg-white p-6 shadow-sm text-left">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-                Votre estimation {estimateIsIndicative ? "indicative" : "actuelle"}
-              </p>
-              <p className="mt-1 text-2xl font-bold text-[#0F172A]">
-                {hasEstimate ? (
-                  <>
-                    {euro(estimateMinEur)} – {euro(estimateMaxEur)}
-                  </>
-                ) : (
-                  <>Fourchette en cours de calcul</>
-                )}
-              </p>
-              <p className="mt-1 text-sm text-[#1E293B]/70">
-                Les photos réduisent l’incertitude → on évite les marges “au cas où”.
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-[#0F172A] px-5 py-4 text-white">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
-                Impact photos
-              </p>
-              <p className="mt-1 text-lg font-bold">
-                {hasEstimate ? (
-                  <>
-                    jusqu’à {euro(savingsMax)}
-                    <span className="text-sm font-semibold text-white/70">
-                      {" "}
-                      potentiel
-                    </span>
-                  </>
-                ) : (
-                  <>Plus de précision</>
-                )}
-              </p>
-              <p className="mt-1 text-[11px] text-white/55">
-                Indicatif (souvent ~{euro(savingsMin)}–{euro(savingsMax)}).
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Action buttons */}
-      <div className="max-w-md mx-auto mb-12 space-y-4">
+      <div className="max-w-md mx-auto mb-8 space-y-4">
         {/* WhatsApp CTA (priority) */}
         <WhatsAppCTA 
           source="tunnel-confirmation" 
@@ -148,87 +113,46 @@ export default function ConfirmationPage({
 
             <button
               onClick={() => {
-                // Desktop upload: on passe l'id Back Office (source de vérité)
                 const url = new URL("/upload-photos", window.location.origin);
                 if (leadId) url.searchParams.set("leadId", leadId);
-                if (linkingCode) url.searchParams.set("code", linkingCode); // affichage uniquement
+                if (linkingCode) url.searchParams.set("code", linkingCode);
                 window.location.href = url.toString();
               }}
               disabled={!leadId}
               className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white border-2 border-[#E3E5E8] px-8 py-4 text-base font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#6BCFCF]/5 transition-all duration-200"
             >
               <Upload className="w-5 h-5" />
-              <span>Ajouter mes photos depuis cet ordinateur</span>
+              <span>Ajouter depuis cet ordinateur</span>
             </button>
           </>
         )}
       </div>
 
-      {/* What happens next */}
-      <div className="bg-white rounded-2xl shadow-sm border border-[#E3E5E8] p-8 text-left">
-        <h3 className="text-lg font-bold text-[#0F172A] mb-6 text-center">
-          📋 Que se passe-t-il maintenant ?
-        </h3>
-
-        <div className="space-y-6">
-          {/* Step 1 */}
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-600 font-bold">
-              1
-            </div>
-            <div>
-              <p className="font-semibold text-[#0F172A] mb-1">
-                Vous envoyez vos photos (WhatsApp ou email)
-              </p>
-              <p className="text-sm text-[#1E293B]/70">
-                Salon, chambres, cuisine, cave, garage, escaliers, parking...
-                <br />
-                <span className="text-[#6BCFCF] font-medium">Plus de photos = devis plus justes</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-bold">
-              2
-            </div>
-            <div>
-              <p className="font-semibold text-[#0F172A] mb-1">
-                Notre IA prépare votre dossier en 30 secondes
-              </p>
-              <p className="text-sm text-[#1E293B]/70">
-                Estimation volume, inventaire, dossier standardisé pour tous les déménageurs
-              </p>
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 text-purple-600 font-bold">
-              3
-            </div>
-            <div>
-              <p className="font-semibold text-[#0F172A] mb-1">
-                Vous recevez 3 à 5 devis comparables
-              </p>
-              <p className="text-sm text-[#1E293B]/70">
-                Sous 48-72h par email • Déménageurs locaux vérifiés • Prix basés sur la même estimation
-              </p>
-            </div>
-          </div>
+      {/* Compact next steps */}
+      <div className="rounded-2xl bg-[#F8F9FA] p-6 text-left">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
+          Prochaines étapes
+        </p>
+        <div className="mt-4 space-y-3 text-sm text-[#1E293B]/70">
+          <p>✓ Vous envoyez vos photos</p>
+          <p>✓ Notre IA prépare votre dossier en 30s</p>
+          <p>✓ Vous recevez 3-5 devis sous 48-72h</p>
         </div>
       </div>
 
+      {/* Linking code - discret */}
+      {linkingCode && (
+        <div className="mt-6 text-center">
+          <p className="text-xs text-[#1E293B]/50">
+            Code dossier : <span className="font-mono text-[#2B7A78]">{linkingCode}</span>
+          </p>
+        </div>
+      )}
+
       {/* Email confirmation */}
       {confirmationRequested && (
-        <div className="mt-8 p-4 rounded-xl bg-blue-50 border border-blue-200">
-          <div className="flex items-center justify-center gap-2 text-sm text-blue-900">
-            <Clock className="w-4 h-4" />
-            <p>
-              Un email de confirmation a été envoyé à <strong>{email}</strong>
-            </p>
-          </div>
+        <div className="mt-6 rounded-xl bg-blue-50 p-3 text-center text-xs text-blue-900">
+          Email de confirmation envoyé à <strong>{email}</strong>
         </div>
       )}
 
