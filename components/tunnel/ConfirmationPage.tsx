@@ -53,12 +53,12 @@ export default function ConfirmationPage({
   return (
     <div className="max-w-2xl mx-auto text-center">
       {/* Success icon */}
-      <div className="flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 mx-auto mb-6 animate-scale-in shadow-lg">
+      <div className="flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 mx-auto mb-6 animate-scale-in shadow-sm">
         <Check className="w-10 h-10 text-white" strokeWidth={3} />
       </div>
 
       {/* Title */}
-      <h2 className="text-3xl md:text-4xl font-bold text-[#0F172A] mb-3">
+      <h2 className="text-4xl md:text-5xl font-black text-[#0F172A] mb-3">
         Merci {firstName}
       </h2>
       
@@ -135,15 +135,21 @@ export default function ConfirmationPage({
         </p>
         <div className="mt-4 space-y-3 text-sm text-[#1E293B]/70">
           <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-[#6BCFCF]" />
+            <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
+              <Check className="w-3 h-3 text-green-600" strokeWidth={3} />
+            </div>
             <p>Vous envoyez vos photos</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-[#6BCFCF]" />
+            <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
+              <Check className="w-3 h-3 text-green-600" strokeWidth={3} />
+            </div>
             <p>Notre IA prépare votre dossier en 30s</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-[#6BCFCF]" />
+            <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
+              <Check className="w-3 h-3 text-green-600" strokeWidth={3} />
+            </div>
             <p>Vous recevez 3-5 devis sous 48-72h</p>
           </div>
         </div>

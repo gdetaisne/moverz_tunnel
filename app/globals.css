@@ -8,14 +8,14 @@
    - Values are RGB triplets to support Tailwind alpha syntax.
 ------------------------------------------------------------ */
 :root {
-  /* Brand */
-  --brand-deep-teal: 43 122 120; /* #2B7A78 */
-  --brand-spark: 107 207 207; /* #6BCFCF */
-  --brand-navy: 15 23 42; /* #0F172A */
-  --brand-slate: 30 41 59; /* #1E293B */
-  --brand-warm: 245 158 11; /* #F59E0B (use sparingly) */
+  /* Brand (aligned with moverz.fr - flat/sober) */
+  --brand-navy: 15 23 42; /* #0F172A - dark navy */
+  --brand-slate: 30 41 59; /* #1E293B - medium navy */
+  --brand-cyan: 183 234 227; /* #B7EAE3 - soft cyan (moverz.fr) */
+  --brand-whatsapp: 37 211 102; /* #25D366 - WhatsApp green */
+  --brand-success: 34 197 94; /* #22C55E - green-500 */
 
-  /* Surfaces (light-first) */
+  /* Surfaces (light-first, flat) */
   --surface-0: 255 255 255; /* white */
   --surface-1: 248 250 252; /* slate-50 */
   --surface-2: 241 245 249; /* slate-100 */
@@ -142,13 +142,13 @@ body {
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* Shadow utilities */
+/* Shadow utilities (flat/subtle like moverz.fr) */
 .shadow-brand {
-  box-shadow: 0 8px 32px rgba(var(--brand-deep-teal), 0.12), 0 2px 8px rgba(var(--brand-spark), 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .shadow-brand-lg {
-  box-shadow: 0 16px 48px rgba(var(--brand-deep-teal), 0.16), 0 4px 16px rgba(var(--brand-spark), 0.10);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 

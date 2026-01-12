@@ -70,10 +70,10 @@ export default function WhatsAppCTA({
       {/* CTA Button */}
       <button
         onClick={handleClick}
-        className={`group w-full inline-flex items-center justify-center gap-3 rounded-full px-8 py-4 text-base font-semibold shadow-lg transition-all duration-200 ${
+        className={`group w-full inline-flex items-center justify-center gap-3 rounded-full px-8 py-4 text-base font-semibold transition-all duration-200 ${
           isPrimary
-            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 hover:shadow-xl"
-            : "bg-white text-[#0F172A] border-2 border-[#E3E5E8] hover:border-[#6BCFCF]"
+            ? "bg-[#25D366] text-white hover:bg-[#20BA5A] shadow-sm"
+            : "bg-white text-[#0F172A] border-2 border-[#E3E5E8] hover:border-[#B7EAE3] shadow-sm"
         }`}
       >
         <Smartphone className="w-5 h-5" />
@@ -129,27 +129,27 @@ export default function WhatsAppCTA({
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-xs text-[#1E293B]/70">
                   <div className="flex items-center gap-1.5">
-                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    <Check className="w-3.5 h-3.5 text-green-600" strokeWidth={3} />
                     Salon
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    <Check className="w-3.5 h-3.5 text-green-600" strokeWidth={3} />
                     Chambres
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    <Check className="w-3.5 h-3.5 text-green-600" strokeWidth={3} />
                     Cuisine
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    <Check className="w-3.5 h-3.5 text-green-600" strokeWidth={3} />
                     Cave/Garage
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    <Check className="w-3.5 h-3.5 text-green-600" strokeWidth={3} />
                     Entrée
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="h-1 w-1 rounded-full bg-[#6BCFCF]" />
+                    <Check className="w-3.5 h-3.5 text-green-600" strokeWidth={3} />
                     Escaliers
                   </div>
                 </div>

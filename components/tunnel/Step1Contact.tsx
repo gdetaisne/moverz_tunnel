@@ -57,7 +57,7 @@ export default function Step1Contact({
             Étape 1/4
           </div>
 
-          <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] mb-3 md:mb-4 leading-tight">
+          <h2 className="text-3xl md:text-5xl font-black text-[#0F172A] mb-3 md:mb-4 leading-tight">
             Vos infos de contact
           </h2>
           
@@ -182,7 +182,7 @@ export default function Step1Contact({
             type="submit"
             disabled={isSubmitting}
             aria-disabled={isSubmitting || !isFormValid}
-            className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#1E293B] hover:shadow-xl transition-all duration-200 ${
+            className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white shadow-sm hover:bg-[#1E293B] transition-all duration-200 ${
               !isFormValid && !isSubmitting ? "opacity-50 cursor-not-allowed" : ""
             } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
           >
