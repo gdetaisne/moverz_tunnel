@@ -4,6 +4,13 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const url = request.nextUrl;
 
+  const host =
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    "";
+  const hostname = host.split(":")[0]?.toLowerCase() ?? "";
+  const isTunnelHost = hostname === "devis.moverz.fr";
+
   // Rediriger toute arrivée sur la racine vers le tunnel, avec src=landing par défaut.
   if (url.pathname === "/") {
     const redirectUrl = url.clone();
@@ -14,14 +21,22 @@ export function middleware(request: NextRequest) {
       redirectUrl.searchParams.set("src", "landing");
     }
 
-    return NextResponse.redirect(redirectUrl);
+    const res = NextResponse.redirect(redirectUrl);
+    if (isTunnelHost) {
+      res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    }
+    return res;
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  if (isTunnelHost) {
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+  return res;
 }
 
 export const config = {
-  matcher: ["/"],
+  matcher: ["/:path*"],
 };
 
 
