@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Upload, Check, X, Image as ImageIcon } from "lucide-react";
 import { uploadBackofficePhotos } from "@/lib/api/client";
+import PremiumShell from "@/components/tunnel/PremiumShell";
 
 function UploadPhotosContent() {
   const searchParams = useSearchParams();
@@ -77,45 +78,52 @@ function UploadPhotosContent() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B]">
+    <PremiumShell>
       {/* Header */}
-      <div className="bg-[#0F172A] border-b border-white/10 py-6">
-        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+      <header className="moverz-animate-fade-in mb-8 rounded-3xl border border-[#E3E5E8] bg-white/80 p-6 shadow-brand moverz-glass">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/icon.png" alt="Moverz" className="h-10 w-auto" />
             <div>
-              <h1 className="text-2xl font-bold text-white">Upload vos photos</h1>
-              <p className="text-sm text-white/60 mt-1">
+              <h1 className="text-2xl font-bold text-[#0F172A]">
+                Upload vos photos
+              </h1>
+              <p className="mt-1 text-sm text-[#1E293B]/70">
                 {leadId ? (
                   <>
-                    Dossier : <span className="font-mono text-[#6BCFCF]">{leadId}</span>
+                    Dossier :{" "}
+                    <span className="font-mono text-[#2B7A78]">{leadId}</span>
                     {linkingCode ? (
                       <>
                         {" "}
                         · Code :{" "}
-                        <span className="font-mono text-[#6BCFCF]">{linkingCode}</span>
+                        <span className="font-mono text-[#2B7A78]">
+                          {linkingCode}
+                        </span>
                       </>
                     ) : null}
                   </>
                 ) : (
                   <>
                     Dossier :{" "}
-                    <span className="font-mono text-amber-300">Non fourni</span>
+                    <span className="font-mono text-amber-700">Non fourni</span>
                   </>
                 )}
               </p>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Main content */}
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!uploaded ? (
           <div className="space-y-8">
             {/* Instructions */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-              <h2 className="text-xl font-bold text-white mb-4">📸 Photos recommandées</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm text-white/70">
+            <div className="moverz-animate-fade-in rounded-3xl border border-[#E3E5E8] bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-xl font-bold text-[#0F172A]">
+                📸 Photos recommandées
+              </h2>
+              <div className="grid grid-cols-2 gap-3 text-sm text-[#1E293B]/75 md:grid-cols-3">
                 <div>✓ Salon</div>
                 <div>✓ Chambres</div>
                 <div>✓ Cuisine</div>
@@ -126,13 +134,13 @@ function UploadPhotosContent() {
                 <div>✓ Ascenseur</div>
                 <div>✓ Meubles volumineux</div>
               </div>
-              <p className="text-xs text-white/50 mt-4">
+              <p className="mt-4 text-xs text-[#1E293B]/60">
                 💡 Plus de photos = devis plus justes (±5%)
               </p>
             </div>
 
             {error && (
-              <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-100">
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
                 {error}
               </div>
             )}
@@ -145,10 +153,10 @@ function UploadPhotosContent() {
                 setIsDragging(true);
               }}
               onDragLeave={() => setIsDragging(false)}
-              className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
+              className={`relative moverz-animate-fade-in rounded-3xl border-2 border-dashed p-10 text-center moverz-transition-fast ${
                 isDragging
                   ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
-                  : "border-white/20 bg-white/5 hover:border-white/40"
+                  : "border-[#E3E5E8] bg-white/70 hover:border-[#6BCFCF]/60 hover:bg-white"
               }`}
             >
               <input
@@ -159,14 +167,16 @@ function UploadPhotosContent() {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
               
-              <Upload className="w-16 h-16 text-white/40 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">
+              <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#6BCFCF]/15 text-[#2B7A78] shadow-sm">
+                <Upload className="h-7 w-7" />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-[#0F172A]">
                 Glissez vos photos ici
               </h3>
-              <p className="text-white/60">
+              <p className="text-[#1E293B]/70">
                 ou cliquez pour sélectionner des fichiers
               </p>
-              <p className="text-sm text-white/40 mt-2">
+              <p className="mt-2 text-sm text-[#1E293B]/55">
                 JPG, PNG, HEIC acceptés
               </p>
             </div>
@@ -175,12 +185,12 @@ function UploadPhotosContent() {
             {files.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-bold text-[#0F172A]">
                     {files.length} photo{files.length > 1 ? 's' : ''} sélectionnée{files.length > 1 ? 's' : ''}
                   </h3>
                   <button
                     onClick={() => setFiles([])}
-                    className="text-sm text-white/60 hover:text-white transition-colors"
+                    className="text-sm text-[#1E293B]/65 hover:text-[#0F172A] transition-colors"
                   >
                     Tout supprimer
                   </button>
@@ -189,7 +199,7 @@ function UploadPhotosContent() {
                 <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
                   {files.map((file, index) => (
                     <div key={index} className="relative group">
-                      <div className="aspect-square rounded-xl bg-white/10 border border-white/20 overflow-hidden">
+                      <div className="aspect-square overflow-hidden rounded-2xl border border-[#E3E5E8] bg-white shadow-sm">
                         <img
                           src={URL.createObjectURL(file)}
                           alt={file.name}
@@ -198,11 +208,11 @@ function UploadPhotosContent() {
                       </div>
                       <button
                         onClick={() => removeFile(index)}
-                        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
                       >
                         <X className="w-4 h-4" />
                       </button>
-                      <p className="text-xs text-white/60 mt-1 truncate">
+                      <p className="mt-1 truncate text-xs text-[#1E293B]/60">
                         {file.name}
                       </p>
                     </div>
@@ -212,11 +222,11 @@ function UploadPhotosContent() {
                 <button
                   onClick={handleUpload}
                   disabled={uploading || !leadId}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#6BCFCF] px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-[#5BBFBF] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#6BCFCF] px-8 py-4 text-base font-semibold text-[#0F172A] shadow-brand hover:bg-[#5BBFBF] disabled:opacity-50 disabled:cursor-not-allowed moverz-transition-fast"
                 >
                   {uploading ? (
                     <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#0F172A] border-t-transparent" />
                       <span>Upload en cours...</span>
                     </>
                   ) : (
@@ -227,7 +237,7 @@ function UploadPhotosContent() {
                   )}
                 </button>
                 {!leadId && (
-                  <p className="text-xs text-amber-200/80">
+                  <p className="text-xs text-amber-800">
                     Identifiant dossier manquant: revenez depuis la page de confirmation.
                   </p>
                 )}
@@ -237,24 +247,24 @@ function UploadPhotosContent() {
         ) : (
           // Success state
           <div className="text-center py-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500 mx-auto mb-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 mx-auto mb-6 shadow-sm">
               <Check className="w-10 h-10 text-white" strokeWidth={3} />
             </div>
             
-            <h2 className="text-3xl font-bold text-white mb-4">
+            <h2 className="text-3xl font-bold text-[#0F172A] mb-4">
               Photos envoyées ! 🎉
             </h2>
             
-            <p className="text-xl text-white/70 mb-8">
+            <p className="text-xl text-[#1E293B]/70 mb-8">
               Vous allez recevoir vos devis sous 48-72h par email.
             </p>
 
             {uploadSummary && uploadSummary.errors.length > 0 && (
-              <div className="mb-8 bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 max-w-md mx-auto text-left">
-                <h3 className="text-lg font-bold text-white mb-2">
+              <div className="mb-8 rounded-3xl bg-white p-6 border border-[#E3E5E8] max-w-md mx-auto text-left shadow-sm">
+                <h3 className="text-lg font-bold text-[#0F172A] mb-2">
                   Certaines photos n'ont pas pu être envoyées
                 </h3>
-                <ul className="space-y-2 text-sm text-white/70">
+                <ul className="space-y-2 text-sm text-[#1E293B]/70">
                   {uploadSummary.errors.slice(0, 5).map((e, idx) => (
                     <li key={idx}>
                       <span className="font-mono">{e.originalFilename}</span>: {e.reason}
@@ -264,34 +274,34 @@ function UploadPhotosContent() {
               </div>
             )}
 
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 max-w-md mx-auto">
-              <h3 className="text-lg font-bold text-white mb-4">Que se passe-t-il maintenant ?</h3>
+            <div className="rounded-3xl bg-white p-6 border border-[#E3E5E8] max-w-md mx-auto shadow-sm">
+              <h3 className="text-lg font-bold text-[#0F172A] mb-4">Que se passe-t-il maintenant ?</h3>
               <div className="space-y-4 text-left">
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
                     1
                   </div>
                   <div>
-                    <p className="text-white font-semibold">Notre IA analyse vos photos</p>
-                    <p className="text-sm text-white/60">Estimation volume et inventaire</p>
+                    <p className="text-[#0F172A] font-semibold">Notre IA analyse vos photos</p>
+                    <p className="text-sm text-[#1E293B]/70">Estimation volume et inventaire</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">
                     2
                   </div>
                   <div>
-                    <p className="text-white font-semibold">Dossier envoyé aux déménageurs</p>
-                    <p className="text-sm text-white/60">Déménageurs locaux vérifiés</p>
+                    <p className="text-[#0F172A] font-semibold">Dossier envoyé aux déménageurs</p>
+                    <p className="text-sm text-[#1E293B]/70">Déménageurs locaux vérifiés</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center font-bold text-sm">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm">
                     3
                   </div>
                   <div>
-                    <p className="text-white font-semibold">Vous recevez 3-5 devis</p>
-                    <p className="text-sm text-white/60">Prix basés sur la même estimation</p>
+                    <p className="text-[#0F172A] font-semibold">Vous recevez 3-5 devis</p>
+                    <p className="text-sm text-[#1E293B]/70">Prix basés sur la même estimation</p>
                   </div>
                 </div>
               </div>
@@ -299,33 +309,32 @@ function UploadPhotosContent() {
 
             <button
               onClick={() => window.location.href = "https://moverz.fr"}
-              className="mt-8 inline-flex items-center gap-2 rounded-full border-2 border-white/20 bg-white/5 px-8 py-3 text-base font-semibold text-white hover:bg-white/10 transition-all"
+              className="mt-8 inline-flex items-center gap-2 rounded-full border-2 border-[#E3E5E8] bg-white px-8 py-3 text-base font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#6BCFCF]/5 moverz-transition-fast"
             >
               Retour à l'accueil
             </button>
           </div>
         )}
-      </div>
-
+      
       {/* Footer note */}
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <p className="text-center text-sm text-white/40">
+      <div className="mt-10">
+        <p className="text-center text-sm text-[#1E293B]/55">
           🔒 Vos photos sont sécurisées et ne seront utilisées que pour votre devis
         </p>
       </div>
-    </main>
+    </PremiumShell>
   );
 }
 
 export default function UploadPhotosPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B] flex items-center justify-center">
+      <PremiumShell containerClassName="flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#6BCFCF] border-t-transparent mb-4"></div>
-          <p className="text-white/70">Chargement...</p>
+          <p className="text-[#1E293B]/70">Chargement...</p>
         </div>
-      </div>
+      </PremiumShell>
     }>
       <UploadPhotosContent />
     </Suspense>
