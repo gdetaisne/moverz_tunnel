@@ -45,6 +45,9 @@ interface Step3VolumeServicesProps {
   surfaceM2: string;
   formule: FormuleType;
   pricing: { volumeM3: number; priceMin: number; priceMax: number } | null;
+  pricingByFormule?: Partial<
+    Record<FormuleType, { priceMin: number; priceMax: number }>
+  > | null;
   pricingDetails?: PricingDetails | null;
   
   // Services en plus
@@ -389,6 +392,15 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                       {props.formule === f.id && (
                         <Check className="w-5 h-5 text-[#6BCFCF]" strokeWidth={3} />
                       )}
+                    </div>
+
+                    <div className="mb-3 text-sm text-[#1E293B]/70">
+                      💰{" "}
+                      <span className="font-semibold text-[#0F172A]">
+                        {props.pricingByFormule?.[f.id]
+                          ? `${props.pricingByFormule[f.id]!.priceMin} - ${props.pricingByFormule[f.id]!.priceMax}€`
+                          : "—"}
+                      </span>
                     </div>
                     
                     <ul className="space-y-1">

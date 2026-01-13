@@ -384,6 +384,7 @@ export interface UpdateBackofficeLeadPayload {
   estimatedPriceMin?: number;
   estimatedPriceAvg?: number;
   estimatedPriceMax?: number;
+  estimatedSavingsEur?: number;
 
   // Détails logement origine
   originHousingType?: string;

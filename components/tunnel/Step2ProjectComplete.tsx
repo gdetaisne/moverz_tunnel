@@ -372,6 +372,15 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               props.originAddress ||
               [props.originPostalCode, props.originCity].filter(Boolean).join(" ")
             }
+            onInputChange={(raw) => {
+              // V2-ish: dès qu'on retape une adresse, on reflète le texte dans le state
+              // et on invalide les infos dérivées (CP/ville/coords) pour éviter du “stale”.
+              props.onFieldChange("originAddress", raw);
+              if (props.originPostalCode) props.onFieldChange("originPostalCode", "");
+              if (props.originCity) props.onFieldChange("originCity", "");
+              if (props.originLat != null) props.onFieldChange("originLat", null);
+              if (props.originLon != null) props.onFieldChange("originLon", null);
+            }}
             onSelect={(s) => {
               markTouched("originAddress");
               props.onFieldChange("originAddress", s.addressLine ?? s.label);
@@ -537,6 +546,13 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     .filter(Boolean)
                     .join(" ")
                 }
+                onInputChange={(raw) => {
+                  props.onFieldChange("destinationAddress", raw);
+                  if (props.destinationPostalCode) props.onFieldChange("destinationPostalCode", "");
+                  if (props.destinationCity) props.onFieldChange("destinationCity", "");
+                  if (props.destinationLat != null) props.onFieldChange("destinationLat", null);
+                  if (props.destinationLon != null) props.onFieldChange("destinationLon", null);
+                }}
                 onSelect={(s) => {
                   markTouched("destinationAddress");
                   props.onFieldChange("destinationAddress", s.addressLine ?? s.label);

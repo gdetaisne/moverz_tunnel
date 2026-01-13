@@ -17,6 +17,7 @@ export interface AddressAutocompleteProps {
   placeholder?: string;
   initialValue?: string;
   onSelect: (value: AddressSuggestion) => void;
+  onInputChange?: (rawText: string) => void;
   disabled?: boolean;
   mode?: "fr" | "world" | "auto";
   inputId?: string;
@@ -100,6 +101,7 @@ export function AddressAutocomplete({
   placeholder,
   initialValue,
   onSelect,
+  onInputChange,
   disabled,
   mode = "auto",
   inputId,
@@ -216,6 +218,7 @@ export function AddressAutocomplete({
           onChange={(e) => {
             const next = e.target.value;
             setInput(next);
+            onInputChange?.(next);
             setShowDropdown(true);
             setHighlightIdx(-1);
             scheduleSearch(next);

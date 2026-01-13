@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
-import { nanoid } from "nanoid";
 import sharp from "sharp";
 
 // Images uniquement (plus de vidéos)
@@ -20,6 +19,14 @@ const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 Mo
 
 // Dossier local pour les images normalisées
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+
+function randomId() {
+  // Pas de dépendance externe: on utilise crypto.randomUUID quand dispo.
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
 
 async function ensureUploadDir() {
   await fs.mkdir(UPLOAD_DIR, { recursive: true });
@@ -74,7 +81,7 @@ export async function POST(req: NextRequest) {
 
       // Normalisation : image JPEG
       // Pour les tests, on réduit fortement la définition (~400x300px) pour privilégier la vitesse.
-      const key = path.join(leadId, `${Date.now()}-${nanoid(8)}.jpg`);
+      const key = path.join(leadId, `${Date.now()}-${randomId().slice(0, 8)}.jpg`);
       const diskPath = path.join(UPLOAD_DIR, key);
 
       try {
@@ -101,7 +108,7 @@ export async function POST(req: NextRequest) {
 
         success.push({
           // Identifiant technique local (non stocké en base pour l’instant)
-          id: nanoid(),
+          id: randomId(),
           url: null,
           storageKey: key,
           originalFilename,

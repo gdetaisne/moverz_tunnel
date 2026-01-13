@@ -52,6 +52,7 @@ export interface TunnelFormState {
   
   // Volume & Services (Step 3)
   surfaceM2: string;
+  surfaceTouched: boolean; // V2 behavior: ne pas écraser la surface si l'utilisateur l'a modifiée
   density: "light" | "normal" | "dense";
   formule: "ECONOMIQUE" | "STANDARD" | "PREMIUM";
   
@@ -141,6 +142,7 @@ const INITIAL_STATE: TunnelFormState = {
   dateFlexible: false,
   
   surfaceM2: "60",
+  surfaceTouched: false,
   density: "normal",
   formule: "STANDARD",
   

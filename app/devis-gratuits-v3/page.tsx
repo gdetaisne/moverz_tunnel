@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ga4Event } from "@/lib/analytics/ga4";
 import {
@@ -50,6 +50,48 @@ function DevisGratuitsV3Content() {
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep2, setShowValidationStep2] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
+
+  // ================================
+  // V2 logic: surface defaults by housing type
+  // ================================
+  const HOUSING_SURFACE_DEFAULTS: Record<string, string> = {
+    studio: "20",
+    t1: "25",
+    t2: "40",
+    t3: "60",
+    t4: "75",
+    t5: "90",
+    house: "110",
+    house_1floor: "120",
+    house_2floors: "140",
+    house_3floors: "160",
+  };
+
+  const lastOriginHousingTypeRef = useRef<string>("");
+
+  useEffect(() => {
+    const nextType = (state.originHousingType || "").trim();
+    const prevType = lastOriginHousingTypeRef.current;
+    if (nextType === prevType) return;
+    lastOriginHousingTypeRef.current = nextType;
+
+    // Pas encore choisi → ne rien faire
+    if (!nextType) return;
+
+    // Si l'utilisateur a déjà touché la surface, on ne la modifie plus automatiquement.
+    if (state.surfaceTouched) return;
+
+    const nextDefault = HOUSING_SURFACE_DEFAULTS[nextType];
+    if (!nextDefault) return;
+
+    // V2 rule: on n’écrase que si surface vide ou égale à l’ancien défaut.
+    const surface = (state.surfaceM2 || "").trim();
+    const prevDefault = HOUSING_SURFACE_DEFAULTS[prevType] ?? null;
+    const shouldOverwrite = !surface || (prevDefault && surface === prevDefault);
+    if (shouldOverwrite) {
+      updateFields({ surfaceM2: nextDefault });
+    }
+  }, [state.originHousingType]);
   
   const { trackStep, trackStepChange, trackCompletion, trackError } = useTunnelTracking({
     source,
@@ -175,6 +217,104 @@ function DevisGratuitsV3Content() {
     return Math.min(1000, 40 + diff * 40);
   };
 
+  // Distance “trajet” (route) via OSRM / OpenStreetMap
+  const distanceCacheRef = useRef<Map<string, number>>(new Map());
+  const [routeDistanceKm, setRouteDistanceKm] = useState<number | null>(null);
+  const [routeDistanceProvider, setRouteDistanceProvider] = useState<
+    "osrm" | "fallback" | null
+  >(null);
+
+  useEffect(() => {
+    if (state.destinationUnknown) {
+      setRouteDistanceKm(null);
+      setRouteDistanceProvider(null);
+      return;
+    }
+
+    const oLat = state.originLat;
+    const oLon = state.originLon;
+    const dLat = state.destinationLat;
+    const dLon = state.destinationLon;
+
+    // Pas de coords → on ne peut pas faire de route distance.
+    if (oLat == null || oLon == null || dLat == null || dLon == null) {
+      setRouteDistanceKm(null);
+      setRouteDistanceProvider("fallback");
+      return;
+    }
+
+    const key = [
+      Math.round(oLat * 1e5) / 1e5,
+      Math.round(oLon * 1e5) / 1e5,
+      Math.round(dLat * 1e5) / 1e5,
+      Math.round(dLon * 1e5) / 1e5,
+    ].join(":");
+
+    const cached = distanceCacheRef.current.get(key);
+    if (typeof cached === "number") {
+      setRouteDistanceKm(cached);
+      setRouteDistanceProvider("osrm");
+      return;
+    }
+
+    const ctrl = new AbortController();
+
+    const run = async () => {
+      try {
+        const res = await fetch("/api/distance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            origin: { lat: oLat, lon: oLon },
+            destination: { lat: dLat, lon: dLon },
+            profile: "driving",
+          }),
+          signal: ctrl.signal,
+        });
+
+        if (!res.ok) {
+          setRouteDistanceKm(null);
+          setRouteDistanceProvider("fallback");
+          return;
+        }
+
+        const data = (await res.json()) as {
+          distanceKm?: number;
+          provider?: string;
+        };
+        const km = typeof data?.distanceKm === "number" ? data.distanceKm : null;
+        if (km && km > 0) {
+          distanceCacheRef.current.set(key, km);
+          setRouteDistanceKm(km);
+          setRouteDistanceProvider("osrm");
+        } else {
+          setRouteDistanceKm(null);
+          setRouteDistanceProvider("fallback");
+        }
+      } catch (e) {
+        if ((e as any)?.name === "AbortError") return;
+        setRouteDistanceKm(null);
+        setRouteDistanceProvider("fallback");
+      }
+    };
+
+    // Petite temporisation: évite de spammer OSRM quand on tape/blur rapidement.
+    const t = window.setTimeout(() => {
+      void run();
+    }, 250);
+
+    return () => {
+      window.clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [
+    state.destinationUnknown,
+    state.originLat,
+    state.originLon,
+    state.destinationLat,
+    state.destinationLon,
+  ]);
+
   const getSeasonFactor = (dateStr: string | null | undefined): number => {
     if (!dateStr) return 1;
     const d = new Date(dateStr);
@@ -233,16 +373,18 @@ function DevisGratuitsV3Content() {
     const housingType = coerceHousingType(state.originHousingType || state.destinationHousingType);
     const density = state.density;
 
-    const distanceKm = state.destinationUnknown
-      ? 50
-      : estimateDistanceKm(
-          state.originPostalCode,
-          state.destinationPostalCode,
-          state.originLat,
-          state.originLon,
-          state.destinationLat,
-          state.destinationLon
-        );
+    const distanceKm =
+      state.destinationUnknown
+        ? 50
+        : routeDistanceKm ??
+          estimateDistanceKm(
+            state.originPostalCode,
+            state.destinationPostalCode,
+            state.originLat,
+            state.originLon,
+            state.destinationLat,
+            state.destinationLon
+          );
 
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
 
@@ -304,6 +446,7 @@ function DevisGratuitsV3Content() {
     state.originPostalCode,
     state.destinationPostalCode,
     state.destinationUnknown,
+    routeDistanceKm,
     state.movingDate,
     state.originFloor,
     state.originElevator,
@@ -354,16 +497,18 @@ function DevisGratuitsV3Content() {
     const typeCoefficient = TYPE_COEFFICIENTS[housingType];
     const densityCoefficient = DENSITY_COEFFICIENTS[state.density];
 
-    const distanceKm = state.destinationUnknown
-      ? 50
-      : estimateDistanceKm(
-          state.originPostalCode,
-          state.destinationPostalCode,
-          state.originLat,
-          state.originLon,
-          state.destinationLat,
-          state.destinationLon
-        );
+    const distanceKm =
+      state.destinationUnknown
+        ? 50
+        : routeDistanceKm ??
+          estimateDistanceKm(
+            state.originPostalCode,
+            state.destinationPostalCode,
+            state.originLat,
+            state.originLon,
+            state.destinationLat,
+            state.destinationLon
+          );
 
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
 
@@ -462,6 +607,7 @@ function DevisGratuitsV3Content() {
     state.destinationUnknown,
     state.originPostalCode,
     state.destinationPostalCode,
+    routeDistanceKm,
     state.movingDate,
     state.originFloor,
     state.destinationFloor,
@@ -701,11 +847,34 @@ function DevisGratuitsV3Content() {
         updateFields({ leadId: effectiveLeadId });
       }
       if (effectiveLeadId) {
-        if (!activePricing) {
+        // Important: on reprend la pricing courante au moment du submit
+        // (évite tout risque de valeur stale si l'utilisateur change vite de formule).
+        const pricingForSubmit =
+          (pricingByFormule
+            ? pricingByFormule[state.formule as PricingFormuleType]
+            : null) ?? activePricing;
+
+        if (!pricingForSubmit) {
           throw new Error("PRICING_NOT_READY");
         }
 
         const tunnelOptions = {
+          pricing: {
+            // Stockage indicatif pour debug/analytics (Neon via JSON).
+            distanceKm:
+              state.destinationUnknown
+                ? 50
+                : routeDistanceKm ??
+                  estimateDistanceKm(
+                    state.originPostalCode,
+                    state.destinationPostalCode,
+                    state.originLat,
+                    state.originLon,
+                    state.destinationLat,
+                    state.destinationLon
+                  ),
+            distanceProvider: routeDistanceProvider ?? undefined,
+          },
           // Important: conserver la structure envoyée en Step 2 (sinon Step 3 écrase et on perd l'accès)
           access: {
             origin: {
@@ -753,12 +922,17 @@ function DevisGratuitsV3Content() {
 
         const payload = {
           surfaceM2: surface,
-          estimatedVolume: activePricing.volumeM3,
+          estimatedVolume: pricingForSubmit.volumeM3,
           density: mapDensity(state.density),
           formule: state.formule,
-          estimatedPriceMin: activePricing.prixMin,
-          estimatedPriceAvg: Math.round((activePricing.prixMin + activePricing.prixMax) / 2),
-          estimatedPriceMax: activePricing.prixMax,
+          estimatedPriceMin: pricingForSubmit.prixMin,
+          estimatedPriceAvg: Math.round((pricingForSubmit.prixMin + pricingForSubmit.prixMax) / 2),
+          estimatedPriceMax: pricingForSubmit.prixMax,
+          // Step 4 / business: économie générée = 10% du prix moyen de la formule choisie
+          estimatedSavingsEur: Math.round(
+            0.1 *
+              Math.round((pricingForSubmit.prixMin + pricingForSubmit.prixMax) / 2)
+          ),
           tunnelOptions,
         };
 
@@ -875,6 +1049,24 @@ function DevisGratuitsV3Content() {
                     }
                   : null
               }
+              pricingByFormule={
+                pricingByFormule
+                  ? {
+                      ECONOMIQUE: {
+                        priceMin: pricingByFormule.ECONOMIQUE.prixMin,
+                        priceMax: pricingByFormule.ECONOMIQUE.prixMax,
+                      },
+                      STANDARD: {
+                        priceMin: pricingByFormule.STANDARD.prixMin,
+                        priceMax: pricingByFormule.STANDARD.prixMax,
+                      },
+                      PREMIUM: {
+                        priceMin: pricingByFormule.PREMIUM.prixMin,
+                        priceMax: pricingByFormule.PREMIUM.prixMax,
+                      },
+                    }
+                  : null
+              }
               pricingDetails={activePricingDetails}
               serviceFurnitureStorage={state.serviceFurnitureStorage}
               serviceCleaning={state.serviceCleaning}
@@ -888,7 +1080,14 @@ function DevisGratuitsV3Content() {
               hasFragileItems={state.hasFragileItems}
               hasSpecificFurniture={state.hasSpecificFurniture}
               specificNotes={state.specificNotes}
-              onFieldChange={(field, value) => updateField(field as any, value)}
+              onFieldChange={(field, value) => {
+                // V2 behavior: si l'utilisateur modifie la surface, on marque surfaceTouched=true
+                if (field === "surfaceM2") {
+                  updateFields({ surfaceM2: String(value), surfaceTouched: true });
+                  return;
+                }
+                updateField(field as any, value);
+              }}
               onSubmit={handleSubmitStep3}
               isSubmitting={false}
               error={null}
