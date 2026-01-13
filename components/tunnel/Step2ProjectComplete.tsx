@@ -76,6 +76,25 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.destinationUnknown]);
 
+  // Si l'accès n'est pas "Contraint", on s'assure que les options "monte-meuble" ne restent pas
+  // activées par erreur (session restaurée / aller-retour), car elles ne sont pas visibles.
+  useEffect(() => {
+    if (props.originAccess !== "constrained" && props.originFurnitureLift === "yes") {
+      props.onFieldChange("originFurnitureLift", "no");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.originAccess, props.originFurnitureLift]);
+
+  useEffect(() => {
+    if (
+      props.destinationAccess !== "constrained" &&
+      props.destinationFurnitureLift === "yes"
+    ) {
+      props.onFieldChange("destinationFurnitureLift", "no");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.destinationAccess, props.destinationFurnitureLift]);
+
   const renderConstrainedOptions = (which: "origin" | "destination") => {
     const prefix = which === "origin" ? "origin" : "destination";
     const access = which === "origin" ? props.originAccess : props.destinationAccess;
@@ -304,6 +323,8 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
       props.onFieldChange(`${prefix}Floor`, "");
       props.onFieldChange(`${prefix}Elevator`, "");
       props.onFieldChange(`${prefix}TightAccess`, false);
+      // Reset: l'utilisateur devra ré-expliciter le besoin si nécessaire.
+      props.onFieldChange(`${prefix}FurnitureLift`, "no");
       return;
     }
 
@@ -502,7 +523,14 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => props.onFieldChange("originAccess", "easy")}
+                onClick={() => {
+                  // Reset immédiat des options "accès contraint" (sinon elles restent actives mais invisibles)
+                  props.onFieldChange("originAccess", "easy");
+                  props.onFieldChange("originFurnitureLift", "no");
+                  props.onFieldChange("originCarryDistance", "");
+                  props.onFieldChange("originParkingAuth", false);
+                  props.onFieldChange("originTightAccess", false);
+                }}
                 className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   props.originAccess === "easy"
                     ? "bg-[#6BCFCF] text-white"
@@ -675,7 +703,13 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={() => props.onFieldChange("destinationAccess", "easy")}
+                    onClick={() => {
+                      props.onFieldChange("destinationAccess", "easy");
+                      props.onFieldChange("destinationFurnitureLift", "no");
+                      props.onFieldChange("destinationCarryDistance", "");
+                      props.onFieldChange("destinationParkingAuth", false);
+                      props.onFieldChange("destinationTightAccess", false);
+                    }}
                     className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                       props.destinationAccess === "easy"
                         ? "bg-[#6BCFCF] text-white"
