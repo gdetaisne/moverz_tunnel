@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Upload, Check, X } from "lucide-react";
 import { uploadBackofficePhotos } from "@/lib/api/client";
@@ -399,6 +399,19 @@ function UploadPhotosContent() {
 }
 
 export default function UploadPhotosPage() {
-  return <UploadPhotosContent />;
+  return (
+    <Suspense
+      fallback={
+        <PremiumShell containerClassName="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#6BCFCF] border-t-transparent mb-4"></div>
+            <p className="text-[#1E293B]/70">Chargement...</p>
+          </div>
+        </PremiumShell>
+      }
+    >
+      <UploadPhotosContent />
+    </Suspense>
+  );
 }
 
