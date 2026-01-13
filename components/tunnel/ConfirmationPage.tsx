@@ -203,6 +203,7 @@ export default function ConfirmationPage({
           <WhatsAppCTA 
             source="tunnel-confirmation" 
             linkingCode={linkingCode} 
+            leadId={leadId}
             variant="primary"
           />
 

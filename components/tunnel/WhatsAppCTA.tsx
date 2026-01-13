@@ -8,12 +8,14 @@ import QRCode from "qrcode";
 interface WhatsAppCTAProps {
   source?: string;
   linkingCode?: string;
+  leadId?: string;
   variant?: "primary" | "secondary";
 }
 
 export default function WhatsAppCTA({ 
   source = "tunnel", 
   linkingCode,
+  leadId,
   variant = "primary" 
 }: WhatsAppCTAProps) {
   const { isMobile } = useDeviceDetection();
@@ -22,10 +24,26 @@ export default function WhatsAppCTA({
   const [copied, setCopied] = useState(false);
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "33752986581";
-  
-  const message = linkingCode 
-    ? `Bonjour, je veux compléter mon dossier avec des photos.\n\nMon code dossier : ${linkingCode}`
-    : `Bonjour, je voudrais obtenir 3 à 5 devis pour mon déménagement.\n\nVille de départ :\nVille d'arrivée :\nDate souhaitée :\n\nJe vais envoyer des photos de TOUTES les pièces.\n\n1 message/jour max • 0 spam`;
+
+  const message = (() => {
+    // Message "bot-friendly" (Back Office): la mention LEAD:<uuid> permet de rattacher automatiquement la conversation.
+    // On garde aussi le code dossier humain si présent.
+    if (leadId) {
+      const lines = [
+        "Bonjour, j'ai finalisé le formulaire et je passe aux photos.",
+        `LEAD:${leadId}`,
+      ];
+      if (linkingCode) {
+        lines.push(`Code dossier: ${linkingCode}`);
+      }
+      return lines.join("\n");
+    }
+
+    // Fallback sans leadId: on conserve l'ancien message (utile si l'utilisateur clique très tôt)
+    return linkingCode
+      ? `Bonjour, je veux compléter mon dossier avec des photos.\n\nMon code dossier : ${linkingCode}`
+      : `Bonjour, je voudrais obtenir 3 à 5 devis pour mon déménagement.\n\nVille de départ :\nVille d'arrivée :\nDate souhaitée :\n\nJe vais envoyer des photos de TOUTES les pièces.\n\n1 message/jour max • 0 spam`;
+  })();
 
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
   const whatsappDeepLink = `whatsapp://send?phone=${whatsappNumber}&text=${encodeURIComponent(message)}`;

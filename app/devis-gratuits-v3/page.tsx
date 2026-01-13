@@ -695,6 +695,11 @@ function DevisGratuitsV3Content() {
 
     try {
       const effectiveLeadId = await ensureBackofficeLeadId();
+      // Safety: si on vient de créer le lead, on s'assure que l'état reflète bien l'id
+      // avant de tracker la complétion (sinon TUNNEL_COMPLETED part avec leadId=null).
+      if (effectiveLeadId && state.leadId !== effectiveLeadId) {
+        updateFields({ leadId: effectiveLeadId });
+      }
       if (effectiveLeadId) {
         if (!activePricing) {
           throw new Error("PRICING_NOT_READY");
@@ -780,7 +785,7 @@ function DevisGratuitsV3Content() {
       }
 
       trackStepChange(3, 4, "RECAP", "THANK_YOU", "forward");
-      trackCompletion();
+      trackCompletion({ leadId: effectiveLeadId ?? null });
       setShowValidationStep3(false);
       goToStep(4);
     } catch (err: any) {

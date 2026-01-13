@@ -90,11 +90,12 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
     }).catch(console.error);
   }, [source, leadId]);
 
-  const trackCompletion = useCallback(() => {
+  const trackCompletion = useCallback((opts?: { leadId?: string | null }) => {
+    const effectiveLeadId = opts?.leadId ?? leadId ?? null;
     ga4Event("lead_submit", {
       source,
       from,
-      lead_id: leadId,
+      lead_id: effectiveLeadId,
     });
 
     const totalDurationMs = stepTimestampsRef.current[1] 
@@ -104,7 +105,7 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
     trackTunnelEvent({
       eventType: "TUNNEL_COMPLETED",
       // leadId ici = Lead Back Office (Postgres)
-      backofficeLeadId: leadId || undefined,
+      backofficeLeadId: effectiveLeadId || undefined,
       source,
       logicalStep: "THANK_YOU",
       screenId: "confirmation_v3",
