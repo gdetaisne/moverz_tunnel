@@ -39,4 +39,39 @@ export const COEF_VOLUME = 80; // €/m3
 export const COEF_DISTANCE = 1.2; // €/km
 export const PRIX_MIN_SOCLE = 400; // Prix minimum
 
+// ============================================
+// La Poste (référence) — tarifs indicatifs en €/m³ selon la distance
+// Source métier: https://www.laposte.fr/demenager/prix-demenagement
+// ============================================
+
+export type DistanceBand = "short" | "medium" | "long";
+
+export function getDistanceBand(distanceKm: number): DistanceBand {
+  if (!Number.isFinite(distanceKm) || distanceKm <= 0) return "short";
+  if (distanceKm < 100) return "short";
+  if (distanceKm <= 500) return "medium";
+  return "long";
+}
+
+export const LA_POSTE_RATES_EUR_PER_M3 = {
+  short: {
+    ECONOMIQUE: 35,
+    STANDARD: 40,
+    PREMIUM: 65, // "Confort" dans la table
+  },
+  medium: {
+    ECONOMIQUE: 60,
+    STANDARD: 95,
+    PREMIUM: 130,
+  },
+  long: {
+    ECONOMIQUE: 110,
+    STANDARD: 140,
+    PREMIUM: 160,
+  },
+} as const satisfies Record<
+  DistanceBand,
+  Record<keyof typeof FORMULE_MULTIPLIERS, number>
+>;
+
 

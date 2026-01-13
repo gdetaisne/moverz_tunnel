@@ -23,15 +23,13 @@ type PricingDetails = {
   constants: {
     typeCoefficient: number;
     densityCoefficient: number;
-    COEF_VOLUME: number;
-    COEF_DISTANCE: number;
     PRIX_MIN_SOCLE: number;
+    distanceBand: string;
+    rateEurPerM3: number;
   };
   intermediate: {
     baseVolumeM3: number;
     adjustedVolumeM3: number;
-    volumePartEur: number;
-    distancePartEur: number;
     baseNoSeasonEur: number;
     coeffEtage: number;
     formuleMultiplier: number;
@@ -285,6 +283,14 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                         distanceKm: <span className="font-mono">{props.pricingDetails.distanceKm}</span>
                       </div>
                       <div>
+                        distanceBand:{" "}
+                        <span className="font-mono">{props.pricingDetails.constants.distanceBand}</span>
+                      </div>
+                      <div>
+                        rate€/m³:{" "}
+                        <span className="font-mono">{props.pricingDetails.constants.rateEurPerM3}</span>
+                      </div>
+                      <div>
                         seasonFactor: <span className="font-mono">{props.pricingDetails.seasonFactor.toFixed(2)}</span>
                       </div>
                       <div>
@@ -314,16 +320,6 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                       <div>
                         adjustedVolume:{" "}
                         <span className="font-mono">{props.pricingDetails.intermediate.adjustedVolumeM3}</span> m³
-                      </div>
-                      <div>
-                        volumePart:{" "}
-                        <span className="font-mono">{props.pricingDetails.intermediate.volumePartEur}</span> € (×{" "}
-                        {props.pricingDetails.constants.COEF_VOLUME})
-                      </div>
-                      <div>
-                        distancePart:{" "}
-                        <span className="font-mono">{props.pricingDetails.intermediate.distancePartEur}</span> € (×{" "}
-                        {props.pricingDetails.constants.COEF_DISTANCE})
                       </div>
                       <div>
                         baseNoSeason:{" "}

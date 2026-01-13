@@ -4,8 +4,9 @@ import {
   FORMULE_MULTIPLIERS,
   SERVICES_PRIX,
   COEF_VOLUME,
-  COEF_DISTANCE,
   PRIX_MIN_SOCLE,
+  getDistanceBand,
+  LA_POSTE_RATES_EUR_PER_M3,
 } from "./constants";
 
 export type HousingType = keyof typeof TYPE_COEFFICIENTS;
@@ -74,11 +75,12 @@ export function calculatePricing(input: PricingInput): PricingOutput {
     input.density
   );
 
-  // 2. Prix base volume / distance : on prend la composante dominante plutôt
-  // que de sommer les deux (logique proche des grilles pro).
-  const volumePart = volumeM3 * COEF_VOLUME;
-  const distancePart = input.distanceKm * COEF_DISTANCE;
-  const baseNoSeason = Math.max(volumePart, distancePart, PRIX_MIN_SOCLE);
+  // 2. Prix base (La Poste): tarif €/m³ dépendant de la tranche distance + formule.
+  // On conserve l'esprit V2 "max(..., socle)" mais la composante distance est en €/m³,
+  // donc elle dépend nécessairement du volume.
+  const band = getDistanceBand(input.distanceKm);
+  const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][input.formule];
+  const baseNoSeason = Math.max(volumeM3 * rateEurPerM3, PRIX_MIN_SOCLE);
   const baseSeasoned = baseNoSeason * input.seasonFactor;
 
   // 3. Coefficient étages (pire des deux accès)
@@ -93,13 +95,13 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   const coeffEtage = Math.max(coeffOrigin, coeffDest);
 
   // 4. Multiplicateur formule
-  const formuleMultiplier = FORMULE_MULTIPLIERS[input.formule];
+  // La formule est déjà intégrée dans le tarif La Poste (rateEurPerM3),
+  // donc on neutralise le multiplicateur pour éviter le double comptage.
+  const formuleMultiplier = 1;
 
   // 5. Prix centres sans / avec saison (hors services)
-  const centreNoSeasonSansServices =
-    baseNoSeason * formuleMultiplier * coeffEtage;
-  const centreSeasonedSansServices =
-    baseSeasoned * formuleMultiplier * coeffEtage;
+  const centreNoSeasonSansServices = baseNoSeason * formuleMultiplier * coeffEtage;
+  const centreSeasonedSansServices = baseSeasoned * formuleMultiplier * coeffEtage;
 
   // 6. Services additionnels
   let servicesTotal = 0;

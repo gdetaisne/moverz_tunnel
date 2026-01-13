@@ -15,12 +15,12 @@ import {
   getEtageCoefficient,
 } from "@/lib/pricing/calculate";
 import {
-  COEF_DISTANCE,
-  COEF_VOLUME,
   DENSITY_COEFFICIENTS,
   FORMULE_MULTIPLIERS,
   PRIX_MIN_SOCLE,
   TYPE_COEFFICIENTS,
+  getDistanceBand,
+  LA_POSTE_RATES_EUR_PER_M3,
 } from "@/lib/pricing/constants";
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
@@ -87,7 +87,11 @@ function DevisGratuitsV3Content() {
     // V2 rule: on n’écrase que si surface vide ou égale à l’ancien défaut.
     const surface = (state.surfaceM2 || "").trim();
     const prevDefault = HOUSING_SURFACE_DEFAULTS[prevType] ?? null;
-    const shouldOverwrite = !surface || (prevDefault && surface === prevDefault);
+    // Compat: si une ancienne session a `surfaceM2="60"` (ancien default V3),
+    // on le traite comme "non saisi" au premier choix de logement.
+    const isLegacyV3Default = !prevType && surface === "60" && !state.surfaceTouched;
+    const shouldOverwrite =
+      !surface || isLegacyV3Default || (prevDefault && surface === prevDefault);
     if (shouldOverwrite) {
       updateFields({ surfaceM2: nextDefault });
     }
@@ -538,15 +542,16 @@ function DevisGratuitsV3Content() {
         : null;
 
     const formule = state.formule as PricingFormuleType;
-    const formuleMultiplier = FORMULE_MULTIPLIERS[formule];
+    // Formule déjà incluse dans le tarif La Poste (€/m³). On neutralise ici pour refléter calculatePricing.
+    const formuleMultiplier = 1;
 
     const baseVolume = surface * typeCoefficient;
     const adjustedVolume = baseVolume * densityCoefficient;
     const volumeM3 = Math.round(adjustedVolume * 10) / 10;
 
-    const volumePartEur = volumeM3 * COEF_VOLUME;
-    const distancePartEur = distanceKm * COEF_DISTANCE;
-    const baseNoSeasonEur = Math.max(volumePartEur, distancePartEur, PRIX_MIN_SOCLE);
+    const band = getDistanceBand(distanceKm);
+    const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][formule];
+    const baseNoSeasonEur = Math.max(volumeM3 * rateEurPerM3, PRIX_MIN_SOCLE);
 
     const coeffOrigin = getEtageCoefficient(originFloor, originElevator);
     const coeffDest = getEtageCoefficient(destinationFloor, destinationElevator);
@@ -581,15 +586,13 @@ function DevisGratuitsV3Content() {
       constants: {
         typeCoefficient,
         densityCoefficient,
-        COEF_VOLUME,
-        COEF_DISTANCE,
         PRIX_MIN_SOCLE,
+        distanceBand: band,
+        rateEurPerM3,
       },
       intermediate: {
         baseVolumeM3: Math.round(baseVolume * 10) / 10,
         adjustedVolumeM3: volumeM3,
-        volumePartEur: Math.round(volumePartEur),
-        distancePartEur: Math.round(distancePartEur),
         baseNoSeasonEur: Math.round(baseNoSeasonEur),
         coeffEtage,
         formuleMultiplier,
