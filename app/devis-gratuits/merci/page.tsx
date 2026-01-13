@@ -15,12 +15,29 @@ function MerciPageInner() {
   const email = searchParams.get("email") ?? undefined;
 
   useEffect(() => {
+    let backofficeLeadId: string | undefined;
+    try {
+      if (typeof window !== "undefined") {
+        const raw = window.localStorage.getItem("moverz_tunnel_form_state");
+        if (raw) {
+          const parsed = JSON.parse(raw) as { backofficeLeadId?: string | null; leadId?: string | null };
+          // Prio: backofficeLeadId (Lead Postgres)
+          if (parsed?.backofficeLeadId) backofficeLeadId = String(parsed.backofficeLeadId);
+          // Fallback: certains états legacy utilisent leadId pour le Back Office
+          if (!backofficeLeadId && parsed?.leadId) backofficeLeadId = String(parsed.leadId);
+        }
+      }
+    } catch {
+      // ignore (tracking best-effort)
+    }
+
     void trackTunnelEvent({
       eventType: "TUNNEL_COMPLETED",
       logicalStep: "THANK_YOU",
       screenId: "thank_you_v1",
       source,
       email,
+      backofficeLeadId,
     });
   }, [source, email]);
 
