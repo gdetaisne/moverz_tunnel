@@ -1,31 +1,15 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Upload, Check, X } from "lucide-react";
 import { uploadBackofficePhotos } from "@/lib/api/client";
 import PremiumShell from "@/components/tunnel/PremiumShell";
 
 function UploadPhotosContent() {
-  const [mounted, setMounted] = useState(false);
   const searchParams = useSearchParams();
   const linkingCode = searchParams.get("code") || "";
   const leadId = searchParams.get("leadId") || "";
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <PremiumShell containerClassName="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#6BCFCF] border-t-transparent mb-4"></div>
-          <p className="text-[#1E293B]/70">Chargement...</p>
-        </div>
-      </PremiumShell>
-    );
-  }
   
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
