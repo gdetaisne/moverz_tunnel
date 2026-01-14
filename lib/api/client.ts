@@ -647,11 +647,13 @@ export async function uploadTunnelPhotos(
 
 export interface TunnelAnalysisSummary {
   volumeTotalM3: number;
+  cartonsTotalCount: number;
   rooms: Array<{
     roomType: string;
     label: string;
     photosCount: number;
     volumeTotalM3: number;
+    cartonsCount: number;
     topItems: Array<{ label: string; quantity: number; volumeM3: number | null }>;
   }>;
   raw?: unknown;
@@ -676,6 +678,7 @@ export async function analyzeTunnelPhotos(
   // Calcul V2 : règles métier (lit -> dérivés, armoire -> contenu, etc.)
   // + emballage (volume emballé) + cartons (petits objets).
   let volumeTotalM3 = 0;
+  let cartonsTotalCount = 0;
 
   const rooms = roomsRaw
     .filter((r: any) => r && typeof r === "object")
@@ -722,6 +725,7 @@ export async function analyzeTunnelPhotos(
 
       // Volume par pièce (meubles + cartons)
       let roomVolumeM3 = 0;
+      let roomCartonsCount = 0;
 
       // 1) Somme des volumes des "gros" objets (emballés) + 2) cartons pour petits objets
       // Seuils V2
@@ -808,6 +812,8 @@ export async function analyzeTunnelPhotos(
         );
 
         let volumePacked = parentVolumes.packed * (item.quantity || 1);
+        const hasArmoireContent =
+          cat === "ARMOIRE" && deps.some((d: any) => d?.derivedKind === "armoire_contenu");
 
         if (deps.length > 0) {
           if (cat === "LIT") {
@@ -822,7 +828,10 @@ export async function analyzeTunnelPhotos(
         if (volumePacked > 0) roomVolumeM3 += volumePacked;
 
         bigItems.push({
-          label: String(item?.label ?? "Objet"),
+          label:
+            cat === "ARMOIRE" && hasArmoireContent
+              ? `${String(item?.label ?? "Armoire")} (avec contenu)`
+              : String(item?.label ?? "Objet"),
           quantity: typeof item?.quantity === "number" ? item.quantity : 1,
           volumeM3: volumePacked > 0 ? Math.round(volumePacked * 10) / 10 : null,
         });
@@ -839,6 +848,8 @@ export async function analyzeTunnelPhotos(
       if (totalSmallNu > 0) {
         const cartonsCount = Math.max(1, Math.ceil(totalSmallNu / STANDARD_CARTON_VOLUME));
         const cartonsVolume = cartonsCount * STANDARD_CARTON_VOLUME;
+        roomCartonsCount = cartonsCount;
+        cartonsTotalCount += cartonsCount;
         roomVolumeM3 += cartonsVolume;
         bigItems.push({
           label: "Cartons (objets divers)",
@@ -860,13 +871,14 @@ export async function analyzeTunnelPhotos(
         label,
         photosCount,
         volumeTotalM3: roomVolumeM3,
+        cartonsCount: roomCartonsCount,
         topItems,
       };
     });
 
   volumeTotalM3 = Math.round(volumeTotalM3 * 10) / 10;
 
-  return { volumeTotalM3, rooms, raw: data };
+  return { volumeTotalM3, cartonsTotalCount, rooms, raw: data };
 }
 
 export async function uploadBackofficePhotos(

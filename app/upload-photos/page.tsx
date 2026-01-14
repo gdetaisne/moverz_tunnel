@@ -28,11 +28,13 @@ function UploadPhotosContent() {
   const [error, setError] = useState<string | null>(null);
   const [analysisSummary, setAnalysisSummary] = useState<{
     volumeTotalM3: number;
+    cartonsTotalCount: number;
     rooms: Array<{
       roomType: string;
       label: string;
       photosCount: number;
       volumeTotalM3: number;
+      cartonsCount: number;
       topItems: Array<{ label: string; quantity: number; volumeM3: number | null }>;
     }>;
   } | null>(null);
@@ -355,6 +357,11 @@ function UploadPhotosContent() {
                         <span className="font-semibold text-[#0F172A]">
                           {analysisSummary.volumeTotalM3} m³
                         </span>
+                        {" · "}
+                        Cartons :{" "}
+                        <span className="font-semibold text-[#0F172A]">
+                          {analysisSummary.cartonsTotalCount}
+                        </span>
                       </div>
                     </div>
 
@@ -375,6 +382,11 @@ function UploadPhotosContent() {
                               <div className="font-semibold text-[#0F172A]">
                                 Total : {r.volumeTotalM3} m³
                               </div>
+                              {r.cartonsCount > 0 && (
+                                <div className="text-[#1E293B]/60">
+                                  Cartons : {r.cartonsCount}
+                                </div>
+                              )}
                             </div>
                           </div>
                           {r.topItems.length > 0 ? (
