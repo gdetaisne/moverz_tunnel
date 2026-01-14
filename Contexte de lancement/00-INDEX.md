@@ -35,5 +35,6 @@ Avant d’écrire du code sur le tunnel, Cursor doit **toujours**:
 - **Local = Prod**: même comportement métier en local et en prod tunnel; `NEXT_PUBLIC_API_URL` pointe vers l’instance Back Office hébergée.
 - **Persistance locale**: DB SQLite via Prisma avec modèles `LeadTunnel`, `LeadPhoto`, `LeadRoom`, `LeadRoomItem`, `LeadAnalysisRun`. Les écritures IA “profondes” (rooms/items/photos) peuvent être temporairement désactivées en prod pour éviter les 500; `LeadAnalysisRun` et `photosStatus` restent la source de vérité.
 - **Upload photos**: `/api/uploads/photos` accepte uniquement des **images** (JPG/PNG/WEBP/HEIC/HEIF), max ~25 Mo, converties en JPEG ~400×300 (qualité ~80) et stockées dans `uploads/`. L’API IA principale est `/api/ai/process2-classify` (une requête par photo pour la pièce, puis une requête par pièce pour l’inventaire).
+- **Doc**: `docs/tunnel/UPLOAD_PHOTOS_ANALYSIS.md` (pipeline analyse, volume emballé V2, cartons, valorisation assurance, limites prod).
 
 
