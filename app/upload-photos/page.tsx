@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Upload, Check, X } from "lucide-react";
-import { uploadBackofficePhotos } from "@/lib/api/client";
+import { listBackofficePhotos, uploadBackofficePhotos } from "@/lib/api/client";
 import PremiumShell from "@/components/tunnel/PremiumShell";
 
 function UploadPhotosContent() {
@@ -12,6 +12,10 @@ function UploadPhotosContent() {
   const leadId = searchParams.get("leadId") || "";
   
   const [files, setFiles] = useState<File[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<
+    Array<{ id: string; url: string; originalFilename: string }>
+  >([]);
+  const [loadingExisting, setLoadingExisting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
@@ -21,6 +25,26 @@ function UploadPhotosContent() {
     totalPhotos: number;
     errors: { originalFilename: string; reason: string }[];
   } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!leadId) return;
+      setLoadingExisting(true);
+      try {
+        const photos = await listBackofficePhotos(leadId);
+        if (!cancelled) setExistingPhotos(photos);
+      } catch {
+        // ignore: on garde la page utilisable même si listing indispo
+      } finally {
+        if (!cancelled) setLoadingExisting(false);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [leadId]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -68,6 +92,28 @@ function UploadPhotosContent() {
         errors: res.data.errors ?? [],
       });
       setUploaded(true);
+      // Refresh listing (et fallback: merge local)
+      try {
+        const refreshed = await listBackofficePhotos(leadId);
+        setExistingPhotos(refreshed);
+      } catch {
+        // fallback merge
+        const added = (res.data.uploaded ?? []).filter((p) => typeof p?.url === "string");
+        setExistingPhotos((prev) => {
+          const byUrl = new Set(prev.map((p) => p.url));
+          const merged = [...prev];
+          for (const p of added) {
+            if (!byUrl.has(p.url)) {
+              merged.push({
+                id: String(p.id ?? p.url),
+                url: p.url,
+                originalFilename: String(p.originalFilename ?? ""),
+              });
+            }
+          }
+          return merged;
+        });
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue lors de l'upload.";
       setError(msg);
@@ -118,6 +164,42 @@ function UploadPhotosContent() {
       {/* Main content */}
         {!uploaded ? (
           <div className="space-y-8">
+            {/* Existing photos (if any) */}
+            {leadId && (loadingExisting || existingPhotos.length > 0) && (
+              <div className="rounded-3xl border border-[#E3E5E8] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-lg font-bold text-[#0F172A]">
+                    Photos déjà reçues
+                  </h2>
+                  <span className="text-sm text-[#1E293B]/70">
+                    {loadingExisting ? "…" : `${existingPhotos.length}`}
+                  </span>
+                </div>
+
+                {existingPhotos.length > 0 ? (
+                  <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
+                    {existingPhotos.slice(0, 12).map((p) => (
+                      <div
+                        key={p.id}
+                        className="aspect-square overflow-hidden rounded-2xl border border-[#E3E5E8] bg-[#F8F9FA]"
+                      >
+                        <img
+                          src={p.url}
+                          alt={p.originalFilename || "Photo"}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-[#1E293B]/70">
+                    {loadingExisting ? "Chargement…" : "Aucune photo enregistrée pour ce dossier."}
+                  </p>
+                )}
+              </div>
+            )}
+
             {error && (
               <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
                 {error}
