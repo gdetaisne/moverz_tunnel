@@ -24,6 +24,11 @@ function UploadPhotosContent() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analyzingStage, setAnalyzingStage] = useState<
+    "upload_local" | "ai" | "push_bo" | null
+  >(null);
+  const [analyzingStartedAt, setAnalyzingStartedAt] = useState<number | null>(null);
+  const [analyzingElapsedMs, setAnalyzingElapsedMs] = useState(0);
   const [uploaded, setUploaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisSummary, setAnalysisSummary] = useState<{
@@ -46,6 +51,15 @@ function UploadPhotosContent() {
 
   const canSubmit = !!leadId && files.length > 0 && !uploading && !analyzing;
   const canAnalyze = !!leadId && files.length > 0 && !uploading && !analyzing;
+
+  useEffect(() => {
+    if (!analyzing || analyzingStartedAt == null) return;
+    const start = analyzingStartedAt;
+    const id = window.setInterval(() => {
+      setAnalyzingElapsedMs(Date.now() - start);
+    }, 200);
+    return () => window.clearInterval(id);
+  }, [analyzing, analyzingStartedAt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -158,8 +172,12 @@ function UploadPhotosContent() {
     }
 
     setAnalyzing(true);
+    setAnalyzingStage("upload_local");
+    setAnalyzingStartedAt(Date.now());
+    setAnalyzingElapsedMs(0);
     try {
       // 1) Upload local (tunnel) -> récupère storageKey pour analyse
+      setAnalyzingStage("upload_local");
       const localUpload = await uploadTunnelPhotos(leadId, files);
       if (localUpload.errors.length > 0 && localUpload.success.length === 0) {
         setError("Aucune photo n'a pu être préparée pour l'analyse.");
@@ -167,11 +185,13 @@ function UploadPhotosContent() {
       }
 
       // 2) Analyse (same-room + inventaire par pièce)
+      setAnalyzingStage("ai");
       const summary = await analyzeTunnelPhotos(localUpload.success);
       setAnalysisSummary(summary);
 
       // 3) Push au Back Office (source de vérité + devis)
       try {
+        setAnalyzingStage("push_bo");
         await uploadBackofficePhotos(leadId, files);
         // refresh listing pour afficher les photos déjà reçues
         const refreshed = await listBackofficePhotos(leadId);
@@ -185,11 +205,69 @@ function UploadPhotosContent() {
       setError(msg);
     } finally {
       setAnalyzing(false);
+      setAnalyzingStage(null);
+      setAnalyzingStartedAt(null);
+      setAnalyzingElapsedMs(0);
     }
   };
 
   return (
     <PremiumShell>
+      {/* Analyze overlay (UX: avoid “ça ne marche pas”) */}
+      {analyzing && (
+        <div
+          className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 px-4"
+          aria-live="polite"
+          role="status"
+        >
+          <div className="w-full max-w-md rounded-3xl border border-white/20 bg-white/95 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)] backdrop-blur">
+            <div className="flex items-start gap-4">
+              <div className="mt-1 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#6BCFCF]/15 text-[#2B7A78]">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#2B7A78] border-t-transparent" />
+              </div>
+              <div className="flex-1">
+                <div className="text-base font-bold text-[#0F172A]">
+                  Analyse en cours…
+                </div>
+                <div className="mt-1 text-sm text-[#1E293B]/70">
+                  Cela peut prendre ~30–60s. Ne fermez pas la page.
+                </div>
+              </div>
+            </div>
+
+            {(() => {
+              // Progress "feel good": basé sur timer, cap à 95% tant que pas fini.
+              const perPhotoMs = 3500; // ~3–4s / photo (indicatif)
+              const estimateMs = Math.max(20_000, Math.min(90_000, files.length * perPhotoMs));
+              const pct = Math.min(95, Math.round((analyzingElapsedMs / estimateMs) * 100));
+              const stageLabel =
+                analyzingStage === "upload_local"
+                  ? "Préparation des photos…"
+                  : analyzingStage === "ai"
+                    ? "Analyse IA des pièces et du volume…"
+                    : analyzingStage === "push_bo"
+                      ? "Envoi au dossier…"
+                      : "Analyse…";
+
+              return (
+                <div className="mt-5">
+                  <div className="flex items-center justify-between text-xs text-[#1E293B]/60">
+                    <span>{stageLabel}</span>
+                    <span>{pct}%</span>
+                  </div>
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#E3E5E8]">
+                    <div
+                      className="h-full rounded-full bg-[#6BCFCF] transition-[width] duration-200"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="moverz-animate-fade-in mb-8 rounded-3xl border border-[#E3E5E8] bg-white/80 p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] moverz-glass">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
