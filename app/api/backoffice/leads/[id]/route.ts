@@ -78,6 +78,24 @@ export async function GET(
     const contentType = upstream.headers.get("content-type") || "";
     const text = await upstream.text();
 
+    // Si le Back Office ne supporte pas ce GET (ou lead introuvable),
+    // renvoyer 200 + payload neutre pour éviter des erreurs réseau visibles.
+    if (upstream.status === 404) {
+      return NextResponse.json(
+        {
+          success: false,
+          warning: "UPSTREAM_404",
+          data: null,
+          upstream: {
+            status: upstream.status,
+            contentType,
+            message: text.slice(0, 300),
+          },
+        },
+        { status: 200 }
+      );
+    }
+
     if (contentType.includes("application/json")) {
       try {
         const data = JSON.parse(text);
