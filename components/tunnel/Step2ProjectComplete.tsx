@@ -292,6 +292,16 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     setTouchedFields((prev) => new Set(prev).add(field));
   }
 
+  const MIN_DAYS_AHEAD = 14;
+  const minMovingDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + MIN_DAYS_AHEAD);
+    return d.toISOString().split("T")[0]!;
+  })();
+
+  const isMovingDateTooSoon =
+    Boolean(props.movingDate) && props.movingDate < minMovingDate;
+
   // Avec l'autocomplete adresse (FR + Europe), on valide d'abord l'adresse + le logement.
   // Le CP/ville peuvent être absents/incomplets (cas étranger) sans bloquer le parcours.
   const isOriginValid =
@@ -301,7 +311,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     props.destinationAddress.trim().length >= 5 &&
     props.destinationHousingType.length > 0;
   
-  const isDateValid = props.movingDate.length > 0;
+  const isDateValid = props.movingDate.length > 0 && !isMovingDateTooSoon;
   const isFormValid = isOriginValid && isDestinationValid && isDateValid;
   const originIsHouse = props.originHousingType === "house";
   const destinationIsHouse = props.destinationHousingType === "house";
@@ -753,7 +763,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 markTouched("movingDate");
                 props.onFieldChange("movingDate", e.target.value);
               }}
-              min={new Date().toISOString().split('T')[0]}
+              min={minMovingDate}
               className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
             />
           </div>
@@ -773,7 +783,9 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           {(showErrors || touchedFields.has("movingDate")) && !isDateValid && (
             <p className="text-sm text-red-600 flex items-center gap-1">
               <AlertCircle className="w-4 h-4" />
-              Date obligatoire
+              {isMovingDateTooSoon
+                ? `Date trop proche — minimum ${MIN_DAYS_AHEAD} jours (à partir du ${minMovingDate})`
+                : "Date obligatoire"}
             </p>
           )}
         </div>

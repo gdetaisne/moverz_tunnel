@@ -36,9 +36,17 @@ export default function Step2Project({
     setTouchedFields((prev) => new Set(prev).add(field));
   }
 
+  const MIN_DAYS_AHEAD = 14;
+  const minMovingDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + MIN_DAYS_AHEAD);
+    return d.toISOString().split("T")[0]!;
+  })();
+  const isMovingDateTooSoon = Boolean(movingDate) && movingDate < minMovingDate;
+
   const isOriginValid = originPostalCode.length === 5 && originCity.trim().length > 0;
   const isDestinationValid = destinationUnknown || (destinationPostalCode.length === 5 && destinationCity.trim().length > 0);
-  const isDateValid = movingDate.length > 0;
+  const isDateValid = movingDate.length > 0 && !isMovingDateTooSoon;
 
   return (
     <div className="grid lg:grid-cols-2 gap-12 items-start">
@@ -196,7 +204,7 @@ export default function Step2Project({
                     markTouched("movingDate");
                     onFieldChange("movingDate", e.target.value);
                   }}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={minMovingDate}
                   className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
                 />
               </div>
@@ -216,7 +224,9 @@ export default function Step2Project({
               {touchedFields.has("movingDate") && !isDateValid && (
                 <p className="text-sm text-red-600 flex items-center gap-1">
                   <AlertCircle className="w-4 h-4" />
-                  Date obligatoire
+                  {isMovingDateTooSoon
+                    ? `Date trop proche — minimum ${MIN_DAYS_AHEAD} jours (à partir du ${minMovingDate})`
+                    : "Date obligatoire"}
                 </p>
               )}
             </div>

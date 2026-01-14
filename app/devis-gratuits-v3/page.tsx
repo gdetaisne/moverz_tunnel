@@ -680,7 +680,15 @@ function DevisGratuitsV3Content() {
       state.destinationUnknown ||
       (state.destinationAddress.trim().length >= 5 &&
         state.destinationHousingType.trim().length > 0);
-    const isDateValid = state.movingDate.length > 0;
+    const MIN_DAYS_AHEAD = 14;
+    const minMovingDate = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + MIN_DAYS_AHEAD);
+      return d.toISOString().split("T")[0]!;
+    })();
+    const isMovingDateTooSoon =
+      Boolean(state.movingDate) && state.movingDate < minMovingDate;
+    const isDateValid = state.movingDate.length > 0 && !isMovingDateTooSoon;
 
     if (!isOriginValid || !isDestinationValid || !isDateValid) {
       setShowValidationStep2(true);
@@ -698,7 +706,7 @@ function DevisGratuitsV3Content() {
             : state.destinationHousingType.trim().length > 0
             ? null
             : "destination-housingType",
-          state.movingDate.length > 0 ? null : "movingDate",
+          state.movingDate.length > 0 && !isMovingDateTooSoon ? null : "movingDate",
         ].filter(Boolean) as string[];
         const firstId = ids[0];
         if (!firstId) return;
