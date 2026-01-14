@@ -454,20 +454,15 @@ function UploadPhotosContent() {
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="font-semibold text-[#0F172A]">
-                              {r.label}
+                              {r.label}{" "}
+                              <span className="font-normal text-[#1E293B]/60">
+                                ({r.photosCount} photo{r.photosCount > 1 ? "s" : ""})
+                              </span>
                             </div>
                             <div className="text-xs text-[#1E293B]/60 text-right">
-                              <div>
-                                {r.photosCount} photo{r.photosCount > 1 ? "s" : ""}
-                              </div>
                               <div className="font-semibold text-[#0F172A]">
-                                Total : {r.volumeTotalM3} m³
+                                Total emballé : {r.volumeTotalM3} m³
                               </div>
-                              {r.cartonsCount > 0 && (
-                                <div className="text-[#1E293B]/60">
-                                  Cartons : {r.cartonsCount}
-                                </div>
-                              )}
                             </div>
                           </div>
                           {r.topItems.length > 0 ? (
