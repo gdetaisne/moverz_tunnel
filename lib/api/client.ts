@@ -1,5 +1,7 @@
 // Client HTTP du tunnel pour gérer les LeadTunnel via les routes Next.js internes (/api/leads).
 
+import { applyPackagingRules } from "@/lib/inventory/businessRules";
+
 export interface LeadTunnelCreatePayload {
   primaryChannel?: "web" | "whatsapp";
   firstName?: string | null;
@@ -668,8 +670,8 @@ export async function analyzeTunnelPhotos(
 
   const roomsRaw = Array.isArray(data?.rooms) ? data.rooms : [];
 
-  // Calcul "V2-ish" : on réapplique les règles métier + emballage + cartons
-  // pour obtenir un volume total plus réaliste (meubles + cartons).
+  // Calcul V2-ish : on applique les règles d'emballage (volume "emballé"),
+  // puis on calcule meubles + cartons (objets divers).
   let volumeTotalM3 = 0;
 
   const rooms = roomsRaw
@@ -680,11 +682,34 @@ export async function analyzeTunnelPhotos(
       const photosCount = Array.isArray(r.photoIds) ? r.photoIds.length : 0;
       const itemsRaw = Array.isArray(r.items) ? r.items : [];
 
+      // Normalisation minimale pour réutiliser applyPackagingRules (V2)
+      const normalized = applyPackagingRules(
+        itemsRaw.map((it: any, idx: number) => ({
+          id: `${roomType}-${idx}`,
+          roomId: roomType,
+          roomLabel: label,
+          label: String(it?.label ?? "Objet"),
+          category: String(it?.category ?? "AUTRE"),
+          quantity: typeof it?.quantity === "number" ? it.quantity : 1,
+          confidence: typeof it?.confidence === "number" ? it.confidence : 0.5,
+          volumeM3Ai: typeof it?.volumeM3 === "number" ? it.volumeM3 : null, // per-unit
+          // flags optionnels si fournis
+          flags:
+            it?.flags && typeof it.flags === "object"
+              ? {
+                  fragile: !!it.flags.fragile,
+                  highValue: !!it.flags.highValue,
+                  requiresDisassembly: !!it.flags.requiresDisassembly,
+                }
+              : undefined,
+        }))
+      );
+
       // Volume par pièce (meubles + cartons)
       let roomVolumeM3 = 0;
 
       // 1) Somme des volumes des "gros" objets + 2) cartons pour petits objets
-      // On approxime à partir des volumes IA par item.
+      // Seuils identiques à V2
       const SMALL_VOLUME_THRESHOLD = 0.15; // m³ par objet
       const STANDARD_CARTON_VOLUME = 0.08; // m³ / carton
 
@@ -711,19 +736,33 @@ export async function analyzeTunnelPhotos(
         [];
       let totalSmallNu = 0;
 
-      for (const it of itemsRaw) {
+      for (const it of normalized) {
         const qty = typeof it?.quantity === "number" ? it.quantity : 1;
-        const v = typeof it?.volumeM3 === "number" ? it.volumeM3 : null;
         const cat = typeof it?.category === "string" ? it.category : "AUTRE";
 
-        if (v != null && Number.isFinite(v) && Number.isFinite(qty)) {
-          const perUnit = v;
+        // per-unit volumes
+        const vNu = typeof it?.volumeM3Nu === "number" ? it.volumeM3Nu : null;
+        const vPacked =
+          typeof it?.volumeM3Emballé === "number"
+            ? it.volumeM3Emballé
+            : typeof it?.volumeM3Final === "number"
+              ? it.volumeM3Final
+              : typeof it?.volumeM3Ai === "number"
+                ? it.volumeM3Ai
+                : null;
+
+        if (vPacked != null && Number.isFinite(vPacked) && Number.isFinite(qty)) {
+          const perUnitPacked = vPacked;
           const isSmallByVolume =
-            !isAlwaysBigCategory(cat) && perUnit > 0 && perUnit < SMALL_VOLUME_THRESHOLD;
+            !isAlwaysBigCategory(cat) &&
+            perUnitPacked > 0 &&
+            perUnitPacked < SMALL_VOLUME_THRESHOLD;
           if (isSmallByVolume) {
-            totalSmallNu += perUnit * qty;
+            // on cumule le volume nu des petits objets pour déterminer le nb de cartons (V2)
+            const perUnitNu = vNu != null && Number.isFinite(vNu) ? vNu : perUnitPacked;
+            totalSmallNu += perUnitNu * qty;
           } else {
-            const lineVol = perUnit * qty;
+            const lineVol = perUnitPacked * qty;
             roomVolumeM3 += lineVol;
             bigItems.push({
               label: String(it?.label ?? "Objet"),
