@@ -35,6 +35,7 @@ function UploadPhotosContent() {
   const [analysisSummary, setAnalysisSummary] = useState<{
     volumeTotalM3: number;
     cartonsTotalCount: number;
+    insuranceValueTotalEur: number | null;
     rooms: Array<{
       roomType: string;
       label: string;
@@ -459,7 +460,17 @@ function UploadPhotosContent() {
                     </div>
 
                     <div className="mt-1 text-sm text-[#1E293B]/70">
-                      Valorisation pour assurance
+                      Valorisation pour assurance :{" "}
+                      <span className="font-semibold text-[#0F172A]">
+                        {typeof analysisSummary.insuranceValueTotalEur === "number" &&
+                        analysisSummary.insuranceValueTotalEur > 0
+                          ? new Intl.NumberFormat("fr-FR", {
+                              style: "currency",
+                              currency: "EUR",
+                              maximumFractionDigits: 0,
+                            }).format(Math.round(analysisSummary.insuranceValueTotalEur))
+                          : "—"}
+                      </span>
                     </div>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">

@@ -648,6 +648,7 @@ export async function uploadTunnelPhotos(
 export interface TunnelAnalysisSummary {
   volumeTotalM3: number;
   cartonsTotalCount: number;
+  insuranceValueTotalEur: number | null;
   rooms: Array<{
     roomType: string;
     label: string;
@@ -679,6 +680,8 @@ export async function analyzeTunnelPhotos(
   // + emballage (volume emballé) + cartons (petits objets).
   let volumeTotalM3 = 0;
   let cartonsTotalCount = 0;
+  let insuranceValueTotalEur = 0;
+  let insuranceValueCount = 0;
 
   const rooms = roomsRaw
     .filter((r: any) => r && typeof r === "object")
@@ -722,6 +725,19 @@ export async function analyzeTunnelPhotos(
 
       const enriched = enrichItemsWithBusinessRules(itemsForRules, roomsForRules);
       const normalized = applyPackagingRules(enriched);
+
+      // Valorisation assurance (V2): on additionne les valeurs IA des items "racine"
+      // (les dérivés type contenu armoire / composants lit n'ont pas de valeur, et on évite le double).
+      for (const it of normalized) {
+        if (it?.parentId) continue;
+        const v =
+          typeof it?.valueEurTypicalAi === "number" ? it.valueEurTypicalAi : null;
+        const q = typeof it?.quantity === "number" ? it.quantity : 1;
+        if (v != null && Number.isFinite(v) && Number.isFinite(q) && v > 0 && q > 0) {
+          insuranceValueTotalEur += v * q;
+          insuranceValueCount += 1;
+        }
+      }
 
       // Volume par pièce (meubles + cartons)
       let roomVolumeM3 = 0;
@@ -906,7 +922,16 @@ export async function analyzeTunnelPhotos(
 
   volumeTotalM3 = Math.round(volumeTotalM3 * 10) / 10;
 
-  return { volumeTotalM3, cartonsTotalCount, rooms, raw: data };
+  const insuranceValueTotalEurOut =
+    insuranceValueCount > 0 ? Math.round(insuranceValueTotalEur) : null;
+
+  return {
+    volumeTotalM3,
+    cartonsTotalCount,
+    insuranceValueTotalEur: insuranceValueTotalEurOut,
+    rooms,
+    raw: data,
+  };
 }
 
 export async function uploadBackofficePhotos(
