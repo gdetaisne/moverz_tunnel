@@ -573,6 +573,143 @@ export interface BackofficeUploadPhotosResult {
   };
 }
 
+// ============================================
+// UPLOAD PHOTOS TO TUNNEL (local) - for analysis
+// ============================================
+
+export interface TunnelUploadedPhoto {
+  id: string;
+  storageKey: string;
+  originalFilename: string;
+}
+
+export interface TunnelUploadPhotosResult {
+  success: TunnelUploadedPhoto[];
+  errors: { originalFilename: string; reason: string }[];
+}
+
+export async function uploadTunnelPhotos(
+  leadId: string,
+  files: File[]
+): Promise<TunnelUploadPhotosResult> {
+  const formData = new FormData();
+  formData.append("leadId", leadId);
+  files.forEach((file) => formData.append("files", file));
+
+  const res = await fetch("/api/uploads/photos", {
+    method: "POST",
+    body: formData,
+  });
+
+  const data: any = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error || data?.message || "Failed to upload tunnel photos");
+  }
+
+  const successRaw = Array.isArray(data?.success) ? data.success : [];
+  const errorsRaw = Array.isArray(data?.errors) ? data.errors : [];
+
+  return {
+    success: successRaw
+      .filter(
+        (p: any) =>
+          p &&
+          typeof p === "object" &&
+          typeof p.id === "string" &&
+          typeof p.storageKey === "string" &&
+          typeof p.originalFilename === "string"
+      )
+      .map((p: any) => ({
+        id: p.id,
+        storageKey: p.storageKey,
+        originalFilename: p.originalFilename,
+      })),
+    errors: errorsRaw
+      .filter(
+        (e: any) =>
+          e &&
+          typeof e === "object" &&
+          typeof e.originalFilename === "string" &&
+          typeof e.reason === "string"
+      )
+      .map((e: any) => ({ originalFilename: e.originalFilename, reason: e.reason })),
+  };
+}
+
+// ============================================
+// ANALYZE TUNNEL PHOTOS (local) - lab-process2
+// ============================================
+
+export interface TunnelAnalysisSummary {
+  volumeTotalM3: number;
+  rooms: Array<{
+    roomType: string;
+    label: string;
+    photosCount: number;
+    topItems: Array<{ label: string; quantity: number; volumeM3: number | null }>;
+  }>;
+  raw?: unknown;
+}
+
+export async function analyzeTunnelPhotos(
+  photos: TunnelUploadedPhoto[]
+): Promise<TunnelAnalysisSummary> {
+  const res = await fetch("/api/ai/lab-process2", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ photos }),
+  });
+
+  const data: any = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error || data?.message || "Failed to analyze photos");
+  }
+
+  const roomsRaw = Array.isArray(data?.rooms) ? data.rooms : [];
+
+  const rooms = roomsRaw
+    .filter((r: any) => r && typeof r === "object")
+    .map((r: any) => {
+      const itemsRaw = Array.isArray(r.items) ? r.items : [];
+      const topItems = itemsRaw
+        .filter(
+          (it: any) =>
+            it &&
+            typeof it === "object" &&
+            typeof it.label === "string" &&
+            typeof it.quantity === "number"
+        )
+        .map((it: any) => ({
+          label: String(it.label),
+          quantity: Number(it.quantity) || 1,
+          volumeM3: typeof it.volumeM3 === "number" ? it.volumeM3 : null,
+        }))
+        .sort((a: any, b: any) => (b.volumeM3 ?? 0) - (a.volumeM3 ?? 0))
+        .slice(0, 4);
+
+      return {
+        roomType: String(r.roomType ?? "INCONNU"),
+        label: String(r.label ?? r.roomType ?? "Pièce"),
+        photosCount: Array.isArray(r.photoIds) ? r.photoIds.length : 0,
+        topItems,
+      };
+    });
+
+  // volume total = somme des volumes IA (indicatif), pondéré par quantité
+  let volumeTotalM3 = 0;
+  for (const r of roomsRaw) {
+    const itemsRaw = Array.isArray(r?.items) ? r.items : [];
+    for (const it of itemsRaw) {
+      const qty = typeof it?.quantity === "number" ? it.quantity : 1;
+      const v = typeof it?.volumeM3 === "number" ? it.volumeM3 : 0;
+      if (Number.isFinite(v) && Number.isFinite(qty)) volumeTotalM3 += v * qty;
+    }
+  }
+  volumeTotalM3 = Math.round(volumeTotalM3 * 10) / 10;
+
+  return { volumeTotalM3, rooms, raw: data };
+}
+
 export async function uploadBackofficePhotos(
   backofficeLeadId: string,
   files: File[]
