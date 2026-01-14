@@ -32,6 +32,7 @@ function UploadPhotosContent() {
       roomType: string;
       label: string;
       photosCount: number;
+      volumeTotalM3: number;
       topItems: Array<{ label: string; quantity: number; volumeM3: number | null }>;
     }>;
   } | null>(null);
@@ -268,66 +269,6 @@ function UploadPhotosContent() {
               </div>
             )}
 
-            {analysisSummary && (
-              <div className="rounded-3xl border border-[#E3E5E8] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-lg font-bold text-[#0F172A]">
-                    Résumé de l’analyse (indicatif)
-                  </h2>
-                  <div className="text-sm text-[#1E293B]/70">
-                    Volume total estimé :{" "}
-                    <span className="font-semibold text-[#0F172A]">
-                      {analysisSummary.volumeTotalM3} m³
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {analysisSummary.rooms.slice(0, 6).map((r, idx) => (
-                    <div
-                      key={`${r.roomType}-${idx}`}
-                      className="rounded-2xl border border-[#E3E5E8] bg-[#F8F9FA] p-4"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="font-semibold text-[#0F172A]">
-                          {r.label}
-                        </div>
-                        <div className="text-xs text-[#1E293B]/60">
-                          {r.photosCount} photo{r.photosCount > 1 ? "s" : ""}
-                        </div>
-                      </div>
-                      {r.topItems.length > 0 ? (
-                        <ul className="mt-2 space-y-1 text-sm text-[#1E293B]/70">
-                          {r.topItems.slice(0, 3).map((it, j) => (
-                            <li key={j} className="flex justify-between gap-3">
-                              <span className="truncate">
-                                {it.quantity > 1 ? `${it.quantity}× ` : ""}
-                                {it.label}
-                              </span>
-                              <span className="shrink-0 text-[#1E293B]/60">
-                                {typeof it.volumeM3 === "number"
-                                  ? `${Math.round(it.volumeM3 * 10) / 10} m³`
-                                  : "—"}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div className="mt-2 text-sm text-[#1E293B]/70">
-                          Objets non détectés.
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-3 text-xs text-[#1E293B]/55">
-                  Cette estimation est basée sur l’analyse automatique des photos et peut
-                  varier.
-                </div>
-              </div>
-            )}
-
             {/* Drop zone */}
             <div
               onDrop={handleDrop}
@@ -401,6 +342,72 @@ function UploadPhotosContent() {
                     </div>
                   ))}
                 </div>
+
+                {/* Résumé en dessous des photos (demandé) */}
+                {analysisSummary && (
+                  <div className="rounded-3xl border border-[#E3E5E8] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h2 className="text-lg font-bold text-[#0F172A]">
+                        Résumé de l’analyse (indicatif)
+                      </h2>
+                      <div className="text-sm text-[#1E293B]/70">
+                        Volume total estimé :{" "}
+                        <span className="font-semibold text-[#0F172A]">
+                          {analysisSummary.volumeTotalM3} m³
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {analysisSummary.rooms.slice(0, 6).map((r, idx) => (
+                        <div
+                          key={`${r.roomType}-${idx}`}
+                          className="rounded-2xl border border-[#E3E5E8] bg-[#F8F9FA] p-4"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="font-semibold text-[#0F172A]">
+                              {r.label}
+                            </div>
+                            <div className="text-xs text-[#1E293B]/60 text-right">
+                              <div>
+                                {r.photosCount} photo{r.photosCount > 1 ? "s" : ""}
+                              </div>
+                              <div className="font-semibold text-[#0F172A]">
+                                Total : {r.volumeTotalM3} m³
+                              </div>
+                            </div>
+                          </div>
+                          {r.topItems.length > 0 ? (
+                            <ul className="mt-2 space-y-1 text-sm text-[#1E293B]/70">
+                              {r.topItems.slice(0, 3).map((it, j) => (
+                                <li key={j} className="flex justify-between gap-3">
+                                  <span className="truncate">
+                                    {it.quantity > 1 ? `${it.quantity}× ` : ""}
+                                    {it.label}
+                                  </span>
+                                  <span className="shrink-0 text-[#1E293B]/60">
+                                    {typeof it.volumeM3 === "number"
+                                      ? `${Math.round(it.volumeM3 * 10) / 10} m³`
+                                      : "—"}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="mt-2 text-sm text-[#1E293B]/70">
+                              Objets non détectés.
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 text-xs text-[#1E293B]/55">
+                      Total = meubles + cartons (objets divers). Estimation automatique.
+                    </div>
+                  </div>
+                )}
+
                 {!leadId && (
                   <p className="text-xs text-amber-800">
                     Identifiant dossier manquant: revenez depuis la page de confirmation.

@@ -646,6 +646,7 @@ export interface TunnelAnalysisSummary {
     roomType: string;
     label: string;
     photosCount: number;
+    volumeTotalM3: number;
     topItems: Array<{ label: string; quantity: number; volumeM3: number | null }>;
   }>;
   raw?: unknown;
@@ -667,44 +668,108 @@ export async function analyzeTunnelPhotos(
 
   const roomsRaw = Array.isArray(data?.rooms) ? data.rooms : [];
 
+  // Calcul "V2-ish" : on réapplique les règles métier + emballage + cartons
+  // pour obtenir un volume total plus réaliste (meubles + cartons).
+  let volumeTotalM3 = 0;
+
   const rooms = roomsRaw
     .filter((r: any) => r && typeof r === "object")
     .map((r: any) => {
+      const roomType = String(r.roomType ?? "INCONNU");
+      const label = String(r.label ?? r.roomType ?? "Pièce");
+      const photosCount = Array.isArray(r.photoIds) ? r.photoIds.length : 0;
       const itemsRaw = Array.isArray(r.items) ? r.items : [];
-      const topItems = itemsRaw
-        .filter(
-          (it: any) =>
-            it &&
-            typeof it === "object" &&
-            typeof it.label === "string" &&
-            typeof it.quantity === "number"
-        )
-        .map((it: any) => ({
-          label: String(it.label),
-          quantity: Number(it.quantity) || 1,
-          volumeM3: typeof it.volumeM3 === "number" ? it.volumeM3 : null,
-        }))
-        .sort((a: any, b: any) => (b.volumeM3 ?? 0) - (a.volumeM3 ?? 0))
+
+      // Volume par pièce (meubles + cartons)
+      let roomVolumeM3 = 0;
+
+      // 1) Somme des volumes des "gros" objets + 2) cartons pour petits objets
+      // On approxime à partir des volumes IA par item.
+      const SMALL_VOLUME_THRESHOLD = 0.15; // m³ par objet
+      const STANDARD_CARTON_VOLUME = 0.08; // m³ / carton
+
+      const isAlwaysBigCategory = (cat: string) => {
+        const c = cat.toUpperCase();
+        return (
+          c === "LIT" ||
+          c === "ARMOIRE" ||
+          c === "ARMOIRE-PENDERIE" ||
+          c === "CANAPE" ||
+          c === "CANAPÉ" ||
+          c === "BUFFET" ||
+          c === "BIBLIOTHEQUE" ||
+          c === "BIBLIOTHÈQUE" ||
+          c === "TABLE" ||
+          c === "ELECTROMENAGER" ||
+          c === "ÉLECTROMÉNAGER" ||
+          c === "GROS_ELECTROMENAGER" ||
+          c === "CARTON"
+        );
+      };
+
+      const bigItems: Array<{ label: string; quantity: number; volumeM3: number | null }> =
+        [];
+      let totalSmallNu = 0;
+
+      for (const it of itemsRaw) {
+        const qty = typeof it?.quantity === "number" ? it.quantity : 1;
+        const v = typeof it?.volumeM3 === "number" ? it.volumeM3 : null;
+        const cat = typeof it?.category === "string" ? it.category : "AUTRE";
+
+        if (v != null && Number.isFinite(v) && Number.isFinite(qty)) {
+          const perUnit = v;
+          const isSmallByVolume =
+            !isAlwaysBigCategory(cat) && perUnit > 0 && perUnit < SMALL_VOLUME_THRESHOLD;
+          if (isSmallByVolume) {
+            totalSmallNu += perUnit * qty;
+          } else {
+            const lineVol = perUnit * qty;
+            roomVolumeM3 += lineVol;
+            bigItems.push({
+              label: String(it?.label ?? "Objet"),
+              quantity: qty,
+              volumeM3: Math.round(lineVol * 10) / 10,
+            });
+          }
+        } else {
+          // pas de volume => on l'affiche éventuellement mais ne contribue pas au total
+          bigItems.push({
+            label: String(it?.label ?? "Objet"),
+            quantity: qty,
+            volumeM3: null,
+          });
+        }
+      }
+
+      // Cartons (objets divers) : on convertit le volume nu des petits objets en cartons.
+      if (totalSmallNu > 0) {
+        const cartonsCount = Math.max(1, Math.ceil(totalSmallNu / STANDARD_CARTON_VOLUME));
+        const cartonsVolume = cartonsCount * STANDARD_CARTON_VOLUME;
+        roomVolumeM3 += cartonsVolume;
+        bigItems.push({
+          label: "Cartons (objets divers)",
+          quantity: cartonsCount,
+          volumeM3: Math.round(cartonsVolume * 10) / 10,
+        });
+      }
+
+      roomVolumeM3 = Math.round(roomVolumeM3 * 10) / 10;
+      volumeTotalM3 += roomVolumeM3;
+
+      const topItems = bigItems
+        .slice()
+        .sort((a, b) => (b.volumeM3 ?? 0) - (a.volumeM3 ?? 0))
         .slice(0, 4);
 
       return {
-        roomType: String(r.roomType ?? "INCONNU"),
-        label: String(r.label ?? r.roomType ?? "Pièce"),
-        photosCount: Array.isArray(r.photoIds) ? r.photoIds.length : 0,
+        roomType,
+        label,
+        photosCount,
+        volumeTotalM3: roomVolumeM3,
         topItems,
       };
     });
 
-  // volume total = somme des volumes IA (indicatif), pondéré par quantité
-  let volumeTotalM3 = 0;
-  for (const r of roomsRaw) {
-    const itemsRaw = Array.isArray(r?.items) ? r.items : [];
-    for (const it of itemsRaw) {
-      const qty = typeof it?.quantity === "number" ? it.quantity : 1;
-      const v = typeof it?.volumeM3 === "number" ? it.volumeM3 : 0;
-      if (Number.isFinite(v) && Number.isFinite(qty)) volumeTotalM3 += v * qty;
-    }
-  }
   volumeTotalM3 = Math.round(volumeTotalM3 * 10) / 10;
 
   return { volumeTotalM3, rooms, raw: data };
