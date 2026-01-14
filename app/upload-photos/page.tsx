@@ -351,7 +351,7 @@ function UploadPhotosContent() {
                         Résumé de l’analyse (indicatif)
                       </h2>
                       <div className="text-sm text-[#1E293B]/70">
-                        Volume total estimé :{" "}
+                        Volume total estimé (emballé) :{" "}
                         <span className="font-semibold text-[#0F172A]">
                           {analysisSummary.volumeTotalM3} m³
                         </span>

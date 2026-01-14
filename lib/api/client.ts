@@ -1,6 +1,9 @@
 // Client HTTP du tunnel pour gérer les LeadTunnel via les routes Next.js internes (/api/leads).
 
-import { applyPackagingRules } from "@/lib/inventory/businessRules";
+import {
+  applyPackagingRules,
+  enrichItemsWithBusinessRules,
+} from "@/lib/inventory/businessRules";
 
 export interface LeadTunnelCreatePayload {
   primaryChannel?: "web" | "whatsapp";
@@ -670,46 +673,58 @@ export async function analyzeTunnelPhotos(
 
   const roomsRaw = Array.isArray(data?.rooms) ? data.rooms : [];
 
-  // Calcul V2-ish : on applique les règles d'emballage (volume "emballé"),
-  // puis on calcule meubles + cartons (objets divers).
+  // Calcul V2 : règles métier (lit -> dérivés, armoire -> contenu, etc.)
+  // + emballage (volume emballé) + cartons (petits objets).
   let volumeTotalM3 = 0;
 
   const rooms = roomsRaw
     .filter((r: any) => r && typeof r === "object")
     .map((r: any) => {
+      const roomId = String(r.roomId ?? r.roomType ?? "room");
       const roomType = String(r.roomType ?? "INCONNU");
       const label = String(r.label ?? r.roomType ?? "Pièce");
       const photosCount = Array.isArray(r.photoIds) ? r.photoIds.length : 0;
       const itemsRaw = Array.isArray(r.items) ? r.items : [];
 
-      // Normalisation minimale pour réutiliser applyPackagingRules (V2)
-      const normalized = applyPackagingRules(
-        itemsRaw.map((it: any, idx: number) => ({
-          id: `${roomType}-${idx}`,
-          roomId: roomType,
-          roomLabel: label,
-          label: String(it?.label ?? "Objet"),
-          category: String(it?.category ?? "AUTRE"),
-          quantity: typeof it?.quantity === "number" ? it.quantity : 1,
-          confidence: typeof it?.confidence === "number" ? it.confidence : 0.5,
-          volumeM3Ai: typeof it?.volumeM3 === "number" ? it.volumeM3 : null, // per-unit
-          // flags optionnels si fournis
-          flags:
-            it?.flags && typeof it.flags === "object"
-              ? {
-                  fragile: !!it.flags.fragile,
-                  highValue: !!it.flags.highValue,
-                  requiresDisassembly: !!it.flags.requiresDisassembly,
-                }
-              : undefined,
-        }))
-      );
+      // --- Pipeline V2: normaliser -> enrich (contenus/dérivés) -> emballage ---
+      const roomsForRules = [{ roomId, roomType, roomLabel: label }];
+      const itemsForRules = itemsRaw.map((it: any, idx: number) => ({
+        id: `${roomId}-${idx}`,
+        roomId,
+        roomLabel: label,
+        label: String(it?.label ?? "Objet"),
+        category: String(it?.category ?? "AUTRE"),
+        quantity: typeof it?.quantity === "number" ? it.quantity : 1,
+        confidence: typeof it?.confidence === "number" ? it.confidence : 0.5,
+        widthCm: typeof it?.widthCm === "number" ? it.widthCm : null,
+        depthCm: typeof it?.depthCm === "number" ? it.depthCm : null,
+        heightCm: typeof it?.heightCm === "number" ? it.heightCm : null,
+        volumeM3Ai: typeof it?.volumeM3 === "number" ? it.volumeM3 : null, // per-unit
+        valueEurTypicalAi:
+          typeof it?.valueEstimateEur === "number" ? it.valueEstimateEur : null,
+        valueSource:
+          typeof it?.valueEstimateEur === "number" ? "ai" : ("none" as const),
+        volumeSource: "ai" as const,
+        parentId: null as string | null,
+        derivedKind: null as string | null,
+        flags:
+          it?.flags && typeof it.flags === "object"
+            ? {
+                fragile: !!it.flags.fragile,
+                highValue: !!it.flags.highValue,
+                requiresDisassembly: !!it.flags.requiresDisassembly,
+              }
+            : undefined,
+      }));
+
+      const enriched = enrichItemsWithBusinessRules(itemsForRules, roomsForRules);
+      const normalized = applyPackagingRules(enriched);
 
       // Volume par pièce (meubles + cartons)
       let roomVolumeM3 = 0;
 
-      // 1) Somme des volumes des "gros" objets + 2) cartons pour petits objets
-      // Seuils identiques à V2
+      // 1) Somme des volumes des "gros" objets (emballés) + 2) cartons pour petits objets
+      // Seuils V2
       const SMALL_VOLUME_THRESHOLD = 0.15; // m³ par objet
       const STANDARD_CARTON_VOLUME = 0.08; // m³ / carton
 
@@ -732,52 +747,92 @@ export async function analyzeTunnelPhotos(
         );
       };
 
+      const byParent = new Map<string, any[]>();
+      const baseItems: any[] = [];
+      for (const it of normalized) {
+        if (it?.parentId) {
+          const list = byParent.get(it.parentId) ?? [];
+          list.push(it);
+          byParent.set(it.parentId, list);
+        } else {
+          baseItems.push(it);
+        }
+      }
+
+      const computeVolumes = (src: any | null) => {
+        if (!src) return { nu: 0, packed: 0 };
+        const nu =
+          src.volumeM3Nu ??
+          src.volumeM3Final ??
+          src.volumeM3Ai ??
+          src.volumeM3Standard ??
+          0;
+        const packed =
+          src.volumeM3Emballé ??
+          src.volumeM3Final ??
+          src.volumeM3Ai ??
+          src.volumeM3Standard ??
+          0;
+        return { nu: Number(nu) || 0, packed: Number(packed) || 0 };
+      };
+
       const bigItems: Array<{ label: string; quantity: number; volumeM3: number | null }> =
         [];
       let totalSmallNu = 0;
 
-      for (const it of normalized) {
-        const qty = typeof it?.quantity === "number" ? it.quantity : 1;
-        const cat = typeof it?.category === "string" ? it.category : "AUTRE";
+      // Séparation petits / gros (V2)
+      const smallBaseItems: any[] = [];
+      const bigBaseItems: any[] = [];
+      for (const item of baseItems) {
+        const cat = String(item?.category ?? "AUTRE");
+        const { packed } = computeVolumes(item);
+        const isSmallByVolume =
+          !isAlwaysBigCategory(cat) && packed > 0 && packed < SMALL_VOLUME_THRESHOLD;
+        if (isSmallByVolume) smallBaseItems.push(item);
+        else bigBaseItems.push(item);
+      }
 
-        // per-unit volumes
-        const vNu = typeof it?.volumeM3Nu === "number" ? it.volumeM3Nu : null;
-        const vPacked =
-          typeof it?.volumeM3Emballé === "number"
-            ? it.volumeM3Emballé
-            : typeof it?.volumeM3Final === "number"
-              ? it.volumeM3Final
-              : typeof it?.volumeM3Ai === "number"
-                ? it.volumeM3Ai
-                : null;
+      // Gros items (avec règles spéciales lit/armoire + contenus)
+      for (const item of bigBaseItems) {
+        const cat = String(item?.category ?? "AUTRE").toUpperCase();
+        const deps = byParent.get(item.id) ?? [];
+        const parentVolumes = computeVolumes(item);
 
-        if (vPacked != null && Number.isFinite(vPacked) && Number.isFinite(qty)) {
-          const perUnitPacked = vPacked;
-          const isSmallByVolume =
-            !isAlwaysBigCategory(cat) &&
-            perUnitPacked > 0 &&
-            perUnitPacked < SMALL_VOLUME_THRESHOLD;
-          if (isSmallByVolume) {
-            // on cumule le volume nu des petits objets pour déterminer le nb de cartons (V2)
-            const perUnitNu = vNu != null && Number.isFinite(vNu) ? vNu : perUnitPacked;
-            totalSmallNu += perUnitNu * qty;
-          } else {
-            const lineVol = perUnitPacked * qty;
-            roomVolumeM3 += lineVol;
-            bigItems.push({
-              label: String(it?.label ?? "Objet"),
-              quantity: qty,
-              volumeM3: Math.round(lineVol * 10) / 10,
-            });
+        const depsVolumes = deps.reduce(
+          (acc: { nu: number; packed: number }, d: any) => {
+            const v = computeVolumes(d);
+            const q = typeof d?.quantity === "number" ? d.quantity : 1;
+            return { nu: acc.nu + v.nu * q, packed: acc.packed + v.packed * q };
+          },
+          { nu: 0, packed: 0 }
+        );
+
+        let volumePacked = parentVolumes.packed * (item.quantity || 1);
+
+        if (deps.length > 0) {
+          if (cat === "LIT") {
+            // Lit: volume = composants uniquement (matelas/sommier/parure)
+            volumePacked = depsVolumes.packed;
+          } else if (cat === "ARMOIRE") {
+            // Armoire: meuble + contenu
+            volumePacked += depsVolumes.packed;
           }
-        } else {
-          // pas de volume => on l'affiche éventuellement mais ne contribue pas au total
-          bigItems.push({
-            label: String(it?.label ?? "Objet"),
-            quantity: qty,
-            volumeM3: null,
-          });
         }
+
+        if (volumePacked > 0) roomVolumeM3 += volumePacked;
+
+        bigItems.push({
+          label: String(item?.label ?? "Objet"),
+          quantity: typeof item?.quantity === "number" ? item.quantity : 1,
+          volumeM3: volumePacked > 0 ? Math.round(volumePacked * 10) / 10 : null,
+        });
+      }
+
+      // Petits objets -> cartons (V2)
+      for (const item of smallBaseItems) {
+        const { nu } = computeVolumes(item);
+        const q = typeof item?.quantity === "number" ? item.quantity : 1;
+        if (nu > 0) totalSmallNu += nu * q;
       }
 
       // Cartons (objets divers) : on convertit le volume nu des petits objets en cartons.
