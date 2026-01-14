@@ -436,9 +436,12 @@ function UploadPhotosContent() {
                           {analysisSummary.volumeTotalM3} m³
                         </span>
                         {" · "}
-                        Cartons :{" "}
+                        Cartons à prévoir :{" "}
                         <span className="font-semibold text-[#0F172A]">
-                          {analysisSummary.cartonsTotalCount}
+                          {Math.max(
+                            0,
+                            Math.ceil((analysisSummary.cartonsTotalCount || 0) / 10) * 10
+                          )}
                         </span>
                       </div>
                     </div>
