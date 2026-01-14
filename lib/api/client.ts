@@ -783,6 +783,7 @@ export async function analyzeTunnelPhotos(
       const bigItems: Array<{ label: string; quantity: number; volumeM3: number | null }> =
         [];
       let totalSmallNu = 0;
+      let storageContentNu = 0;
 
       // Séparation petits / gros (V2)
       const smallBaseItems: any[] = [];
@@ -814,6 +815,18 @@ export async function analyzeTunnelPhotos(
         let volumePacked = parentVolumes.packed * (item.quantity || 1);
         const hasArmoireContent =
           cat === "ARMOIRE" && deps.some((d: any) => d?.derivedKind === "armoire_contenu");
+
+        // Comptage cartons: on inclut le "contenu des rangements" (armoire_contenu) dans le nb de cartons.
+        // Important: on NE l'ajoute pas au volume via cartons, car son volume emballé est déjà inclus
+        // dans le volume de l'armoire (meuble + contenu) pour rester aligné V2 sur le volume total.
+        if (cat === "ARMOIRE" && deps.length > 0) {
+          for (const d of deps) {
+            if (d?.derivedKind !== "armoire_contenu") continue;
+            const v = computeVolumes(d);
+            const q = typeof d?.quantity === "number" ? d.quantity : 1;
+            if (v.nu > 0) storageContentNu += v.nu * q;
+          }
+        }
 
         if (deps.length > 0) {
           if (cat === "LIT") {
@@ -855,6 +868,21 @@ export async function analyzeTunnelPhotos(
           label: "Cartons (objets divers)",
           quantity: cartonsCount,
           volumeM3: Math.round(cartonsVolume * 10) / 10,
+        });
+      }
+
+      // Contenu des rangements (armoire/buffet) -> cartons (compteur uniquement)
+      if (storageContentNu > 0) {
+        const storageCartonsCount = Math.max(
+          1,
+          Math.ceil(storageContentNu / STANDARD_CARTON_VOLUME)
+        );
+        roomCartonsCount += storageCartonsCount;
+        cartonsTotalCount += storageCartonsCount;
+        bigItems.push({
+          label: "Cartons (contenu rangements)",
+          quantity: storageCartonsCount,
+          volumeM3: null, // volume déjà inclus dans le meuble (armoire + contenu)
         });
       }
 
