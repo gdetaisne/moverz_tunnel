@@ -446,6 +446,10 @@ function UploadPhotosContent() {
                       </div>
                     </div>
 
+                    <div className="mt-1 text-sm text-[#1E293B]/70">
+                      Valorisation pour assurance
+                    </div>
+
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       {analysisSummary.rooms.slice(0, 6).map((r, idx) => (
                         <div
