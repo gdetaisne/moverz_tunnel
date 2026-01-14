@@ -77,14 +77,6 @@ function UploadPhotosContent() {
     }
   };
 
-  const TARGET_PHOTOS = 12;
-  const photoCount = files.length;
-  const progress = Math.min(1, photoCount / TARGET_PHOTOS);
-  const score = Math.round(35 + progress * 65); // 35–100
-
-  const scoreLabel =
-    score >= 90 ? "Très élevé" : score >= 75 ? "Élevé" : score >= 55 ? "Correct" : "Faible";
-
   return (
     <PremiumShell>
       {/* Header */}
@@ -126,75 +118,6 @@ function UploadPhotosContent() {
       {/* Main content */}
         {!uploaded ? (
           <div className="space-y-8">
-            {/* Compact incentive */}
-            <section className="moverz-animate-fade-in rounded-3xl border border-[#E3E5E8] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-                    Devis plus comparables, plus vite
-                  </p>
-                  <p className="mt-1 text-sm text-[#1E293B]/70">
-                    Ajoutez des photos → on réduit l’incertitude (volume + accès) → moins de marge “au cas où”.
-                  </p>
-                </div>
-
-                <div className="flex-shrink-0 rounded-2xl bg-[#0F172A] px-4 py-3 text-white">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
-                      Score
-                    </p>
-                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/90">
-                      {scoreLabel}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-baseline justify-between gap-3">
-                    <p className="text-xl font-bold">{score}</p>
-                    <p className="text-[11px] text-white/60">
-                      {photoCount}/{TARGET_PHOTOS}
-                    </p>
-                  </div>
-                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-[#6BCFCF] moverz-transition-fast"
-                      style={{ width: `${Math.round(progress * 100)}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-[11px] text-white/60">
-                    Objectif: 10–12 photos (toutes les pièces)
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* Instructions */}
-            <div className="moverz-animate-fade-in rounded-3xl border border-[#E3E5E8] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
-              <h2 className="mb-4 text-xl font-bold text-[#0F172A]">
-                Quoi photographier
-              </h2>
-              <div className="flex flex-wrap gap-2 text-sm text-[#1E293B]/75">
-                {[
-                  "Salon",
-                  "Chambres",
-                  "Cuisine",
-                  "SDB / WC",
-                  "Cave / Garage",
-                  "Escaliers",
-                  "Entrée immeuble",
-                  "Meubles volumineux",
-                ].map((label) => (
-                  <span
-                    key={label}
-                    className="inline-flex items-center rounded-full border border-[#E3E5E8] bg-[#F8F9FA] px-3 py-1"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-              <p className="mt-3 text-xs text-[#1E293B]/60">
-                Le but: capturer <span className="font-semibold text-[#0F172A]">les volumes + les accès</span> (photos simples, pas besoin d’être parfait).
-              </p>
-            </div>
-
             {error && (
               <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
                 {error}
