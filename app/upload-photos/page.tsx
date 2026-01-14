@@ -25,10 +25,11 @@ function UploadPhotosContent() {
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzingStage, setAnalyzingStage] = useState<
-    "upload_local" | "ai" | "push_bo" | null
+    "upload_local" | "ai" | null
   >(null);
   const [analyzingStartedAt, setAnalyzingStartedAt] = useState<number | null>(null);
   const [analyzingElapsedMs, setAnalyzingElapsedMs] = useState(0);
+  const [boSyncing, setBoSyncing] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisSummary, setAnalysisSummary] = useState<{
@@ -189,16 +190,25 @@ function UploadPhotosContent() {
       const summary = await analyzeTunnelPhotos(localUpload.success);
       setAnalysisSummary(summary);
 
-      // 3) Push au Back Office (source de vérité + devis)
-      try {
-        setAnalyzingStage("push_bo");
-        await uploadBackofficePhotos(leadId, files);
-        // refresh listing pour afficher les photos déjà reçues
-        const refreshed = await listBackofficePhotos(leadId);
-        setExistingPhotos(refreshed);
-      } catch (err) {
-        console.warn("⚠️ Upload Back Office après analyse échoué:", err);
-      }
+      // UX: dès que l'analyse est prête, on enlève l'overlay même si la sync BO continue.
+      setAnalyzing(false);
+      setAnalyzingStage(null);
+      setAnalyzingStartedAt(null);
+      setAnalyzingElapsedMs(0);
+
+      // 3) Push au Back Office (source de vérité + devis) en arrière-plan
+      setBoSyncing(true);
+      void (async () => {
+        try {
+          await uploadBackofficePhotos(leadId, files);
+          const refreshed = await listBackofficePhotos(leadId);
+          setExistingPhotos(refreshed);
+        } catch (err) {
+          console.warn("⚠️ Upload Back Office après analyse échoué:", err);
+        } finally {
+          setBoSyncing(false);
+        }
+      })();
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Erreur inconnue lors de l'analyse.";
@@ -237,23 +247,25 @@ function UploadPhotosContent() {
 
             {(() => {
               // Progress "feel good": basé sur timer, cap à 95% tant que pas fini.
-              const perPhotoMs = 3500; // ~3–4s / photo (indicatif)
-              const estimateMs = Math.max(20_000, Math.min(90_000, files.length * perPhotoMs));
+              const perPhotoMs = 4500; // 4–5s / photo (indicatif)
+              const estimateMs = Math.max(20_000, Math.min(120_000, files.length * perPhotoMs));
               const pct = Math.min(95, Math.round((analyzingElapsedMs / estimateMs) * 100));
               const stageLabel =
                 analyzingStage === "upload_local"
                   ? "Préparation des photos…"
                   : analyzingStage === "ai"
                     ? "Analyse IA des pièces et du volume…"
-                    : analyzingStage === "push_bo"
-                      ? "Envoi au dossier…"
-                      : "Analyse…";
+                    : "Analyse…";
+              const estimateSec = Math.max(20, Math.round(estimateMs / 1000));
 
               return (
                 <div className="mt-5">
                   <div className="flex items-center justify-between text-xs text-[#1E293B]/60">
                     <span>{stageLabel}</span>
                     <span>{pct}%</span>
+                  </div>
+                  <div className="mt-1 text-[11px] text-[#1E293B]/60">
+                    Temps estimé : ~{estimateSec}s ({files.length} photo{files.length > 1 ? "s" : ""})
                   </div>
                   <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#E3E5E8]">
                     <div
