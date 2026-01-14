@@ -74,14 +74,34 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
 };
 
 // Limite de photos par pièce pour l'analyse détaillée
-const MAX_PHOTOS_PER_ROOM = Number(
-  process.env.AI_MAX_PHOTOS_PER_ROOM ?? "10"
-);
+const IS_PROD = process.env.NODE_ENV === "production";
+const MAX_PHOTOS_PER_ROOM = Number(process.env.AI_MAX_PHOTOS_PER_ROOM ?? (IS_PROD ? "6" : "10"));
+
+// Limite globale de photos analysées (pour éviter timeouts / OOM en prod)
+const MAX_PHOTOS_TOTAL = Number(process.env.AI_MAX_PHOTOS_TOTAL ?? (IS_PROD ? "12" : "50"));
 
 // Concurrence max pour les appels de classification (éviter de tout lancer d'un coup)
 const CLASSIFY_CONCURRENCY = Number(
-  process.env.AI_LAB_CLASSIFY_CONCURRENCY ?? "6"
+  process.env.AI_LAB_CLASSIFY_CONCURRENCY ?? (IS_PROD ? "3" : "6")
 );
+
+// Timeout/budget global pour éviter de faire tomber l'upstream (nginx 502)
+const LAB_PROCESS2_BUDGET_MS = Number(process.env.AI_LAB_TIMEOUT_MS ?? "55000");
+const CLAUDE_CALL_TIMEOUT_MS = Number(process.env.AI_CLAUDE_TIMEOUT_MS ?? "20000");
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number
+) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
 
 function buildClassificationPrompt(photo: AnalyzePhotoInput): string {
   return `
@@ -131,8 +151,11 @@ export async function POST(req: NextRequest) {
     const photoImages = new Map<string, string>(); // photoId -> base64
     const classifications: PhotoClassificationResult[] = [];
 
+    // Cap global (prod): éviter les timeouts / surcharge
+    const photosCapped = json.photos.slice(0, MAX_PHOTOS_TOTAL);
+
     const loaded = await Promise.all(
-      json.photos.map(async (photo) => {
+      photosCapped.map(async (photo) => {
         const fullPath = path.join(UPLOAD_DIR, photo.storageKey);
         try {
           const buffer = await fs.readFile(fullPath);
@@ -160,12 +183,19 @@ export async function POST(req: NextRequest) {
     }
 
     for (const batch of classifyBatches) {
+      if (Date.now() - startedAt > LAB_PROCESS2_BUDGET_MS) {
+        console.warn("[AI][LabProcess2] Budget temps atteint pendant classification, stop.");
+        break;
+      }
       await Promise.all(
         batch.map(async ({ photo, base64 }) => {
         try {
           const prompt = buildClassificationPrompt(photo);
 
-          const res = await fetch("https://api.anthropic.com/v1/messages", {
+          const timeLeft = LAB_PROCESS2_BUDGET_MS - (Date.now() - startedAt);
+          if (timeLeft < 1500) return;
+
+          const res = await fetchWithTimeout("https://api.anthropic.com/v1/messages", {
             method: "POST",
             headers: {
               "content-type": "application/json",
@@ -193,7 +223,7 @@ export async function POST(req: NextRequest) {
                 },
               ],
             }),
-          });
+          }, Math.min(CLAUDE_CALL_TIMEOUT_MS, Math.max(1500, timeLeft - 500)));
 
           if (!res.ok) {
             console.error(
@@ -240,6 +270,12 @@ export async function POST(req: NextRequest) {
             roomGuessAlternatives: alternatives,
           });
         } catch (error) {
+          if ((error as any)?.name === "AbortError") {
+            console.warn(
+              `[AI][LabProcess2] Timeout classification photo ${photo.id} (skip)`
+            );
+            return;
+          }
           console.error(
             `[AI][LabProcess2] Erreur de classification pour la photo ${photo.id}:`,
             error
@@ -345,6 +381,9 @@ export async function POST(req: NextRequest) {
 
     await Promise.all(
       roomEntries.map(async ([roomType, photoIds], index) => {
+        if (Date.now() - startedAt > LAB_PROCESS2_BUDGET_MS) {
+          return;
+        }
         const label = ROOM_TYPE_LABELS[roomType] ?? roomType;
 
         const selectedPhotoIds = photoIds.slice(0, MAX_PHOTOS_PER_ROOM);
@@ -416,7 +455,7 @@ async function callClaudeInventoryForRoomWithMeasures(
 ): Promise<RoomInventoryItem[]> {
   const prompt = buildInventoryPromptWithMeasures(roomType, roomLabel, photosMeta);
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetchWithTimeout("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -444,7 +483,7 @@ async function callClaudeInventoryForRoomWithMeasures(
         },
       ],
     }),
-  });
+  }, CLAUDE_CALL_TIMEOUT_MS);
 
   if (!res.ok) {
     console.error(
@@ -497,7 +536,7 @@ Réponds STRICTEMENT en JSON, sans texte avant ou après, avec la forme :
 }
 `.trim();
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetchWithTimeout("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -533,7 +572,7 @@ Réponds STRICTEMENT en JSON, sans texte avant ou après, avec la forme :
         },
       ],
     }),
-  });
+  }, CLAUDE_CALL_TIMEOUT_MS);
 
   if (!res.ok) {
     console.error(
