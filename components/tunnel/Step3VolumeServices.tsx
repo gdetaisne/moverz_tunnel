@@ -10,6 +10,7 @@ type PricingDetails = {
   housingType: string;
   density: string;
   distanceKm: number;
+  distanceSource: "osrm" | "fallback" | null;
   seasonFactor: number;
   originFloor: number;
   originElevator: string;
@@ -32,7 +33,6 @@ type PricingDetails = {
     adjustedVolumeM3: number;
     baseNoSeasonEur: number;
     coeffEtage: number;
-    formuleMultiplier: number;
     servicesTotalEur: number;
     centreNoSeasonEur: number;
     centreSeasonedEur: number;
@@ -280,14 +280,23 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                         (coef <span className="font-mono">{props.pricingDetails.constants.densityCoefficient}</span>)
                       </div>
                       <div>
-                        distanceKm: <span className="font-mono">{props.pricingDetails.distanceKm}</span>
+                        distance:{" "}
+                        <span className="font-mono">{props.pricingDetails.distanceKm}</span> km
+                        <span className="text-[#1E293B]/60">
+                          {" "}
+                          (
+                          {props.pricingDetails.distanceSource === "osrm"
+                            ? "route OSRM"
+                            : "fallback CP"}
+                          )
+                        </span>
                       </div>
                       <div>
                         distanceBand:{" "}
                         <span className="font-mono">{props.pricingDetails.constants.distanceBand}</span>
                       </div>
                       <div>
-                        rate€/m³:{" "}
+                        tarif €/m³ (band):{" "}
                         <span className="font-mono">{props.pricingDetails.constants.rateEurPerM3}</span>
                       </div>
                       <div>
@@ -322,16 +331,12 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                         <span className="font-mono">{props.pricingDetails.intermediate.adjustedVolumeM3}</span> m³
                       </div>
                       <div>
-                        baseNoSeason:{" "}
-                        <span className="font-mono">{props.pricingDetails.intermediate.baseNoSeasonEur}</span> € (socle{" "}
+                        base avant saison:{" "}
+                        <span className="font-mono">{props.pricingDetails.intermediate.baseNoSeasonEur}</span> € (min{" "}
                         {props.pricingDetails.constants.PRIX_MIN_SOCLE})
                       </div>
                       <div>
                         coeffEtage: <span className="font-mono">{props.pricingDetails.intermediate.coeffEtage}</span>
-                      </div>
-                      <div>
-                        formuleMultiplier:{" "}
-                        <span className="font-mono">{props.pricingDetails.intermediate.formuleMultiplier}</span>
                       </div>
                       <div>
                         servicesTotal:{" "}
