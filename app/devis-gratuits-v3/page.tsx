@@ -654,9 +654,6 @@ function DevisGratuitsV3Content() {
             state.destinationLat,
             state.destinationLon
           );
-    const distanceSource: "osrm" | "fallback" | null =
-      state.destinationUnknown ? null : routeDistanceKm != null ? "osrm" : "fallback";
-
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
 
     const originIsHouse = isHouseType(state.originHousingType);
@@ -780,6 +777,8 @@ function DevisGratuitsV3Content() {
             state.destinationLat,
             state.destinationLon
           );
+    const distanceSource: "osrm" | "fallback" | null =
+      state.destinationUnknown ? null : routeDistanceKm != null ? "osrm" : "fallback";
 
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
 
