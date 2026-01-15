@@ -251,106 +251,130 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               <button
                 type="button"
                 onClick={() => setShowDetails((v) => !v)}
-                className="text-xs font-medium text-[#0F172A]/60 underline-offset-2 hover:underline"
+                className="rounded-full border border-[#E3E5E8] bg-white px-3 py-1 text-xs font-semibold text-[#0F172A]/70 shadow-sm hover:border-[#6BCFCF]/60 hover:text-[#0F172A] transition"
               >
-                {showDetails ? "Masquer le détail du calcul" : "Détail du calcul"}
+                {showDetails ? "Masquer le détail" : "Voir le détail"}
               </button>
               {props.pricingDetails?.housingType && (
-                <span className="text-xs text-[#1E293B]/50">
-                  type: <span className="font-mono">{props.pricingDetails.housingType}</span>
+                <span className="rounded-full bg-[#6BCFCF]/10 px-2.5 py-1 text-[11px] font-semibold text-[#0F172A]">
+                  type {props.pricingDetails.housingType}
                 </span>
               )}
             </div>
 
             {showDetails && props.pricingDetails && (
-              <div className="mt-3 rounded-xl border border-[#E3E5E8] bg-[#F8F9FA] p-3 text-xs text-[#0F172A]/80">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <div>
-                    <div className="font-semibold">Entrées</div>
-                    <div className="mt-1 space-y-0.5">
-                      <div>
-                        surface: <span className="font-mono">{props.pricingDetails.surfaceM2}</span> m²
+              <div className="mt-4 rounded-2xl border border-[#E3E5E8] bg-white/80 p-4 text-xs text-[#0F172A]/80 shadow-[0_6px_20px_rgba(0,0,0,0.05)]">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-sm font-semibold text-[#0F172A]">Détails du calcul</div>
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#1E293B]/60">
+                    <span className="rounded-full bg-[#F1F5F9] px-2 py-0.5">
+                      distance {props.pricingDetails.distanceKm} km ·{" "}
+                      {props.pricingDetails.distanceSource === "osrm" ? "route OSRM" : "fallback CP"}
+                    </span>
+                    <span className="rounded-full bg-[#F1F5F9] px-2 py-0.5">
+                      band {props.pricingDetails.constants.distanceBand} ·{" "}
+                      {props.pricingDetails.constants.rateEurPerM3} €/m³
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-[#E3E5E8] bg-[#F8F9FA] p-3">
+                    <div className="text-xs font-semibold text-[#0F172A]">Entrées</div>
+                    <dl className="mt-2 space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Surface</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.surfaceM2} m²
+                        </dd>
                       </div>
-                      <div>
-                        housingType: <span className="font-mono">{props.pricingDetails.housingType}</span>{" "}
-                        (coef <span className="font-mono">{props.pricingDetails.constants.typeCoefficient}</span>)
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Type logement</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.housingType} (coef{" "}
+                          {props.pricingDetails.constants.typeCoefficient})
+                        </dd>
                       </div>
-                      <div>
-                        densité: <span className="font-mono">{props.pricingDetails.density}</span>{" "}
-                        (coef <span className="font-mono">{props.pricingDetails.constants.densityCoefficient}</span>)
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Densité</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.density} (coef{" "}
+                          {props.pricingDetails.constants.densityCoefficient})
+                        </dd>
                       </div>
-                      <div>
-                        distance:{" "}
-                        <span className="font-mono">{props.pricingDetails.distanceKm}</span> km
-                        <span className="text-[#1E293B]/60">
-                          {" "}
-                          (
-                          {props.pricingDetails.distanceSource === "osrm"
-                            ? "route OSRM"
-                            : "fallback CP"}
-                          )
-                        </span>
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Saisonnalité</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.seasonFactor.toFixed(2)}
+                        </dd>
                       </div>
-                      <div>
-                        distanceBand:{" "}
-                        <span className="font-mono">{props.pricingDetails.constants.distanceBand}</span>
-                      </div>
-                      <div>
-                        tarif €/m³ (band):{" "}
-                        <span className="font-mono">{props.pricingDetails.constants.rateEurPerM3}</span>
-                      </div>
-                      <div>
-                        seasonFactor: <span className="font-mono">{props.pricingDetails.seasonFactor.toFixed(2)}</span>
-                      </div>
-                      <div>
-                        étages:{" "}
-                        <span className="font-mono">
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Étages</dt>
+                        <dd className="font-mono text-[#0F172A]">
                           O={props.pricingDetails.originFloor} ({props.pricingDetails.originElevator}), D=
                           {props.pricingDetails.destinationFloor} ({props.pricingDetails.destinationElevator})
-                        </span>
+                        </dd>
                       </div>
-                      <div>
-                        services:{" "}
-                        <span className="font-mono">
-                          monteMeuble={String(props.pricingDetails.services.monteMeuble)}, piano=
-                          {props.pricingDetails.services.piano ?? "null"}, debarras=
-                          {String(props.pricingDetails.services.debarras)}
-                        </span>
+                      <div className="flex items-start justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Services</dt>
+                        <dd className="font-mono text-[#0F172A] text-right">
+                          monteMeuble={String(props.pricingDetails.services.monteMeuble)}
+                          <br />
+                          piano={props.pricingDetails.services.piano ?? "null"}
+                          <br />
+                          debarras={String(props.pricingDetails.services.debarras)}
+                        </dd>
                       </div>
-                    </div>
+                    </dl>
                   </div>
 
-                  <div>
-                    <div className="font-semibold">Calcul</div>
-                    <div className="mt-1 space-y-0.5">
-                      <div>
-                        baseVolume: <span className="font-mono">{props.pricingDetails.intermediate.baseVolumeM3}</span> m³
+                  <div className="rounded-xl border border-[#E3E5E8] bg-[#F8F9FA] p-3">
+                    <div className="text-xs font-semibold text-[#0F172A]">Calcul</div>
+                    <dl className="mt-2 space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Volume base</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.intermediate.baseVolumeM3} m³
+                        </dd>
                       </div>
-                      <div>
-                        adjustedVolume:{" "}
-                        <span className="font-mono">{props.pricingDetails.intermediate.adjustedVolumeM3}</span> m³
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Volume ajusté</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.intermediate.adjustedVolumeM3} m³
+                        </dd>
                       </div>
-                      <div>
-                        base avant saison:{" "}
-                        <span className="font-mono">{props.pricingDetails.intermediate.baseNoSeasonEur}</span> € (min{" "}
-                        {props.pricingDetails.constants.PRIX_MIN_SOCLE})
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Base avant saison</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.intermediate.baseNoSeasonEur} € (min{" "}
+                          {props.pricingDetails.constants.PRIX_MIN_SOCLE})
+                        </dd>
                       </div>
-                      <div>
-                        coeffEtage: <span className="font-mono">{props.pricingDetails.intermediate.coeffEtage}</span>
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Coeff étage</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.intermediate.coeffEtage}
+                        </dd>
                       </div>
-                      <div>
-                        servicesTotal:{" "}
-                        <span className="font-mono">{props.pricingDetails.intermediate.servicesTotalEur}</span> €
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Services</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.intermediate.servicesTotalEur} €
+                        </dd>
                       </div>
-                      <div>
-                        centreNoSeason:{" "}
-                        <span className="font-mono">{props.pricingDetails.intermediate.centreNoSeasonEur}</span> €
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Centre (hors saison)</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.intermediate.centreNoSeasonEur} €
+                        </dd>
                       </div>
-                      <div>
-                        centreSeasoned:{" "}
-                        <span className="font-mono">{props.pricingDetails.intermediate.centreSeasonedEur}</span> €
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[#1E293B]/70">Centre (saisonné)</dt>
+                        <dd className="font-mono text-[#0F172A]">
+                          {props.pricingDetails.intermediate.centreSeasonedEur} €
+                        </dd>
                       </div>
-                    </div>
+                    </dl>
                   </div>
                 </div>
               </div>
