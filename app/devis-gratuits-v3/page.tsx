@@ -80,9 +80,15 @@ function DevisGratuitsV3Content() {
   // Reprise dossier: l'URL est la source de vérité si leadId est fourni.
   useEffect(() => {
     if (!urlLeadId) return;
-    if (state.leadId === urlLeadId && hydratedLeadRef.current === urlLeadId) return;
-    hydratedLeadRef.current = urlLeadId;
+    if (state.leadId === urlLeadId) return;
     updateFields({ leadId: urlLeadId });
+  }, [urlLeadId, state.leadId, updateFields]);
+
+  // Hydratation des champs depuis le Back Office (via leadId).
+  useEffect(() => {
+    if (!urlLeadId) return;
+    if (hydratedLeadRef.current === urlLeadId) return;
+    hydratedLeadRef.current = urlLeadId;
 
     let cancelled = false;
     void (async () => {
@@ -185,7 +191,7 @@ function DevisGratuitsV3Content() {
     return () => {
       cancelled = true;
     };
-  }, [urlLeadId, state.leadId, updateFields]);
+  }, [urlLeadId, updateFields]);
 
   // ================================
   // V2 logic: surface defaults by housing type
