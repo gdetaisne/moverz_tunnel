@@ -415,10 +415,6 @@ export interface UpdateBackofficeLeadPayload {
   tunnelOptions?: unknown;
 }
 
-export interface BackofficePhotoListResult {
-  photos: string[];
-}
-
 const BACKOFFICE_BASE_URL = "https://moverz-backoffice.gslv.cloud";
 
 function parsePhotosUrls(raw: unknown): string[] {
@@ -521,7 +517,7 @@ export async function updateBackofficeLead(
 
 export async function listBackofficePhotos(
   backofficeLeadId: string
-): Promise<BackofficePhotoListResult> {
+): Promise<BackofficeUploadedPhoto[]> {
   const response = await fetch(`/api/backoffice/leads/${backofficeLeadId}`, {
     method: "GET",
   });
@@ -542,7 +538,12 @@ export async function listBackofficePhotos(
   const data = await response.json();
   const lead = data?.data ?? data;
   const rawUrls = parsePhotosUrls(lead?.photosUrls);
-  return { photos: normalizePhotoUrls(rawUrls) };
+  const urls = normalizePhotoUrls(rawUrls);
+  return urls.map((url) => ({
+    id: url,
+    url,
+    originalFilename: "",
+  }));
 }
 
 // ============================================
@@ -1043,78 +1044,6 @@ export async function uploadBackofficePhotos(
       totalPhotos: result.data?.totalPhotos ?? 0,
     },
   };
-}
-
-// ============================================
-// LIST PHOTOS ALREADY UPLOADED (Backoffice)
-// ============================================
-
-export async function listBackofficePhotos(
-  backofficeLeadId: string
-): Promise<BackofficeUploadedPhoto[]> {
-  // On privilégie un proxy same-origin pour éviter CORS et dépendances build-time.
-  const res = await fetch(`/api/backoffice/leads/${backofficeLeadId}/photos`, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-  });
-
-  if (res.ok) {
-    const data: any = await res.json().catch(() => null);
-    const candidates =
-      data?.data?.uploaded ??
-      data?.data?.photos ??
-      data?.uploaded ??
-      data?.photos ??
-      null;
-    if (Array.isArray(candidates)) {
-      return candidates
-        .filter((p) => p && typeof p === "object" && typeof p.url === "string")
-        .map((p) => ({
-          id: String(p.id ?? p.url),
-          url: String(p.url),
-          originalFilename: String(p.originalFilename ?? ""),
-        }));
-    }
-  }
-
-  // Fallback: certains BO ne proposent pas GET /photos; on tente GET /public/leads/:id
-  const leadRes = await fetch(`/api/backoffice/leads/${backofficeLeadId}`, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-  });
-  if (!leadRes.ok) return [];
-  const lead: any = await leadRes.json().catch(() => null);
-
-  // Essayer plusieurs formes probables
-  const photos =
-    lead?.data?.photos ??
-    lead?.photos ??
-    null;
-  if (Array.isArray(photos)) {
-    return photos
-      .filter((p) => p && typeof p === "object" && typeof p.url === "string")
-      .map((p) => ({
-        id: String(p.id ?? p.url),
-        url: String(p.url),
-        originalFilename: String(p.originalFilename ?? ""),
-      }));
-  }
-
-  const photosUrls = lead?.data?.photosUrls ?? lead?.photosUrls ?? null;
-  if (typeof photosUrls === "string" && photosUrls.trim()) {
-    try {
-      const parsed = JSON.parse(photosUrls);
-      if (Array.isArray(parsed)) {
-        return parsed
-          .filter((u) => typeof u === "string" && u)
-          .map((u) => ({ id: u, url: u, originalFilename: "" }));
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  return [];
 }
 
 // ============================================
