@@ -128,6 +128,50 @@ function DevisGratuitsV3Content() {
         if (typeof lead.destPostalCode === "string" && lead.destPostalCode.trim()) {
           next.destinationPostalCode = lead.destPostalCode;
         }
+        const originLatRaw =
+          typeof lead.originLat === "number"
+            ? lead.originLat
+            : typeof lead.originLat === "string"
+            ? Number(lead.originLat)
+            : typeof lead.originLatitude === "number"
+            ? lead.originLatitude
+            : typeof lead.originLatitude === "string"
+            ? Number(lead.originLatitude)
+            : null;
+        const originLonRaw =
+          typeof lead.originLon === "number"
+            ? lead.originLon
+            : typeof lead.originLon === "string"
+            ? Number(lead.originLon)
+            : typeof lead.originLongitude === "number"
+            ? lead.originLongitude
+            : typeof lead.originLongitude === "string"
+            ? Number(lead.originLongitude)
+            : null;
+        const destLatRaw =
+          typeof lead.destLat === "number"
+            ? lead.destLat
+            : typeof lead.destLat === "string"
+            ? Number(lead.destLat)
+            : typeof lead.destinationLat === "number"
+            ? lead.destinationLat
+            : typeof lead.destinationLat === "string"
+            ? Number(lead.destinationLat)
+            : null;
+        const destLonRaw =
+          typeof lead.destLon === "number"
+            ? lead.destLon
+            : typeof lead.destLon === "string"
+            ? Number(lead.destLon)
+            : typeof lead.destinationLon === "number"
+            ? lead.destinationLon
+            : typeof lead.destinationLon === "string"
+            ? Number(lead.destinationLon)
+            : null;
+        if (Number.isFinite(originLatRaw)) next.originLat = originLatRaw;
+        if (Number.isFinite(originLonRaw)) next.originLon = originLonRaw;
+        if (Number.isFinite(destLatRaw)) next.destinationLat = destLatRaw;
+        if (Number.isFinite(destLonRaw)) next.destinationLon = destLonRaw;
 
         if (typeof lead.originHousingType === "string" && lead.originHousingType.trim()) {
           next.originHousingType = lead.originHousingType;
@@ -192,6 +236,85 @@ function DevisGratuitsV3Content() {
       cancelled = true;
     };
   }, [urlLeadId, updateFields]);
+
+  // Assurer des coordonnées même si l'adresse provient d'un lien / BO.
+  useEffect(() => {
+    if (state.originLat != null && state.originLon != null) return;
+    if (!state.originPostalCode || !state.originCity) return;
+
+    const controller = new AbortController();
+    const run = async () => {
+      try {
+        const q = `${state.originPostalCode} ${state.originCity}`;
+        const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
+          q
+        )}&limit=1`;
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          features?: { geometry?: { coordinates?: [number, number] } }[];
+        };
+        const coords = data.features?.[0]?.geometry?.coordinates;
+        if (!coords) return;
+        const [lon, lat] = coords;
+        if (typeof lat === "number" && typeof lon === "number") {
+          updateField("originLat", lat);
+          updateField("originLon", lon);
+        }
+      } catch {
+        // ignore erreurs réseau / abort
+      }
+    };
+
+    void run();
+    return () => controller.abort();
+  }, [
+    state.originPostalCode,
+    state.originCity,
+    state.originLat,
+    state.originLon,
+    updateField,
+  ]);
+
+  useEffect(() => {
+    if (state.destinationUnknown) return;
+    if (state.destinationLat != null && state.destinationLon != null) return;
+    if (!state.destinationPostalCode || !state.destinationCity) return;
+
+    const controller = new AbortController();
+    const run = async () => {
+      try {
+        const q = `${state.destinationPostalCode} ${state.destinationCity}`;
+        const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
+          q
+        )}&limit=1`;
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          features?: { geometry?: { coordinates?: [number, number] } }[];
+        };
+        const coords = data.features?.[0]?.geometry?.coordinates;
+        if (!coords) return;
+        const [lon, lat] = coords;
+        if (typeof lat === "number" && typeof lon === "number") {
+          updateField("destinationLat", lat);
+          updateField("destinationLon", lon);
+        }
+      } catch {
+        // ignore erreurs réseau / abort
+      }
+    };
+
+    void run();
+    return () => controller.abort();
+  }, [
+    state.destinationUnknown,
+    state.destinationPostalCode,
+    state.destinationCity,
+    state.destinationLat,
+    state.destinationLon,
+    updateField,
+  ]);
 
   // ================================
   // V2 logic: surface defaults by housing type
