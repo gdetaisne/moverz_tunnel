@@ -921,19 +921,32 @@ function DevisGratuitsV3Content() {
         estimationMethod: "FORM" as const,
       };
 
-      const { id: backofficeLeadId } = await createBackofficeLead(payload);
-      // V3: on utilise maintenant l'id Back Office (Neon) comme `leadId` dans le state.
-      // `linkingCode` (anciennement via SQLite /api/leads) n'est pas requis pour créer le lead BO;
-      // WhatsApp CTA a un fallback sans code.
-      updateFields({ leadId: backofficeLeadId, linkingCode: null });
+      if (state.leadId) {
+        try {
+          await updateBackofficeLead(state.leadId, payload);
+        } catch (err: any) {
+          if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
+            const { id: backofficeLeadId } = await createBackofficeLead(payload);
+            updateFields({ leadId: backofficeLeadId, linkingCode: null });
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        const { id: backofficeLeadId } = await createBackofficeLead(payload);
+        // V3: on utilise maintenant l'id Back Office (Neon) comme `leadId` dans le state.
+        // `linkingCode` (anciennement via SQLite /api/leads) n'est pas requis pour créer le lead BO;
+        // WhatsApp CTA a un fallback sans code.
+        updateFields({ leadId: backofficeLeadId, linkingCode: null });
+      }
+
       setConfirmationRequested(false);
       setShowValidationStep1(false);
-
       trackStepChange(1, 2, "CONTACT", "PROJECT", "forward");
       goToStep(2);
     } catch (err: any) {
-      console.error("Error creating lead:", err);
-      trackError("API_ERROR", err.message || "Failed to create lead", 1, "CONTACT");
+      console.error("Error creating/updating lead:", err);
+      trackError("API_ERROR", err.message || "Failed to create/update lead", 1, "CONTACT");
     }
   }
 
