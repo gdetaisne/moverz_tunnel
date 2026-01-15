@@ -20,14 +20,12 @@ function getBasicAuthHeader(): string | null {
   return `Basic ${token}`;
 }
 
-function getUpstreamHeaders(baseHeaders?: HeadersInit): Record<string, string> {
-  const headers: Record<string, string> = {
-    ...(baseHeaders || {}),
-    "x-user-id": "public-form",
-  };
+function getUpstreamHeaders(baseHeaders?: HeadersInit): Headers {
+  const headers = new Headers(baseHeaders);
+  headers.set("x-user-id", "public-form");
   const auth = getBasicAuthHeader();
   if (auth) {
-    headers.Authorization = auth;
+    headers.set("Authorization", auth);
   }
   return headers;
 }
