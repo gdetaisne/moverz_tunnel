@@ -13,8 +13,9 @@ function getBackofficeBaseUrl() {
 
 function getBasicAuthHeader(): string | null {
   const user = process.env.BASIC_AUTH_USER;
-  const pass = process.env.BASIC_AUTH_PASSWORD;
-  if (!user || !pass) return null;
+  if (!user) return null;
+  // Le password peut être vide (Basic auth accepte "user:")
+  const pass = process.env.BASIC_AUTH_PASSWORD ?? "";
   const token = Buffer.from(`${user}:${pass}`).toString("base64");
   return `Basic ${token}`;
 }
