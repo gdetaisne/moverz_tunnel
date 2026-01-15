@@ -419,6 +419,8 @@ export interface BackofficePhotoListResult {
   photos: string[];
 }
 
+const BACKOFFICE_BASE_URL = "https://moverz-backoffice.gslv.cloud";
+
 function parsePhotosUrls(raw: unknown): string[] {
   if (!raw) return [];
   if (Array.isArray(raw)) {
@@ -441,7 +443,7 @@ function parsePhotosUrls(raw: unknown): string[] {
 }
 
 function normalizePhotoUrls(rawUrls: string[]): string[] {
-  const base = getApiBaseUrl();
+  const base = BACKOFFICE_BASE_URL.replace(/\/+$/, "");
   return rawUrls
     .map((url) => url.trim())
     .filter(Boolean)
