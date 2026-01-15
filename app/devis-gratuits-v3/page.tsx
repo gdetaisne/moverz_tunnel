@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ga4Event } from "@/lib/analytics/ga4";
 import {
   createBackofficeLead,
+  getBackofficeLead,
   requestBackofficeConfirmation,
   updateBackofficeLead,
 } from "@/lib/api/client";
@@ -46,17 +47,144 @@ function DevisGratuitsV3Content() {
   const source = searchParams.get("source") || searchParams.get("src") || "direct";
   const from = searchParams.get("from") || "/devis-gratuits-v3";
   const urlLeadId = (searchParams.get("leadId") || "").trim();
+  const hydratedLeadRef = useRef<string | null>(null);
 
   const [confirmationRequested, setConfirmationRequested] = useState(false);
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep2, setShowValidationStep2] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
 
+  const toInputDate = (raw: string | null | undefined): string | undefined => {
+    if (!raw) return undefined;
+    const d = new Date(raw);
+    if (!Number.isFinite(d.getTime())) return undefined;
+    return d.toISOString().split("T")[0];
+  };
+
+  const mapDensityFromBo = (d: string | null | undefined): "light" | "normal" | "dense" | undefined => {
+    if (!d) return undefined;
+    if (d === "LIGHT") return "light";
+    if (d === "HEAVY") return "dense";
+    if (d === "MEDIUM") return "normal";
+    return undefined;
+  };
+
+  const mapElevatorFromBo = (e: string | null | undefined): string | undefined => {
+    if (!e) return undefined;
+    if (e === "OUI") return "yes";
+    if (e === "PARTIEL") return "partial";
+    if (e === "NON") return "none";
+    return undefined;
+  };
+
   // Reprise dossier: l'URL est la source de vérité si leadId est fourni.
   useEffect(() => {
     if (!urlLeadId) return;
-    if (state.leadId === urlLeadId) return;
+    if (state.leadId === urlLeadId && hydratedLeadRef.current === urlLeadId) return;
+    hydratedLeadRef.current = urlLeadId;
     updateFields({ leadId: urlLeadId });
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const lead = await getBackofficeLead(urlLeadId);
+        if (!lead || cancelled) return;
+
+        const next: Partial<typeof state> = {};
+        if (typeof lead.firstName === "string" && lead.firstName.trim()) {
+          next.firstName = lead.firstName;
+        }
+        if (typeof lead.lastName === "string" && lead.lastName.trim()) {
+          next.lastName = lead.lastName;
+        }
+        if (typeof lead.email === "string" && lead.email.trim()) {
+          next.email = lead.email;
+        }
+        if (typeof lead.phone === "string" && lead.phone.trim()) {
+          next.phone = lead.phone;
+        }
+
+        if (typeof lead.originAddress === "string" && lead.originAddress.trim()) {
+          next.originAddress = lead.originAddress;
+        }
+        if (typeof lead.originCity === "string" && lead.originCity.trim()) {
+          next.originCity = lead.originCity;
+        }
+        if (typeof lead.originPostalCode === "string" && lead.originPostalCode.trim()) {
+          next.originPostalCode = lead.originPostalCode;
+        }
+        if (typeof lead.destAddress === "string" && lead.destAddress.trim()) {
+          next.destinationAddress = lead.destAddress;
+        }
+        if (typeof lead.destCity === "string" && lead.destCity.trim()) {
+          next.destinationCity = lead.destCity;
+        }
+        if (typeof lead.destPostalCode === "string" && lead.destPostalCode.trim()) {
+          next.destinationPostalCode = lead.destPostalCode;
+        }
+
+        if (typeof lead.originHousingType === "string" && lead.originHousingType.trim()) {
+          next.originHousingType = lead.originHousingType;
+        }
+        if (typeof lead.destHousingType === "string" && lead.destHousingType.trim()) {
+          next.destinationHousingType = lead.destHousingType;
+        }
+
+        if (lead.originFloor != null) {
+          next.originFloor = String(lead.originFloor);
+        }
+        if (lead.destFloor != null) {
+          next.destinationFloor = String(lead.destFloor);
+        }
+        const originElevator = mapElevatorFromBo(lead.originElevator);
+        if (originElevator) next.originElevator = originElevator;
+        const destElevator = mapElevatorFromBo(lead.destElevator);
+        if (destElevator) next.destinationElevator = destElevator;
+
+        if (typeof lead.originFurnitureLift === "string" && lead.originFurnitureLift.trim()) {
+          next.originFurnitureLift = lead.originFurnitureLift;
+        }
+        if (typeof lead.destFurnitureLift === "string" && lead.destFurnitureLift.trim()) {
+          next.destinationFurnitureLift = lead.destFurnitureLift;
+        }
+        if (typeof lead.originCarryDistance === "string" && lead.originCarryDistance.trim()) {
+          next.originCarryDistance = lead.originCarryDistance;
+        }
+        if (typeof lead.destCarryDistance === "string" && lead.destCarryDistance.trim()) {
+          next.destinationCarryDistance = lead.destCarryDistance;
+        }
+        if (typeof lead.originParkingAuth === "boolean") {
+          next.originParkingAuth = lead.originParkingAuth;
+        }
+        if (typeof lead.destParkingAuth === "boolean") {
+          next.destinationParkingAuth = lead.destParkingAuth;
+        }
+
+        const movingDate = toInputDate(lead.movingDate);
+        if (movingDate) next.movingDate = movingDate;
+        if (typeof lead.dateFlexible === "boolean") {
+          next.dateFlexible = lead.dateFlexible;
+        }
+        if (lead.surfaceM2 != null && Number.isFinite(Number(lead.surfaceM2))) {
+          next.surfaceM2 = String(lead.surfaceM2);
+        }
+        const density = mapDensityFromBo(lead.density);
+        if (density) next.density = density;
+        if (typeof lead.formule === "string" && lead.formule.trim()) {
+          next.formule = lead.formule;
+        }
+
+        if (!cancelled && Object.keys(next).length > 0) {
+          updateFields(next);
+        }
+      } catch (err) {
+        console.warn("⚠️ Unable to hydrate lead from BO:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [urlLeadId, state.leadId, updateFields]);
 
   // ================================

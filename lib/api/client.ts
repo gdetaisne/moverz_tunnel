@@ -546,6 +546,29 @@ export async function listBackofficePhotos(
   }));
 }
 
+export async function getBackofficeLead(backofficeLeadId: string): Promise<any> {
+  const response = await fetch(`/api/backoffice/leads/${backofficeLeadId}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    let errorData: any = {};
+    try {
+      errorData = await response.json();
+    } catch {
+      // ignore
+    }
+    if (response.status === 404) {
+      throw new Error("LEAD_NOT_FOUND");
+    }
+    throw new Error(errorData?.error || errorData?.message || "Failed to load lead");
+  }
+
+  const data = await response.json();
+  return data?.data ?? data;
+}
+
 // ============================================
 // REQUEST CONFIRMATION EMAIL
 // ============================================
