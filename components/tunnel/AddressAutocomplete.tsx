@@ -116,6 +116,7 @@ export function AddressAutocomplete({
   const controllerRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cacheRef = useRef<Record<string, AddressSuggestion[]>>({});
+  const lastSelectionRef = useRef<AddressSuggestion | null>(null);
 
   useEffect(() => {
     setInput(initialValue ?? "");
@@ -130,6 +131,22 @@ export function AddressAutocomplete({
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
+
+  const fetchSuggestionsForQuery = async (
+    query: string,
+    signal?: AbortSignal
+  ): Promise<AddressSuggestion[]> => {
+    if (mode === "world") {
+      return fetchNominatimSuggestions(query, signal);
+    }
+    if (mode === "fr") {
+      return fetchBanSuggestions(query, signal);
+    }
+    // auto: BAN d'abord, puis Nominatim si aucun résultat
+    const ban = await fetchBanSuggestions(query, signal);
+    if (ban.length > 0) return ban;
+    return fetchNominatimSuggestions(query, signal);
+  };
 
   const runSearch = async (query: string) => {
     const trimmed = query.trim();
@@ -146,19 +163,7 @@ export function AddressAutocomplete({
     controllerRef.current = ctrl;
     setIsLoading(true);
     try {
-      let suggestions: AddressSuggestion[] = [];
-
-      if (mode === "fr") {
-        suggestions = await fetchBanSuggestions(trimmed, ctrl.signal);
-      } else if (mode === "world") {
-        suggestions = await fetchNominatimSuggestions(trimmed, ctrl.signal);
-      } else {
-        // auto: BAN d'abord, puis Nominatim si aucun résultat
-        suggestions = await fetchBanSuggestions(trimmed, ctrl.signal);
-        if (suggestions.length === 0) {
-          suggestions = await fetchNominatimSuggestions(trimmed, ctrl.signal);
-        }
-      }
+      const suggestions = await fetchSuggestionsForQuery(trimmed, ctrl.signal);
 
       cacheRef.current[trimmed] = suggestions;
       if (!ctrl.signal.aborted) setResults(suggestions);
@@ -176,9 +181,24 @@ export function AddressAutocomplete({
     }, 250);
   };
 
-  const commitSelection = (s: AddressSuggestion) => {
-    onSelect(s);
-    setInput(s.addressLine ?? s.label);
+  const ensureCoords = async (s: AddressSuggestion): Promise<AddressSuggestion> => {
+    if (s.lat != null && s.lon != null) return s;
+    const query = (s.addressLine ?? s.label ?? "").trim();
+    if (query.length < 3) return s;
+    try {
+      const list = await fetchSuggestionsForQuery(query);
+      const withCoords = list.find((item) => item.lat != null && item.lon != null);
+      return withCoords ?? s;
+    } catch {
+      return s;
+    }
+  };
+
+  const commitSelection = async (s: AddressSuggestion) => {
+    const resolved = await ensureCoords(s);
+    lastSelectionRef.current = resolved;
+    onSelect(resolved);
+    setInput(resolved.addressLine ?? resolved.label);
     setShowDropdown(false);
     setHighlightIdx(-1);
   };
@@ -188,19 +208,23 @@ export function AddressAutocomplete({
     const trimmed = input.trim();
     if (trimmed.length < 5) return;
     try {
-      const ctrl = new AbortController();
-      const list =
-        mode === "world"
-          ? await fetchNominatimSuggestions(trimmed, ctrl.signal)
-          : mode === "fr"
-          ? await fetchBanSuggestions(trimmed, ctrl.signal)
-          : (await fetchBanSuggestions(trimmed, ctrl.signal)).length
-          ? await fetchBanSuggestions(trimmed, ctrl.signal)
-          : await fetchNominatimSuggestions(trimmed, ctrl.signal);
+      const last = lastSelectionRef.current;
+      const lastLabel = last?.addressLine ?? last?.label ?? "";
+      if (last && lastLabel === trimmed && last.lat != null && last.lon != null) {
+        return;
+      }
+
+      if (last && lastLabel === trimmed) {
+        const enriched = await ensureCoords(last);
+        if (enriched) await commitSelection(enriched);
+        return;
+      }
+
+      const list = await fetchSuggestionsForQuery(trimmed);
       const first = list[0];
       // En "world"/étranger, on peut ne pas avoir de CP/ville au format FR.
       // Si on a au moins une suggestion (et idéalement des coords), on la prend.
-      if (first) commitSelection(first);
+      if (first) await commitSelection(first);
     } catch {
       // ignore
     }
@@ -242,7 +266,7 @@ export function AddressAutocomplete({
             } else if (e.key === "Enter") {
               if (highlightIdx >= 0 && highlightIdx < results.length) {
                 e.preventDefault();
-                commitSelection(results[highlightIdx]!);
+                void commitSelection(results[highlightIdx]!);
               }
             } else if (e.key === "Escape") {
               setShowDropdown(false);
@@ -268,7 +292,7 @@ export function AddressAutocomplete({
                     type="button"
                     onMouseEnter={() => setHighlightIdx(idx)}
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => commitSelection(r)}
+                    onClick={() => void commitSelection(r)}
                     className={[
                       "w-full px-4 py-3 text-left text-sm transition-colors",
                       active ? "bg-[#6BCFCF]/10" : "hover:bg-[#6BCFCF]/5",
