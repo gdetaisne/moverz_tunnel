@@ -415,6 +415,39 @@ export interface UpdateBackofficeLeadPayload {
   tunnelOptions?: unknown;
 }
 
+export interface BackofficePhotoListResult {
+  photos: string[];
+}
+
+function parsePhotosUrls(raw: unknown): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return raw.filter((url) => typeof url === "string" && url.trim().length > 0);
+  }
+  if (typeof raw === "string") {
+    const s = raw.trim();
+    if (!s || s === "[]") return [];
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((url) => typeof url === "string" && url.trim().length > 0);
+      }
+    } catch {
+      // fallback: consider raw as single url
+    }
+    return [s];
+  }
+  return [];
+}
+
+function normalizePhotoUrls(rawUrls: string[]): string[] {
+  const base = getApiBaseUrl();
+  return rawUrls
+    .map((url) => url.trim())
+    .filter(Boolean)
+    .map((url) => (url.startsWith("http") ? url : `${base}${url}`));
+}
+
 export async function updateBackofficeLead(
   backofficeLeadId: string,
   payload: UpdateBackofficeLeadPayload
@@ -482,6 +515,32 @@ export async function updateBackofficeLead(
   }
 
   throw new Error("Invalid response format from backend");
+}
+
+export async function listBackofficePhotos(
+  backofficeLeadId: string
+): Promise<BackofficePhotoListResult> {
+  const response = await fetch(`/api/backoffice/leads/${backofficeLeadId}`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    let errorData: any = {};
+    try {
+      errorData = await response.json();
+    } catch {
+      // ignore
+    }
+    if (response.status === 404) {
+      throw new Error("LEAD_NOT_FOUND");
+    }
+    throw new Error(errorData?.error || errorData?.message || "Failed to load photos");
+  }
+
+  const data = await response.json();
+  const lead = data?.data ?? data;
+  const rawUrls = parsePhotosUrls(lead?.photosUrls);
+  return { photos: normalizePhotoUrls(rawUrls) };
 }
 
 // ============================================

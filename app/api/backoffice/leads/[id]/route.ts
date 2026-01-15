@@ -11,6 +11,69 @@ function getBackofficeBaseUrl() {
   return normalized;
 }
 
+function getBasicAuthHeader(): string | null {
+  const user = process.env.BASIC_AUTH_USER;
+  const pass = process.env.BASIC_AUTH_PASSWORD;
+  if (!user || !pass) return null;
+  const token = Buffer.from(`${user}:${pass}`).toString("base64");
+  return `Basic ${token}`;
+}
+
+function getUpstreamHeaders(baseHeaders?: HeadersInit): Record<string, string> {
+  const headers: Record<string, string> = {
+    ...(baseHeaders || {}),
+    "x-user-id": "public-form",
+  };
+  const auth = getBasicAuthHeader();
+  if (auth) {
+    headers.Authorization = auth;
+  }
+  return headers;
+}
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const API_BASE_URL = getBackofficeBaseUrl();
+
+    const upstream = await fetch(`${API_BASE_URL}/api/leads/${id}`, {
+      method: "GET",
+      headers: getUpstreamHeaders({
+        Accept: "application/json",
+      }),
+    });
+
+    const contentType = upstream.headers.get("content-type") || "";
+    const text = await upstream.text();
+
+    if (contentType.includes("application/json")) {
+      try {
+        const data = JSON.parse(text);
+        return NextResponse.json(data, { status: upstream.status });
+      } catch {
+        return NextResponse.json(
+          { error: "UPSTREAM_INVALID_JSON", raw: text },
+          { status: upstream.status }
+        );
+      }
+    }
+
+    return new NextResponse(text, {
+      status: upstream.status,
+      headers: { "content-type": contentType || "text/plain" },
+    });
+  } catch (err: unknown) {
+    console.error("❌ Proxy GET /api/backoffice/leads/[id] failed:", err);
+    return NextResponse.json(
+      { error: "PROXY_ERROR", message: "Unable to reach backoffice" },
+      { status: 502 }
+    );
+  }
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
