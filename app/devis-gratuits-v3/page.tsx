@@ -45,11 +45,19 @@ function DevisGratuitsV3Content() {
   const { state, updateField, updateFields, goToStep } = useTunnelState();
   const source = searchParams.get("source") || searchParams.get("src") || "direct";
   const from = searchParams.get("from") || "/devis-gratuits-v3";
+  const urlLeadId = (searchParams.get("leadId") || "").trim();
 
   const [confirmationRequested, setConfirmationRequested] = useState(false);
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep2, setShowValidationStep2] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
+
+  // Reprise dossier: l'URL est la source de vérité si leadId est fourni.
+  useEffect(() => {
+    if (!urlLeadId) return;
+    if (state.leadId === urlLeadId) return;
+    updateFields({ leadId: urlLeadId });
+  }, [urlLeadId, state.leadId, updateFields]);
 
   // ================================
   // V2 logic: surface defaults by housing type
