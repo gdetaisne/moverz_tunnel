@@ -2,8 +2,20 @@
 
 Objectif: fournir au bot Moverz une **référence unique** des règles métier et formules présentes dans le code (tunnel).
 
-Dernière mise à jour: 2026-01-16  
+Dernière mise à jour: 2026-01-19  
 Portée: tunnel Next.js (analyse IA photos + estimation pricing).
+
+### Changelog (pricing)
+
+- **2026-01-19 — Ajustement estimation pricing (distance + volume)**
+  - **Pourquoi**: la formule précédente sur-estimait fréquemment le prix dès que la distance dépassait 100 km (saut de 40 → 95 €/m³), ce qui créait un “prix choc” et un risque de drop-off au moment de l’affichage des formules.
+  - **Ce qui change**:
+    - tranches distance plus fines (7 bands au lieu de 3),
+    - ajout d’une économie d’échelle volumique \(f(V)\) appliquée au coût volumique (sans toucher au socle).
+  - **Sources de calibration** (bench public + extraction HTML):
+    - [AlloDemenageur — Petit déménagement : prix et solutions économiques en 2026](https://www.allodemenageur.fr/devis-demenagement/petit-demenagement/)
+    - [Demenagement24 — Prix déménagement](https://www.demenagement24.com/demenagement-prix/)
+    - [Nextories — Déménagement Paris Munich](https://www.nextories.com/le-demenagement-international/demenagement-france-allemagne/demenagement-paris-munich)
 
 ## Sources (code)
 
@@ -313,7 +325,7 @@ Formule:
 
 DistanceBand:
 
-- short si distance < 100 km
+- lt_100 si distance < 100 km
 - d100_369 si 100–369 km
 - d370_499 si 370–499 km
 - d500_699 si 500–699 km
@@ -333,7 +345,10 @@ Tarifs (LA_POSTE_RATES_EUR_PER_M3) — grille actuelle:
 
 ### 6.3 Prix de base + saison
 
-- \(prixBase = \max(V \times rate, PRIX\_MIN\_SOCLE)\)
+- Économie d’échelle volume:
+  - \(f(V) = \mathrm{clamp}((V/10)^{-0.15}, 0.75, 1.05)\)
+  - appliqué sur la composante volumique uniquement.
+- \(prixBase = \max(V \times rate \times f(V), PRIX\_MIN\_SOCLE)\)
 - `PRIX_MIN_SOCLE = 400`
 - \(prixBaseSaison = prixBase \times seasonFactor\)
 
