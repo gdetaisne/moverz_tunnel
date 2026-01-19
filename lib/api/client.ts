@@ -1128,6 +1128,10 @@ export interface SaveBackofficeInventoryPayload {
     roomType?: string;
     photoUrls: string[];
   }[];
+  // Option B: meta tunnel pour déclencher conversion auto côté Back Office
+  originCountryCode?: string;
+  destCountryCode?: string;
+  tunnelStep?: number;
 }
 
 export async function saveBackofficeInventory(

@@ -213,12 +213,14 @@ interface FormState {
   originPostalCode: string;
   originCity: string;
   originAddress: string;
+  originCountryCode: string;
   originLat: number | null;
   originLon: number | null;
   originHousingType: HousingType | "";
   destinationPostalCode: string;
   destinationCity: string;
   destinationAddress: string;
+  destinationCountryCode: string;
   destinationLat: number | null;
   destinationLon: number | null;
   movingDate: string;
@@ -581,6 +583,7 @@ const INITIAL_FORM_STATE: FormState = {
   originPostalCode: "",
   originCity: "",
   originAddress: "",
+  originCountryCode: "FR",
   originLat: null,
   originLon: null,
   originHousingType: "", // L'utilisateur doit choisir
@@ -589,6 +592,7 @@ const INITIAL_FORM_STATE: FormState = {
   destinationPostalCode: "",
   destinationCity: "",
   destinationAddress: "",
+  destinationCountryCode: "FR",
   destinationLat: null,
   destinationLon: null,
 
@@ -3816,6 +3820,10 @@ function DevisGratuitsPageInner() {
                     updateField("originAddress", s.addressLine ?? s.label);
                     updateField("originPostalCode", s.postalCode ?? "");
                     updateField("originCity", s.city ?? "");
+                    updateField(
+                      "originCountryCode",
+                      String(s.countryCode ?? "fr").toUpperCase()
+                    );
                     updateField("originLat", s.lat ?? null);
                     updateField("originLon", s.lon ?? null);
                   }}
@@ -4021,6 +4029,10 @@ function DevisGratuitsPageInner() {
                     updateField("destinationAddress", s.addressLine ?? s.label);
                     updateField("destinationPostalCode", s.postalCode ?? "");
                     updateField("destinationCity", s.city ?? "");
+                    updateField(
+                      "destinationCountryCode",
+                      String(s.countryCode ?? (isDestinationForeign ? "" : "fr")).toUpperCase()
+                    );
                     updateField("destinationLat", s.lat ?? null);
                     updateField("destinationLon", s.lon ?? null);
                   }}
@@ -6200,6 +6212,11 @@ function DevisGratuitsPageInner() {
                               await saveBackofficeInventory(backofficeLeadId, {
                                 items: process2Inventory,
                                 excludedInventoryIds,
+                                originCountryCode: (form.originCountryCode || "FR").toUpperCase(),
+                                destCountryCode: form.destinationUnknown
+                                  ? undefined
+                                  : (form.destinationCountryCode || "FR").toUpperCase(),
+                                tunnelStep: 4,
                               });
                             } catch (err) {
                               // Cas particulier : le lead Back Office a été supprimé ou n'existe plus.
@@ -6218,6 +6235,11 @@ function DevisGratuitsPageInner() {
                                   await saveBackofficeInventory(newId, {
                                     items: process2Inventory,
                                     excludedInventoryIds,
+                                    originCountryCode: (form.originCountryCode || "FR").toUpperCase(),
+                                    destCountryCode: form.destinationUnknown
+                                      ? undefined
+                                      : (form.destinationCountryCode || "FR").toUpperCase(),
+                                    tunnelStep: 4,
                                   });
                                 }
                               } else {
