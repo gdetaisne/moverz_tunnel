@@ -27,6 +27,7 @@ type PricingDetails = {
     PRIX_MIN_SOCLE: number;
     distanceBand: string;
     rateEurPerM3: number;
+    volumeScale?: number;
   };
   intermediate: {
     baseVolumeM3: number;
@@ -275,6 +276,11 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                       band {props.pricingDetails.constants.distanceBand} ·{" "}
                       {props.pricingDetails.constants.rateEurPerM3} €/m³
                     </span>
+                    {typeof props.pricingDetails.constants.volumeScale === "number" && (
+                      <span className="rounded-full bg-[#F1F5F9] px-2 py-0.5">
+                        scale {props.pricingDetails.constants.volumeScale.toFixed(2)}
+                      </span>
+                    )}
                   </div>
                 </div>
 

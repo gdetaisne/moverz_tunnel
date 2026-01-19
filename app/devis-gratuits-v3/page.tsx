@@ -14,6 +14,7 @@ import {
   type FormuleType as PricingFormuleType,
   type HousingType,
   getEtageCoefficient,
+  getVolumeEconomyScale,
 } from "@/lib/pricing/calculate";
 import {
   DENSITY_COEFFICIENTS,
@@ -817,7 +818,11 @@ function DevisGratuitsV3Content() {
 
     const band = getDistanceBand(distanceKm);
     const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][formule];
-    const baseNoSeasonEur = Math.max(volumeM3 * rateEurPerM3, PRIX_MIN_SOCLE);
+    const volumeScale = getVolumeEconomyScale(volumeM3);
+    const baseNoSeasonEur = Math.max(
+      volumeM3 * rateEurPerM3 * volumeScale,
+      PRIX_MIN_SOCLE
+    );
 
     const coeffOrigin = getEtageCoefficient(originFloor, originElevator);
     const coeffDest = getEtageCoefficient(destinationFloor, destinationElevator);
@@ -856,6 +861,7 @@ function DevisGratuitsV3Content() {
         PRIX_MIN_SOCLE,
         distanceBand: band,
         rateEurPerM3,
+        volumeScale,
       },
       intermediate: {
         baseVolumeM3: Math.round(baseVolume * 10) / 10,

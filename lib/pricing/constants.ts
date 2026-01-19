@@ -44,30 +44,67 @@ export const PRIX_MIN_SOCLE = 400; // Prix minimum
 // Source métier: https://www.laposte.fr/demenager/prix-demenagement
 // ============================================
 
-export type DistanceBand = "short" | "medium" | "long";
+/**
+ * Grille distance plus granulaire (objectif: éviter l'effet "95 €/m³ dès 101 km").
+ *
+ * ⚠️ Note: le nom "LA_POSTE_RATES_EUR_PER_M3" est historique. Les valeurs ici
+ * sont calibrées sur un bench marché (AlloDemenageur) pour la formule Standard.
+ */
+export type DistanceBand =
+  | "lt_100"
+  | "d100_369"
+  | "d370_499"
+  | "d500_699"
+  | "d700_849"
+  | "d850_999"
+  | "gte_1000";
 
 export function getDistanceBand(distanceKm: number): DistanceBand {
-  if (!Number.isFinite(distanceKm) || distanceKm <= 0) return "short";
-  if (distanceKm < 100) return "short";
-  if (distanceKm <= 500) return "medium";
-  return "long";
+  if (!Number.isFinite(distanceKm) || distanceKm <= 0) return "lt_100";
+  if (distanceKm < 100) return "lt_100";
+  if (distanceKm < 370) return "d100_369";
+  if (distanceKm < 500) return "d370_499";
+  if (distanceKm < 700) return "d500_699";
+  if (distanceKm < 850) return "d700_849";
+  if (distanceKm < 1000) return "d850_999";
+  return "gte_1000";
 }
 
 export const LA_POSTE_RATES_EUR_PER_M3 = {
-  short: {
+  lt_100: {
     ECONOMIQUE: 35,
     STANDARD: 40,
-    PREMIUM: 65, // "Confort" dans la table
+    PREMIUM: 65,
   },
-  medium: {
+  d100_369: {
     ECONOMIQUE: 60,
+    STANDARD: 75,
+    PREMIUM: 110,
+  },
+  d370_499: {
+    ECONOMIQUE: 65,
+    STANDARD: 85,
+    PREMIUM: 120,
+  },
+  d500_699: {
+    ECONOMIQUE: 75,
     STANDARD: 95,
     PREMIUM: 130,
   },
-  long: {
-    ECONOMIQUE: 110,
-    STANDARD: 140,
-    PREMIUM: 160,
+  d700_849: {
+    ECONOMIQUE: 85,
+    STANDARD: 105,
+    PREMIUM: 140,
+  },
+  d850_999: {
+    ECONOMIQUE: 95,
+    STANDARD: 125,
+    PREMIUM: 155,
+  },
+  gte_1000: {
+    ECONOMIQUE: 105,
+    STANDARD: 145,
+    PREMIUM: 170,
   },
 } as const satisfies Record<
   DistanceBand,

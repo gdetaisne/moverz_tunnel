@@ -46,6 +46,23 @@ export interface PricingOutput {
   prixMax: number;
 }
 
+function clamp(n: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, n));
+}
+
+/**
+ * Économie d'échelle sur le coût volumique:
+ * - petits volumes (≈10 m³) ~ neutre
+ * - volumes moyens/grands: €/m³ légèrement plus bas (capé)
+ *
+ * Formule: clamp((V/10)^(-0.15), 0.75, 1.05)
+ */
+export function getVolumeEconomyScale(volumeM3: number): number {
+  if (!Number.isFinite(volumeM3) || volumeM3 <= 0) return 1;
+  const raw = Math.pow(volumeM3 / 10, -0.15);
+  return clamp(raw, 0.75, 1.05);
+}
+
 export function calculateVolume(
   surfaceM2: number,
   housingType: HousingType,
@@ -80,7 +97,11 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   // donc elle dépend nécessairement du volume.
   const band = getDistanceBand(input.distanceKm);
   const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][input.formule];
-  const baseNoSeason = Math.max(volumeM3 * rateEurPerM3, PRIX_MIN_SOCLE);
+  const volumeScale = getVolumeEconomyScale(volumeM3);
+  const baseNoSeason = Math.max(
+    volumeM3 * rateEurPerM3 * volumeScale,
+    PRIX_MIN_SOCLE
+  );
   const baseSeasoned = baseNoSeason * input.seasonFactor;
 
   // 3. Coefficient étages (pire des deux accès)
