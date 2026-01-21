@@ -52,18 +52,25 @@ export default function Step1Contact({
       {/* Left: Form */}
       <div className="order-1">
         <div className="mb-4 md:mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
+          {/* Micro-bar de réassurance, sans compteur d'étapes explicite */}
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#0F172A] px-4 py-1.5 text-xs md:text-sm font-semibold text-white mb-4 md:mb-6">
             <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
-            Étape 1/4
+            <span className="flex items-center gap-2">
+              <span>🔒 Données protégées</span>
+              <span className="opacity-60">•</span>
+              <span>Gratuit</span>
+              <span className="opacity-60 hidden sm:inline">•</span>
+              <span className="hidden sm:inline">~2 min restantes</span>
+            </span>
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-black text-[#0F172A] mb-3 md:mb-4 leading-tight">
-            Vos infos de contact
+          <h2 className="text-3xl md:text-5xl font-black text-[#0F172A] mb-2 md:mb-4 leading-tight">
+            Où souhaitez-vous recevoir vos devis&nbsp;?
           </h2>
           
-          <p className="hidden md:block text-lg text-[#1E293B]/70 leading-relaxed">
-            Pour vous envoyer vos devis et suivre votre dossier.{" "}
-            <span className="text-[#1E293B] font-medium">Jamais partagé ni revendu.</span>
+          <p className="text-sm md:text-lg text-[#1E293B]/70 leading-relaxed">
+            Première étape: un moyen de contact fiable pour vous envoyer les propositions.{" "}
+            <span className="text-[#1E293B] font-medium">Vos coordonnées ne sont jamais revendues.</span>
           </p>
         </div>
 
@@ -112,7 +119,7 @@ export default function Step1Contact({
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
               <Mail className="w-4 h-4 text-[#6BCFCF]" />
-              Email de contact
+              Email de contact (obligatoire)
             </label>
             <div className="relative">
               <input
@@ -186,7 +193,7 @@ export default function Step1Contact({
               !isFormValid && !isSubmitting ? "opacity-50 cursor-not-allowed" : ""
             } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <span>{isSubmitting ? "Création en cours..." : "Commencer ma demande"}</span>
+            <span>{isSubmitting ? "Création en cours..." : "Voir les options disponibles"}</span>
             {!isSubmitting && (
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             )}

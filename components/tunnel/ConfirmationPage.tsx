@@ -200,6 +200,12 @@ export default function ConfirmationPage({
       {/* CTA Section - light style like moverz.fr */}
       <div className="mb-16 text-center">
         <div className="max-w-md mx-auto space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
+            Dernière étape
+          </p>
+          <p className="text-sm text-[#1E293B]/70">
+            Envoyez quelques photos pour transformer cette estimation en devis concrets.
+          </p>
           <WhatsAppCTA 
             source="tunnel-confirmation" 
             linkingCode={linkingCode} 

@@ -190,17 +190,24 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
   return (
     <div className="space-y-8">
       <div>
-        <div className="hidden md:inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
+        {/* Micro-bar de progression sans mention directe “Étape 3/4” */}
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#0F172A] px-4 py-1.5 text-xs md:text-sm font-semibold text-white mb-4 md:mb-6">
           <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
-          Étape 3/4
+          <span className="flex items-center gap-2">
+            <span>🔒 Données protégées</span>
+            <span className="opacity-60">•</span>
+            <span>Gratuit</span>
+            <span className="opacity-60 hidden sm:inline">•</span>
+            <span className="hidden sm:inline">~1 min restante</span>
+          </span>
         </div>
 
         <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] mb-3 md:mb-4 leading-tight">
-          Volume, formule & services
+          Votre estimation personnalisée
         </h2>
         
-        <p className="hidden md:block text-lg text-[#1E293B]/70 leading-relaxed">
-          Derniers détails pour un devis sur-mesure.
+        <p className="text-sm md:text-lg text-[#1E293B]/70 leading-relaxed">
+          Nous estimons le volume et une fourchette de prix basée sur des déménagements similaires.
         </p>
       </div>
 
@@ -228,25 +235,34 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
           {showErrors && !isSurfaceValid && (
             <p className="text-sm text-red-600 mt-2">Surface entre 10 et 500 m²</p>
           )}
-          <div className="mt-4 p-4 rounded-xl bg-white border border-[#E3E5E8]">
-            <p className="text-sm text-[#1E293B]/70">
-              📦 Volume estimé :{" "}
-              <strong className="text-[#0F172A]">
-                {props.pricing ? `${props.pricing.volumeM3}m³` : "—"}
-              </strong>
-            </p>
-            <p className="text-sm text-[#1E293B]/70 mt-1">
-              💰 Fourchette{" "}
-              {props.formule === "ECONOMIQUE"
-                ? "Éco"
-                : props.formule === "STANDARD"
-                ? "Standard"
-                : "Premium"}{" "}
-              :{" "}
-              <strong className="text-[#0F172A]">
-                {props.pricing ? `${props.pricing.priceMin} - ${props.pricing.priceMax}€` : "—"}
-              </strong>
-            </p>
+          <div className="mt-4 p-4 rounded-xl bg-white border border-[#E3E5E8] space-y-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6BCFCF] mb-1">
+                Budget estimé
+              </p>
+              <p className="text-xl font-bold text-[#0F172A]">
+                {props.pricing ? `${props.pricing.priceMin} – ${props.pricing.priceMax} €` : "—"}
+              </p>
+              <p className="text-xs text-[#1E293B]/60 mt-1">
+                Basé sur des déménagements similaires au vôtre.
+              </p>
+            </div>
+            <div className="h-px bg-[#E3E5E8]" />
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60 mb-1">
+                  Volume estimé
+                </p>
+                <p className="text-base font-semibold text-[#0F172A]">
+                  {props.pricing ? `${props.pricing.volumeM3} m³` : "—"}
+                </p>
+              </div>
+              {props.pricingDetails?.housingType && (
+                <span className="rounded-full bg-[#6BCFCF]/10 px-2.5 py-1 text-[11px] font-semibold text-[#0F172A]">
+                  {props.pricingDetails.housingType}
+                </span>
+              )}
+            </div>
 
             <div className="mt-3 flex items-center justify-between">
               <button
@@ -256,11 +272,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               >
                 {showDetails ? "Masquer le détail" : "Voir le détail"}
               </button>
-              {props.pricingDetails?.housingType && (
-                <span className="rounded-full bg-[#6BCFCF]/10 px-2.5 py-1 text-[11px] font-semibold text-[#0F172A]">
-                  type {props.pricingDetails.housingType}
-                </span>
-              )}
+              {/* badge déplacé dans le bloc volume pour un scan plus rapide */}
             </div>
 
             {showDetails && props.pricingDetails && (
@@ -547,7 +559,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
             !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          <span>{props.isSubmitting ? "Enregistrement..." : "Continuer vers les photos"}</span>
+          <span>{props.isSubmitting ? "Enregistrement..." : "Finaliser mon estimation"}</span>
           {!props.isSubmitting && (
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           )}

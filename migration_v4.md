@@ -21,6 +21,38 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-21 — Phase 1 UX: micro-bar + valeur perçue (staging)
+
+- **Date**: 2026-01-21
+- **Auteur**: (ux-phase1)
+- **Décision**: rapprocher la V3 de la vision V4 sans changer l’ordre technique des steps ni le tracking, en mettant davantage la valeur en avant et en réduisant la friction perçue.
+- **Changements UI**:
+  - `Step1Contact`:
+    - Remplacement du badge "Étape 1/4" par une micro-bar de rassurance (`🔒 Données protégées • Gratuit • ~2 min restantes`).
+    - Titre changé en "Où souhaitez-vous recevoir vos devis ?" pour cadrer le step comme point de contact, pas comme simple formulaire.
+    - Copy renforcée sur la protection des données, sans supprimer le champ email existant.
+    - CTA renommé en "Voir les options disponibles".
+  - `Step3VolumeServices`:
+    - Remplacement du badge "Étape 3/4" par micro-bar de progression (`🔒 Données protégées • Gratuit • ~1 min restante`).
+    - Bloc estimation restructuré en deux zones scannables mobile: "Budget estimé" (fourchette en €) et "Volume estimé" (m³) avec rappel "Basé sur des déménagements similaires".
+    - CTA renommé en "Finaliser mon estimation" (au lieu de "Continuer vers les photos").
+  - `ConfirmationPage`:
+    - Ajout d’un mini-en-tête "Dernière étape" + phrase "Envoyez quelques photos pour transformer cette estimation en devis concrets." au-dessus du CTA WhatsApp.
+- **Tracking**:
+  - logicalStep impactés: CONTACT, RECAP, THANK_YOU (semantique inchangée).
+  - screenId impactés: `contact_v3`, `formules_v3`, `confirmation_v3` (structure UI et wording mis à jour, ids inchangés).
+  - notes: pas de modification du mapping logicalStep/screenId, uniquement de la présentation et des CTA.
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés (UX only): textes et libellés des CTA / micro-copy, email toujours obligatoire à la step contact.
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Risques / points à vérifier sur staging**:
+  - Lisibilité mobile de la micro-bar (pas de collision avec le hero / header).
+  - Compréhension des nouveaux CTA ("Voir les options disponibles", "Finaliser mon estimation").
+  - Vérifier que les conversions GA4 / tunnel-events ne sont pas impactées (mêmes logicalStep et screenId).
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
