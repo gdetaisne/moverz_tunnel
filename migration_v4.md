@@ -21,6 +21,21 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-21 — Fix build staging (trackError: screenId requis)
+
+- **Date**: 2026-01-21
+- **Auteur**: (fix)
+- **Décision**: suite au changement de signature `trackError`, ajouter `screenId` sur tous les appels pour éviter un build Next cassé.
+- **Changements UI**:
+  - Aucun
+- **Tracking**:
+  - `TUNNEL_ERROR` inclut désormais `screenId` explicite dans les appels (ex: `contact_v3`, `project_v3`, `formules_v3`)
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+- **Back Office payload**:
+  - changements: **AUCUN**
+
 ### 2026-01-21 — Badge “TEST” visible sur Step 1 (staging uniquement)
 
 - **Date**: 2026-01-21

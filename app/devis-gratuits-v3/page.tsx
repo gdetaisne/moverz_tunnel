@@ -903,7 +903,7 @@ function DevisGratuitsV3Content() {
         document.getElementById("contact-firstName")?.scrollIntoView({ behavior: "smooth", block: "center" });
         (document.getElementById("contact-firstName") as any)?.focus?.();
       });
-      trackError("VALIDATION_ERROR", "Invalid firstName", 1, "CONTACT");
+      trackError("VALIDATION_ERROR", "Invalid firstName", 1, "CONTACT", "contact_v3");
       return;
     }
 
@@ -913,7 +913,7 @@ function DevisGratuitsV3Content() {
         document.getElementById("contact-email")?.scrollIntoView({ behavior: "smooth", block: "center" });
         (document.getElementById("contact-email") as any)?.focus?.();
       });
-      trackError("VALIDATION_ERROR", "Invalid email", 1, "CONTACT");
+      trackError("VALIDATION_ERROR", "Invalid email", 1, "CONTACT", "contact_v3");
       return;
     }
 
@@ -952,7 +952,7 @@ function DevisGratuitsV3Content() {
       goToStep(2);
     } catch (err: any) {
       console.error("Error creating/updating lead:", err);
-      trackError("API_ERROR", err.message || "Failed to create/update lead", 1, "CONTACT");
+      trackError("API_ERROR", err.message || "Failed to create/update lead", 1, "CONTACT", "contact_v3");
     }
   }
 
@@ -1006,7 +1006,7 @@ function DevisGratuitsV3Content() {
               ) as HTMLElement | null);
         focusable?.focus?.();
       });
-      trackError("VALIDATION_ERROR", "Invalid project fields", 2, "PROJECT");
+      trackError("VALIDATION_ERROR", "Invalid project fields", 2, "PROJECT", "project_v3");
       return;
     }
 
@@ -1117,7 +1117,7 @@ function DevisGratuitsV3Content() {
       goToStep(3);
     } catch (err: any) {
       console.error("Error updating lead:", err);
-      trackError("API_ERROR", err.message || "Failed to update lead", 2, "PROJECT");
+      trackError("API_ERROR", err.message || "Failed to update lead", 2, "PROJECT", "project_v3");
     }
   }
 
@@ -1131,7 +1131,7 @@ function DevisGratuitsV3Content() {
         document.getElementById("surfaceM2")?.scrollIntoView({ behavior: "smooth", block: "center" });
         (document.getElementById("surfaceM2") as any)?.focus?.();
       });
-      trackError("VALIDATION_ERROR", "Invalid surface", 3, "RECAP");
+      trackError("VALIDATION_ERROR", "Invalid surface", 3, "RECAP", "formules_v3");
       return;
     }
 
@@ -1260,7 +1260,7 @@ function DevisGratuitsV3Content() {
       goToStep(4);
     } catch (err: any) {
       console.error("Error finalizing lead:", err);
-      trackError("API_ERROR", err.message || "Failed to finalize lead", 3, "RECAP");
+      trackError("API_ERROR", err.message || "Failed to finalize lead", 3, "RECAP", "formules_v3");
     }
   }
 
