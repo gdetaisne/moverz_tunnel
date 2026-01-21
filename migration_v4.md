@@ -112,6 +112,25 @@
   - Vérifier que `NEXT_PUBLIC_FUNNEL_V2` disparaît bien de la liste des build-args “not consumed” dans les logs.
   - Vérifier que `/devis-gratuits-v3` affiche bien la V2 lorsque le flag est à `true`.
 
+### 2026-01-21 — V2: m² en étape 1 + options en fin d’étape 3
+
+- **Date**: 2026-01-21
+- **Auteur**: (v2-ux-iterate)
+- **Décision**: rapprocher encore le flow V2 de la vision produit en rendant la surface explicite dès l’étape 1 et en réintégrant les services optionnels en fin d’étape 3, sans alourdir la charge cognitive.
+- **Changements UI** (flag V2 uniquement):
+  - Step 1 (Qualification): ajout d’un champ `Surface approximative (m²)` sous “Type de logement”, lié à `surfaceM2` (déjà utilisé par le moteur de pricing).
+  - Step 3 (Accès & logistique): question accès mise au pluriel (“accès départ & arrivée”), même logique simple/contraint + sous-questions progressives; ajout en bas d’un accordéon “Options supplémentaires (facultatif)” contenant les mêmes toggles services qu’en V1 (garde-meuble, nettoyage/débarras, etc.) + textarea “Précisions”.
+- **Tracking**:
+  - Pas de nouveau screenId; comportement inchangé côté events (toujours `acces_v2` pour la step).
+- **Champs / Inputs**:
+  - `surfaceM2` déjà existant, simplement éditable dès l’étape 1 V2.
+  - Services optionnels V1 réutilisent les mêmes champs booléens (`serviceFurnitureStorage`, `serviceCleaning`, etc.) et `specificNotes`.
+- **Back Office payload**:
+  - Les options restent envoyées via `tunnelOptions.services` comme avant; aucun changement de schéma.
+- **Risques / points à vérifier sur staging**:
+  - Vérifier que la complétion de l’étape 1 reste rapide (<30s) malgré le champ m².
+  - Vérifier que les services cochés en V2 sont bien visibles dans le Back Office comme aujourd’hui en V1.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21

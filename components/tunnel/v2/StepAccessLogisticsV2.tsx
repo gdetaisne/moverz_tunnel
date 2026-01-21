@@ -27,6 +27,16 @@ interface StepAccessLogisticsV2Props {
   difficult_parking: boolean;
   lift_required: boolean;
   access_details: string;
+  // Services en plus (mappés sur les mêmes champs que V1)
+  serviceFurnitureStorage: boolean;
+  serviceCleaning: boolean;
+  serviceFullPacking: boolean;
+  serviceFurnitureAssembly: boolean;
+  serviceInsurance: boolean;
+  serviceWasteRemoval: boolean;
+  serviceHelpWithoutTruck: boolean;
+  serviceSpecificSchedule: boolean;
+  specificNotes: string;
 }
 
 const questions: Array<{ key: QuestionKey; label: string }> = [
@@ -36,8 +46,20 @@ const questions: Array<{ key: QuestionKey; label: string }> = [
   { key: "lift_required", label: "Besoin d’un monte-meuble ?" },
 ];
 
+const SERVICE_LABELS: Array<{ key: keyof StepAccessLogisticsV2Props; label: string }> = [
+  { key: "serviceFurnitureStorage", label: "Garde-meuble" },
+  { key: "serviceCleaning", label: "Nettoyage / débarras" },
+  { key: "serviceFullPacking", label: "Emballage complet" },
+  { key: "serviceFurnitureAssembly", label: "Montage meubles neufs" },
+  { key: "serviceInsurance", label: "Assurance renforcée" },
+  { key: "serviceWasteRemoval", label: "Évacuation déchets" },
+  { key: "serviceHelpWithoutTruck", label: "Aide sans camion" },
+  { key: "serviceSpecificSchedule", label: "Horaires spécifiques" },
+];
+
 export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
   const [revealedCount, setRevealedCount] = useState(1);
+  const [showOptions, setShowOptions] = useState(false);
   const answered = useMemo(
     () => ({
       narrow_access: props.narrow_access,
@@ -167,11 +189,13 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Home className="w-5 h-5 text-[#6BCFCF]" />
-          <p className="text-sm font-semibold text-[#0F172A]">Accès</p>
+          <p className="text-sm font-semibold text-[#0F172A]">Accès départ & arrivée</p>
         </div>
 
         <div className="space-y-2 rounded-2xl border border-[#E3E5E8] p-4 bg-white">
-          <p className="text-base font-semibold text-[#0F172A]">L’accès est-il simple ?</p>
+          <p className="text-base font-semibold text-[#0F172A]">
+            Les accès départ & arrivée sont-ils simples ?
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
@@ -230,6 +254,47 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-sm"
               rows={3}
             />
+          </div>
+        )}
+      </div>
+
+      {/* Options facultatives (services en plus) */}
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => setShowOptions((v) => !v)}
+          className="w-full flex items-center justify-between rounded-2xl border border-[#E3E5E8] bg-white px-4 py-3 text-sm font-semibold text-[#0F172A]"
+        >
+          <span>Options supplémentaires (facultatif)</span>
+          <span className="text-xs text-[#1E293B]/60">{showOptions ? "Masquer" : "Personnaliser"}</span>
+        </button>
+
+        {showOptions && (
+          <div className="space-y-4 rounded-2xl border border-[#E3E5E8] bg-white p-4">
+            <div className="space-y-3">
+              {SERVICE_LABELS.map(({ key, label }) => {
+                const value = props[key] as boolean;
+                return (
+                  <div key={String(key)} className="flex items-center justify-between gap-4">
+                    <p className="text-sm font-medium text-[#0F172A]">{label}</p>
+                    <YesNo
+                      value={!!value}
+                      onChange={(v) => props.onFieldChange(key as string, v)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#0F172A]">Précisions</p>
+              <textarea
+                value={props.specificNotes}
+                onChange={(e) => props.onFieldChange("specificNotes", e.target.value)}
+                placeholder="Ex : besoin d'emballage complet, objets fragiles, contraintes particulières..."
+                rows={3}
+                className="mt-2 w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-sm text-[#0F172A]"
+              />
+            </div>
           </div>
         )}
       </div>

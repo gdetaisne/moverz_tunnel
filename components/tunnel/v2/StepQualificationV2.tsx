@@ -10,6 +10,7 @@ interface StepQualificationV2Props {
   destinationCity: string;
   destinationPostalCode: string;
   housingType: string;
+  surfaceM2: string;
   onFieldChange: (field: string, value: any) => void;
   onSubmit: (e: FormEvent) => void;
   isSubmitting: boolean;
@@ -21,6 +22,7 @@ export function StepQualificationV2({
   destinationCity,
   destinationPostalCode,
   housingType,
+  surfaceM2,
   onFieldChange,
   onSubmit,
   isSubmitting,
@@ -66,7 +68,7 @@ export function StepQualificationV2({
         />
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Home className="w-5 h-5 text-[#6BCFCF]" />
           <p className="text-sm font-semibold text-[#0F172A]">Type de logement</p>
@@ -94,6 +96,26 @@ export function StepQualificationV2({
           >
             Maison
           </button>
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-[#0F172A]">
+            Surface approximative (m²)
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              min={10}
+              max={500}
+              value={surfaceM2}
+              onChange={(e) => onFieldChange("surfaceM2", e.target.value)}
+              className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base text-[#0F172A]"
+              placeholder="60"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1E293B]/60 text-sm">
+              m²
+            </span>
+          </div>
         </div>
       </div>
 

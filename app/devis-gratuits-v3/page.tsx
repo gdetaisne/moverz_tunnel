@@ -1386,6 +1386,7 @@ function DevisGratuitsV3Content() {
                 destinationCity={state.destinationCity}
                 destinationPostalCode={state.destinationPostalCode}
                 housingType={state.originHousingType || "t2"}
+                surfaceM2={state.surfaceM2}
                 onFieldChange={(field, value) => updateField(field as any, value)}
                 onSubmit={handleSubmitQualificationV2}
                 isSubmitting={false}
@@ -1427,6 +1428,15 @@ function DevisGratuitsV3Content() {
                 difficult_parking={!!state.difficult_parking}
                 lift_required={!!state.lift_required}
                 access_details={state.access_details ?? ""}
+                serviceFurnitureStorage={state.serviceFurnitureStorage}
+                serviceCleaning={state.serviceCleaning}
+                serviceFullPacking={state.serviceFullPacking}
+                serviceFurnitureAssembly={state.serviceFurnitureAssembly}
+                serviceInsurance={state.serviceInsurance}
+                serviceWasteRemoval={state.serviceWasteRemoval}
+                serviceHelpWithoutTruck={state.serviceHelpWithoutTruck}
+                serviceSpecificSchedule={state.serviceSpecificSchedule}
+                specificNotes={state.specificNotes}
               />
             </div>
           )}
