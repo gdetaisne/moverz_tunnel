@@ -21,6 +21,21 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-21 — Retrait badge “TEST” (staging)
+
+- **Date**: 2026-01-21
+- **Auteur**: (cleanup)
+- **Décision**: retirer le badge “TEST” ajouté sur Step 1.
+- **Changements UI**:
+  - Suppression du badge **TEST** sur Step 1
+- **Tracking**:
+  - Aucun
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+- **Back Office payload**:
+  - changements: **AUCUN**
+
 ### 2026-01-21 — Fix build staging (trackError: screenId requis)
 
 - **Date**: 2026-01-21

@@ -28,9 +28,6 @@ export default function Step1Contact({
   const [firstNameTouched, setFirstNameTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const { isMobile } = useDeviceDetection();
-  const isStagingV4 =
-    typeof window !== "undefined" &&
-    window.location?.hostname === "staging-v4-tunnel.gslv.cloud";
 
   const isFirstNameValid = firstName.trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -59,13 +56,6 @@ export default function Step1Contact({
             <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
             Étape 1/4
           </div>
-          {isStagingV4 && (
-            <div className="mb-4 inline-flex items-center rounded-2xl border-2 border-red-600 bg-red-50 px-4 py-2">
-              <span className="text-2xl md:text-4xl font-black tracking-widest text-red-700">
-                TEST
-              </span>
-            </div>
-          )}
 
           <h2 className="text-3xl md:text-5xl font-black text-[#0F172A] mb-3 md:mb-4 leading-tight">
             Vos infos de contact
