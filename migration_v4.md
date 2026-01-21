@@ -53,6 +53,44 @@
   - Compréhension des nouveaux CTA ("Voir les options disponibles", "Finaliser mon estimation").
   - Vérifier que les conversions GA4 / tunnel-events ne sont pas impactées (mêmes logicalStep et screenId).
 
+### 2026-01-21 — Préparation V2 (state accès simplifié)
+
+- **Date**: 2026-01-21
+- **Auteur**: (prep-v2)
+- **Décision**: ajouter les champs d’état pour le futur flow V2 (accès simple/contraint + sous-questions) sans impacter le flow actuel.
+- **Changements UI**:
+  - Aucun (préparation interne uniquement).
+- **Tracking**:
+  - Aucun changement (les events V2 seront ajoutés avec le flag).
+- **Champs / Inputs**:
+  - ajoutés (state uniquement, pas de suppression) : `access_type`, `narrow_access`, `long_carry`, `difficult_parking`, `lift_required`, `access_details` (défaut: accès simple, booléens à false).
+- **Back Office payload**:
+  - changements: **AUCUN** (les champs ne sont pas encore envoyés).
+- **Risques / points à vérifier sur staging**:
+  - Aucun impact attendu; c’est un changement interne de state.
+
+### 2026-01-21 — Implémentation V2 (flow mobile-first sous flag)
+
+- **Date**: 2026-01-21
+- **Auteur**: (v2-flag)
+- **Décision**: activer un flow V2 (4 étapes réordonnées, mobile-first) derrière `NEXT_PUBLIC_FUNNEL_V2=true`, sans toucher au flow V1 si flag absent.
+- **Changements UI** (flag ON uniquement):
+  - Step 1: qualification ultra-light (villes + type logement), CTA “Voir les options disponibles”, pas de hero mobile.
+  - Step 2: estimation immédiate (budget + volume, mention “Basé sur des déménagements similaires”), CTA “Affiner mon devis”.
+  - Step 3: détails pratiques avec accès progressif (question unique “L’accès est-il simple ?”, sous-questions révélées une par une, champ détails si ≥1 Oui), CTA “Finaliser mon estimation”, micro-copy temps restant.
+  - Step 4: contact + photos, titre “Où souhaitez-vous recevoir vos devis ?”, message “Dernière étape…”, phrase humaine “Un conseiller Moverz vérifie…”, WhatsApp prioritaire + upload desktop.
+  - Plus de label “Étape X/4”; barre de progression + temps seulement; bouton “← Modifier” en haut; sticky CTA mobile sur steps 2 & 3; hero supprimé dès step 2 mobile.
+- **Tracking**:
+  - Nouveaux screenId V2: `qualification_v2`, `estimation_v2`, `acces_v2`, `contact_v2`.
+  - Pas encore d’envoi des nouveaux events custom; à compléter si besoin (funnel_step_viewed/completed variant v2, access_type_selected, etc.).
+- **Champs / Inputs**:
+  - Ajout state accès V2 déjà noté (access_type, narrow_access, long_carry, difficult_parking, lift_required, access_details). Aucun champ supprimé.
+- **Back Office payload**:
+  - Contact envoyé en Step 4 via lead BO; tunnelOptions inclut accessV2 (ne casse pas le schéma).
+- **Risques / points à vérifier sur staging**:
+  - Vérifier affichage mobile (sticky CTA, suppression hero step 2+).
+  - Vérifier tracking (screenId v2) et absence de régression V1 lorsque le flag est off.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21

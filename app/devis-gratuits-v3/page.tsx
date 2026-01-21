@@ -33,6 +33,14 @@ import Step3VolumeServices from "@/components/tunnel/Step3VolumeServices";
 import ConfirmationPage from "@/components/tunnel/ConfirmationPage";
 import TrustSignals from "@/components/tunnel/TrustSignals";
 
+// V2 (feature flag) components
+import { StepQualificationV2 } from "@/components/tunnel/v2/StepQualificationV2";
+import { StepEstimationV2 } from "@/components/tunnel/v2/StepEstimationV2";
+import { StepAccessLogisticsV2 } from "@/components/tunnel/v2/StepAccessLogisticsV2";
+import { StepContactPhotosV2 } from "@/components/tunnel/v2/StepContactPhotosV2";
+import { V2ProgressBar } from "@/components/tunnel/v2/V2ProgressBar";
+import { useMemo } from "react";
+
 const STEPS = [
   { id: 1, label: "Contact" },
   { id: 2, label: "Projet" },
@@ -49,6 +57,7 @@ function DevisGratuitsV3Content() {
   const from = searchParams.get("from") || "/devis-gratuits-v3";
   const urlLeadId = (searchParams.get("leadId") || "").trim();
   const hydratedLeadRef = useRef<string | null>(null);
+  const isFunnelV2 = useMemo(() => process.env.NEXT_PUBLIC_FUNNEL_V2 === "true", []);
 
   const [confirmationRequested, setConfirmationRequested] = useState(false);
   const [showValidationStep1, setShowValidationStep1] = useState(false);
@@ -382,8 +391,21 @@ function DevisGratuitsV3Content() {
     }
   }, [source, from]);
 
-  // Track step views
+  // Track step views (V1/V2)
   useEffect(() => {
+    if (isFunnelV2) {
+      const stepMap = {
+        1: { logical: "PROJECT" as const, screen: "qualification_v2" },
+        2: { logical: "RECAP" as const, screen: "estimation_v2" },
+        3: { logical: "PROJECT" as const, screen: "acces_v2" },
+        4: { logical: "THANK_YOU" as const, screen: "contact_v2" },
+      };
+      const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
+      if (current) {
+        trackStep(state.currentStep, current.logical, current.screen);
+      }
+      return;
+    }
     const stepMap = {
       1: { logical: "CONTACT" as const, screen: "contact_v3" },
       2: { logical: "PROJECT" as const, screen: "project_v3" },
@@ -395,7 +417,7 @@ function DevisGratuitsV3Content() {
     if (current) {
       trackStep(state.currentStep, current.logical, current.screen);
     }
-  }, [state.currentStep]);
+  }, [state.currentStep, isFunnelV2]);
 
   const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" =>
     d === "light" ? "LIGHT" : d === "dense" ? "HEAVY" : "MEDIUM";
@@ -956,6 +978,81 @@ function DevisGratuitsV3Content() {
     }
   }
 
+  // V2 handlers
+  const handleSubmitQualificationV2 = (e: FormEvent) => {
+    e.preventDefault();
+    trackStepChange(1, 2, "PROJECT", "RECAP", "estimation_v2", "forward");
+    goToStep(2);
+  };
+
+  const handleSubmitEstimationV2 = (e: FormEvent) => {
+    e.preventDefault();
+    trackStepChange(2, 3, "RECAP", "PROJECT", "acces_v2", "forward");
+    goToStep(3);
+  };
+
+  const handleSubmitAccessV2 = async () => {
+    // Normalise accès simple
+    if (state.access_type === "simple") {
+      updateFields({
+        narrow_access: false,
+        long_carry: false,
+        difficult_parking: false,
+        lift_required: false,
+        access_details: "",
+      });
+    }
+    trackStepChange(3, 4, "PROJECT", "THANK_YOU", "contact_v2", "forward");
+    goToStep(4);
+  };
+
+  async function handleSubmitContactV2(e: FormEvent) {
+    e.preventDefault();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) {
+      setShowValidationStep1(true);
+      requestAnimationFrame(() => {
+        document.getElementById("contact-email")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById("contact-email") as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Invalid email", 4, "THANK_YOU", "contact_v2");
+      return;
+    }
+
+    try {
+      const payload = {
+        firstName: state.firstName.trim() || undefined,
+        email: state.email.trim().toLowerCase(),
+        phone: state.phone.trim() || undefined,
+        source,
+        estimationMethod: "FORM" as const,
+        tunnelOptions: {
+          accessV2: {
+            access_type: state.access_type ?? "simple",
+            narrow_access: !!state.narrow_access,
+            long_carry: !!state.long_carry,
+            difficult_parking: !!state.difficult_parking,
+            lift_required: !!state.lift_required,
+            access_details: state.access_details || undefined,
+          },
+        },
+      };
+
+      if (state.leadId) {
+        await updateBackofficeLead(state.leadId, payload);
+      } else {
+        const { id: backofficeLeadId } = await createBackofficeLead(payload);
+        updateFields({ leadId: backofficeLeadId, linkingCode: null });
+      }
+
+      trackStepChange(4, 4, "THANK_YOU", "THANK_YOU", "contact_v2", "forward");
+      trackCompletion({ leadId: state.leadId });
+    } catch (err: any) {
+      console.error("Error creating/updating lead:", err);
+      trackError("API_ERROR", err.message || "Failed to finalize lead", 4, "THANK_YOU", "contact_v2");
+    }
+  }
+
   async function handleSubmitStep2(e: FormEvent) {
     e.preventDefault();
 
@@ -1265,6 +1362,93 @@ function DevisGratuitsV3Content() {
   }
 
   return (
+    isFunnelV2 ? (
+      <main className="min-h-screen bg-[#F8F9FA] text-[#0F172A]">
+        <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+          {/* Top back/edit */}
+          {state.currentStep > 1 && (
+            <button
+              onClick={() => goToStep((state.currentStep - 1) as 1 | 2 | 3 | 4)}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#0F172A]"
+            >
+              ← Modifier
+            </button>
+          )}
+
+          <V2ProgressBar step={state.currentStep} />
+
+          {state.currentStep === 1 && (
+            <div className="rounded-3xl bg-white p-5 shadow-sm">
+              <StepQualificationV2
+                originCity={state.originCity}
+                originPostalCode={state.originPostalCode}
+                destinationCity={state.destinationCity}
+                destinationPostalCode={state.destinationPostalCode}
+                housingType={state.originHousingType || "t2"}
+                onFieldChange={(field, value) => updateField(field as any, value)}
+                onSubmit={handleSubmitQualificationV2}
+                isSubmitting={false}
+              />
+            </div>
+          )}
+
+          {state.currentStep === 2 && (
+            <div className="rounded-3xl bg-white p-5 shadow-sm relative">
+              <StepEstimationV2
+                volume={activePricing?.volumeM3 ?? null}
+                priceMin={activePricing?.prixMin ?? null}
+                priceMax={activePricing?.prixMax ?? null}
+                onSubmit={handleSubmitEstimationV2}
+                isSubmitting={false}
+              />
+            </div>
+          )}
+
+          {state.currentStep === 3 && (
+            <div className="rounded-3xl bg-white p-5 shadow-sm relative">
+              <StepAccessLogisticsV2
+                originAddress={state.originAddress}
+                originCity={state.originCity}
+                originPostalCode={state.originPostalCode}
+                destinationAddress={state.destinationAddress}
+                destinationCity={state.destinationCity}
+                destinationPostalCode={state.destinationPostalCode}
+                originHousingType={state.originHousingType}
+                destinationHousingType={state.destinationHousingType}
+                movingDate={state.movingDate}
+                dateFlexible={state.dateFlexible}
+                onFieldChange={(field, value) => updateField(field as any, value)}
+                onSubmit={handleSubmitAccessV2}
+                isSubmitting={false}
+                access_type={state.access_type ?? "simple"}
+                narrow_access={!!state.narrow_access}
+                long_carry={!!state.long_carry}
+                difficult_parking={!!state.difficult_parking}
+                lift_required={!!state.lift_required}
+                access_details={state.access_details ?? ""}
+              />
+            </div>
+          )}
+
+          {state.currentStep === 4 && (
+            <div className="rounded-3xl bg-white p-5 shadow-sm relative">
+              <StepContactPhotosV2
+                firstName={state.firstName}
+                email={state.email}
+                phone={state.phone}
+                leadId={state.leadId}
+                linkingCode={state.linkingCode}
+                onFirstNameChange={(v) => updateField("firstName", v)}
+                onEmailChange={(v) => updateField("email", v)}
+                onPhoneChange={(v) => updateField("phone", v)}
+                onSubmit={handleSubmitContactV2}
+                isSubmitting={false}
+              />
+            </div>
+          )}
+        </div>
+      </main>
+    ) : (
     <main className="min-h-screen bg-gradient-to-b from-[#F8F9FA] to-white">
       {/* Hero with progress */}
       <TunnelHero currentStep={state.currentStep} totalSteps={STEPS.length} />
@@ -1467,6 +1651,7 @@ function DevisGratuitsV3Content() {
         )}
       </div>
     </main>
+    )
   );
 }
 

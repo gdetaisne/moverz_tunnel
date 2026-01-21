@@ -84,6 +84,14 @@ export interface TunnelFormState {
   furnitureAquarium: boolean;
   furnitureOver25kg: boolean;
   hasSpecificFurniture: boolean; // Backward compat
+
+  // Accès V2 (simple/contraint + sous-questions)
+  access_type?: "simple" | "constrained";
+  narrow_access?: boolean;
+  long_carry?: boolean;
+  difficult_parking?: boolean;
+  lift_required?: boolean;
+  access_details?: string;
   
   // Autres besoins
   hasFragileItems: boolean;
@@ -172,6 +180,13 @@ const INITIAL_STATE: TunnelFormState = {
   furnitureAquarium: false,
   furnitureOver25kg: false,
   hasSpecificFurniture: false,
+
+  access_type: "simple",
+  narrow_access: false,
+  long_carry: false,
+  difficult_parking: false,
+  lift_required: false,
+  access_details: "",
   
   hasFragileItems: false,
   specificNotes: "",
