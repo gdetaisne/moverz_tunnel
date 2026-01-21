@@ -97,6 +97,46 @@ Si la convention de nommage de `src` / `source` change, la décision doit être 
 
 ---
 
+## 5.1 Règles V4 (staging) — garde-fous (NON NÉGOCIABLE)
+
+Objectif: permettre une refonte UX/UI en staging **sans risque** pour prod / DB / tracking.
+
+### Branches & déploiement
+
+- **Interdit de toucher à `main`** (aucun commit, aucune PR, aucune modif).
+- Travailler **uniquement** sur la branche `staging`.
+- **Interdit de tester en local**: les tests se font **uniquement sur staging** (CapRover) après push.
+- Faire des **commits fréquents** (petites étapes), pour tester en conditions réelles rapidement.
+
+### DB / Prisma (zéro migration)
+
+- **Interdit** de modifier:
+  - `prisma/schema.prisma`
+  - `prisma/migrations/**`
+- Conclusion: **aucune migration / aucun changement de schéma** en V4 staging.
+
+### Champs / Inputs (zéro suppression)
+
+- **Interdit** de supprimer des champs / inputs existants du tunnel (ils doivent rester disponibles pour les clients).
+- En principe, ne pas créer de nouveaux inputs.
+- Si un prototype de nouvel input est exceptionnellement nécessaire:
+  - il doit être **clairement marqué “non connecté”** dans l’UI,
+  - il ne doit pas être envoyé au Back Office,
+  - et il doit être documenté dans `migration_v4.md`.
+
+### Tracking (GA4 / Back Office)
+
+- `logicalStep` est la source de vérité métier (stable).
+- `screenId` doit être **explicite** et lié à l’écran UI (ex: `project_v4`), **jamais** dérivé d’un index d’étape.
+- Si l’ordre des steps change: on conserve le mapping `logicalStep` correct (ex: PROJECT reste PROJECT).
+
+### Journal obligatoire
+
+- À **chaque** modification de code ou décision: mettre à jour `migration_v4.md`.
+- Dans le message de fin (chat), écrire exactement: **Migration_v4 à jour**.
+
+---
+
 ### 6. Documentation & nettoyage (code zombie)
 
 - **Documentation**:

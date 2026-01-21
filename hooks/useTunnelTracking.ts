@@ -63,13 +63,14 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
   }, [source, from, leadId]);
 
   const trackStepChange = useCallback((
-    fromStep: number,
-    toStep: number,
+    fromStepIndex: number,
+    toStepIndex: number,
     fromLogicalStep: LogicalStep,
     toLogicalStep: LogicalStep,
+    toScreenId: string,
     direction: "forward" | "back"
   ) => {
-    const startTime = stepTimestampsRef.current[fromStep];
+    const startTime = stepTimestampsRef.current[fromStepIndex];
     const durationMs = startTime ? Date.now() - startTime : undefined;
 
     trackTunnelEvent({
@@ -78,11 +79,15 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
       backofficeLeadId: leadId || undefined,
       source,
       logicalStep: toLogicalStep,
-      screenId: `step_${toStep}_v3`,
+      // IMPORTANT: screenId ne doit JAMAIS dépendre de l'index (ré-ordonnable).
+      // Toujours passer un screenId explicite lié à l'écran UI (ex: project_v4).
+      screenId: toScreenId,
       extra: {
         sessionId: sessionIdRef.current,
         fromStep: fromLogicalStep,
         toStep: toLogicalStep,
+        fromStepIndex,
+        toStepIndex,
         direction,
         durationMs,
         urlPath: typeof window !== "undefined" ? window.location.pathname : "",
@@ -121,8 +126,9 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
   const trackError = useCallback((
     errorType: string,
     errorMessage: string,
-    currentStep: number,
-    logicalStep: LogicalStep
+    currentStepIndex: number,
+    logicalStep: LogicalStep,
+    screenId: string
   ) => {
     trackTunnelEvent({
       eventType: "TUNNEL_ERROR",
@@ -130,12 +136,13 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
       backofficeLeadId: leadId || undefined,
       source,
       logicalStep,
-      screenId: `step_${currentStep}_v3`,
+      // IMPORTANT: screenId ne doit JAMAIS dépendre de l'index (ré-ordonnable).
+      screenId,
       extra: {
         sessionId: sessionIdRef.current,
         errorType,
         errorMessage,
-        stepIndex: currentStep,
+        stepIndex: currentStepIndex,
         urlPath: typeof window !== "undefined" ? window.location.pathname : "",
       },
     }).catch(console.error);

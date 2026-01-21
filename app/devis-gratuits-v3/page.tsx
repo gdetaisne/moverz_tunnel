@@ -948,7 +948,7 @@ function DevisGratuitsV3Content() {
 
       setConfirmationRequested(false);
       setShowValidationStep1(false);
-      trackStepChange(1, 2, "CONTACT", "PROJECT", "forward");
+      trackStepChange(1, 2, "CONTACT", "PROJECT", "project_v3", "forward");
       goToStep(2);
     } catch (err: any) {
       console.error("Error creating/updating lead:", err);
@@ -1112,7 +1112,7 @@ function DevisGratuitsV3Content() {
         }
       }
 
-      trackStepChange(2, 3, "PROJECT", "RECAP", "forward");
+      trackStepChange(2, 3, "PROJECT", "RECAP", "formules_v3", "forward");
       setShowValidationStep2(false);
       goToStep(3);
     } catch (err: any) {
@@ -1254,7 +1254,7 @@ function DevisGratuitsV3Content() {
         // côté Back Office (Option A).
       }
 
-      trackStepChange(3, 4, "RECAP", "THANK_YOU", "forward");
+      trackStepChange(3, 4, "RECAP", "THANK_YOU", "confirmation_v3", "forward");
       trackCompletion({ leadId: effectiveLeadId ?? null });
       setShowValidationStep3(false);
       goToStep(4);
@@ -1417,11 +1417,18 @@ function DevisGratuitsV3Content() {
                   3: "RECAP",
                   4: "THANK_YOU",
                 } as const;
+                const screenMap = {
+                  1: "contact_v3",
+                  2: "project_v3",
+                  3: "formules_v3",
+                  4: "confirmation_v3",
+                } as const;
                 trackStepChange(
                   state.currentStep,
                   prevStep,
                   stepMap[state.currentStep as 1 | 2 | 3 | 4],
                   stepMap[prevStep],
+                  screenMap[prevStep],
                   "back"
                 );
                 goToStep(prevStep);

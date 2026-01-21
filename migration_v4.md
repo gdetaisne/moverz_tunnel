@@ -1,0 +1,73 @@
+# Migration V4 (staging) — journal de refonte UX/UI
+
+> **Règle**: ce fichier doit être mis à jour **à chaque modification de code** liée au tunnel (UI, tracking, mapping payload, copy, étapes) et **à chaque décision** (même petite).
+>
+> **Interdits** (staging V4):
+> - **Aucune migration Prisma / aucun changement DB schema** (`prisma/schema.prisma`, `prisma/migrations/**`).
+> - **Aucune suppression de champs** existants côté tunnel (les champs actuellement disponibles pour les clients doivent rester disponibles).
+> - **Pas de modification directe de `main`**.
+>
+> **Note**: des champs UI supplémentaires peuvent être prototypés **uniquement** s’ils sont clairement marqués “non connectés” côté front **et** s’ils ne sont pas envoyés au Back Office.
+
+---
+
+## 0) Contexte
+
+- **Branche**: `staging`
+- **Déploiement**: staging (CapRover) — tests uniquement en conditions réelles
+- **Objectif**: refonte UX/UI **sans** changer les champs / formules (sauf prototype explicitement non connecté)
+
+---
+
+## 1) Changelog (ordre chronologique)
+
+### 2026-01-21 — Guardrails + tracking ré-ordonnable
+
+- **Date**: 2026-01-21
+- **Auteur**: (setup initial)
+- **Décision**: sécuriser V4 staging avec garde-fous automatiques et rendre le tracking indépendant de l’index d’étape.
+- **Changements UI**:
+  - Aucun changement UI (infrastructure de garde-fous uniquement)
+- **Tracking**:
+  - `screenId` n’est plus dérivé d’un index dans `useTunnelTracking` (on passe un `screenId` explicite)
+  - mapping recommandé: `logicalStep` stable + `screenId` explicite par écran
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés (UX only): **AUCUN**
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Risques / points à vérifier sur staging**:
+  - Vérifier que les events `TUNNEL_STEP_CHANGED` et `TUNNEL_ERROR` ont un `screenId` explicite
+  - Vérifier que la CI bloque bien toute modif Prisma + exige `migration_v4.md`
+
+### Entrée template (à copier)
+
+- **Date**: YYYY-MM-DD
+- **Auteur**: (nom)
+- **Décision** (si applicable): (ce qui a été décidé + pourquoi, 1–3 lignes)
+- **Changements UI**:
+  - (liste concise)
+- **Tracking**:
+  - logicalStep impactés: (CONTACT/PROJECT/RECAP/THANK_YOU/…)
+  - screenId impactés: (ex: `project_v4`)
+  - notes: (ex: ré-ordonnancement steps, mapping conservé)
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: (si oui => marqués “non connectés” + justification)
+  - modifiés (UX only): (si oui)
+- **Back Office payload**:
+  - changements: **AUCUN** (sauf mention explicite)
+- **Risques / points à vérifier sur staging**:
+  - (liste)
+
+---
+
+## 2) Checklist obligatoire avant “OK pour review”
+
+- [ ] Aucun fichier Prisma modifié (`prisma/schema.prisma`, `prisma/migrations/**`)
+- [ ] Aucun champ existant supprimé (FormState + UI)
+- [ ] Tracking: `logicalStep` stable, `screenId` explicite (jamais dérivé d’un index)
+- [ ] Mobile-first validé (iPhone/Android: lisibilité, CTA, scroll, clavier)
+- [ ] Tests uniquement sur staging (URL staging + vraie navigation)
+
