@@ -5,8 +5,10 @@ WORKDIR /usr/src/app
 # Variables d'environnement NEXT_PUBLIC_* (injectées au build time)
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_WHATSAPP_NUMBER
+ARG NEXT_PUBLIC_FUNNEL_V2
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_WHATSAPP_NUMBER=$NEXT_PUBLIC_WHATSAPP_NUMBER
+ENV NEXT_PUBLIC_FUNNEL_V2=$NEXT_PUBLIC_FUNNEL_V2
 
 # 1) Installer les dépendances (y compris dev, nécessaires au build: Tailwind, TypeScript, etc.)
 COPY package*.json ./
