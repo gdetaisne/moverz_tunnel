@@ -39,7 +39,6 @@ import { StepEstimationV2 } from "@/components/tunnel/v2/StepEstimationV2";
 import { StepAccessLogisticsV2 } from "@/components/tunnel/v2/StepAccessLogisticsV2";
 import { StepContactPhotosV2 } from "@/components/tunnel/v2/StepContactPhotosV2";
 import { V2ProgressBar } from "@/components/tunnel/v2/V2ProgressBar";
-import { useMemo } from "react";
 
 const STEPS = [
   { id: 1, label: "Contact" },
