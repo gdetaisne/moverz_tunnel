@@ -21,6 +21,24 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-21 — Badge “TEST” visible sur Step 1 (staging uniquement)
+
+- **Date**: 2026-01-21
+- **Auteur**: (setup)
+- **Décision**: afficher un marqueur “TEST” très visible sur la Step 1 pour éviter toute confusion avec la prod.
+- **Changements UI**:
+  - Ajout d’un badge **TEST** sur Step 1
+  - Affiché uniquement si hostname = `staging-v4-tunnel.gslv.cloud`
+- **Tracking**:
+  - Aucun
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Risques / points à vérifier sur staging**:
+  - Visibilité mobile (CTA toujours visible)
+
 ### 2026-01-21 — Guardrails + tracking ré-ordonnable
 
 - **Date**: 2026-01-21
