@@ -90,6 +90,7 @@
 - **Risques / points à vérifier sur staging**:
   - Vérifier affichage mobile (sticky CTA, suppression hero step 2+).
   - Vérifier tracking (screenId v2) et absence de régression V1 lorsque le flag est off.
+  - `firstName` est optionnel côté UI V2 mais toujours envoyé comme string (éventuellement vide) pour respecter le contrat BO.
 
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 

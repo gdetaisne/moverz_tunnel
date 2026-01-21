@@ -1020,7 +1020,9 @@ function DevisGratuitsV3Content() {
 
     try {
       const payload = {
-        firstName: state.firstName.trim() || undefined,
+        // `firstName` optionnel côté UX mais le contrat BO attend une string.
+        // On envoie une chaîne vide si l'utilisateur ne renseigne rien.
+        firstName: state.firstName.trim(),
         email: state.email.trim().toLowerCase(),
         phone: state.phone.trim() || undefined,
         source,
