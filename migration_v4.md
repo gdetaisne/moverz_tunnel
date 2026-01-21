@@ -92,6 +92,26 @@
   - Vérifier tracking (screenId v2) et absence de régression V1 lorsque le flag est off.
   - `firstName` est optionnel côté UI V2 mais toujours envoyé comme string (éventuellement vide) pour respecter le contrat BO.
 
+### 2026-01-21 — Wiring flag NEXT_PUBLIC_FUNNEL_V2 dans Dockerfile
+
+- **Date**: 2026-01-21
+- **Auteur**: (v2-flag-docker)
+- **Décision**: exposer `NEXT_PUBLIC_FUNNEL_V2` au build Next via le Dockerfile pour que le flag soit réellement pris en compte sur staging.
+- **Changements UI**:
+  - Aucun direct; permet simplement d’activer le flow V2 lorsqu’on passe le flag dans CapRover.
+- **Tracking**:
+  - Aucun changement supplémentaire.
+- **Champs / Inputs**:
+  - Aucun changement.
+- **Back Office payload**:
+  - Aucun changement.
+- **Notes techniques**:
+  - `Dockerfile`: ajout de `ARG NEXT_PUBLIC_FUNNEL_V2` + `ENV NEXT_PUBLIC_FUNNEL_V2=$NEXT_PUBLIC_FUNNEL_V2` dans le stage builder.
+  - CapRover doit fournir `NEXT_PUBLIC_FUNNEL_V2` comme build-arg pour que `process.env.NEXT_PUBLIC_FUNNEL_V2` soit inliné côté Next.
+- **Risques / points à vérifier sur staging**:
+  - Vérifier que `NEXT_PUBLIC_FUNNEL_V2` disparaît bien de la liste des build-args “not consumed” dans les logs.
+  - Vérifier que `/devis-gratuits-v3` affiche bien la V2 lorsque le flag est à `true`.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
