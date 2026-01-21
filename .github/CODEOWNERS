@@ -1,0 +1,17 @@
+# Guardrails: fichiers sensibles => review requise (effectif si branch protection activée)
+
+# Tracking
+/hooks/useTunnelTracking.ts @guillaumestehelin
+/lib/analytics/ga4.ts @guillaumestehelin
+/lib/api/client.ts @guillaumestehelin
+
+# Form state (champs)
+/hooks/useTunnelState.ts @guillaumestehelin
+
+# DB / Prisma
+/prisma/schema.prisma @guillaumestehelin
+/prisma/migrations/ @guillaumestehelin
+
+# Journal obligatoire
+/migration_v4.md @guillaumestehelin
+

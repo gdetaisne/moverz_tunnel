@@ -1,0 +1,28 @@
+## Cursor rules — Tunnel V4 (staging)
+Répondre en français, concis.
+
+### Règles de sécurité (NON NÉGOCIABLE)
+- **Interdit de toucher à `main`** (aucun commit, aucune PR, aucune modif).
+- Travailler **uniquement** sur la branche `staging`.
+- **Interdit de tester en local**. Les tests se font **uniquement sur staging** (CapRover) après push.
+- **DB / Prisma**: interdit de modifier `prisma/schema.prisma`, `prisma/migrations/**` (aucune migration, aucun changement de schéma).
+- **Champs**: interdit de supprimer des champs / inputs existants du tunnel (ils doivent rester disponibles pour les clients).
+- **Nouveaux inputs**: en principe interdits. Si prototypage exceptionnel:
+  - ils doivent être **clairement marqués “non connecté”** dans l’UI,
+  - ils ne doivent pas être envoyés au Back Office,
+  - et ils doivent être documentés dans `migration_v4.md`.
+
+### Tracking (GA4 / Back Office)
+- Le tracking doit rester **stable**: `logicalStep` est la source de vérité “métier”.
+- `screenId` doit être **explicite** et lié à l’écran UI (ex: `project_v4`), **jamais** dérivé d’un index d’étape.
+- Si l’ordre des steps change: on conserve le mapping `logicalStep` correct. Exemple: si l’ancienne “Step 2” devient la 3, alors l’event `PROJECT` doit rester `PROJECT` (et non “Step 3”).
+
+### Workflow obligatoire
+- Petits commits fréquents.
+- Après chaque modification de code ou décision: **mettre à jour `migration_v4.md`**.
+- Dans le message de fin (chat), écrire exactement: **Migration_v4 à jour**.
+
+### Mobile-first
+- Penser **mobile first** (CTA visibles, typographie lisible, pas de layout desktop qui casse mobile).
+- Desktop ensuite, sans compromettre mobile.
+

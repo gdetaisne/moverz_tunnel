@@ -903,7 +903,7 @@ function DevisGratuitsV3Content() {
         document.getElementById("contact-firstName")?.scrollIntoView({ behavior: "smooth", block: "center" });
         (document.getElementById("contact-firstName") as any)?.focus?.();
       });
-      trackError("VALIDATION_ERROR", "Invalid firstName", 1, "CONTACT");
+      trackError("VALIDATION_ERROR", "Invalid firstName", 1, "CONTACT", "contact_v3");
       return;
     }
 
@@ -913,7 +913,7 @@ function DevisGratuitsV3Content() {
         document.getElementById("contact-email")?.scrollIntoView({ behavior: "smooth", block: "center" });
         (document.getElementById("contact-email") as any)?.focus?.();
       });
-      trackError("VALIDATION_ERROR", "Invalid email", 1, "CONTACT");
+      trackError("VALIDATION_ERROR", "Invalid email", 1, "CONTACT", "contact_v3");
       return;
     }
 
@@ -948,11 +948,11 @@ function DevisGratuitsV3Content() {
 
       setConfirmationRequested(false);
       setShowValidationStep1(false);
-      trackStepChange(1, 2, "CONTACT", "PROJECT", "forward");
+      trackStepChange(1, 2, "CONTACT", "PROJECT", "project_v3", "forward");
       goToStep(2);
     } catch (err: any) {
       console.error("Error creating/updating lead:", err);
-      trackError("API_ERROR", err.message || "Failed to create/update lead", 1, "CONTACT");
+      trackError("API_ERROR", err.message || "Failed to create/update lead", 1, "CONTACT", "contact_v3");
     }
   }
 
@@ -1006,7 +1006,7 @@ function DevisGratuitsV3Content() {
               ) as HTMLElement | null);
         focusable?.focus?.();
       });
-      trackError("VALIDATION_ERROR", "Invalid project fields", 2, "PROJECT");
+      trackError("VALIDATION_ERROR", "Invalid project fields", 2, "PROJECT", "project_v3");
       return;
     }
 
@@ -1112,12 +1112,12 @@ function DevisGratuitsV3Content() {
         }
       }
 
-      trackStepChange(2, 3, "PROJECT", "RECAP", "forward");
+      trackStepChange(2, 3, "PROJECT", "RECAP", "formules_v3", "forward");
       setShowValidationStep2(false);
       goToStep(3);
     } catch (err: any) {
       console.error("Error updating lead:", err);
-      trackError("API_ERROR", err.message || "Failed to update lead", 2, "PROJECT");
+      trackError("API_ERROR", err.message || "Failed to update lead", 2, "PROJECT", "project_v3");
     }
   }
 
@@ -1131,7 +1131,7 @@ function DevisGratuitsV3Content() {
         document.getElementById("surfaceM2")?.scrollIntoView({ behavior: "smooth", block: "center" });
         (document.getElementById("surfaceM2") as any)?.focus?.();
       });
-      trackError("VALIDATION_ERROR", "Invalid surface", 3, "RECAP");
+      trackError("VALIDATION_ERROR", "Invalid surface", 3, "RECAP", "formules_v3");
       return;
     }
 
@@ -1254,13 +1254,13 @@ function DevisGratuitsV3Content() {
         // côté Back Office (Option A).
       }
 
-      trackStepChange(3, 4, "RECAP", "THANK_YOU", "forward");
+      trackStepChange(3, 4, "RECAP", "THANK_YOU", "confirmation_v3", "forward");
       trackCompletion({ leadId: effectiveLeadId ?? null });
       setShowValidationStep3(false);
       goToStep(4);
     } catch (err: any) {
       console.error("Error finalizing lead:", err);
-      trackError("API_ERROR", err.message || "Failed to finalize lead", 3, "RECAP");
+      trackError("API_ERROR", err.message || "Failed to finalize lead", 3, "RECAP", "formules_v3");
     }
   }
 
@@ -1417,11 +1417,18 @@ function DevisGratuitsV3Content() {
                   3: "RECAP",
                   4: "THANK_YOU",
                 } as const;
+                const screenMap = {
+                  1: "contact_v3",
+                  2: "project_v3",
+                  3: "formules_v3",
+                  4: "confirmation_v3",
+                } as const;
                 trackStepChange(
                   state.currentStep,
                   prevStep,
                   stepMap[state.currentStep as 1 | 2 | 3 | 4],
                   stepMap[prevStep],
+                  screenMap[prevStep],
                   "back"
                 );
                 goToStep(prevStep);
