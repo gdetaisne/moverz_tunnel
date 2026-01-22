@@ -1454,6 +1454,9 @@ function DevisGratuitsV3Content() {
                 onPhoneChange={(v) => updateField("phone", v)}
                 onSubmit={handleSubmitContactV2}
                 isSubmitting={false}
+                estimateMinEur={estimateRange?.minEur ?? null}
+                estimateMaxEur={estimateRange?.maxEur ?? null}
+                estimateIsIndicative={estimateIsIndicative}
               />
             </div>
           )}

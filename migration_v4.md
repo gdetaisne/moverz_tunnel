@@ -112,24 +112,45 @@
   - Vérifier que `NEXT_PUBLIC_FUNNEL_V2` disparaît bien de la liste des build-args “not consumed” dans les logs.
   - Vérifier que `/devis-gratuits-v3` affiche bien la V2 lorsque le flag est à `true`.
 
-### 2026-01-21 — V2: m² en étape 1 + options en fin d’étape 3
+### 2026-01-21 — V2: m² en étape 1 + options en fin d'étape 3
 
 - **Date**: 2026-01-21
 - **Auteur**: (v2-ux-iterate)
-- **Décision**: rapprocher encore le flow V2 de la vision produit en rendant la surface explicite dès l’étape 1 et en réintégrant les services optionnels en fin d’étape 3, sans alourdir la charge cognitive.
+- **Décision**: rapprocher encore le flow V2 de la vision produit en rendant la surface explicite dès l'étape 1 et en réintégrant les services optionnels en fin d'étape 3, sans alourdir la charge cognitive.
 - **Changements UI** (flag V2 uniquement):
-  - Step 1 (Qualification): ajout d’un champ `Surface approximative (m²)` sous “Type de logement”, lié à `surfaceM2` (déjà utilisé par le moteur de pricing).
-  - Step 3 (Accès & logistique): question accès mise au pluriel (“accès départ & arrivée”), même logique simple/contraint + sous-questions progressives; ajout en bas d’un accordéon “Options supplémentaires (facultatif)” contenant les mêmes toggles services qu’en V1 (garde-meuble, nettoyage/débarras, etc.) + textarea “Précisions”.
+  - Step 1 (Qualification): ajout d'un champ `Surface approximative (m²)` sous "Type de logement", lié à `surfaceM2` (déjà utilisé par le moteur de pricing).
+  - Step 3 (Accès & logistique): question accès mise au pluriel ("accès départ & arrivée"), même logique simple/contraint + sous-questions progressives; ajout en bas d'un accordéon "Options supplémentaires (facultatif)" contenant les mêmes toggles services qu'en V1 (garde-meuble, nettoyage/débarras, etc.) + textarea "Précisions".
 - **Tracking**:
   - Pas de nouveau screenId; comportement inchangé côté events (toujours `acces_v2` pour la step).
 - **Champs / Inputs**:
-  - `surfaceM2` déjà existant, simplement éditable dès l’étape 1 V2.
+  - `surfaceM2` déjà existant, simplement éditable dès l'étape 1 V2.
   - Services optionnels V1 réutilisent les mêmes champs booléens (`serviceFurnitureStorage`, `serviceCleaning`, etc.) et `specificNotes`.
 - **Back Office payload**:
   - Les options restent envoyées via `tunnelOptions.services` comme avant; aucun changement de schéma.
 - **Risques / points à vérifier sur staging**:
-  - Vérifier que la complétion de l’étape 1 reste rapide (<30s) malgré le champ m².
-  - Vérifier que les services cochés en V2 sont bien visibles dans le Back Office comme aujourd’hui en V1.
+  - Vérifier que la complétion de l'étape 1 reste rapide (<30s) malgré le champ m².
+  - Vérifier que les services cochés en V2 sont bien visibles dans le Back Office comme aujourd'hui en V1.
+
+### 2026-01-21 — V2 Step 4: intégration design ConfirmationPage (hero + euros économisés + mock iPhone)
+
+- **Date**: 2026-01-21
+- **Auteur**: (v2-step4-design)
+- **Décision**: réintégrer le design de l'ancienne `ConfirmationPage` (hero "Photographiez toutes vos pièces", carte "Vous économisez XX €", mock iPhone) dans `StepContactPhotosV2` pour renforcer l'engagement émotionnel et la valeur perçue, tout en conservant les champs de contact en haut.
+- **Changements UI** (flag V2 uniquement):
+  - Step 4 (Contact + Photos): formulaire contact conservé en haut (Prénom optionnel, Email obligatoire, Téléphone optionnel); ajout du hero "Photographiez toutes vos pièces" avec badge "Dossier créé"; carte "Vous économisez XX €" calculée depuis `estimateMaxEur` (3-8% de l'estimation max); mock iPhone réaliste avec conversation WhatsApp simulée; section "Prochaines étapes" avec checkmarks; CTA WhatsApp + upload desktop; bouton submit sticky mobile "Accéder à mes devis".
+- **Tracking**:
+  - Pas de changement de screenId (`contact_v2` inchangé).
+- **Champs / Inputs**:
+  - Aucun changement (formulaire contact inchangé).
+- **Back Office payload**:
+  - Aucun changement (payload identique).
+- **Notes techniques**:
+  - `StepContactPhotosV2` reçoit désormais `estimateMinEur`, `estimateMaxEur`, `estimateIsIndicative` depuis `page.tsx` pour calculer et afficher les économies.
+  - Design responsive: hero + mock iPhone en grid lg:grid-cols sur desktop, empilés sur mobile.
+- **Risques / points à vérifier sur staging**:
+  - Vérifier l'affichage du hero + mock iPhone sur mobile (pas de débordement, scroll fluide).
+  - Vérifier que la carte "Vous économisez" s'affiche uniquement si `hasEstimate` est vrai.
+  - Vérifier que le formulaire contact reste accessible et fonctionnel avant le hero.
 
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
