@@ -281,6 +281,14 @@
 - **Notes techniques**:
   - Upload branché sur `uploadBackofficePhotos(backofficeLeadId, files)` (Back Office) — pas de nouveau schéma DB.
 
+### 2026-01-22 — V2 Step 4: mock WhatsApp (avatar sans vert)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-mock-avatar)
+- **Décision**: éviter le vert “WhatsApp” trop présent dans le mock et rester aligné au style Moverz.
+- **Changements UI** (flag V2 uniquement):
+  - Avatar du mock WhatsApp: fond blanc + bordure soft (au lieu de vert).
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21

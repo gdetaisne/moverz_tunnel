@@ -239,7 +239,7 @@ export function StepContactPhotosV2({
                 {/* Header */}
                 <div className="bg-white px-4 py-3 border-b border-gray-200">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[#25D366] flex items-center justify-center overflow-hidden">
+                    <div className="w-8 h-8 rounded-full bg-white border border-[#E3E5E8] shadow-sm flex items-center justify-center overflow-hidden">
                       <img
                         src="/icon.png"
                         alt="Moverz"
