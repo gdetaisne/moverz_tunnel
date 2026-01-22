@@ -34,8 +34,6 @@ export function StepContactPhotosV2({
   } | null>(null);
   const [lastSelection, setLastSelection] = useState<File[]>([]);
   const [showImpactDetails, setShowImpactDetails] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [sendingEmail, setSendingEmail] = useState(false);
   const [mockupAnimationStep, setMockupAnimationStep] = useState(0);
 
   useEffect(() => {
@@ -45,30 +43,31 @@ export function StepContactPhotosV2({
   // Animation du mockup WhatsApp (desktop only)
   useEffect(() => {
     if (!mounted || isMobile) return;
-    
-    const animationTimeline = [
-      { step: 1, delay: 800 },   // Message initial apparaît
-      { step: 2, delay: 1500 },  // Photos apparaissent
-      { step: 3, delay: 2200 },  // Check marks
-      { step: 4, delay: 3000 },  // Réponse finale
-      { step: 0, delay: 5000 },  // Reset pour loop
-    ];
 
-    const timers: NodeJS.Timeout[] = [];
-    let currentDelay = 0;
+    let cancelled = false;
+    let cycleTimers: Array<ReturnType<typeof setTimeout>> = [];
 
-    animationTimeline.forEach(({ step, delay }) => {
-      currentDelay += delay;
-      const timer = setTimeout(() => {
-        setMockupAnimationStep(step);
-      }, currentDelay);
-      timers.push(timer);
-    });
+    const runCycle = () => {
+      cycleTimers.forEach(clearTimeout);
+      cycleTimers = [];
+      if (cancelled) return;
+
+      setMockupAnimationStep(0);
+
+      cycleTimers.push(setTimeout(() => !cancelled && setMockupAnimationStep(1), 800));
+      cycleTimers.push(setTimeout(() => !cancelled && setMockupAnimationStep(2), 1500));
+      cycleTimers.push(setTimeout(() => !cancelled && setMockupAnimationStep(3), 2200));
+      cycleTimers.push(setTimeout(() => !cancelled && setMockupAnimationStep(4), 3000));
+      cycleTimers.push(setTimeout(() => !cancelled && runCycle(), 5000));
+    };
+
+    runCycle();
 
     return () => {
-      timers.forEach(clearTimeout);
+      cancelled = true;
+      cycleTimers.forEach(clearTimeout);
     };
-  }, [mounted, isMobile, mockupAnimationStep]);
+  }, [mounted, isMobile]);
 
   const canUpload = !!leadId && mounted;
 
@@ -162,67 +161,74 @@ export function StepContactPhotosV2({
     void handleUploadFiles(Array.from(e.dataTransfer.files));
   };
 
-  const handleSendWhatsAppEmail = async () => {
-    if (!leadId || !linkingCode) {
-      setUploadError("Identifiant dossier manquant.");
-      return;
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "33752986581";
+  const whatsappMessage = useMemo(() => {
+    if (leadId) {
+      const lines = [
+        "Bonjour, j'ai finalisé le formulaire et je passe aux photos.",
+        `LEAD:${leadId}`,
+      ];
+      if (linkingCode) lines.push(`Code dossier: ${linkingCode}`);
+      return lines.join("\n");
     }
-    setSendingEmail(true);
-    try {
-      // TODO: appeler l'API pour envoyer l'email avec le lien WhatsApp
-      // Simulé pour l'instant
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setEmailSent(true);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erreur lors de l'envoi de l'email.";
-      setUploadError(msg);
-    } finally {
-      setSendingEmail(false);
-    }
+    return linkingCode
+      ? `Bonjour, je veux compléter mon dossier avec des photos.\n\nMon code dossier : ${linkingCode}`
+      : `Bonjour, je voudrais obtenir 3 à 5 devis pour mon déménagement.\n\nVille de départ :\nVille d'arrivée :\nDate souhaitée :\n\nJe vais envoyer des photos de TOUTES les pièces.\n\n1 message/jour max • 0 spam`;
+  }, [leadId, linkingCode]);
+
+  const whatsappLink = useMemo(() => {
+    return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+  }, [whatsappNumber, whatsappMessage]);
+
+  const handleSendWhatsAppEmail = () => {
+    // Sans backend: on ouvre le client mail de l'utilisateur avec un mail pré-rempli
+    const subject = "Votre lien WhatsApp pour envoyer vos photos (Moverz)";
+    const body = `Voici le lien WhatsApp pour envoyer vos photos :\n\n${whatsappLink}\n\nConseil : 3 à 8 photos par pièce (angles larges, bonne lumière).`;
+    const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
   };
 
   // Impact card component (réutilisable)
   const ImpactCard = () =>
     hasEstimate ? (
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] p-[2px] shadow-[0_20px_50px_rgba(15,23,42,0.3)]">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-[#6BCFCF]/30 blur-3xl animate-pulse" />
-          <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-[#6BCFCF]/20 blur-3xl" />
-        </div>
+      <div className="relative overflow-hidden rounded-3xl border border-[#E3E5E8] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
+        {/* Accent turquoise ultra-light */}
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#6BCFCF] via-[#6BCFCF]/60 to-transparent" />
+        <div className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full bg-[#6BCFCF]/14 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-[#6BCFCF]/10 blur-3xl" />
 
-        <div className="relative rounded-[calc(1.5rem-2px)] bg-[#0F172A] p-6 md:p-8">
-          <div className="flex items-center justify-between gap-4 mb-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/50">
+        <div className="relative p-5 md:p-6">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#1E293B]/55">
               Impact des photos
             </p>
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/20 border border-[#6BCFCF]/40 px-3 py-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#6BCFCF] animate-pulse" />
-              <span className="text-[10px] font-bold text-[#6BCFCF]">-10% estimé</span>
-            </div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] border border-[#B7EAE3] px-3 py-1 text-[10px] font-bold text-[#2B7A78]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#6BCFCF]" />
+              -10% estimé
+            </span>
           </div>
 
-          <div className="text-center mb-6">
-            <p className="text-lg md:text-xl font-bold text-white/90 mb-2">Gagnez</p>
-            <div className="inline-block relative">
-              <div className="absolute inset-0 blur-2xl bg-[#6BCFCF]/20" />
-              <p className="relative text-6xl md:text-7xl font-black text-white tabular-nums tracking-tight leading-none">
-                {savingsText ?? "—"}
-              </p>
-            </div>
-            <p className="mt-3 text-sm text-white/60">en ajoutant vos photos maintenant</p>
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-[#0F172A]">Gagnez</p>
+            <p className="mt-1 text-5xl md:text-6xl font-black text-[#0F172A] tabular-nums tracking-tight leading-none">
+              {savingsText ?? "—"}
+            </p>
+            <p className="mt-2 text-sm text-[#1E293B]/70">
+              en ajoutant vos photos maintenant
+            </p>
           </div>
 
-          <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+          <div className="mt-4 rounded-2xl bg-[#F8FAFC] border border-[#E3E5E8] p-4">
             <button
               type="button"
               onClick={() => setShowImpactDetails((v) => !v)}
-              className="w-full flex items-center justify-between group"
+              className="w-full flex items-center justify-between"
             >
-              <span className="text-sm font-semibold text-white/90 group-hover:text-white transition-colors">
+              <span className="text-sm font-semibold text-[#0F172A]">
                 {showImpactDetails ? "Masquer le détail" : "Voir comment on calcule"}
               </span>
               <svg
-                className={`w-5 h-5 text-white/60 transition-transform duration-200 ${
+                className={`w-5 h-5 text-[#1E293B]/60 transition-transform duration-200 ${
                   showImpactDetails ? "rotate-180" : ""
                 }`}
                 fill="none"
@@ -234,24 +240,22 @@ export function StepContactPhotosV2({
             </button>
 
             {showImpactDetails && (
-              <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+              <div className="mt-4 pt-4 border-t border-[#E3E5E8] space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Estimation actuelle</span>
-                  <span className="text-sm font-semibold text-white tabular-nums">
+                  <span className="text-sm text-[#1E293B]/70">Estimation actuelle</span>
+                  <span className="text-sm font-semibold text-[#0F172A] tabular-nums">
                     {`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Avec photos détaillées</span>
-                  <span className="text-sm font-semibold text-[#6BCFCF] tabular-nums">
+                  <span className="text-sm text-[#1E293B]/70">Avec photos détaillées</span>
+                  <span className="text-sm font-semibold text-[#2B7A78] tabular-nums">
                     {`${euro(discountedMin)} – ${euro(discountedMax)}`}
                   </span>
                 </div>
-                <div className="pt-3 border-t border-white/10">
-                  <p className="text-xs text-white/50 leading-relaxed">
-                    Photos complètes → volume et temps mieux estimés → marge d'incertitude réduite → meilleur prix final.
-                  </p>
-                </div>
+                <p className="text-xs text-[#1E293B]/60 leading-relaxed">
+                  Photos complètes → volume/temps mieux estimés → marge d'incertitude réduite → meilleur prix final.
+                </p>
               </div>
             )}
           </div>
@@ -387,6 +391,19 @@ export function StepContactPhotosV2({
         )}
       </div>
 
+      {/* CTA principal (desktop) : ouverture QR/copie lien via WhatsAppCTA */}
+      <div className="max-w-md">
+        <WhatsAppCTA
+          source="tunnel-v2"
+          linkingCode={linkingCode || undefined}
+          leadId={leadId || undefined}
+          variant="primary"
+        />
+        <p className="mt-2 text-xs text-[#1E293B]/60">
+          Scannez le QR code avec votre téléphone, puis envoyez 3–8 photos par pièce.
+        </p>
+      </div>
+
       {/* Grid: Impact card + mockup */}
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <ImpactCard />
@@ -507,31 +524,19 @@ export function StepContactPhotosV2({
       {/* Options desktop */}
       <div className="space-y-4">
         <p className="text-sm font-semibold text-[#0F172A] text-center">
-          Choisissez votre méthode d'envoi
+          Autres options
         </p>
 
-        {/* Option 1: WhatsApp par email */}
-        {!emailSent ? (
-          <button
-            type="button"
-            onClick={handleSendWhatsAppEmail}
-            disabled={!canUpload || sendingEmail}
-            className="w-full rounded-3xl bg-gradient-to-r from-[#6BCFCF] to-[#2B7A78] p-[2px] shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-60"
-          >
-            <div className="rounded-[calc(1.5rem-2px)] bg-white px-6 py-4 flex items-center justify-center gap-3">
-              <Mail className="h-5 w-5 text-[#2B7A78]" />
-              <span className="text-base font-semibold text-[#0F172A]">
-                {sendingEmail ? "Envoi en cours…" : "Recevoir le lien WhatsApp par email"}
-              </span>
-            </div>
-          </button>
-        ) : (
-          <div className="rounded-2xl bg-green-50 border border-green-200 p-4 text-center">
-            <p className="text-sm font-semibold text-green-700">
-              ✓ Email envoyé ! Vérifiez votre boîte de réception.
-            </p>
-          </div>
-        )}
+        {/* Option: envoyer le lien par email (mailto) */}
+        <button
+          type="button"
+          onClick={handleSendWhatsAppEmail}
+          disabled={!canUpload}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#E3E5E8] bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#B7EAE3] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-60"
+        >
+          <Mail className="h-4 w-4 text-[#2B7A78]" />
+          M’envoyer le lien WhatsApp par email
+        </button>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">

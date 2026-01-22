@@ -389,6 +389,26 @@
   - Keyframes CSS custom (`fadeInUp`, `fadeIn`) via style dangerouslySetInnerHTML
   - Animation loop automatique (desktop only, pas sur mobile pour économiser ressources)
 
+### 2026-01-22 — V2 Step 4: allègement design (turquoise Moverz) + CTA desktop prioritaire
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-lighten)
+- **Décision**: alléger la perception visuelle de la dernière étape (moins “lourd/marketing”), remettre le **CTA WhatsApp** comme action principale desktop (sans scroll) et basculer la carte “gain” sur un style **light premium** avec turquoise Moverz.
+- **Changements UI** (flag V2 uniquement):
+  - Carte “Impact des photos”:
+    - Passage d’un fond dark à une carte **claire** (`bg-white`, bordure fine, ombre soft).
+    - Accent turquoise subtil (barre en haut + halos très légers).
+    - Badge `-10% estimé` en pill turquoise soft.
+    - Accordéon conservé mais rendu plus discret/clean.
+  - Desktop:
+    - Ajout du CTA WhatsApp **au-dessus** du fold (QR modal via `WhatsAppCTA`).
+    - L’option “email” devient un bouton secondaire qui ouvre le client mail (mailto) avec lien WhatsApp pré-rempli.
+- **DB / Linking**:
+  - Le lien WhatsApp contient toujours `LEAD:<leadId>` (rattachement BO) + `Code dossier` si présent.
+  - Upload desktop/mobile toujours via `uploadBackofficePhotos(leadId, files)`.
+- **Notes techniques**:
+  - Fix animation mockup: boucle via `runCycle()` + timeouts, sans re-créer de timers à chaque step (évite le leak).
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
