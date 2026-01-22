@@ -269,6 +269,7 @@
 - **Changements UI** (flag V2 uniquement):
   - Carte impact photos: suppression du gros titre “GAGNEZ” + réduction hiérarchie, ajout d’un badge “Impact des photos”, chiffres plus sobres (tabular nums), et avant/après en lignes compactes avec badge “-10%”.
   - Refonte visuelle: layout “dashboard” (gain potentiel à gauche, avant/après à droite), accent gradient discret, copy plus tech (“devis plus précis / moins de marge”).
+  - Nouvelle itération “push photos”: carte plus “WOW” (bloc premium sombre avec économie potentielle), et détails avant/après + hypothèse en accordéon (“Voir le détail”) pour réduire le texte visible.
 
 ### 2026-01-22 — V2 Step 4: upload desktop premium (drag & drop branché)
 
