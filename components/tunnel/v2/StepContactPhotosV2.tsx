@@ -33,10 +33,36 @@ export function StepContactPhotosV2({
     errors: { originalFilename: string; reason: string }[];
   } | null>(null);
   const [lastSelection, setLastSelection] = useState<File[]>([]);
+  const [mockupAnimationStep, setMockupAnimationStep] = useState(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Animation mockup (desktop only)
+  useEffect(() => {
+    if (!mounted || isMobile) return;
+
+    let cancelled = false;
+
+    const runCycle = () => {
+      if (cancelled) return;
+      setMockupAnimationStep(0);
+
+      setTimeout(() => !cancelled && setMockupAnimationStep(1), 600);
+      setTimeout(() => !cancelled && setMockupAnimationStep(2), 1200);
+      setTimeout(() => !cancelled && setMockupAnimationStep(3), 1800);
+      setTimeout(() => !cancelled && setMockupAnimationStep(4), 2400);
+      setTimeout(() => !cancelled && setMockupAnimationStep(5), 3200);
+      setTimeout(() => !cancelled && runCycle(), 5500);
+    };
+
+    runCycle();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mounted, isMobile]);
 
   const canUpload = !!leadId && mounted;
 
@@ -396,6 +422,139 @@ export function StepContactPhotosV2({
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Mockup iPhone (exemple pédagogique: 3-4 photos salon) */}
+      <div className="text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60 mb-6">
+          Exemple : 3-4 photos de votre salon
+        </p>
+        <div className="relative mx-auto w-full max-w-[300px]">
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              @keyframes fadeInUp {
+                from {
+                  opacity: 0;
+                  transform: translateY(10px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+              @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+              }
+            `
+          }} />
+          
+          <div className="relative bg-[#1a1a1a] rounded-[3rem] p-3 shadow-xl">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-[#1a1a1a] rounded-b-3xl z-10" />
+            
+            <div className="bg-[#f5f5f7] rounded-[2.5rem] overflow-hidden relative">
+              {/* Status bar */}
+              <div className="h-12 bg-white flex items-center justify-between px-8 pt-2">
+                <span className="text-[10px] font-semibold">9:41</span>
+                <div className="flex gap-1">
+                  <div className="w-4 h-3 border border-black rounded-sm" />
+                </div>
+              </div>
+              
+              {/* Header */}
+              <div className="bg-white px-4 py-3 border-b border-gray-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-white border border-[#E3E5E8] shadow-sm flex items-center justify-center overflow-hidden">
+                    <img src="/icon.png" alt="Moverz" className="w-5 h-5 object-contain" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-[#0F172A]">Moverz</p>
+                    <p className="text-[10px] text-[#1E293B]/50">en ligne</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Chat content */}
+              <div className="p-3 space-y-2 h-[360px] overflow-hidden bg-[#ECE5DD]">
+                {/* Message initial */}
+                {mockupAnimationStep >= 1 && (
+                  <div className="flex justify-start mb-2 animate-[fadeInUp_0.3s_ease-out]">
+                    <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[80%] shadow-sm">
+                      <p className="text-[10px] text-[#0F172A] leading-relaxed">
+                        Envoyez 3-4 photos de votre salon 📸
+                      </p>
+                      <p className="text-[8px] text-[#1E293B]/40 mt-1">10:42</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Photo 1 */}
+                {mockupAnimationStep >= 2 && (
+                  <div className="flex justify-end mb-1 animate-[fadeInUp_0.3s_ease-out]">
+                    <div className="w-[45%] aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-amber-200 via-orange-100 to-yellow-50 relative shadow-md">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.5)_0%,transparent_60%)]" />
+                      <div className="absolute bottom-0 right-0 w-1/3 h-1/4 bg-gradient-to-tl from-amber-300/40 to-transparent" />
+                      <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-white/70" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Photos 2 & 3 */}
+                {mockupAnimationStep >= 3 && (
+                  <div className="flex justify-end mb-1 animate-[fadeInUp_0.3s_ease-out]">
+                    <div className="grid grid-cols-2 gap-1 w-[65%]">
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 relative shadow-md">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_50%,rgba(255,255,255,0.4)_0%,transparent_60%)]" />
+                        <div className="absolute bottom-1/4 left-1/4 w-4 h-3 bg-orange-200/40 rounded blur-sm" />
+                      </div>
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-yellow-100 via-amber-100 to-orange-50 relative shadow-md">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_40%,rgba(255,255,255,0.6)_0%,transparent_50%)]" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Photo 4 */}
+                {mockupAnimationStep >= 4 && (
+                  <div className="flex justify-end mb-1 animate-[fadeInUp_0.3s_ease-out]">
+                    <div className="w-[45%] aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-amber-100 via-yellow-50 to-orange-100 relative shadow-md">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(255,255,255,0.5)_0%,transparent_60%)]" />
+                      <div className="absolute top-1/3 right-1/3 w-5 h-4 bg-amber-200/30 rounded blur-sm" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Check marks */}
+                {mockupAnimationStep >= 4 && (
+                  <div className="flex justify-end mb-2 animate-[fadeIn_0.2s_ease-out]">
+                    <div className="text-[8px] text-[#1E293B]/40">✓✓ 10:44</div>
+                  </div>
+                )}
+
+                {/* Réponse */}
+                {mockupAnimationStep >= 5 && (
+                  <div className="flex justify-start animate-[fadeInUp_0.3s_ease-out]">
+                    <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[75%] shadow-sm">
+                      <p className="text-[10px] text-[#0F172A]">
+                        Parfait! 🎉 Faites pareil pour chaque pièce
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Input bar */}
+              <div className="bg-[#F0F2F5] border-t border-gray-200 px-3 py-2 flex items-center gap-2">
+                <div className="flex-1 bg-white rounded-full px-3 py-2 text-[10px] text-[#1E293B]/40">
+                  Message
+                </div>
+                <div className="w-7 h-7 rounded-full bg-[#25D366] flex items-center justify-center">
+                  <span className="text-white text-[10px] font-bold">➤</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
