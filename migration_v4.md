@@ -299,6 +299,7 @@
 - **Changements UI** (flag V2 uniquement):
   - En-tête: "Envoyez vos photos…" devient une microcopy (le hero "Photographiez…" reste le titre principal).
   - Mock: remplacement de "iMessage" par "Message", couleur bouton envoi WhatsApp, fond chat WhatsApp.
+  - **Itération mockup**: ajout de **plusieurs photos réalistes** (3 envois successifs: Salon 3 photos, Cuisine 4 photos, Chambres+SdB 3 photos) pour montrer concrètement le flow d'envoi par pièce. Total ~10 photos visibles avec effets de profondeur (radial-gradient) pour rendre les vignettes plus réalistes.
 
 ### 2026-01-22 — V2 Step 4: refonte complète carte Impact Photos (design hero premium)
 
