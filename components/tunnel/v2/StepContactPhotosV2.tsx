@@ -33,41 +33,10 @@ export function StepContactPhotosV2({
     errors: { originalFilename: string; reason: string }[];
   } | null>(null);
   const [lastSelection, setLastSelection] = useState<File[]>([]);
-  const [showImpactDetails, setShowImpactDetails] = useState(false);
-  const [mockupAnimationStep, setMockupAnimationStep] = useState(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Animation du mockup WhatsApp (desktop only)
-  useEffect(() => {
-    if (!mounted || isMobile) return;
-
-    let cancelled = false;
-    let cycleTimers: Array<ReturnType<typeof setTimeout>> = [];
-
-    const runCycle = () => {
-      cycleTimers.forEach(clearTimeout);
-      cycleTimers = [];
-      if (cancelled) return;
-
-      setMockupAnimationStep(0);
-
-      cycleTimers.push(setTimeout(() => !cancelled && setMockupAnimationStep(1), 800));
-      cycleTimers.push(setTimeout(() => !cancelled && setMockupAnimationStep(2), 1500));
-      cycleTimers.push(setTimeout(() => !cancelled && setMockupAnimationStep(3), 2200));
-      cycleTimers.push(setTimeout(() => !cancelled && setMockupAnimationStep(4), 3000));
-      cycleTimers.push(setTimeout(() => !cancelled && runCycle(), 5000));
-    };
-
-    runCycle();
-
-    return () => {
-      cancelled = true;
-      cycleTimers.forEach(clearTimeout);
-    };
-  }, [mounted, isMobile]);
 
   const canUpload = !!leadId && mounted;
 
@@ -78,13 +47,6 @@ export function StepContactPhotosV2({
     Number.isFinite(estimateMaxEur) &&
     estimateMaxEur > 0;
 
-  const euro = (n: number) =>
-    new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-      maximumFractionDigits: 0,
-    }).format(Math.round(n));
-
   const eur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
       maximumFractionDigits: 0,
@@ -92,18 +54,14 @@ export function StepContactPhotosV2({
 
   // Impact photos
   const DISCOUNT_RATE = 0.1;
-  const discountedMin = hasEstimate ? Math.round(estimateMinEur * (1 - DISCOUNT_RATE)) : 0;
-  const discountedMax = hasEstimate ? Math.round(estimateMaxEur * (1 - DISCOUNT_RATE)) : 0;
-  const savingsMin = hasEstimate ? Math.max(0, Math.round(estimateMinEur - discountedMin)) : 0;
-  const savingsMax = hasEstimate ? Math.max(0, Math.round(estimateMaxEur - discountedMax)) : 0;
+  const savingsMin = hasEstimate ? Math.max(0, Math.round(estimateMinEur * DISCOUNT_RATE)) : 0;
+  const savingsMax = hasEstimate ? Math.max(0, Math.round(estimateMaxEur * DISCOUNT_RATE)) : 0;
   const savingsText =
     hasEstimate && savingsMin > 0 && savingsMax > 0
       ? savingsMin === savingsMax
         ? `${eur(savingsMax)} €`
         : `${eur(savingsMin)}–${eur(savingsMax)} €`
       : null;
-
-  const savingsUpToText = hasEstimate && savingsMax > 0 ? `${eur(savingsMax)} €` : null;
 
   const previewUrls = useMemo(() => {
     return lastSelection.map((f) => ({
@@ -123,6 +81,8 @@ export function StepContactPhotosV2({
     fileInputRef.current?.click();
   };
 
+  const MAX_MB = 10;
+
   const handleUploadFiles = async (files: File[]) => {
     setUploadError(null);
     setUploadSummary(null);
@@ -131,37 +91,27 @@ export function StepContactPhotosV2({
       setUploadError("Identifiant dossier manquant. Revenez à l'étape précédente.");
       return;
     }
-    const MAX_MB = 10;
-    const MAX_BYTES = MAX_MB * 1024 * 1024;
-
     const images = files.filter((f) => f.type.startsWith("image/"));
     if (images.length === 0) {
       setUploadError("Ajoutez au moins une image (JPG/PNG/WEBP/HEIC).");
       return;
     }
 
-    const tooLarge = images.filter((f) => f.size > MAX_BYTES);
-    const accepted = images.filter((f) => f.size <= MAX_BYTES);
-    if (accepted.length === 0) {
-      setUploadError(`Fichiers trop lourds. Formats acceptés : JPG/PNG/HEIC – jusqu’à ${MAX_MB} Mo.`);
+    const tooLarge = images.filter((f) => f.size > MAX_MB * 1024 * 1024);
+    if (tooLarge.length > 0) {
+      setUploadError(`${tooLarge.length} photo(s) trop lourdes (max ${MAX_MB} Mo).`);
       return;
     }
 
     setLastSelection(images);
     setUploading(true);
     try {
-      const res = await uploadBackofficePhotos(leadId, accepted);
+      const res = await uploadBackofficePhotos(leadId, images);
       const uploadedCount = res.data.uploaded?.length ?? 0;
       setUploadSummary({
         uploadedCount,
         totalPhotos: res.data.totalPhotos ?? 0,
-        errors: [
-          ...(res.data.errors ?? []),
-          ...tooLarge.map((f) => ({
-            originalFilename: f.name,
-            reason: `Trop lourd (>${MAX_MB} Mo)`,
-          })),
-        ],
+        errors: res.data.errors ?? [],
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue lors de l'upload.";
@@ -179,120 +129,44 @@ export function StepContactPhotosV2({
     void handleUploadFiles(Array.from(e.dataTransfer.files));
   };
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "33752986581";
-  const whatsappMessage = useMemo(() => {
-    if (leadId) {
-      const lines = [
-        "Bonjour, j'ai finalisé le formulaire et je passe aux photos.",
-        `LEAD:${leadId}`,
-      ];
-      if (linkingCode) lines.push(`Code dossier: ${linkingCode}`);
-      return lines.join("\n");
-    }
-    return linkingCode
-      ? `Bonjour, je veux compléter mon dossier avec des photos.\n\nMon code dossier : ${linkingCode}`
-      : `Bonjour, je voudrais obtenir 3 à 5 devis pour mon déménagement.\n\nVille de départ :\nVille d'arrivée :\nDate souhaitée :\n\nJe vais envoyer des photos de TOUTES les pièces.\n\n1 message/jour max • 0 spam`;
-  }, [leadId, linkingCode]);
-
-  const whatsappLink = useMemo(() => {
-    return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
-  }, [whatsappNumber, whatsappMessage]);
-
-  const handleSendWhatsAppEmail = () => {
-    // Sans backend: on ouvre le client mail de l'utilisateur avec un mail pré-rempli
-    const subject = "Votre lien WhatsApp pour envoyer vos photos (Moverz)";
-    const body = `Voici le lien WhatsApp pour envoyer vos photos :\n\n${whatsappLink}\n\nConseil : 3 à 8 photos par pièce (angles larges, bonne lumière).`;
-    const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailto;
-  };
-
-  // Badge gain (léger) + détail repliable
-  const GainBadge = () =>
-    savingsUpToText ? (
-      <span className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] border border-[#B7EAE3] px-3 py-1 text-xs font-semibold text-[#2B7A78]">
-        <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
-        Ajoutez des photos → gagnez jusqu’à {savingsUpToText}
-      </span>
-    ) : null;
-
-  const GainDetails = () =>
-    hasEstimate ? (
-      <div className="rounded-2xl border border-[#E3E5E8] bg-white p-4">
-        <button
-          type="button"
-          onClick={() => setShowImpactDetails((v) => !v)}
-          className="w-full flex items-center justify-between"
-        >
-          <span className="text-sm font-semibold text-[#0F172A]">
-            {showImpactDetails ? "Masquer le détail" : "Voir le détail du gain"}
-          </span>
-          <svg
-            className={`w-5 h-5 text-[#1E293B]/60 transition-transform duration-200 ${
-              showImpactDetails ? "rotate-180" : ""
-            }`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {showImpactDetails && (
-          <div className="mt-4 pt-4 border-t border-[#E3E5E8] space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#1E293B]/70">Estimation actuelle</span>
-              <span className="text-sm font-semibold text-[#0F172A] tabular-nums">
-                {`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#1E293B]/70">Avec photos détaillées</span>
-              <span className="text-sm font-semibold text-[#2B7A78] tabular-nums">
-                {`${euro(discountedMin)} – ${euro(discountedMax)}`}
-              </span>
-            </div>
-            <p className="text-xs text-[#1E293B]/60 leading-relaxed">
-              Hypothèse : photos complètes → volume/temps mieux estimés → marge d’incertitude réduite.
-            </p>
-          </div>
-        )}
-      </div>
-    ) : null;
-
   // Mobile layout
   if (mounted && isMobile) {
     return (
-      <div className="space-y-6 pb-28">
-        {/* Header */}
-        <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
-            Dernière étape
+      <div className="space-y-6">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] px-3 py-1.5 text-xs font-semibold text-[#2B7A78]">
+            <Check className="w-3.5 h-3.5" strokeWidth={3} />
+            Dossier créé
+          </div>
+          <h1 className="text-3xl font-black text-[#0F172A]">
+            Ajoutez vos photos
+          </h1>
+          <p className="text-sm text-[#1E293B]/70">
+            3–8 photos par pièce
           </p>
-          <div className="pt-1">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] px-3 py-1 text-xs font-semibold text-[#2B7A78]">
-              <Check className="h-3.5 w-3.5" strokeWidth={3} />
-              Dossier créé
+          {savingsText && (
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] border border-[#6BCFCF]/30 px-4 py-2 text-sm font-semibold text-[#2B7A78]">
+              <span className="text-xs">💰</span>
+              <span>Gagnez jusqu'à {savingsText}</span>
             </div>
-          </div>
-          <h2 className="text-2xl font-black text-[#0F172A]">
-            Prenez quelques photos de votre logement
-          </h2>
-          <div className="pt-1">
-            <GainBadge />
-          </div>
-          {!leadId && (
-            <p className="text-sm text-[#B91C1C]">
-              Une information manque. Revenez à l'étape précédente.
-            </p>
           )}
         </div>
 
-        {/* Option upload mobile */}
+        <WhatsAppCTA 
+          source="tunnel-v2-mobile" 
+          linkingCode={linkingCode || undefined} 
+          leadId={leadId || undefined}
+          variant="primary"
+        />
+        <p className="text-xs text-center text-[#1E293B]/60">
+          🔒 0 spam • <2 min
+        </p>
+
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-[#E3E5E8]"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
+          <div className="relative flex justify-center text-xs">
             <span className="px-4 bg-white text-[#1E293B]/60">ou</span>
           </div>
         </div>
@@ -321,9 +195,6 @@ export function StepContactPhotosV2({
           <Smartphone className="h-5 w-5" />
           {uploading ? "Envoi en cours…" : "Ajouter depuis ce téléphone"}
         </button>
-        <p className="text-xs text-center text-[#1E293B]/60">
-          Une pièce = salon, chambre, cuisine… • JPG/PNG/HEIC jusqu’à 10 Mo
-        </p>
 
         {uploadSummary?.uploadedCount ? (
           <div className="rounded-2xl bg-green-50 border border-green-200 p-4 text-center">
@@ -338,295 +209,77 @@ export function StepContactPhotosV2({
             <p className="text-sm font-medium text-red-700">{uploadError}</p>
           </div>
         )}
-
-        {!!uploadSummary?.errors?.length && (
-          <div className="rounded-2xl border border-[#E3E5E8] bg-[#F8FAFC] p-4">
-            <p className="text-xs font-semibold text-[#0F172A]">Quelques fichiers n’ont pas été pris en compte</p>
-            <div className="mt-2 space-y-1">
-              {uploadSummary.errors.slice(0, 3).map((e) => (
-                <p key={e.originalFilename} className="text-xs text-[#1E293B]/70">
-                  <span className="font-semibold">{e.originalFilename}:</span> {e.reason}
-                </p>
-              ))}
-              {uploadSummary.errors.length > 3 && (
-                <p className="text-xs text-[#1E293B]/60">
-                  +{uploadSummary.errors.length - 3} autres erreurs
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        <GainDetails />
-
-        {/* Sticky CTA WhatsApp (mobile) */}
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E3E5E8] bg-white/90 backdrop-blur">
-          <div className="mx-auto max-w-3xl px-4 py-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#0F172A]">Recommandé</span>
-              <span className="text-xs text-[#1E293B]/60">⏱ &lt; 2 min • 🔒 0 spam</span>
-            </div>
-            <WhatsAppCTA
-              source="tunnel-v2-mobile"
-              linkingCode={linkingCode || undefined}
-              leadId={leadId || undefined}
-              variant="primary"
-              label="Envoyer mes photos sur WhatsApp"
-              sublabel="Recommandé • moins de 2 minutes"
-            />
-            <p className="text-[11px] text-center text-[#1E293B]/60">
-              Uniquement pour recevoir vos photos • Stop quand vous voulez
-            </p>
-          </div>
-        </div>
       </div>
     );
   }
 
-  // Desktop layout
+  // Desktop layout (ULTRA-SIMPLE)
   return (
-    <div className="space-y-8">
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(10px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-            }
-            to {
-              opacity: 1;
-            }
-          }
-        `
-      }} />
-      
-      {/* Header */}
-      <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
-          Dernière étape
+    <div className="max-w-2xl mx-auto space-y-10">
+      {/* Header minimal */}
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] px-3 py-1.5 text-xs font-semibold text-[#2B7A78]">
+          <Check className="w-3.5 h-3.5" strokeWidth={3} />
+          Dossier créé
+        </div>
+        <h1 className="text-4xl md:text-5xl font-black text-[#0F172A] leading-tight">
+          Ajoutez vos photos
+        </h1>
+        <p className="text-base text-[#1E293B]/70">
+          3–8 photos par pièce • angles larges • bonne lumière
         </p>
-        <div className="pt-1">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] px-3 py-1 text-xs font-semibold text-[#2B7A78]">
-            <Check className="h-3.5 w-3.5" strokeWidth={3} />
-            Dossier créé
+        {savingsText && (
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] border border-[#6BCFCF]/30 px-4 py-2 text-sm font-semibold text-[#2B7A78]">
+            <span className="text-xs">💰</span>
+            <span>Gagnez jusqu'à {savingsText}</span>
           </div>
-        </div>
-        <h2 className="text-3xl font-black text-[#0F172A]">
-          Prenez quelques photos de votre logement
-        </h2>
-        <p className="text-sm text-[#1E293B]/70">
-          3–8 photos par pièce • angles larges • bonne lumière • sans blabla
-        </p>
-        <div className="pt-2">
-          <GainBadge />
-        </div>
-        {!leadId && (
-          <p className="text-sm text-[#B91C1C]">
-            Une information manque. Revenez à l'étape précédente pour renseigner votre email.
-          </p>
         )}
       </div>
 
-      {/* CTA principal (desktop) : ouverture QR/copie lien via WhatsAppCTA */}
-      <div className="max-w-md">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-[#0F172A]">Recommandé</span>
-          <span className="text-xs text-[#1E293B]/60">⏱ &lt; 2 min • 🔒 0 spam</span>
-        </div>
-        <WhatsAppCTA
-          source="tunnel-v2"
-          linkingCode={linkingCode || undefined}
+      {/* CTA WhatsApp (principal) */}
+      <div className="space-y-3">
+        <WhatsAppCTA 
+          source="tunnel-v2-desktop" 
+          linkingCode={linkingCode || undefined} 
           leadId={leadId || undefined}
           variant="primary"
-          label="Envoyer mes photos sur WhatsApp"
-          sublabel="Recommandé • QR code"
         />
-        <p className="mt-2 text-xs text-[#1E293B]/60">
-          Scannez le QR code avec votre téléphone, envoyez les photos — on s’occupe du reste.
-        </p>
-        <p className="mt-1 text-xs text-[#1E293B]/60">
-          Déjà <span className="font-semibold text-[#0F172A]">12 483</span> dossiers envoyés • ⭐️ 4,8/5 “Simple et rapide”
+        <p className="text-xs text-center text-[#1E293B]/60">
+          🔒 0 spam • uniquement pour recevoir vos photos • <2 min
         </p>
       </div>
 
-      {/* Grid: Impact card + mockup */}
-      <div className="grid lg:grid-cols-2 gap-8 items-start">
-        <div className="rounded-2xl border border-[#E3E5E8] bg-white p-6">
-          <p className="text-sm font-semibold text-[#0F172A]">1 action, et c’est fait</p>
-          <div className="mt-3 space-y-2 text-sm text-[#1E293B]/70">
-            <p>
-              <span className="font-semibold text-[#0F172A]">1.</span> Envoyez vos photos
-            </p>
-            <p>
-              <span className="font-semibold text-[#0F172A]">2.</span> On s’occupe du reste
-            </p>
-          </div>
-          <div className="mt-4 text-xs text-[#1E293B]/60">
-            🔒 Aucun spam • uniquement pour recevoir vos photos
-          </div>
-          <div className="mt-3">
-            <GainBadge />
-          </div>
-        </div>
-        
-        {/* Mockup iPhone - compact */}
-        <div className="relative">
-          <div className="relative mx-auto w-full max-w-[280px]">
-            <div className="relative bg-[#1a1a1a] rounded-[3rem] p-3 shadow-2xl">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-[#1a1a1a] rounded-b-3xl z-10" />
-              
-              <div className="bg-[#f5f5f7] rounded-[2.5rem] overflow-hidden relative">
-                <div className="h-12 bg-white flex items-center justify-between px-8 pt-2">
-                  <span className="text-[10px] font-semibold">9:41</span>
-                  <div className="flex gap-1">
-                    <div className="w-4 h-3 border border-black rounded-sm" />
-                  </div>
-                </div>
-                
-                <div className="bg-white px-4 py-3 border-b border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-white border border-[#E3E5E8] shadow-sm flex items-center justify-center overflow-hidden">
-                      <img src="/icon.png" alt="Moverz" className="w-5 h-5 object-contain" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-[#0F172A]">Moverz</p>
-                      <p className="text-[10px] text-[#1E293B]/50">en ligne</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-3 space-y-2 h-[380px] overflow-hidden bg-[#ECE5DD] relative">
-                  {/* Mini step (projection) */}
-                  {mockupAnimationStep >= 1 && (
-                    <div className="flex justify-center mb-2 animate-[fadeIn_0.2s_ease-out]">
-                      <div className="rounded-full bg-white/70 backdrop-blur px-3 py-1 text-[9px] text-[#0F172A] border border-white/60">
-                        <span className="font-semibold">Envoyez vos photos</span> → on s’occupe du reste
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Message initial */}
-                  {mockupAnimationStep >= 1 && (
-                    <div className="flex justify-start mb-2 animate-[fadeInUp_0.3s_ease-out]">
-                      <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[75%] shadow-sm">
-                        <p className="text-[10px] text-[#0F172A] leading-relaxed">
-                          Envoyez <strong>3-8 photos</strong> 📸 par pièce
-                        </p>
-                        <p className="text-[8px] text-[#1E293B]/40 mt-1">10:42</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Typing indicator */}
-                  {mockupAnimationStep === 1 && (
-                    <div className="flex justify-end mb-1">
-                      <div className="bg-white rounded-2xl px-3 py-2 shadow-sm flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#1E293B]/40 animate-pulse" style={{ animationDelay: '0ms' }} />
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#1E293B]/40 animate-pulse" style={{ animationDelay: '150ms' }} />
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#1E293B]/40 animate-pulse" style={{ animationDelay: '300ms' }} />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Photos grid avec effets réalistes */}
-                  {mockupAnimationStep >= 2 && (
-                    <div className="flex justify-end mb-1 animate-[fadeInUp_0.4s_ease-out]">
-                      <div className="grid grid-cols-2 gap-0.5 max-w-[75%]">
-                        {/* Photo 1: Salon lumineux */}
-                        <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-amber-200 via-orange-100 to-yellow-50 relative shadow-sm">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.4)_0%,transparent_50%)]" />
-                          <div className="absolute bottom-0 right-0 w-1/3 h-1/4 bg-gradient-to-tl from-amber-300/30 to-transparent" />
-                          <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-white/60" />
-                        </div>
-                        {/* Photo 2: Cuisine moderne */}
-                        <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-blue-100 via-cyan-50 to-slate-100 relative shadow-sm">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.5)_0%,transparent_60%)]" />
-                          <div className="absolute bottom-0 left-0 w-1/4 h-1/3 bg-gradient-to-tr from-blue-200/30 to-transparent" />
-                          <div className="absolute top-1/3 right-1/4 w-3 h-1 bg-white/40 blur-[1px]" />
-                        </div>
-                        {/* Photo 3: Chambre cosy */}
-                        <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 via-pink-50 to-rose-50 relative shadow-sm">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.3)_0%,transparent_50%)]" />
-                          <div className="absolute bottom-1/4 right-1/3 w-4 h-3 bg-purple-200/40 rounded blur-sm" />
-                        </div>
-                        {/* Photo 4: Salle de bain */}
-                        <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-teal-100 via-emerald-50 to-green-50 relative shadow-sm">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_60%,rgba(255,255,255,0.6)_0%,transparent_50%)]" />
-                          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/70 rounded-full blur-[0.5px]" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Check marks */}
-                  {mockupAnimationStep >= 3 && (
-                    <div className="flex justify-end mb-2 animate-[fadeIn_0.2s_ease-out]">
-                      <div className="text-[8px] text-[#1E293B]/40">✓✓ 10:44</div>
-                    </div>
-                  )}
-
-                  {/* Réponse finale */}
-                  {mockupAnimationStep >= 4 && (
-                    <div className="flex justify-start animate-[fadeInUp_0.3s_ease-out]">
-                      <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[75%] shadow-sm">
-                        <p className="text-[10px] text-[#0F172A]">
-                          Parfait! 🎉 Devis sous <strong>48-72h</strong>
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="bg-[#F0F2F5] border-t border-gray-200 px-3 py-2 flex items-center gap-2">
-                  <div className="flex-1 bg-white rounded-full px-3 py-2 text-[10px] text-[#1E293B]/40">
-                    Message
-                  </div>
-                  <div className="w-7 h-7 rounded-full bg-[#25D366] flex items-center justify-center">
-                    <span className="text-white text-[10px] font-bold">➤</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Options desktop */}
+      {/* Alternatives discrètes */}
       <div className="space-y-4">
-        <p className="text-sm font-semibold text-[#0F172A] text-center">
-          Autres options
-        </p>
-
-        {/* Option: envoyer le lien par email (mailto) */}
-        <button
-          type="button"
-          onClick={handleSendWhatsAppEmail}
-          disabled={!canUpload}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#E3E5E8] bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#B7EAE3] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-60"
-        >
-          <Mail className="h-4 w-4 text-[#2B7A78]" />
-          M’envoyer le lien WhatsApp par email
-        </button>
-
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-[#E3E5E8]"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
+          <div className="relative flex justify-center text-xs">
             <span className="px-4 bg-white text-[#1E293B]/60">ou</span>
           </div>
         </div>
 
-        {/* Option 2: Dropzone */}
+        {/* Email WhatsApp link */}
+        <button
+          type="button"
+          onClick={() => {
+            const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "33752986581";
+            const message = leadId
+              ? `Bonjour, j'ai finalisé le formulaire et je passe aux photos.\nLEAD:${leadId}${linkingCode ? `\nCode dossier: ${linkingCode}` : ""}`
+              : `Bonjour, je voudrais obtenir 3 à 5 devis pour mon déménagement.`;
+            const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+            const subject = "Lien WhatsApp Moverz";
+            const body = `Voici le lien WhatsApp pour envoyer vos photos :\n\n${whatsappLink}`;
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+          }}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#E3E5E8] bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#F8F9FA] transition-colors"
+        >
+          <Mail className="h-4 w-4" />
+          M'envoyer le lien par email
+        </button>
+
+        {/* Dropzone */}
         <input
           ref={fileInputRef}
           type="file"
@@ -663,8 +316,8 @@ export function StepContactPhotosV2({
             !leadId
               ? "border-[#E3E5E8] opacity-60"
               : isDragging
-              ? "border-[#6BCFCF] bg-[#F0FAFA] scale-[1.02]"
-              : "border-dashed border-[#E3E5E8] hover:border-[#6BCFCF] hover:bg-[#6BCFCF]/5",
+              ? "border-[#6BCFCF] bg-[#F0FAFA] scale-[1.01]"
+              : "border-dashed border-[#E3E5E8] hover:border-[#6BCFCF]",
           ].join(" ")}
         >
           <div className="flex flex-col items-center gap-4">
@@ -690,10 +343,9 @@ export function StepContactPhotosV2({
                   choisissez des fichiers
                 </button>
               </p>
-              <div className="mt-3 space-y-1 text-xs text-[#1E293B]/60">
-                <p>Une pièce = salon, chambre, cuisine…</p>
-                <p>Formats acceptés : JPG, PNG, HEIC — jusqu’à 10 Mo</p>
-              </div>
+              <p className="mt-3 text-xs text-[#1E293B]/60">
+                JPG, PNG, HEIC — jusqu'à {MAX_MB} Mo par photo
+              </p>
             </div>
 
             {uploadSummary?.uploadedCount ? (
@@ -707,26 +359,6 @@ export function StepContactPhotosV2({
           {uploadError && (
             <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
               <p className="text-sm font-medium text-red-700">{uploadError}</p>
-            </div>
-          )}
-
-          {!!uploadSummary?.errors?.length && (
-            <div className="mt-4 rounded-2xl border border-[#E3E5E8] bg-[#F8FAFC] p-4 text-left">
-              <p className="text-xs font-semibold text-[#0F172A]">
-                Quelques fichiers n’ont pas été pris en compte
-              </p>
-              <div className="mt-2 space-y-1">
-                {uploadSummary.errors.slice(0, 3).map((e) => (
-                  <p key={e.originalFilename} className="text-xs text-[#1E293B]/70">
-                    <span className="font-semibold">{e.originalFilename}:</span> {e.reason}
-                  </p>
-                ))}
-                {uploadSummary.errors.length > 3 && (
-                  <p className="text-xs text-[#1E293B]/60">
-                    +{uploadSummary.errors.length - 3} autres erreurs
-                  </p>
-                )}
-              </div>
             </div>
           )}
 
@@ -768,33 +400,31 @@ export function StepContactPhotosV2({
       </div>
 
       {/* Timeline (projection) */}
-      <div className="rounded-2xl border border-[#E3E5E8] bg-white p-6 text-left">
+      <div className="rounded-2xl border border-[#E3E5E8] bg-white p-6">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60 mb-4">
-          Ensuite, c’est simple
+          Ensuite
         </p>
         <div className="space-y-3 text-sm text-[#1E293B]/70">
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E7FAFA] text-[#2B7A78] text-xs font-bold">
+            <div className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#E7FAFA] text-[#2B7A78] text-xs font-bold">
               1
             </div>
-            <p><span className="font-semibold text-[#0F172A]">Vous envoyez vos photos</span> (3–8 par pièce)</p>
+            <p>Vous envoyez vos photos</p>
           </div>
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E7FAFA] text-[#2B7A78] text-xs font-bold">
+            <div className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#E7FAFA] text-[#2B7A78] text-xs font-bold">
               2
             </div>
-            <p><span className="font-semibold text-[#0F172A]">On prépare automatiquement votre dossier</span> (sans action de votre part)</p>
+            <p>On prépare votre dossier automatiquement</p>
           </div>
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E7FAFA] text-[#2B7A78] text-xs font-bold">
+            <div className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#E7FAFA] text-[#2B7A78] text-xs font-bold">
               3
             </div>
-            <p><span className="font-semibold text-[#0F172A]">Vous recevez 3–5 devis</span> sous 48–72h</p>
+            <p>Vous recevez 3–5 devis sous 48–72h</p>
           </div>
         </div>
       </div>
-
-      <GainDetails />
     </div>
   );
 }

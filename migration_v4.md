@@ -439,7 +439,50 @@
 - **Notes techniques**:
   - Fix animation mockup: boucle via `runCycle()` + timeouts, sans re-créer de timers à chaque step (évite le leak).
 
-### 2026-01-21 — Retrait badge “TEST” (staging)
+### 2026-01-22 — V2 Step 4: refonte ultra-minimaliste (suppression UI surchargée)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-radical-simplify)
+- **Décision**: après feedback "c'est ultra moche, y'a rien qui va", **supprimer 80% des éléments** pour créer une version **ultra-simple, aérée et premium**. Exit: box "1 action", mockup iPhone, preuve sociale fake, badge gain en double, micro-copy partout.
+- **Changements UI** (flag V2 uniquement):
+  - **Supprimé** (trop lourd):
+    - Grid 2 colonnes (impact card dark + mockup iPhone)
+    - Box "1 action, et c'est fait" (redondante avec le reste)
+    - Mockup iPhone animé (prend trop de place pour rien)
+    - Preuve sociale "12 483 dossiers envoyés • ⭐ 4,8/5" (fait fake)
+    - Badge gain affiché 2× (dédoublonnage)
+    - Carte impact dark (fond noir/gradient) → trop lourd visuellement
+    - Micro-copy "Recommandé" / "< 2 min" au-dessus du CTA (redondant)
+    - Toutes les animations mockup + timers (inutiles maintenant)
+  - **Conservé** (essentiel uniquement):
+    - Badge "Dossier créé" (pill turquoise, rassure)
+    - Titre "Ajoutez vos photos" (clair, actionnable)
+    - Sous-titre "3–8 photos par pièce • angles larges • bonne lumière"
+    - **1 badge gain** (turquoise) : "💰 Gagnez jusqu'à XXX€" (1 seule fois, pas de double)
+    - **1 CTA WhatsApp** (principal, vert, gros, via `WhatsAppCTA`)
+    - Micro-copy sous CTA : "🔒 0 spam • < 2 min"
+    - Alternatives secondaires (email / dropzone) très discrètes (séparateur "ou", pas de gros blocs)
+    - Timeline "Ensuite" (3 steps : envoi → préparation auto → devis 48-72h)
+  - **Layout**:
+    - Desktop: centré `max-w-2xl mx-auto`, espacement généreux (`space-y-10`)
+    - Mobile: idem, layout vertical simple
+    - Beaucoup d'**espace blanc** (breathing room)
+  - **Palette**: turquoise Moverz partout (badge, gain, dropzone hover), vert WhatsApp uniquement sur le bouton WhatsApp (cohérence)
+- **Objectif UX**:
+  - **1 action dominante** (WhatsApp) sans concurrence visuelle
+  - **Hiérarchie ultra-nette** (badge → titre → gain → CTA → alternatives → timeline)
+  - **Premium/aéré** (typographie respirable, shadows subtiles, **pas de gros blocs sombres**)
+  - **Conversion** (moins de friction cognitive, clarté immédiate, scroll minimal)
+- **Tracking / payload**:
+  - Source tracking: `tunnel-v2-desktop` / `tunnel-v2-mobile`
+  - Upload toujours via `uploadBackofficePhotos(leadId, files)` → DB inchangée
+  - WhatsApp garde `LEAD:<leadId>` + code dossier → rattachement BO OK
+- **Notes techniques**:
+  - Code réduit de ~400 lignes (suppression mockup + animations + grid + box "1 action")
+  - Email WhatsApp: `mailto:` avec lien WhatsApp pré-rempli (pas de backend, pas de "simulé")
+  - Dropzone: validation fichiers > 10 Mo + affichage erreur inline
+
+### 2026-01-21 — Retrait badge "TEST" (staging)
 
 - **Date**: 2026-01-21
 - **Auteur**: (cleanup)
