@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Check, Upload } from "lucide-react";
+import { useMemo, useRef, useState, useEffect } from "react";
+import { Check, Upload, ImagePlus, X, Loader2 } from "lucide-react";
 import WhatsAppCTA from "@/components/tunnel/WhatsAppCTA";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
+import { uploadBackofficePhotos } from "@/lib/api/client";
 
 interface StepContactPhotosV2Props {
   leadId?: string | null;
@@ -22,10 +23,22 @@ export function StepContactPhotosV2({
 }: StepContactPhotosV2Props) {
   const { isMobile } = useDeviceDetection();
   const [mounted, setMounted] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSummary, setUploadSummary] = useState<{
+    uploadedCount: number;
+    totalPhotos: number;
+    errors: { originalFilename: string; reason: string }[];
+  } | null>(null);
+  const [lastSelection, setLastSelection] = useState<File[]>([]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const canUpload = !!leadId && mounted && !isMobile;
 
   const hasEstimate =
     typeof estimateMinEur === "number" &&
@@ -59,6 +72,67 @@ export function StepContactPhotosV2({
         ? `${eur(savingsMax)} €`
         : `${eur(savingsMin)}–${eur(savingsMax)} €`
       : null;
+
+  const previewUrls = useMemo(() => {
+    // Previews uniquement pour la dernière sélection (évite de stocker trop d’URLs)
+    return lastSelection.map((f) => ({
+      name: f.name,
+      url: URL.createObjectURL(f),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastSelection]);
+
+  useEffect(() => {
+    return () => {
+      // cleanup
+      for (const p of previewUrls) URL.revokeObjectURL(p.url);
+    };
+  }, [previewUrls]);
+
+  const openFilePicker = () => {
+    if (!canUpload) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleUploadFiles = async (files: File[]) => {
+    setUploadError(null);
+    setUploadSummary(null);
+
+    if (!leadId) {
+      setUploadError("Identifiant dossier manquant. Revenez à l’étape précédente.");
+      return;
+    }
+    const images = files.filter((f) => f.type.startsWith("image/"));
+    if (images.length === 0) {
+      setUploadError("Ajoutez au moins une image (JPG/PNG/WEBP/HEIC).");
+      return;
+    }
+
+    setLastSelection(images);
+    setUploading(true);
+    try {
+      const res = await uploadBackofficePhotos(leadId, images);
+      const uploadedCount = res.data.uploaded?.length ?? 0;
+      setUploadSummary({
+        uploadedCount,
+        totalPhotos: res.data.totalPhotos ?? 0,
+        errors: res.data.errors ?? [],
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur inconnue lors de l’upload.";
+      setUploadError(msg);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (!canUpload || uploading) return;
+    void handleUploadFiles(Array.from(e.dataTransfer.files));
+  };
 
   return (
     <div className="space-y-8">
@@ -284,19 +358,168 @@ export function StepContactPhotosV2({
                 </div>
               </div>
 
-              <button
-                onClick={() => {
-                  const url = new URL("/upload-photos", window.location.origin);
-                  if (leadId) url.searchParams.set("leadId", leadId);
-                  if (linkingCode) url.searchParams.set("code", linkingCode);
-                  window.location.href = url.toString();
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const files = e.target.files ? Array.from(e.target.files) : [];
+                  if (!files.length) return;
+                  void handleUploadFiles(files);
+                  // reset value so selecting same files again works
+                  e.target.value = "";
                 }}
-                disabled={!leadId}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white border-2 border-[#E3E5E8] px-8 py-4 text-base font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#6BCFCF]/5 transition-all duration-200"
+              />
+
+              <div
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!canUpload || uploading) return;
+                  setIsDragging(true);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDragging(false);
+                }}
+                onDrop={onDrop}
+                className={[
+                  "w-full rounded-3xl border-2 bg-white p-5 text-left transition-all duration-200",
+                  !leadId
+                    ? "border-[#E3E5E8] opacity-60"
+                    : isDragging
+                    ? "border-[#6BCFCF] bg-[#F0FAFA]"
+                    : "border-dashed border-[#E3E5E8] hover:border-[#6BCFCF] hover:bg-[#6BCFCF]/5",
+                ].join(" ")}
               >
-                <Upload className="w-5 h-5" />
-                <span>Depuis cet ordinateur</span>
-              </button>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#6BCFCF]/15 text-[#2B7A78]">
+                      {uploading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <ImagePlus className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[#0F172A]">
+                        Glissez-déposez vos photos ici
+                      </p>
+                      <p className="mt-1 text-sm text-[#1E293B]/70">
+                        ou{" "}
+                        <button
+                          type="button"
+                          onClick={openFilePicker}
+                          disabled={!canUpload || uploading}
+                          className="font-semibold text-[#0F172A] underline underline-offset-2"
+                        >
+                          choisissez des fichiers
+                        </button>
+                      </p>
+                      <p className="mt-2 text-xs text-[#1E293B]/60">
+                        Idéalement 3–8 photos par pièce (bonne lumière, angles larges).
+                      </p>
+                    </div>
+                  </div>
+
+                  {uploadSummary?.uploadedCount ? (
+                    <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                      {uploadSummary.uploadedCount} envoyées
+                    </div>
+                  ) : null}
+                </div>
+
+                {(uploadError || uploadSummary?.errors?.length) && (
+                  <div className="mt-4 rounded-2xl border border-[#E3E5E8] bg-[#F8F9FA] p-4">
+                    {uploadError && (
+                      <p className="text-sm font-medium text-[#B91C1C]">{uploadError}</p>
+                    )}
+                    {!!uploadSummary?.errors?.length && (
+                      <div className="mt-2 space-y-1">
+                        {uploadSummary.errors.slice(0, 3).map((e) => (
+                          <p key={e.originalFilename} className="text-xs text-[#1E293B]/70">
+                            <span className="font-semibold">{e.originalFilename}:</span> {e.reason}
+                          </p>
+                        ))}
+                        {uploadSummary.errors.length > 3 && (
+                          <p className="text-xs text-[#1E293B]/60">
+                            +{uploadSummary.errors.length - 3} autres erreurs
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {previewUrls.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
+                        Dernière sélection
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setLastSelection([])}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-[#1E293B]/70 hover:text-[#0F172A]"
+                      >
+                        <X className="h-4 w-4" />
+                        Effacer
+                      </button>
+                    </div>
+                    <div className="mt-3 grid grid-cols-4 gap-2">
+                      {previewUrls.slice(0, 8).map((p) => (
+                        <div
+                          key={p.url}
+                          className="aspect-square overflow-hidden rounded-xl border border-[#E3E5E8] bg-white"
+                        >
+                          <img src={p.url} alt={p.name} className="h-full w-full object-cover" />
+                        </div>
+                      ))}
+                      {previewUrls.length > 8 && (
+                        <div className="aspect-square rounded-xl border border-[#E3E5E8] bg-white flex items-center justify-center">
+                          <p className="text-sm font-semibold text-[#1E293B]/70">
+                            +{previewUrls.length - 8}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-5 flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={openFilePicker}
+                    disabled={!canUpload || uploading}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white border-2 border-[#E3E5E8] px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#6BCFCF]/5 transition-all duration-200 disabled:opacity-60"
+                  >
+                    <Upload className="h-4 w-4" />
+                    {uploading ? "Envoi en cours…" : "Ajouter des photos"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = new URL("/upload-photos", window.location.origin);
+                      if (leadId) url.searchParams.set("leadId", leadId);
+                      if (linkingCode) url.searchParams.set("code", linkingCode);
+                      window.location.href = url.toString();
+                    }}
+                    disabled={!leadId}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1E293B] transition-all duration-200 disabled:opacity-60"
+                  >
+                    Ouvrir l’analyse (optionnel)
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </div>

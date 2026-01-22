@@ -269,6 +269,18 @@
 - **Changements UI** (flag V2 uniquement):
   - Carte impact photos: suppression du gros titre “GAGNEZ” + réduction hiérarchie, ajout d’un badge “Impact des photos”, chiffres plus sobres (tabular nums), et avant/après en lignes compactes avec badge “-10%”.
 
+### 2026-01-22 — V2 Step 4: upload desktop premium (drag & drop branché)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-dropzone)
+- **Décision**: réduire la friction desktop en branchant un upload “drag & drop” directement en Step 4, avec feedback premium (préviews, état upload, erreurs).
+- **Changements UI** (flag V2 uniquement):
+  - Step 4: remplacement du simple bouton “Depuis cet ordinateur” par une **dropzone** (glisser-déposer + picker).
+  - Prévisualisation de la dernière sélection, état “envoi en cours”, résumé upload (nb envoyées) et erreurs.
+  - Accès conservé à `/upload-photos` via CTA “Ouvrir l’analyse (optionnel)”.
+- **Notes techniques**:
+  - Upload branché sur `uploadBackofficePhotos(backofficeLeadId, files)` (Back Office) — pas de nouveau schéma DB.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
