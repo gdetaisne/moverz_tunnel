@@ -169,48 +169,49 @@ export function StepContactPhotosV2({
 
           {/* Estimate impact - ULTRA SIMPLE */}
           {hasEstimate && (
-            <div className="relative rounded-3xl bg-white border border-[#E3E5E8] p-8 md:p-10 mb-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#6BCFCF]" />
-              
-              <div className="relative">
-                <div className="flex items-start justify-between gap-6">
-                  <div className="min-w-0">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-3 py-1 text-xs font-semibold text-[#2B7A78]">
-                      Impact des photos
-                    </div>
-                    <p className="mt-3 text-2xl md:text-3xl font-black text-[#0F172A] tracking-tight tabular-nums">
-                      Gagnez {savingsText ?? "—"}
-                    </p>
-                    <p className="mt-1 text-sm text-[#1E293B]/70">
-                      en ~5 minutes, en ajoutant des photos détaillées
-                    </p>
-                  </div>
+            <div className="relative rounded-3xl border border-[#E3E5E8] bg-white p-6 md:p-8 shadow-[0_6px_24px_rgba(15,23,42,0.06)]">
+              <div className="absolute inset-x-0 top-0 h-1 rounded-t-3xl bg-gradient-to-r from-[#6BCFCF] via-[#6BCFCF]/70 to-transparent" />
 
-                  <div className="hidden md:block text-right">
-                    <div className="text-[11px] font-semibold text-[#1E293B]/60">Estimation</div>
-                    <div className="text-sm font-semibold text-[#0F172A] tabular-nums">
-                      {`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}
-                    </div>
-                  </div>
+              <div className="flex items-start justify-between gap-6">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+                    Impact des photos
+                  </p>
+                  <p className="mt-2 text-base md:text-lg font-bold text-[#0F172A]">
+                    Photos = devis plus précis (moins de marge)
+                  </p>
+                </div>
+                <div className="rounded-full bg-[#E7FAFA] px-3 py-1 text-xs font-semibold text-[#2B7A78]">
+                  -10% estimé
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-[1fr,1fr] md:items-end">
+                <div className="rounded-2xl bg-[#F8F9FA] p-4">
+                  <p className="text-xs font-semibold text-[#1E293B]/60">Gain potentiel</p>
+                  <p className="mt-1 text-2xl md:text-3xl font-black text-[#0F172A] tabular-nums tracking-tight">
+                    {savingsText ?? "—"}
+                  </p>
+                  <p className="mt-1 text-sm text-[#1E293B]/70">
+                    en ~5 minutes avec des photos détaillées
+                  </p>
                 </div>
 
-                <div className="mt-5 grid gap-2 text-sm">
-                  <div className="flex items-center justify-between gap-3 text-[#1E293B]/70">
-                    <span>Estimation</span>
-                    <span className="font-semibold text-[#0F172A] tabular-nums">
+                <div className="rounded-2xl border border-[#E3E5E8] bg-white p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-[#1E293B]/70">Estimation</span>
+                    <span className="text-sm font-semibold text-[#0F172A] tabular-nums">
                       {`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-[#1E293B]/70">
-                      <span>Avec photos</span>
-                      <span className="rounded-full bg-[#E7FAFA] px-2 py-0.5 text-[11px] font-semibold text-[#2B7A78]">
-                        -10%
-                      </span>
-                    </div>
-                    <span className="font-semibold text-[#0F172A] tabular-nums">
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-sm text-[#1E293B]/70">Avec photos</span>
+                    <span className="text-sm font-semibold text-[#0F172A] tabular-nums">
                       {`${euro(discountedMin)} – ${euro(discountedMax)}`}
                     </span>
+                  </div>
+                  <div className="mt-3 text-xs text-[#1E293B]/60">
+                    Hypothèse: photos complètes → meilleur volume/temps → marge réduite.
                   </div>
                 </div>
               </div>

@@ -268,6 +268,7 @@
 - **Décision**: rendre la carte “gain” plus premium (moins “promo”), mieux alignée au style Moverz (badge soft, typo plus sobre, avant/après lisible).
 - **Changements UI** (flag V2 uniquement):
   - Carte impact photos: suppression du gros titre “GAGNEZ” + réduction hiérarchie, ajout d’un badge “Impact des photos”, chiffres plus sobres (tabular nums), et avant/après en lignes compactes avec badge “-10%”.
+  - Refonte visuelle: layout “dashboard” (gain potentiel à gauche, avant/après à droite), accent gradient discret, copy plus tech (“devis plus précis / moins de marge”).
 
 ### 2026-01-22 — V2 Step 4: upload desktop premium (drag & drop branché)
 
