@@ -482,6 +482,36 @@
   - Email WhatsApp: `mailto:` avec lien WhatsApp pré-rempli (pas de backend, pas de "simulé")
   - Dropzone: validation fichiers > 10 Mo + affichage erreur inline
 
+### 2026-01-22 — V2 Step 4: réintégration mockup iPhone pédagogique (3-4 photos salon)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-mockup-pedagogy)
+- **Décision**: réintégrer le mockup iPhone de manière **discrète et pédagogique** pour montrer concrètement comment envoyer **3-4 photos d'une même pièce** (exemple: salon), avec animation progressive.
+- **Changements UI** (flag V2 desktop uniquement):
+  - Ajout du mockup iPhone **en bas** (après les CTAs, avant la timeline).
+  - Titre au-dessus : "Exemple : 3-4 photos de votre salon" (contexte clair).
+  - **Animation progressive** (loop) :
+    1. Message "Envoyez 3-4 photos de votre salon 📸"
+    2. Photo 1 (salon vue large) apparaît
+    3. Photos 2 & 3 (salon angles différents) apparaissent en grid 2×1
+    4. Photo 4 (salon détail) apparaît
+    5. Check marks ✓✓
+    6. Réponse "Parfait! 🎉 Faites pareil pour chaque pièce"
+    7. Reset et loop
+  - **Photos réalistes** (salon uniquement, tons chauds):
+    - Gradients ambre/orange/jaune
+    - Effets de lumière (radial-gradient)
+    - Ombres et profondeur
+    - 4 photos différentes du même salon (angles variés)
+  - Mockup plus compact (`max-w-[300px]`) et discret (pas de grid, juste centré).
+- **Objectif UX**:
+  - **Pédagogie**: montrer concrètement "3-4 photos **par pièce**" (pas juste "envoyer des photos")
+  - **Projection**: l'utilisateur voit exactement ce qu'il doit faire
+  - **Réassurance**: le flow WhatsApp est simple et rapide
+- **Notes techniques**:
+  - Timeline animation : 600ms → 1200ms → 1800ms → 2400ms → 3200ms → reset 5500ms
+  - Animation desktop only (économise ressources mobile)
+
 ### 2026-01-21 — Retrait badge "TEST" (staging)
 
 - **Date**: 2026-01-21
