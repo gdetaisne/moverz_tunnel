@@ -290,6 +290,15 @@
 - **Changements UI** (flag V2 uniquement):
   - Avatar du mock WhatsApp: fond blanc + bordure soft (au lieu de vert).
 
+### 2026-01-22 — V2 Step 4: suppression titre redondant + mock plus WhatsApp
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-whatsapp-mock)
+- **Décision**: éviter la redondance de titres (un seul hero H1) et rendre le mock plus crédible WhatsApp.
+- **Changements UI** (flag V2 uniquement):
+  - En-tête: “Envoyez vos photos…” devient une microcopy (le hero “Photographiez…” reste le titre principal).
+  - Mock: remplacement de “iMessage” par “Message”, couleur bouton envoi WhatsApp, fond chat WhatsApp.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21

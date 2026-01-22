@@ -140,9 +140,9 @@ export function StepContactPhotosV2({
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
           Dernière étape
         </p>
-        <h2 className="text-3xl font-black text-[#0F172A]">
-          Envoyez vos photos pour recevoir vos devis
-        </h2>
+        <p className="text-sm text-[#1E293B]/70">
+          Envoyez vos photos pour recevoir vos devis.
+        </p>
         {!leadId && (
           <p className="text-sm text-[#B91C1C]">
             Une information manque. Revenez à l’étape précédente pour renseigner votre email.
@@ -255,7 +255,7 @@ export function StepContactPhotosV2({
                 </div>
                 
                 {/* Chat content */}
-                <div className="p-3 space-y-2 h-[420px] overflow-hidden">
+                <div className="p-3 space-y-2 h-[420px] overflow-hidden bg-[#ECE5DD]">
                   {/* Message bubble */}
                   <div className="flex justify-start mb-3">
                     <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[75%] shadow-sm">
@@ -312,12 +312,12 @@ export function StepContactPhotosV2({
                 </div>
 
                 {/* Input bar */}
-                <div className="bg-white border-t border-gray-200 px-3 py-2 flex items-center gap-2">
-                  <div className="flex-1 bg-[#f5f5f7] rounded-full px-3 py-1.5 text-[10px] text-[#1E293B]/40">
-                    iMessage
+                <div className="bg-[#F0F2F5] border-t border-gray-200 px-3 py-2 flex items-center gap-2">
+                  <div className="flex-1 bg-white rounded-full px-3 py-2 text-[10px] text-[#1E293B]/40">
+                    Message
                   </div>
-                  <div className="w-6 h-6 rounded-full bg-[#007AFF] flex items-center justify-center">
-                    <span className="text-white text-xs">↑</span>
+                  <div className="w-7 h-7 rounded-full bg-[#25D366] flex items-center justify-center">
+                    <span className="text-white text-[10px] font-bold">➤</span>
                   </div>
                 </div>
               </div>
