@@ -325,6 +325,41 @@
   - L'accordéon permet de garder la carte simple par défaut tout en offrant les détails pour les users curieux.
   - Le wording "Gagnez" est beaucoup plus actionnable et émotionnel que "économie potentielle" (moins comptable, plus motivant).
 
+### 2026-01-22 — V2 Step 4: refonte UX seamless - CTA above fold, adapté mobile/desktop
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-seamless)
+- **Décision**: rendre le CTA photo **immédiatement accessible** (above the fold) et **adapter l'UX au device** pour maximiser la conversion. Le flow doit être seamless sans scroll inutile.
+- **Changements UI** (flag V2 uniquement):
+  - **Layout mobile** (refonte complète):
+    - Header "Dernière étape" + titre compact
+    - **CTA WhatsApp principal** (above the fold, immédiat) avec microcopy "Le lien s'ouvre dans WhatsApp"
+    - Carte "Gagnez XXX€" (motivation)
+    - Option secondaire : "Ajouter depuis ce téléphone" (file input mobile avec `capture="environment"`)
+    - Upload summary + erreurs inline
+  - **Layout desktop** (refonte complète):
+    - Header "Dernière étape" + titre
+    - Grid 2 colonnes : carte "Gagnez XXX€" + mockup iPhone (compact)
+    - **Option 1**: "Recevoir le lien WhatsApp par email" (nouveau CTA premium avec gradient border)
+    - **Option 2**: Dropzone drag & drop (existant, amélioré) avec previews + upload status
+    - Section "Prochaines étapes" en bas
+- **Fonctionnalités**:
+  - Ajout de `handleSendWhatsAppEmail()` pour envoyer le lien WhatsApp par email (desktop) → **TODO: brancher l'API réelle**
+  - Mobile: `capture="environment"` sur le file input pour ouvrir directement la caméra
+  - Desktop: dropzone avec drag & drop + previews + status
+  - Tout reste **branché à la DB** via `leadId`, `linkingCode`, `uploadBackofficePhotos(leadId, files)`
+- **Objectif UX**:
+  - **Mobile**: CTA WhatsApp immédiat, pas de scroll pour atteindre l'action principale
+  - **Desktop**: choix entre "recevoir par email" (pour continuer sur mobile) ou upload direct
+  - Flow seamless adapté au device, réduction du drop
+- **Tracking / payload**:
+  - Source tracking: `tunnel-v2-mobile` pour mobile, `tunnel-v2` pour desktop WhatsApp email
+  - Upload toujours via `uploadBackofficePhotos(backofficeLeadId, files)` → DB inchangée
+- **Notes techniques**:
+  - Composant `ImpactCard` extrait en sous-composant réutilisable
+  - Conditional rendering `if (mounted && isMobile)` pour séparer mobile/desktop
+  - TODO: créer l'API route pour l'envoi d'email WhatsApp (actuellement simulé avec setTimeout)
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
