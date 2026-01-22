@@ -308,6 +308,7 @@
 - **Changements UI** (flag V2 uniquement):
   - **Fond sombre premium**: gradient `from-[#0F172A] via-[#1E293B] to-[#0F172A]` avec bordure lumineuse (effet de 2px), ombres profondes.
   - **Hero number**: gain potentiel (64-172€) en **text-8xl** centré, avec effet de glow lumineux derrière (blur-2xl + bg-[#6BCFCF]/20).
+  - **Wording actionnable**: "**Gagnez XXX€**" (au lieu de "économie potentielle") + "en ajoutant vos photos maintenant" → message direct et émotionnel.
   - **Badge animé**: "-10% estimé" avec point qui pulse + bordure lumineuse Moverz.
   - **Comparaison repliable élégante**: bouton "Voir comment on calcule" avec icône rotate + accordéon smooth qui révèle l'avant/après (Estimation actuelle / Avec photos) + explication de la logique.
   - **Glassmorphism**: section détail sur fond `bg-white/5 backdrop-blur-xl border-white/10`.
@@ -315,12 +316,13 @@
 - **Objectif UX**: 
   - Créer un effet "WOW" immédiat (le chiffre en énorme).
   - Rendre la carte très premium/tech (type fintech dashboard).
-  - Pousser émotionnellement à ajouter des photos via l'impact visuel du gain.
+  - Pousser émotionnellement à ajouter des photos via l'impact visuel du gain + wording direct ("Gagnez").
 - **Tracking / payload**:
   - Aucun changement.
 - **Notes design**:
   - Le design est maintenant beaucoup plus proche d'un dashboard moderne (type Stripe/Vercel) avec des effets de lumière, des gradients subtils, et une hiérarchie visuelle forte.
   - L'accordéon permet de garder la carte simple par défaut tout en offrant les détails pour les users curieux.
+  - Le wording "Gagnez" est beaucoup plus actionnable et émotionnel que "économie potentielle" (moins comptable, plus motivant).
 
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
