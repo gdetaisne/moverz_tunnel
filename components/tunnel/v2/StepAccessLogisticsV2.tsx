@@ -114,9 +114,6 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     }
   };
 
-  const anyYes =
-    props.narrow_access || props.long_carry || props.difficult_parking || props.lift_required;
-
   const YesNo = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
     <div className="grid grid-cols-2 gap-2">
       <button
@@ -260,6 +257,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           <p className="text-sm text-[#1E293B]/70">
             Par défaut, l’accès est considéré comme simple.
             <br />
+            Départ et arrivée peuvent être différents : si l’un des deux est contraint, choisissez “accès contraint”.
+            <br />
             Nous vous posons des questions uniquement si ce n’est pas le cas.
           </p>
         </div>
@@ -282,12 +281,12 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           </div>
         )}
 
-        {props.access_type === "constrained" && anyYes && (
+        {props.access_type === "constrained" && (
           <div>
             <textarea
               value={props.access_details ?? ""}
               onChange={(e) => props.onFieldChange("access_details", e.target.value)}
-              placeholder="Ex : rue étroite, pas de place pour camion…"
+              placeholder="Ex : arrivée uniquement (rue étroite), départ simple…"
               className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-sm"
               rows={3}
             />

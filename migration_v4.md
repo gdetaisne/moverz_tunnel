@@ -239,6 +239,26 @@
 - **Notes techniques**:
   - `AddressAutocomplete` supporte désormais `required` + `errorMessage` (props optionnelles, backward compatible).
 
+### 2026-01-22 — V2 Step 3 (Accès): clarification départ/arrivée sans alourdir l’UX
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-access-clarity)
+- **Décision**: rendre explicite le cas “accès départ ≠ arrivée” **sans ajouter de nouveaux champs** et sans casser le flow progressif.
+- **Changements UI** (flag V2 uniquement):
+  - Step 3 (Accès & logistique): micro-copy ajoutée sous la question “Accès départ & arrivée” pour indiquer que départ/arrivée peuvent différer et qu’il faut choisir “accès contraint” si l’un des deux l’est.
+  - Le champ `access_details` est désormais affiché dès que `access_type="constrained"` afin de permettre de préciser “départ seulement / arrivée seulement / les deux”.
+- **Tracking**:
+  - Aucun changement (screenId `acces_v2` inchangé).
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés (UX only): affichage conditionnel de `access_details` (toujours visible en mode contraint).
+- **Back Office payload**:
+  - Aucun changement de schéma: `tunnelOptions.accessV2` continue d’embarquer `access_type` + sous-questions + `access_details`.
+- **Risques / points à vérifier sur staging**:
+  - Compréhension: les users “arrivée seulement” doivent naturellement utiliser la zone précisions.
+  - Friction: vérifier que l’affichage du textarea en mode contraint n’augmente pas le drop.
+
 ### 2026-01-22 — V2 Step 4: micro-ajustements UI (copy + logo mock WhatsApp)
 
 - **Date**: 2026-01-22
