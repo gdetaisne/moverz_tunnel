@@ -41,8 +41,19 @@ export function StepContactPhotosV2({
       maximumFractionDigits: 0,
     }).format(Math.round(n));
 
-  const savingsMin = hasEstimate ? Math.round(estimateMaxEur * 0.03) : 0;
-  const savingsMax = hasEstimate ? Math.round(estimateMaxEur * 0.08) : 0;
+  // Impact photos: on affiche un gain basé sur la fourchette précédente.
+  // Hypothèse UX: des photos détaillées améliorent la précision et peuvent réduire le prix final (~10%).
+  const DISCOUNT_RATE = 0.1;
+  const discountedMin = hasEstimate ? Math.round(estimateMinEur * (1 - DISCOUNT_RATE)) : 0;
+  const discountedMax = hasEstimate ? Math.round(estimateMaxEur * (1 - DISCOUNT_RATE)) : 0;
+  const savingsMin = hasEstimate ? Math.max(0, Math.round(estimateMinEur - discountedMin)) : 0;
+  const savingsMax = hasEstimate ? Math.max(0, Math.round(estimateMaxEur - discountedMax)) : 0;
+  const savingsText =
+    hasEstimate && savingsMin > 0 && savingsMax > 0
+      ? savingsMin === savingsMax
+        ? euro(savingsMax)
+        : `${euro(savingsMin)} – ${euro(savingsMax)}`
+      : null;
 
   return (
     <div className="space-y-8">
@@ -84,14 +95,26 @@ export function StepContactPhotosV2({
               
               <div className="relative">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6BCFCF] mb-2">
-                  Vous économisez
+                  Gagnez
                 </p>
-                <p className="text-5xl md:text-6xl font-black text-[#0F172A] tracking-tight mb-1">
-                  {euro(savingsMax)}
+                <p className="text-5xl md:text-6xl font-black text-[#0F172A] tracking-tight mb-2">
+                  {savingsText ?? "—"}
                 </p>
-                <p className="text-sm text-[#1E293B]/60">
-                  en envoyant vos photos maintenant
+                <p className="text-sm text-[#1E293B]/60 mb-4">
+                  en 5 minutes en ajoutant des photos
                 </p>
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+                  <span className="text-[#1E293B]/60">
+                    Estimation : <span className="font-semibold text-[#0F172A]">{`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}</span>
+                  </span>
+                  <span className="text-[#1E293B]/40">→</span>
+                  <span className="text-[#1E293B]/60">
+                    Avec photos :{" "}
+                    <span className="font-semibold text-[#0F172A]">{`${euro(discountedMin)} – ${euro(discountedMax)}`}</span>{" "}
+                    <span className="text-xs font-semibold text-[#2B7A78]">(-10%)</span>
+                  </span>
+                </div>
               </div>
             </div>
           )}

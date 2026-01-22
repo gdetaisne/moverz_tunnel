@@ -250,6 +250,17 @@
 - **Tracking / payload**:
   - Aucun changement.
 
+### 2026-01-22 — V2 Step 4: carte “gain” basée sur la fourchette + -10% (impact photos)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-savings-range)
+- **Décision**: mieux matérialiser l’impact des photos en réutilisant la fourchette d’estimation (Step 2) et en affichant un avant/après premium avec une hypothèse de réduction de ~10%.
+- **Changements UI** (flag V2 uniquement):
+  - Remplacement de “Vous économisez XX€” par “Gagnez X–Y€ en 5 minutes en ajoutant des photos”.
+  - Affichage de l’avant/après: `Estimation (min–max)` → `Avec photos (min–max) (-10%)`.
+- **Tracking / payload**:
+  - Aucun changement.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
