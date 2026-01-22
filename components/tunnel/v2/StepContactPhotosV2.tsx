@@ -168,65 +168,87 @@ export function StepContactPhotosV2({
             Plus vous envoyez de photos détaillées, plus les déménageurs peuvent estimer précisément <strong>le volume et le temps nécessaire</strong>
           </p>
 
-          {/* Estimate impact - ULTRA SIMPLE */}
+          {/* Estimate impact - HERO CARD ULTRA PREMIUM */}
           {hasEstimate && (
-            <div className="relative overflow-hidden rounded-3xl border border-[#E3E5E8] bg-white p-6 md:p-8 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
-              {/* Premium accent */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] p-[2px] shadow-[0_20px_50px_rgba(15,23,42,0.3)]">
+              {/* Glow effect */}
               <div className="pointer-events-none absolute inset-0">
-                <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-[#6BCFCF]/18 blur-2xl" />
-                <div className="absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-[#6BCFCF]/12 blur-2xl" />
+                <div className="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-[#6BCFCF]/30 blur-3xl animate-pulse" />
+                <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-[#6BCFCF]/20 blur-3xl" />
               </div>
 
-              <div className="relative">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+              <div className="relative rounded-[calc(1.5rem-2px)] bg-[#0F172A] p-8 md:p-10">
+                {/* Header */}
+                <div className="flex items-center justify-between gap-4 mb-8">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/50">
                     Impact des photos
                   </p>
-                  <span className="rounded-full bg-[#E7FAFA] px-3 py-1 text-xs font-semibold text-[#2B7A78]">
-                    Jusqu’à -10%*
-                  </span>
+                  <div className="inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/20 border border-[#6BCFCF]/40 px-3 py-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#6BCFCF] animate-pulse" />
+                    <span className="text-[10px] font-bold text-[#6BCFCF]">-10% estimé</span>
+                  </div>
                 </div>
 
-                <div className="mt-4 grid gap-4 md:grid-cols-[1.3fr,1fr] md:items-end">
-                  <div className="rounded-2xl bg-[#0F172A] p-5 text-white shadow-[0_8px_24px_rgba(15,23,42,0.25)]">
-                    <p className="text-sm text-white/80">Économie potentielle</p>
-                    <p className="mt-2 text-4xl md:text-5xl font-black tracking-tight tabular-nums">
+                {/* Hero number */}
+                <div className="text-center mb-8">
+                  <div className="inline-block relative">
+                    {/* Glow behind number */}
+                    <div className="absolute inset-0 blur-2xl bg-[#6BCFCF]/20" />
+                    <p className="relative text-7xl md:text-8xl font-black text-white tabular-nums tracking-tight leading-none">
                       {savingsText ?? "—"}
                     </p>
-                    <p className="mt-2 text-sm text-white/70">
-                      Ajoutez des photos maintenant pour réduire l’incertitude du devis.
-                    </p>
                   </div>
+                  <p className="mt-4 text-base md:text-lg font-semibold text-white/90">
+                    d'économie potentielle
+                  </p>
+                  <p className="mt-2 text-sm text-white/60 max-w-md mx-auto">
+                    Ajoutez des photos maintenant pour réduire l'incertitude du devis et payer moins cher.
+                  </p>
+                </div>
 
-                  <div className="rounded-2xl border border-[#E3E5E8] bg-white/70 p-5 backdrop-blur">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-[#1E293B]/70">Estimation</span>
-                      <span className="text-sm font-semibold text-[#0F172A] tabular-nums">
-                        {`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between gap-3">
-                      <span className="text-sm text-[#1E293B]/70">Avec photos</span>
-                      <span className="text-sm font-semibold text-[#0F172A] tabular-nums">
-                        {`${euro(discountedMin)} – ${euro(discountedMax)}`}
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowImpactDetails((v) => !v)}
-                      className="mt-3 text-xs font-semibold text-[#0F172A] underline underline-offset-2"
+                {/* Comparison - collapsible */}
+                <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-5">
+                  <button
+                    type="button"
+                    onClick={() => setShowImpactDetails((v) => !v)}
+                    className="w-full flex items-center justify-between group"
+                  >
+                    <span className="text-sm font-semibold text-white/90 group-hover:text-white transition-colors">
+                      {showImpactDetails ? "Masquer le détail" : "Voir comment on calcule"}
+                    </span>
+                    <svg
+                      className={`w-5 h-5 text-white/60 transition-transform duration-200 ${
+                        showImpactDetails ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      {showImpactDetails ? "Masquer le détail" : "Voir le détail"}
-                    </button>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                    {showImpactDetails && (
-                      <div className="mt-3 text-xs text-[#1E293B]/60">
-                        *Hypothèse UX: photos complètes → volume/temps mieux estimés → marge
-                        d’incertitude réduite.
+                  {showImpactDetails && (
+                    <div className="mt-5 pt-5 border-t border-white/10 space-y-3 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white/60">Estimation actuelle</span>
+                        <span className="text-sm font-semibold text-white tabular-nums">
+                          {`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}
+                        </span>
                       </div>
-                    )}
-                  </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white/60">Avec photos détaillées</span>
+                        <span className="text-sm font-semibold text-[#6BCFCF] tabular-nums">
+                          {`${euro(discountedMin)} – ${euro(discountedMax)}`}
+                        </span>
+                      </div>
+                      <div className="pt-3 border-t border-white/10">
+                        <p className="text-xs text-white/50 leading-relaxed">
+                          Photos complètes → volume et temps mieux estimés → marge d'incertitude réduite → meilleur prix final.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
