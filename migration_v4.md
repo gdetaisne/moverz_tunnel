@@ -297,8 +297,30 @@
 - **Auteur**: (v2-step4-whatsapp-mock)
 - **Décision**: éviter la redondance de titres (un seul hero H1) et rendre le mock plus crédible WhatsApp.
 - **Changements UI** (flag V2 uniquement):
-  - En-tête: “Envoyez vos photos…” devient une microcopy (le hero “Photographiez…” reste le titre principal).
-  - Mock: remplacement de “iMessage” par “Message”, couleur bouton envoi WhatsApp, fond chat WhatsApp.
+  - En-tête: "Envoyez vos photos…" devient une microcopy (le hero "Photographiez…" reste le titre principal).
+  - Mock: remplacement de "iMessage" par "Message", couleur bouton envoi WhatsApp, fond chat WhatsApp.
+
+### 2026-01-22 — V2 Step 4: refonte complète carte Impact Photos (design hero premium)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-hero-impact)
+- **Décision**: transformer la carte "Impact des photos" en un élément **ultra-premium, émotionnel et tech** pour maximiser la conversion photo. Le gain potentiel devient un "hero number" géant sur fond sombre, avec des effets visuels type dashboard fintech.
+- **Changements UI** (flag V2 uniquement):
+  - **Fond sombre premium**: gradient `from-[#0F172A] via-[#1E293B] to-[#0F172A]` avec bordure lumineuse (effet de 2px), ombres profondes.
+  - **Hero number**: gain potentiel (64-172€) en **text-8xl** centré, avec effet de glow lumineux derrière (blur-2xl + bg-[#6BCFCF]/20).
+  - **Badge animé**: "-10% estimé" avec point qui pulse + bordure lumineuse Moverz.
+  - **Comparaison repliable élégante**: bouton "Voir comment on calcule" avec icône rotate + accordéon smooth qui révèle l'avant/après (Estimation actuelle / Avec photos) + explication de la logique.
+  - **Glassmorphism**: section détail sur fond `bg-white/5 backdrop-blur-xl border-white/10`.
+  - **Micro-animations**: pulse sur le badge, glow derrière le chiffre principal, transitions fluides.
+- **Objectif UX**: 
+  - Créer un effet "WOW" immédiat (le chiffre en énorme).
+  - Rendre la carte très premium/tech (type fintech dashboard).
+  - Pousser émotionnellement à ajouter des photos via l'impact visuel du gain.
+- **Tracking / payload**:
+  - Aucun changement.
+- **Notes design**:
+  - Le design est maintenant beaucoup plus proche d'un dashboard moderne (type Stripe/Vercel) avec des effets de lumière, des gradients subtils, et une hiérarchie visuelle forte.
+  - L'accordéon permet de garder la carte simple par défaut tout en offrant les détails pour les users curieux.
 
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
