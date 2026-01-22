@@ -360,6 +360,35 @@
   - Conditional rendering `if (mounted && isMobile)` pour séparer mobile/desktop
   - TODO: créer l'API route pour l'envoi d'email WhatsApp (actuellement simulé avec setTimeout)
 
+### 2026-01-22 — V2 Step 4: mockup WhatsApp animé + photos réalistes
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-mockup-animated)
+- **Décision**: rendre le mockup iPhone **vivant et engageant** avec des animations progressives type chat réel + des photos plus réalistes.
+- **Changements UI** (flag V2 desktop uniquement):
+  - **Animation progressive du chat** (loop infini):
+    1. Message initial apparaît (fadeInUp)
+    2. Typing indicator (3 dots qui pulsent)
+    3. Photos apparaissent en grid (fadeInUp)
+    4. Check marks (✓✓)
+    5. Réponse finale (fadeInUp)
+    6. Reset et recommence
+  - **Photos ultra-réalistes**:
+    - Effets de lumière (radial-gradient pour simuler fenêtres/lampes)
+    - Ombres et profondeur (zones sombres en bas/coins)
+    - Highlights (points lumineux blancs)
+    - 4 photos: Salon (tons chauds), Cuisine (tons bleus), Chambre (tons roses), SdB (tons verts)
+  - **Timing précis**: 800ms → 1500ms → 2200ms → 3000ms → 5000ms (reset)
+- **Objectif UX**:
+  - Montrer concrètement le flow d'envoi WhatsApp
+  - Rendre le mockup **engageant et vivant** (pas statique)
+  - Rassurer sur la simplicité du process
+- **Notes techniques**:
+  - Ajout de `mockupAnimationStep` state (0-4)
+  - useEffect avec timers pour gérer la timeline d'animation
+  - Keyframes CSS custom (`fadeInUp`, `fadeIn`) via style dangerouslySetInnerHTML
+  - Animation loop automatique (desktop only, pas sur mobile pour économiser ressources)
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
