@@ -191,6 +191,9 @@ export function StepContactPhotosV2({
 
                 {/* Hero number */}
                 <div className="text-center mb-8">
+                  <p className="text-lg md:text-xl font-bold text-white/90 mb-3">
+                    Gagnez
+                  </p>
                   <div className="inline-block relative">
                     {/* Glow behind number */}
                     <div className="absolute inset-0 blur-2xl bg-[#6BCFCF]/20" />
@@ -198,11 +201,8 @@ export function StepContactPhotosV2({
                       {savingsText ?? "—"}
                     </p>
                   </div>
-                  <p className="mt-4 text-base md:text-lg font-semibold text-white/90">
-                    d'économie potentielle
-                  </p>
-                  <p className="mt-2 text-sm text-white/60 max-w-md mx-auto">
-                    Ajoutez des photos maintenant pour réduire l'incertitude du devis et payer moins cher.
+                  <p className="mt-4 text-sm text-white/60 max-w-md mx-auto">
+                    en ajoutant vos photos maintenant
                   </p>
                 </div>
 
