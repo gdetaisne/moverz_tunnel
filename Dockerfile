@@ -17,8 +17,9 @@ RUN npm ci --include=dev
 # 2) Copier le code applicatif
 COPY . .
 
-# 3) Générer Prisma Client, appliquer les migrations SQLite et builder Next
-RUN npx prisma generate \
+# 3) Nettoyer les anciens builds et générer Prisma Client, appliquer les migrations SQLite et builder Next
+RUN rm -rf .next \
+  && npx prisma generate \
   && DATABASE_URL="file:./prisma/dev.db" npx prisma migrate deploy \
   && npm run build \
   && npm prune --omit=dev

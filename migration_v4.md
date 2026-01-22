@@ -152,6 +152,26 @@
   - Vérifier que la carte "Vous économisez" s'affiche uniquement si `hasEstimate` est vrai.
   - Vérifier que le formulaire contact reste accessible et fonctionnel avant le hero.
 
+### 2026-01-22 — Fix Dockerfile: nettoyage cache .next avant build
+
+- **Date**: 2026-01-22
+- **Auteur**: (fix-build-cache)
+- **Décision**: nettoyer le dossier `.next` avant chaque build pour éviter les conflits de hash entre builds successifs et les erreurs 404 sur les fichiers statiques.
+- **Changements UI**:
+  - Aucun changement UI direct.
+- **Tracking**:
+  - Aucun changement.
+- **Champs / Inputs**:
+  - Aucun changement.
+- **Back Office payload**:
+  - Aucun changement.
+- **Notes techniques**:
+  - `Dockerfile`: ajout de `rm -rf .next` avant le build Next.js pour forcer une régénération complète des assets statiques.
+  - Cela évite que des fichiers avec d'anciens hash soient référencés dans le HTML alors qu'ils n'existent plus.
+- **Risques / points à vérifier sur staging**:
+  - Vérifier que le build génère bien tous les fichiers statiques après un rebuild complet.
+  - Si les erreurs 404 persistent, vérifier la configuration nginx/CapRover pour le cache du HTML.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
