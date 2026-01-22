@@ -36,39 +36,10 @@ export function StepContactPhotosV2({
   const [showImpactDetails, setShowImpactDetails] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
-  const [mockupAnimationStep, setMockupAnimationStep] = useState(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Animation du mockup WhatsApp (desktop only)
-  useEffect(() => {
-    if (!mounted || isMobile) return;
-    
-    const animationTimeline = [
-      { step: 1, delay: 800 },   // Message initial apparaît
-      { step: 2, delay: 1500 },  // Photos apparaissent
-      { step: 3, delay: 2200 },  // Check marks
-      { step: 4, delay: 3000 },  // Réponse finale
-      { step: 0, delay: 5000 },  // Reset pour loop
-    ];
-
-    const timers: NodeJS.Timeout[] = [];
-    let currentDelay = 0;
-
-    animationTimeline.forEach(({ step, delay }) => {
-      currentDelay += delay;
-      const timer = setTimeout(() => {
-        setMockupAnimationStep(step);
-      }, currentDelay);
-      timers.push(timer);
-    });
-
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, [mounted, isMobile, mockupAnimationStep]);
 
   const canUpload = !!leadId && mounted;
 
@@ -349,29 +320,6 @@ export function StepContactPhotosV2({
   // Desktop layout
   return (
     <div className="space-y-8">
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(10px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-            }
-            to {
-              opacity: 1;
-            }
-          }
-        `
-      }} />
-      
       {/* Header */}
       <div className="space-y-1">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
@@ -417,77 +365,36 @@ export function StepContactPhotosV2({
                   </div>
                 </div>
                 
-                <div className="p-3 space-y-2 h-[380px] overflow-hidden bg-[#ECE5DD] relative">
-                  {/* Message initial */}
-                  {mockupAnimationStep >= 1 && (
-                    <div className="flex justify-start mb-2 animate-[fadeInUp_0.3s_ease-out]">
-                      <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[75%] shadow-sm">
-                        <p className="text-[10px] text-[#0F172A] leading-relaxed">
-                          Envoyez <strong>3-8 photos</strong> 📸 par pièce
-                        </p>
-                        <p className="text-[8px] text-[#1E293B]/40 mt-1">10:42</p>
-                      </div>
+                <div className="p-3 space-y-2 h-[380px] overflow-hidden bg-[#ECE5DD]">
+                  <div className="flex justify-start mb-2">
+                    <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[75%] shadow-sm">
+                      <p className="text-[10px] text-[#0F172A] leading-relaxed">
+                        Envoyez <strong>3-8 photos</strong> 📸 par pièce
+                      </p>
+                      <p className="text-[8px] text-[#1E293B]/40 mt-1">10:42</p>
                     </div>
-                  )}
+                  </div>
 
-                  {/* Typing indicator */}
-                  {mockupAnimationStep === 1 && (
-                    <div className="flex justify-end mb-1">
-                      <div className="bg-white rounded-2xl px-3 py-2 shadow-sm flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#1E293B]/40 animate-pulse" style={{ animationDelay: '0ms' }} />
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#1E293B]/40 animate-pulse" style={{ animationDelay: '150ms' }} />
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#1E293B]/40 animate-pulse" style={{ animationDelay: '300ms' }} />
-                      </div>
+                  <div className="flex justify-end mb-1">
+                    <div className="grid grid-cols-2 gap-0.5 max-w-[75%]">
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-amber-200 to-orange-100" />
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-blue-100 to-cyan-50" />
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-pink-50" />
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-green-100 to-emerald-50" />
                     </div>
-                  )}
+                  </div>
 
-                  {/* Photos grid avec effets réalistes */}
-                  {mockupAnimationStep >= 2 && (
-                    <div className="flex justify-end mb-1 animate-[fadeInUp_0.4s_ease-out]">
-                      <div className="grid grid-cols-2 gap-0.5 max-w-[75%]">
-                        {/* Photo 1: Salon lumineux */}
-                        <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-amber-200 via-orange-100 to-yellow-50 relative shadow-sm">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.4)_0%,transparent_50%)]" />
-                          <div className="absolute bottom-0 right-0 w-1/3 h-1/4 bg-gradient-to-tl from-amber-300/30 to-transparent" />
-                          <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-white/60" />
-                        </div>
-                        {/* Photo 2: Cuisine moderne */}
-                        <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-blue-100 via-cyan-50 to-slate-100 relative shadow-sm">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.5)_0%,transparent_60%)]" />
-                          <div className="absolute bottom-0 left-0 w-1/4 h-1/3 bg-gradient-to-tr from-blue-200/30 to-transparent" />
-                          <div className="absolute top-1/3 right-1/4 w-3 h-1 bg-white/40 blur-[1px]" />
-                        </div>
-                        {/* Photo 3: Chambre cosy */}
-                        <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 via-pink-50 to-rose-50 relative shadow-sm">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.3)_0%,transparent_50%)]" />
-                          <div className="absolute bottom-1/4 right-1/3 w-4 h-3 bg-purple-200/40 rounded blur-sm" />
-                        </div>
-                        {/* Photo 4: Salle de bain */}
-                        <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-teal-100 via-emerald-50 to-green-50 relative shadow-sm">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_60%,rgba(255,255,255,0.6)_0%,transparent_50%)]" />
-                          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/70 rounded-full blur-[0.5px]" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex justify-end mb-2">
+                    <div className="text-[8px] text-[#1E293B]/40">✓✓ 10:44</div>
+                  </div>
 
-                  {/* Check marks */}
-                  {mockupAnimationStep >= 3 && (
-                    <div className="flex justify-end mb-2 animate-[fadeIn_0.2s_ease-out]">
-                      <div className="text-[8px] text-[#1E293B]/40">✓✓ 10:44</div>
+                  <div className="flex justify-start">
+                    <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[75%] shadow-sm">
+                      <p className="text-[10px] text-[#0F172A]">
+                        Parfait! 🎉 Devis sous <strong>48-72h</strong>
+                      </p>
                     </div>
-                  )}
-
-                  {/* Réponse finale */}
-                  {mockupAnimationStep >= 4 && (
-                    <div className="flex justify-start animate-[fadeInUp_0.3s_ease-out]">
-                      <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[75%] shadow-sm">
-                        <p className="text-[10px] text-[#0F172A]">
-                          Parfait! 🎉 Devis sous <strong>48-72h</strong>
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 <div className="bg-[#F0F2F5] border-t border-gray-200 px-3 py-2 flex items-center gap-2">
