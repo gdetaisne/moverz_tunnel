@@ -275,7 +275,7 @@ export function StepContactPhotosV2({
         </p>
       </div>
 
-      {/* Alternatives discrètes */}
+      {/* Alternative : Upload depuis cet ordinateur */}
       <div className="space-y-4">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -285,25 +285,6 @@ export function StepContactPhotosV2({
             <span className="px-4 bg-white text-[#1E293B]/60">ou</span>
           </div>
         </div>
-
-        {/* Email WhatsApp link */}
-        <button
-          type="button"
-          onClick={() => {
-            const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "33752986581";
-            const message = leadId
-              ? `Bonjour, j'ai finalisé le formulaire et je passe aux photos.\nLEAD:${leadId}${linkingCode ? `\nCode dossier: ${linkingCode}` : ""}`
-              : `Bonjour, je voudrais obtenir 3 à 5 devis pour mon déménagement.`;
-            const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-            const subject = "Lien WhatsApp Moverz";
-            const body = `Voici le lien WhatsApp pour envoyer vos photos :\n\n${whatsappLink}`;
-            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-          }}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#E3E5E8] bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#F8F9FA] transition-colors"
-        >
-          <Mail className="h-4 w-4" />
-          M'envoyer le lien par email
-        </button>
 
         {/* Dropzone */}
         <input
