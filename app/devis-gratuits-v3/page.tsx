@@ -397,7 +397,7 @@ function DevisGratuitsV3Content() {
         1: { logical: "PROJECT" as const, screen: "qualification_v2" },
         2: { logical: "RECAP" as const, screen: "estimation_v2" },
         3: { logical: "PROJECT" as const, screen: "acces_v2" },
-        4: { logical: "THANK_YOU" as const, screen: "contact_v2" },
+        4: { logical: "PHOTOS" as const, screen: "photos_v2" },
       };
       const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
       if (current) {
@@ -991,6 +991,20 @@ function DevisGratuitsV3Content() {
   };
 
   const handleSubmitAccessV2 = async () => {
+    // Validation contact (email obligatoire) — déplacé en fin de Step 3
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim())) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        document.getElementById("v2-contact-email")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        (document.getElementById("v2-contact-email") as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Invalid email", 3, "PROJECT", "acces_v2");
+      return;
+    }
+
     // Normalise accès simple
     if (state.access_type === "simple") {
       updateFields({
@@ -1001,8 +1015,52 @@ function DevisGratuitsV3Content() {
         access_details: "",
       });
     }
-    trackStepChange(3, 4, "PROJECT", "THANK_YOU", "contact_v2", "forward");
-    goToStep(4);
+
+    // Création / MAJ lead Back Office à la fin de Step 3 (avant les photos)
+    try {
+      const payload = {
+        firstName: state.firstName.trim(), // obligatoire côté contrat BO (string, possiblement vide)
+        email: state.email.trim().toLowerCase(),
+        phone: state.phone.trim() || undefined,
+        source,
+        estimationMethod: "FORM" as const,
+        tunnelOptions: {
+          accessV2: {
+            access_type: state.access_type ?? "simple",
+            narrow_access: !!state.narrow_access,
+            long_carry: !!state.long_carry,
+            difficult_parking: !!state.difficult_parking,
+            lift_required: !!state.lift_required,
+            access_details: state.access_details || undefined,
+          },
+        },
+      };
+
+      if (state.leadId) {
+        try {
+          await updateBackofficeLead(state.leadId, payload);
+        } catch (err: any) {
+          if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
+            const { id: backofficeLeadId } = await createBackofficeLead(payload);
+            updateFields({ leadId: backofficeLeadId, linkingCode: null });
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        const { id: backofficeLeadId } = await createBackofficeLead(payload);
+        updateFields({ leadId: backofficeLeadId, linkingCode: null });
+      }
+
+      setShowValidationStep3(false);
+      // Step 4 est désormais "Photos"
+      trackStepChange(3, 4, "PROJECT", "PHOTOS", "photos_v2", "forward");
+      trackCompletion({ leadId: state.leadId });
+      goToStep(4);
+    } catch (err: any) {
+      console.error("Error creating/updating lead (V2 Step 3):", err);
+      trackError("API_ERROR", err.message || "Failed to create/update lead", 3, "PROJECT", "acces_v2");
+    }
   };
 
   async function handleSubmitContactV2(e: FormEvent) {
@@ -1448,6 +1506,9 @@ function DevisGratuitsV3Content() {
                 difficult_parking={!!state.difficult_parking}
                 lift_required={!!state.lift_required}
                 access_details={state.access_details ?? ""}
+                firstName={state.firstName}
+                email={state.email}
+                phone={state.phone}
                 serviceFurnitureStorage={state.serviceFurnitureStorage}
                 serviceCleaning={state.serviceCleaning}
                 serviceFullPacking={state.serviceFullPacking}
@@ -1464,16 +1525,8 @@ function DevisGratuitsV3Content() {
           {state.currentStep === 4 && (
             <div className="rounded-3xl bg-white p-5 shadow-sm relative">
               <StepContactPhotosV2
-                firstName={state.firstName}
-                email={state.email}
-                phone={state.phone}
                 leadId={state.leadId}
                 linkingCode={state.linkingCode}
-                onFirstNameChange={(v) => updateField("firstName", v)}
-                onEmailChange={(v) => updateField("email", v)}
-                onPhoneChange={(v) => updateField("phone", v)}
-                onSubmit={handleSubmitContactV2}
-                isSubmitting={false}
                 estimateMinEur={estimateRange?.minEur ?? null}
                 estimateMaxEur={estimateRange?.maxEur ?? null}
                 estimateIsIndicative={estimateIsIndicative}

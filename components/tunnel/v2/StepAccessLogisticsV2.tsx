@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, MapPin, Home } from "lucide-react";
+import { Calendar, MapPin, Home, Mail, User, Phone } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 
 type QuestionKey = "narrow_access" | "long_carry" | "difficult_parking" | "lift_required";
@@ -27,6 +27,10 @@ interface StepAccessLogisticsV2Props {
   difficult_parking: boolean;
   lift_required: boolean;
   access_details: string;
+  // Contact (déplacé en fin de step 3, email obligatoire)
+  firstName: string;
+  email: string;
+  phone: string;
   // Services en plus (mappés sur les mêmes champs que V1)
   serviceFurnitureStorage: boolean;
   serviceCleaning: boolean;
@@ -60,6 +64,7 @@ const SERVICE_LABELS: Array<{ key: keyof StepAccessLogisticsV2Props; label: stri
 export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
   const [revealedCount, setRevealedCount] = useState(1);
   const [showOptions, setShowOptions] = useState(false);
+  const [showPhone, setShowPhone] = useState(false);
   const answered = useMemo(
     () => ({
       narrow_access: props.narrow_access,
@@ -297,6 +302,72 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Contact (email obligatoire) */}
+      <div className="space-y-3">
+        <div className="rounded-2xl border border-[#E3E5E8] bg-white p-4 space-y-3">
+          <p className="text-sm font-semibold text-[#0F172A]">Où recevoir vos devis ?</p>
+          <p className="text-sm text-[#1E293B]/70">
+            Dernière étape ensuite : vous envoyez vos photos pour recevoir vos devis.
+          </p>
+
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
+                <User className="w-4 h-4 text-[#6BCFCF]" />
+                Prénom (optionnel)
+              </label>
+              <input
+                type="text"
+                value={props.firstName}
+                onChange={(e) => props.onFieldChange("firstName", e.target.value)}
+                className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
+                placeholder="Votre prénom"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
+                <Mail className="w-4 h-4 text-[#6BCFCF]" />
+                Email (obligatoire)
+              </label>
+              <input
+                id="v2-contact-email"
+                type="email"
+                value={props.email}
+                onChange={(e) => props.onFieldChange("email", e.target.value)}
+                className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
+                placeholder="vous@email.fr"
+                required
+              />
+            </div>
+
+            {!showPhone ? (
+              <button
+                type="button"
+                onClick={() => setShowPhone(true)}
+                className="text-left text-sm font-semibold text-[#0F172A]"
+              >
+                + Ajouter un téléphone (optionnel)
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
+                  <Phone className="w-4 h-4 text-[#6BCFCF]" />
+                  Téléphone (optionnel)
+                </label>
+                <input
+                  type="tel"
+                  value={props.phone}
+                  onChange={(e) => props.onFieldChange("phone", e.target.value)}
+                  className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
+                  placeholder="+33 6..."
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="pb-24 md:pb-0" />

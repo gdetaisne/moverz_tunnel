@@ -190,6 +190,25 @@
   - Vérifier la lisibilité mobile (cards horizontales, snap).
   - Vérifier que la formule sélectionnée se répercute bien dans l’estimation et le reste du tunnel.
 
+### 2026-01-22 — V2: contact déplacé en fin Step 3, Step 4 = photos only (anti-drop)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-anti-drop-photos)
+- **Décision**: réduire le drop sur la dernière étape en rendant la Step 4 exclusivement dédiée à l’envoi de photos. Le contact (prénom optionnel + email obligatoire) est déplacé en fin de Step 3 et le lead BO est créé/MAJ à ce moment.
+- **Changements UI** (flag V2 uniquement):
+  - Step 3: ajout d’un bloc “Où recevoir vos devis ?” en fin d’étape avec `Prénom (optionnel)` + `Email (obligatoire)` (+ téléphone optionnel replié).
+  - Step 4: suppression du formulaire contact; écran dédié uniquement aux CTAs photo (WhatsApp + upload desktop) et au hero “Photographiez toutes vos pièces”.
+- **Tracking**:
+  - Step 4 devient `PHOTOS` avec `screenId=photos_v2` (explicite, non dérivé d’un index).
+  - La soumission Step 3 déclenche désormais la création/MAJ du lead BO avant l’étape photos.
+- **Champs / Inputs**:
+  - Aucun champ supprimé: `firstName`, `email`, `phone` restent disponibles mais déplacés en Step 3 (V2).
+- **Back Office payload**:
+  - Lead créé/MAJ en Step 3 avec `firstName`, `email`, `phone` + `tunnelOptions.accessV2`.
+- **Risques / points à vérifier sur staging**:
+  - Vérifier la validation email en Step 3 (scroll/focus).
+  - Vérifier que Step 4 a bien `leadId` et que les CTAs WhatsApp/upload fonctionnent.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21

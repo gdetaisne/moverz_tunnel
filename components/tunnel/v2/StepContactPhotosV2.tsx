@@ -1,37 +1,21 @@
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
-import { Mail, User, Check, Upload, Phone } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, Upload } from "lucide-react";
 import WhatsAppCTA from "@/components/tunnel/WhatsAppCTA";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 interface StepContactPhotosV2Props {
-  firstName: string;
-  email: string;
-  phone: string;
   leadId?: string | null;
   linkingCode?: string | null;
-  onFirstNameChange: (v: string) => void;
-  onEmailChange: (v: string) => void;
-  onPhoneChange: (v: string) => void;
-  onSubmit: (e: FormEvent) => void;
-  isSubmitting: boolean;
   estimateMinEur?: number | null;
   estimateMaxEur?: number | null;
   estimateIsIndicative?: boolean;
 }
 
 export function StepContactPhotosV2({
-  firstName,
-  email,
-  phone,
   leadId,
   linkingCode,
-  onFirstNameChange,
-  onEmailChange,
-  onPhoneChange,
-  onSubmit,
-  isSubmitting,
   estimateMinEur = null,
   estimateMaxEur = null,
   estimateIsIndicative = false,
@@ -62,63 +46,22 @@ export function StepContactPhotosV2({
 
   return (
     <div className="space-y-8">
-      {/* Contact form section */}
-      <form onSubmit={onSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-3xl font-black text-[#0F172A]">Où souhaitez-vous recevoir vos devis ?</h2>
-          <p className="text-sm text-[#1E293B]/70">
-            Dernière étape — envoyez vos photos pour recevoir vos devis.
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
+          Dernière étape
+        </p>
+        <h2 className="text-3xl font-black text-[#0F172A]">
+          Envoyez vos photos pour recevoir vos devis
+        </h2>
+        <p className="text-sm text-[#1E293B]/70">
+          Un conseiller Moverz vérifie votre dossier avant l’envoi.
+        </p>
+        {!leadId && (
+          <p className="text-sm text-[#B91C1C]">
+            Une information manque. Revenez à l’étape précédente pour renseigner votre email.
           </p>
-          <p className="text-sm text-[#1E293B]/70">
-            Un conseiller Moverz vérifie votre dossier avant l'envoi.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
-              <User className="w-4 h-4 text-[#6BCFCF]" />
-              Prénom (optionnel)
-            </label>
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => onFirstNameChange(e.target.value)}
-              className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
-              placeholder="Votre prénom"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
-              <Mail className="w-4 h-4 text-[#6BCFCF]" />
-              Email (obligatoire)
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => onEmailChange(e.target.value)}
-              className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
-              placeholder="vous@email.fr"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
-              <Phone className="w-4 h-4 text-[#6BCFCF]" />
-              Téléphone (optionnel)
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => onPhoneChange(e.target.value)}
-              className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
-              placeholder="+33 6..."
-            />
-          </div>
-        </div>
-      </form>
+        )}
+      </div>
 
       {/* Hero section - moverz.fr style */}
       <div className="grid lg:grid-cols-[1fr,340px] gap-12 lg:gap-20 items-center">
@@ -338,17 +281,6 @@ export function StepContactPhotosV2({
         </div>
       </div>
 
-      {/* Submit button (mobile sticky) */}
-      <div className="md:static fixed left-0 right-0 bottom-0 bg-white/95 backdrop-blur px-4 py-4 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none">
-        <button
-          type="submit"
-          onClick={onSubmit}
-          disabled={isSubmitting}
-          className="w-full rounded-full bg-[#0F172A] text-white font-semibold py-4 text-base hover:bg-[#1E293B] transition-all"
-        >
-          {isSubmitting ? "Envoi..." : "Accéder à mes devis"}
-        </button>
-      </div>
     </div>
   );
 }
