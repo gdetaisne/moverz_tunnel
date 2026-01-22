@@ -53,9 +53,6 @@ export function StepContactPhotosV2({
         <h2 className="text-3xl font-black text-[#0F172A]">
           Envoyez vos photos pour recevoir vos devis
         </h2>
-        <p className="text-sm text-[#1E293B]/70">
-          Un conseiller Moverz vérifie votre dossier avant l’envoi.
-        </p>
         {!leadId && (
           <p className="text-sm text-[#B91C1C]">
             Une information manque. Revenez à l’étape précédente pour renseigner votre email.
@@ -121,8 +118,12 @@ export function StepContactPhotosV2({
                 {/* Header */}
                 <div className="bg-white px-4 py-3 border-b border-gray-200">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[#25D366] flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">M</span>
+                    <div className="w-8 h-8 rounded-full bg-[#25D366] flex items-center justify-center overflow-hidden">
+                      <img
+                        src="/icon.png"
+                        alt="Moverz"
+                        className="w-5 h-5 object-contain"
+                      />
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-[#0F172A]">Moverz</p>

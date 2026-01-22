@@ -239,6 +239,17 @@
 - **Notes techniques**:
   - `AddressAutocomplete` supporte désormais `required` + `errorMessage` (props optionnelles, backward compatible).
 
+### 2026-01-22 — V2 Step 4: micro-ajustements UI (copy + logo mock WhatsApp)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-tweak)
+- **Décision**: alléger encore la Step 4 (photos only) en retirant une phrase de friction et en renforçant la crédibilité visuelle dans le mock WhatsApp.
+- **Changements UI** (flag V2 uniquement):
+  - Step 4: suppression du texte “Un conseiller Moverz vérifie votre dossier avant l’envoi.”
+  - Mock WhatsApp: remplacement du “M” par le logo Moverz (`/public/icon.png`) dans l’avatar.
+- **Tracking / payload**:
+  - Aucun changement.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
