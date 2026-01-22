@@ -489,38 +489,50 @@ export function StepContactPhotosV2({
                   </div>
                 )}
 
-                {/* Photo 1 */}
+                {/* Photo 1 - Vue large salon */}
                 {mockupAnimationStep >= 2 && (
                   <div className="flex justify-end mb-1 animate-[fadeInUp_0.3s_ease-out]">
-                    <div className="w-[45%] aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-amber-200 via-orange-100 to-yellow-50 relative shadow-md">
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.5)_0%,transparent_60%)]" />
-                      <div className="absolute bottom-0 right-0 w-1/3 h-1/4 bg-gradient-to-tl from-amber-300/40 to-transparent" />
-                      <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-white/70" />
+                    <div className="w-[45%] aspect-square rounded-lg overflow-hidden shadow-md">
+                      <img 
+                        src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop&q=80" 
+                        alt="Salon vue large"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   </div>
                 )}
 
-                {/* Photos 2 & 3 */}
+                {/* Photos 2 & 3 - Angles différents */}
                 {mockupAnimationStep >= 3 && (
                   <div className="flex justify-end mb-1 animate-[fadeInUp_0.3s_ease-out]">
                     <div className="grid grid-cols-2 gap-1 w-[65%]">
-                      <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 relative shadow-md">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_50%,rgba(255,255,255,0.4)_0%,transparent_60%)]" />
-                        <div className="absolute bottom-1/4 left-1/4 w-4 h-3 bg-orange-200/40 rounded blur-sm" />
+                      <div className="aspect-square rounded-lg overflow-hidden shadow-md">
+                        <img 
+                          src="https://images.unsplash.com/photo-1556020685-ae41abfc9365?w=300&h=300&fit=crop&q=80" 
+                          alt="Salon angle 2"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-yellow-100 via-amber-100 to-orange-50 relative shadow-md">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_40%,rgba(255,255,255,0.6)_0%,transparent_50%)]" />
+                      <div className="aspect-square rounded-lg overflow-hidden shadow-md">
+                        <img 
+                          src="https://images.unsplash.com/photo-1567016432779-094069958ea5?w=300&h=300&fit=crop&q=80" 
+                          alt="Salon angle 3"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Photo 4 */}
+                {/* Photo 4 - Détail salon */}
                 {mockupAnimationStep >= 4 && (
                   <div className="flex justify-end mb-1 animate-[fadeInUp_0.3s_ease-out]">
-                    <div className="w-[45%] aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-amber-100 via-yellow-50 to-orange-100 relative shadow-md">
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(255,255,255,0.5)_0%,transparent_60%)]" />
-                      <div className="absolute top-1/3 right-1/3 w-5 h-4 bg-amber-200/30 rounded blur-sm" />
+                    <div className="w-[45%] aspect-square rounded-lg overflow-hidden shadow-md">
+                      <img 
+                        src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop&q=80" 
+                        alt="Salon détail"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   </div>
                 )}
