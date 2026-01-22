@@ -524,6 +524,34 @@
   - Timeline animation : 600ms → 1200ms → 1800ms → 2400ms → 3200ms → reset 5500ms
   - Animation desktop only (économise ressources mobile)
 
+### 2026-01-22 — V2 Step 4: simplification UX - options dans modale QR uniquement
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-ux-simplification)
+- **Décision**: **simplifier la home** et **enrichir la modale QR** pour réduire la charge cognitive et clarifier le flow.
+- **Changements UX** (flag V2):
+  - **Home Step 4 (page principale)** :
+    - **Desktop** : 1️⃣ CTA WhatsApp (ouvre modale QR) → 2️⃣ Dropzone upload
+    - **Mobile** : 1️⃣ CTA WhatsApp (redirige direct vers l'app) → 2️⃣ "Upload depuis cet appareil" (camera)
+    - ❌ **SUPPRIMÉ** : bouton "M'envoyer le lien par email" de la home (déplacé dans la modale)
+  - **Modale QR (desktop uniquement)** :
+    - QR code (déjà présent)
+    - Photos recommandées (déjà présent)
+    - ➕ **"Ouvrir WhatsApp sur cet ordinateur"** (WhatsApp Web, `window.open(whatsappLink, "_blank")`)
+    - ➕ **"M'envoyer le lien par email"** (`mailto:` avec lien WhatsApp pré-rempli)
+    - ➕ **"Copier le lien WhatsApp"** (clipboard API, déjà présent)
+  - Hiérarchie des options dans la modale :
+    1. WhatsApp Web (ouverture direct)
+    2. Email (envoi différé)
+    3. Copy link (manuel)
+- **Objectif UX**:
+  - **Clarté** : 2 options principales sur la home (WhatsApp ou Upload), pas de confusion
+  - **Progressive disclosure** : les options avancées (email, copy, web) sont disponibles **uniquement si l'utilisateur clique sur WhatsApp**
+  - **Réduction friction** : moins de choix = conversion plus rapide
+- **Notes techniques**:
+  - `WhatsAppCTA.tsx` : ajout imports `Mail`, `ExternalLink`
+  - `StepContactPhotosV2.tsx` : suppression bouton email de la home (lignes 289-306)
+
 ### 2026-01-21 — Retrait badge "TEST" (staging)
 
 - **Date**: 2026-01-21
