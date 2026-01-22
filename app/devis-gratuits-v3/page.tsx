@@ -1402,6 +1402,26 @@ function DevisGratuitsV3Content() {
                 priceMax={activePricing?.prixMax ?? null}
                 onSubmit={handleSubmitEstimationV2}
                 isSubmitting={false}
+                  pricingByFormule={
+                    pricingByFormule
+                      ? {
+                          ECONOMIQUE: {
+                            priceMin: pricingByFormule.ECONOMIQUE.prixMin,
+                            priceMax: pricingByFormule.ECONOMIQUE.prixMax,
+                          },
+                          STANDARD: {
+                            priceMin: pricingByFormule.STANDARD.prixMin,
+                            priceMax: pricingByFormule.STANDARD.prixMax,
+                          },
+                          PREMIUM: {
+                            priceMin: pricingByFormule.PREMIUM.prixMin,
+                            priceMax: pricingByFormule.PREMIUM.prixMax,
+                          },
+                        }
+                      : null
+                  }
+                  selectedFormule={state.formule}
+                  onFormuleChange={(v) => updateField("formule", v)}
               />
             </div>
           )}

@@ -172,6 +172,24 @@
   - Vérifier que le build génère bien tous les fichiers statiques après un rebuild complet.
   - Si les erreurs 404 persistent, vérifier la configuration nginx/CapRover pour le cache du HTML.
 
+### 2026-01-22 — V2 Step 2: ajout des formules (sélection premium)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step2-formules)
+- **Décision**: réintroduire le choix de formule en Step 2 pour renforcer l’engagement et permettre une sélection immédiate, sans casser le flow mobile-first.
+- **Changements UI** (flag V2 uniquement):
+  - Step 2: ajout d’un bloc “Choisissez votre formule” sous l’estimation, avec 3 cartes scrollables (Éco / Standard / Premium), badge “Recommandé” sur Standard, sélection visuelle premium.
+  - Le budget et la sélection sont cohérents avec la formule choisie (mise à jour immédiate).
+- **Tracking**:
+  - Aucun changement (screenId `estimation_v2` inchangé).
+- **Champs / Inputs**:
+  - Aucun nouveau champ; utilisation du champ existant `formule`.
+- **Back Office payload**:
+  - Aucun changement (formule déjà utilisée en aval).
+- **Risques / points à vérifier sur staging**:
+  - Vérifier la lisibilité mobile (cards horizontales, snap).
+  - Vérifier que la formule sélectionnée se répercute bien dans l’estimation et le reste du tunnel.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
