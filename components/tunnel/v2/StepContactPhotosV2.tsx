@@ -272,9 +272,18 @@ export function StepContactPhotosV2({
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
             Dernière étape
           </p>
+          <div className="pt-1">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] px-3 py-1 text-xs font-semibold text-[#2B7A78]">
+              <Check className="h-3.5 w-3.5" strokeWidth={3} />
+              Dossier créé
+            </div>
+          </div>
           <h2 className="text-2xl font-black text-[#0F172A]">
-            Envoyez vos photos 📸
+            Photographiez toutes vos pièces
           </h2>
+          <p className="text-sm text-[#1E293B]/70">
+            3–8 photos par pièce • angles larges • bonne lumière
+          </p>
           {!leadId && (
             <p className="text-sm text-[#B91C1C]">
               Une information manque. Revenez à l'étape précédente.
@@ -381,9 +390,18 @@ export function StepContactPhotosV2({
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
           Dernière étape
         </p>
+        <div className="pt-1">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] px-3 py-1 text-xs font-semibold text-[#2B7A78]">
+            <Check className="h-3.5 w-3.5" strokeWidth={3} />
+            Dossier créé
+          </div>
+        </div>
         <h2 className="text-3xl font-black text-[#0F172A]">
-          Envoyez vos photos pour recevoir vos devis 📸
+          Photographiez toutes vos pièces
         </h2>
+        <p className="text-sm text-[#1E293B]/70">
+          3–8 photos par pièce • angles larges • bonne lumière
+        </p>
         {!leadId && (
           <p className="text-sm text-[#B91C1C]">
             Une information manque. Revenez à l'étape précédente pour renseigner votre email.

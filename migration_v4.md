@@ -403,6 +403,9 @@
   - Desktop:
     - Ajout du CTA WhatsApp **au-dessus** du fold (QR modal via `WhatsAppCTA`).
     - L’option “email” devient un bouton secondaire qui ouvre le client mail (mailto) avec lien WhatsApp pré-rempli.
+- **Wording / titre**:
+  - Rétablissement du badge **“Dossier créé”** (pill turquoise) sur Step 4 (mobile + desktop).
+  - Remplacement du titre par **“Photographiez toutes vos pièces”** + micro-instructions “3–8 photos par pièce…”, plus actionnable et cohérent avec l’objectif photo-only.
 - **DB / Linking**:
   - Le lien WhatsApp contient toujours `LEAD:<leadId>` (rattachement BO) + `Code dossier` si présent.
   - Upload desktop/mobile toujours via `uploadBackofficePhotos(leadId, files)`.
