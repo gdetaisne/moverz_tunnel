@@ -10,13 +10,17 @@ interface WhatsAppCTAProps {
   linkingCode?: string;
   leadId?: string;
   variant?: "primary" | "secondary";
+  label?: string;
+  sublabel?: string;
 }
 
 export default function WhatsAppCTA({ 
   source = "tunnel", 
   linkingCode,
   leadId,
-  variant = "primary" 
+  variant = "primary",
+  label,
+  sublabel,
 }: WhatsAppCTAProps) {
   const { isMobile } = useDeviceDetection();
   const [showQRModal, setShowQRModal] = useState(false);
@@ -82,6 +86,10 @@ export default function WhatsAppCTA({
   }
 
   const isPrimary = variant === "primary";
+  const defaultLabel = `${isMobile ? "Envoyer mes photos" : "Continuer"} sur WhatsApp`;
+  const defaultSublabel = isPrimary ? (isMobile ? "Photos de toutes les pièces" : "Scanner le QR code") : undefined;
+  const finalLabel = label ?? defaultLabel;
+  const finalSublabel = sublabel ?? defaultSublabel;
 
   return (
     <>
@@ -96,10 +104,10 @@ export default function WhatsAppCTA({
       >
         <Smartphone className="w-5 h-5" />
         <div className="flex flex-col items-start">
-          <span>{isMobile ? "Envoyer mes photos" : "Continuer"} sur WhatsApp</span>
-          {isPrimary && (
+          <span>{finalLabel}</span>
+          {!!finalSublabel && (
             <span className="text-xs font-normal opacity-90">
-              {isMobile ? "Photos de toutes les pièces" : "Scanner le QR code"}
+              {finalSublabel}
             </span>
           )}
         </div>

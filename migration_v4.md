@@ -426,6 +426,13 @@
 - **Wording / titre**:
   - Rétablissement du badge **“Dossier créé”** (pill turquoise) sur Step 4 (mobile + desktop).
   - Remplacement du titre par **“Photographiez toutes vos pièces”** + micro-instructions “3–8 photos par pièce…”, plus actionnable et cohérent avec l’objectif photo-only.
+- **Itération conversion Step 4 (actions dominantes + charge cognitive)**:
+  - **1 action dominante** : CTA WhatsApp explicite “Envoyer mes photos sur WhatsApp” (recommandé) via `WhatsAppCTA(label, sublabel)`.
+  - **Réassurance** sous CTA : “🔒 0 spam • ⏱ < 2 min” + mention stop à tout moment.
+  - **Gain allégé** : remplacement du gros bloc “gain” par un badge turquoise “Ajoutez des photos → gagnez jusqu’à X€” + détail repliable.
+  - **Mockup** : ajout d’un mini-step visible “Envoyez vos photos → on s’occupe du reste”.
+  - **Dropzone** : clarifications “Une pièce = …” + “Formats … jusqu’à 10 Mo”, et affichage des erreurs (fichiers trop lourds, etc.).
+  - **Timeline** : “Prochaines étapes” devient une mini timeline 1-2-3 plus projetante, wording plus humain (“On prépare automatiquement votre dossier…”).
 - **DB / Linking**:
   - Le lien WhatsApp contient toujours `LEAD:<leadId>` (rattachement BO) + `Code dossier` si présent.
   - Upload desktop/mobile toujours via `uploadBackofficePhotos(leadId, files)`.

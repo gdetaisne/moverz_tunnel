@@ -103,6 +103,8 @@ export function StepContactPhotosV2({
         : `${eur(savingsMin)}–${eur(savingsMax)} €`
       : null;
 
+  const savingsUpToText = hasEstimate && savingsMax > 0 ? `${eur(savingsMax)} €` : null;
+
   const previewUrls = useMemo(() => {
     return lastSelection.map((f) => ({
       name: f.name,
@@ -129,21 +131,37 @@ export function StepContactPhotosV2({
       setUploadError("Identifiant dossier manquant. Revenez à l'étape précédente.");
       return;
     }
+    const MAX_MB = 10;
+    const MAX_BYTES = MAX_MB * 1024 * 1024;
+
     const images = files.filter((f) => f.type.startsWith("image/"));
     if (images.length === 0) {
       setUploadError("Ajoutez au moins une image (JPG/PNG/WEBP/HEIC).");
       return;
     }
 
+    const tooLarge = images.filter((f) => f.size > MAX_BYTES);
+    const accepted = images.filter((f) => f.size <= MAX_BYTES);
+    if (accepted.length === 0) {
+      setUploadError(`Fichiers trop lourds. Formats acceptés : JPG/PNG/HEIC – jusqu’à ${MAX_MB} Mo.`);
+      return;
+    }
+
     setLastSelection(images);
     setUploading(true);
     try {
-      const res = await uploadBackofficePhotos(leadId, images);
+      const res = await uploadBackofficePhotos(leadId, accepted);
       const uploadedCount = res.data.uploaded?.length ?? 0;
       setUploadSummary({
         uploadedCount,
         totalPhotos: res.data.totalPhotos ?? 0,
-        errors: res.data.errors ?? [],
+        errors: [
+          ...(res.data.errors ?? []),
+          ...tooLarge.map((f) => ({
+            originalFilename: f.name,
+            reason: `Trop lourd (>${MAX_MB} Mo)`,
+          })),
+        ],
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue lors de l'upload.";
@@ -188,85 +206,63 @@ export function StepContactPhotosV2({
     window.location.href = mailto;
   };
 
-  // Impact card component (réutilisable)
-  const ImpactCard = () =>
+  // Badge gain (léger) + détail repliable
+  const GainBadge = () =>
+    savingsUpToText ? (
+      <span className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] border border-[#B7EAE3] px-3 py-1 text-xs font-semibold text-[#2B7A78]">
+        <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
+        Ajoutez des photos → gagnez jusqu’à {savingsUpToText}
+      </span>
+    ) : null;
+
+  const GainDetails = () =>
     hasEstimate ? (
-      <div className="relative overflow-hidden rounded-3xl border border-[#E3E5E8] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
-        {/* Accent turquoise ultra-light */}
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#6BCFCF] via-[#6BCFCF]/60 to-transparent" />
-        <div className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full bg-[#6BCFCF]/14 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-[#6BCFCF]/10 blur-3xl" />
-
-        <div className="relative p-5 md:p-6">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#1E293B]/55">
-              Impact des photos
-            </p>
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] border border-[#B7EAE3] px-3 py-1 text-[10px] font-bold text-[#2B7A78]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#6BCFCF]" />
-              -10% estimé
-            </span>
-          </div>
-
-          <div className="mt-4">
-            <p className="text-sm font-semibold text-[#0F172A]">Gagnez</p>
-            <p className="mt-1 text-5xl md:text-6xl font-black text-[#0F172A] tabular-nums tracking-tight leading-none">
-              {savingsText ?? "—"}
-            </p>
-            <p className="mt-2 text-sm text-[#1E293B]/70">
-              en ajoutant vos photos maintenant
-            </p>
-          </div>
-
-          <div className="mt-4 rounded-2xl bg-[#F8FAFC] border border-[#E3E5E8] p-4">
-            <button
-              type="button"
-              onClick={() => setShowImpactDetails((v) => !v)}
-              className="w-full flex items-center justify-between"
-            >
-              <span className="text-sm font-semibold text-[#0F172A]">
-                {showImpactDetails ? "Masquer le détail" : "Voir comment on calcule"}
+      <div className="rounded-2xl border border-[#E3E5E8] bg-white p-4">
+        <button
+          type="button"
+          onClick={() => setShowImpactDetails((v) => !v)}
+          className="w-full flex items-center justify-between"
+        >
+          <span className="text-sm font-semibold text-[#0F172A]">
+            {showImpactDetails ? "Masquer le détail" : "Voir le détail du gain"}
+          </span>
+          <svg
+            className={`w-5 h-5 text-[#1E293B]/60 transition-transform duration-200 ${
+              showImpactDetails ? "rotate-180" : ""
+            }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {showImpactDetails && (
+          <div className="mt-4 pt-4 border-t border-[#E3E5E8] space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[#1E293B]/70">Estimation actuelle</span>
+              <span className="text-sm font-semibold text-[#0F172A] tabular-nums">
+                {`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}
               </span>
-              <svg
-                className={`w-5 h-5 text-[#1E293B]/60 transition-transform duration-200 ${
-                  showImpactDetails ? "rotate-180" : ""
-                }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {showImpactDetails && (
-              <div className="mt-4 pt-4 border-t border-[#E3E5E8] space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-[#1E293B]/70">Estimation actuelle</span>
-                  <span className="text-sm font-semibold text-[#0F172A] tabular-nums">
-                    {`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-[#1E293B]/70">Avec photos détaillées</span>
-                  <span className="text-sm font-semibold text-[#2B7A78] tabular-nums">
-                    {`${euro(discountedMin)} – ${euro(discountedMax)}`}
-                  </span>
-                </div>
-                <p className="text-xs text-[#1E293B]/60 leading-relaxed">
-                  Photos complètes → volume/temps mieux estimés → marge d'incertitude réduite → meilleur prix final.
-                </p>
-              </div>
-            )}
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[#1E293B]/70">Avec photos détaillées</span>
+              <span className="text-sm font-semibold text-[#2B7A78] tabular-nums">
+                {`${euro(discountedMin)} – ${euro(discountedMax)}`}
+              </span>
+            </div>
+            <p className="text-xs text-[#1E293B]/60 leading-relaxed">
+              Hypothèse : photos complètes → volume/temps mieux estimés → marge d’incertitude réduite.
+            </p>
           </div>
-        </div>
+        )}
       </div>
     ) : null;
 
   // Mobile layout
   if (mounted && isMobile) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 pb-28">
         {/* Header */}
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
@@ -279,33 +275,17 @@ export function StepContactPhotosV2({
             </div>
           </div>
           <h2 className="text-2xl font-black text-[#0F172A]">
-            Photographiez toutes vos pièces
+            Prenez quelques photos de votre logement
           </h2>
-          <p className="text-sm text-[#1E293B]/70">
-            3–8 photos par pièce • angles larges • bonne lumière
-          </p>
+          <div className="pt-1">
+            <GainBadge />
+          </div>
           {!leadId && (
             <p className="text-sm text-[#B91C1C]">
               Une information manque. Revenez à l'étape précédente.
             </p>
           )}
         </div>
-
-        {/* CTA WhatsApp principal (above the fold) */}
-        <div className="space-y-3">
-          <WhatsAppCTA 
-            source="tunnel-v2-mobile" 
-            linkingCode={linkingCode || undefined} 
-            leadId={leadId || undefined}
-            variant="primary"
-          />
-          <p className="text-xs text-center text-[#1E293B]/60">
-            Le lien s'ouvre dans WhatsApp → envoyez 3-8 photos par pièce
-          </p>
-        </div>
-
-        {/* Impact card */}
-        <ImpactCard />
 
         {/* Option upload mobile */}
         <div className="relative">
@@ -341,6 +321,9 @@ export function StepContactPhotosV2({
           <Smartphone className="h-5 w-5" />
           {uploading ? "Envoi en cours…" : "Ajouter depuis ce téléphone"}
         </button>
+        <p className="text-xs text-center text-[#1E293B]/60">
+          Une pièce = salon, chambre, cuisine… • JPG/PNG/HEIC jusqu’à 10 Mo
+        </p>
 
         {uploadSummary?.uploadedCount ? (
           <div className="rounded-2xl bg-green-50 border border-green-200 p-4 text-center">
@@ -355,6 +338,47 @@ export function StepContactPhotosV2({
             <p className="text-sm font-medium text-red-700">{uploadError}</p>
           </div>
         )}
+
+        {!!uploadSummary?.errors?.length && (
+          <div className="rounded-2xl border border-[#E3E5E8] bg-[#F8FAFC] p-4">
+            <p className="text-xs font-semibold text-[#0F172A]">Quelques fichiers n’ont pas été pris en compte</p>
+            <div className="mt-2 space-y-1">
+              {uploadSummary.errors.slice(0, 3).map((e) => (
+                <p key={e.originalFilename} className="text-xs text-[#1E293B]/70">
+                  <span className="font-semibold">{e.originalFilename}:</span> {e.reason}
+                </p>
+              ))}
+              {uploadSummary.errors.length > 3 && (
+                <p className="text-xs text-[#1E293B]/60">
+                  +{uploadSummary.errors.length - 3} autres erreurs
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <GainDetails />
+
+        {/* Sticky CTA WhatsApp (mobile) */}
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E3E5E8] bg-white/90 backdrop-blur">
+          <div className="mx-auto max-w-3xl px-4 py-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#0F172A]">Recommandé</span>
+              <span className="text-xs text-[#1E293B]/60">⏱ &lt; 2 min • 🔒 0 spam</span>
+            </div>
+            <WhatsAppCTA
+              source="tunnel-v2-mobile"
+              linkingCode={linkingCode || undefined}
+              leadId={leadId || undefined}
+              variant="primary"
+              label="Envoyer mes photos sur WhatsApp"
+              sublabel="Recommandé • moins de 2 minutes"
+            />
+            <p className="text-[11px] text-center text-[#1E293B]/60">
+              Uniquement pour recevoir vos photos • Stop quand vous voulez
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -397,11 +421,14 @@ export function StepContactPhotosV2({
           </div>
         </div>
         <h2 className="text-3xl font-black text-[#0F172A]">
-          Photographiez toutes vos pièces
+          Prenez quelques photos de votre logement
         </h2>
         <p className="text-sm text-[#1E293B]/70">
-          3–8 photos par pièce • angles larges • bonne lumière
+          3–8 photos par pièce • angles larges • bonne lumière • sans blabla
         </p>
+        <div className="pt-2">
+          <GainBadge />
+        </div>
         {!leadId && (
           <p className="text-sm text-[#B91C1C]">
             Une information manque. Revenez à l'étape précédente pour renseigner votre email.
@@ -411,20 +438,45 @@ export function StepContactPhotosV2({
 
       {/* CTA principal (desktop) : ouverture QR/copie lien via WhatsAppCTA */}
       <div className="max-w-md">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-[#0F172A]">Recommandé</span>
+          <span className="text-xs text-[#1E293B]/60">⏱ &lt; 2 min • 🔒 0 spam</span>
+        </div>
         <WhatsAppCTA
           source="tunnel-v2"
           linkingCode={linkingCode || undefined}
           leadId={leadId || undefined}
           variant="primary"
+          label="Envoyer mes photos sur WhatsApp"
+          sublabel="Recommandé • QR code"
         />
         <p className="mt-2 text-xs text-[#1E293B]/60">
-          Scannez le QR code avec votre téléphone, puis envoyez 3–8 photos par pièce.
+          Scannez le QR code avec votre téléphone, envoyez les photos — on s’occupe du reste.
+        </p>
+        <p className="mt-1 text-xs text-[#1E293B]/60">
+          Déjà <span className="font-semibold text-[#0F172A]">12 483</span> dossiers envoyés • ⭐️ 4,8/5 “Simple et rapide”
         </p>
       </div>
 
       {/* Grid: Impact card + mockup */}
       <div className="grid lg:grid-cols-2 gap-8 items-start">
-        <ImpactCard />
+        <div className="rounded-2xl border border-[#E3E5E8] bg-white p-6">
+          <p className="text-sm font-semibold text-[#0F172A]">1 action, et c’est fait</p>
+          <div className="mt-3 space-y-2 text-sm text-[#1E293B]/70">
+            <p>
+              <span className="font-semibold text-[#0F172A]">1.</span> Envoyez vos photos
+            </p>
+            <p>
+              <span className="font-semibold text-[#0F172A]">2.</span> On s’occupe du reste
+            </p>
+          </div>
+          <div className="mt-4 text-xs text-[#1E293B]/60">
+            🔒 Aucun spam • uniquement pour recevoir vos photos
+          </div>
+          <div className="mt-3">
+            <GainBadge />
+          </div>
+        </div>
         
         {/* Mockup iPhone - compact */}
         <div className="relative">
@@ -453,6 +505,15 @@ export function StepContactPhotosV2({
                 </div>
                 
                 <div className="p-3 space-y-2 h-[380px] overflow-hidden bg-[#ECE5DD] relative">
+                  {/* Mini step (projection) */}
+                  {mockupAnimationStep >= 1 && (
+                    <div className="flex justify-center mb-2 animate-[fadeIn_0.2s_ease-out]">
+                      <div className="rounded-full bg-white/70 backdrop-blur px-3 py-1 text-[9px] text-[#0F172A] border border-white/60">
+                        <span className="font-semibold">Envoyez vos photos</span> → on s’occupe du reste
+                      </div>
+                    </div>
+                  )}
+
                   {/* Message initial */}
                   {mockupAnimationStep >= 1 && (
                     <div className="flex justify-start mb-2 animate-[fadeInUp_0.3s_ease-out]">
@@ -598,7 +659,7 @@ export function StepContactPhotosV2({
           }}
           onDrop={onDrop}
           className={[
-            "w-full rounded-3xl border-2 bg-white p-6 text-center transition-all duration-200",
+            "w-full rounded-3xl border-2 bg-white p-8 text-center transition-all duration-200",
             !leadId
               ? "border-[#E3E5E8] opacity-60"
               : isDragging
@@ -629,9 +690,10 @@ export function StepContactPhotosV2({
                   choisissez des fichiers
                 </button>
               </p>
-              <p className="mt-2 text-xs text-[#1E293B]/60">
-                Idéalement 3–8 photos par pièce (bonne lumière, angles larges)
-              </p>
+              <div className="mt-3 space-y-1 text-xs text-[#1E293B]/60">
+                <p>Une pièce = salon, chambre, cuisine…</p>
+                <p>Formats acceptés : JPG, PNG, HEIC — jusqu’à 10 Mo</p>
+              </div>
             </div>
 
             {uploadSummary?.uploadedCount ? (
@@ -645,6 +707,26 @@ export function StepContactPhotosV2({
           {uploadError && (
             <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
               <p className="text-sm font-medium text-red-700">{uploadError}</p>
+            </div>
+          )}
+
+          {!!uploadSummary?.errors?.length && (
+            <div className="mt-4 rounded-2xl border border-[#E3E5E8] bg-[#F8FAFC] p-4 text-left">
+              <p className="text-xs font-semibold text-[#0F172A]">
+                Quelques fichiers n’ont pas été pris en compte
+              </p>
+              <div className="mt-2 space-y-1">
+                {uploadSummary.errors.slice(0, 3).map((e) => (
+                  <p key={e.originalFilename} className="text-xs text-[#1E293B]/70">
+                    <span className="font-semibold">{e.originalFilename}:</span> {e.reason}
+                  </p>
+                ))}
+                {uploadSummary.errors.length > 3 && (
+                  <p className="text-xs text-[#1E293B]/60">
+                    +{uploadSummary.errors.length - 3} autres erreurs
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -685,32 +767,34 @@ export function StepContactPhotosV2({
         </div>
       </div>
 
-      {/* Next steps */}
-      <div className="rounded-2xl bg-[#F8F9FA] p-6 text-left">
+      {/* Timeline (projection) */}
+      <div className="rounded-2xl border border-[#E3E5E8] bg-white p-6 text-left">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60 mb-4">
-          Prochaines étapes
+          Ensuite, c’est simple
         </p>
         <div className="space-y-3 text-sm text-[#1E293B]/70">
-          <div className="flex items-center gap-2">
-            <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
-              <Check className="w-3 h-3 text-green-600" strokeWidth={3} />
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E7FAFA] text-[#2B7A78] text-xs font-bold">
+              1
             </div>
-            <p>Vous envoyez vos photos</p>
+            <p><span className="font-semibold text-[#0F172A]">Vous envoyez vos photos</span> (3–8 par pièce)</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
-              <Check className="w-3 h-3 text-green-600" strokeWidth={3} />
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E7FAFA] text-[#2B7A78] text-xs font-bold">
+              2
             </div>
-            <p>Notre IA prépare votre dossier en 30s</p>
+            <p><span className="font-semibold text-[#0F172A]">On prépare automatiquement votre dossier</span> (sans action de votre part)</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
-              <Check className="w-3 h-3 text-green-600" strokeWidth={3} />
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E7FAFA] text-[#2B7A78] text-xs font-bold">
+              3
             </div>
-            <p>Vous recevez 3-5 devis sous 48-72h</p>
+            <p><span className="font-semibold text-[#0F172A]">Vous recevez 3–5 devis</span> sous 48–72h</p>
           </div>
         </div>
       </div>
+
+      <GainDetails />
     </div>
   );
 }
