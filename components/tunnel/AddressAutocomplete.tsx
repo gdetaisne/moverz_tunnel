@@ -21,6 +21,8 @@ export interface AddressAutocompleteProps {
   disabled?: boolean;
   mode?: "fr" | "world" | "auto";
   inputId?: string;
+  required?: boolean;
+  errorMessage?: string | null;
 }
 
 // --- Providers ---
@@ -105,6 +107,8 @@ export function AddressAutocomplete({
   disabled,
   mode = "auto",
   inputId,
+  required = false,
+  errorMessage = null,
 }: AddressAutocompleteProps) {
   const [input, setInput] = useState(initialValue ?? "");
   const [isLoading, setIsLoading] = useState(false);
@@ -232,7 +236,14 @@ export function AddressAutocomplete({
 
   return (
     <div ref={containerRef} className="space-y-2">
-      <label className="block text-sm font-medium text-[#0F172A]">{label}</label>
+      <div className="flex items-center justify-between gap-3">
+        <label className="block text-sm font-medium text-[#0F172A]" htmlFor={inputId}>
+          {label}
+        </label>
+        {required && (
+          <span className="text-[11px] font-semibold text-[#1E293B]/50">Requis</span>
+        )}
+      </div>
       <div className="relative">
         <input
           type="text"
@@ -273,8 +284,24 @@ export function AddressAutocomplete({
             }
           }}
           placeholder={placeholder}
-          className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+          aria-invalid={!!errorMessage}
+          aria-describedby={errorMessage ? `${inputId ?? "address"}-error` : undefined}
+          className={[
+            "w-full rounded-xl border-2 bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:outline-none focus:ring-2 transition-all",
+            errorMessage
+              ? "border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/15"
+              : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:ring-[#6BCFCF]/20",
+          ].join(" ")}
         />
+
+        {errorMessage && (
+          <p
+            id={`${inputId ?? "address"}-error`}
+            className="mt-2 text-sm font-medium text-[#EF4444]"
+          >
+            {errorMessage}
+          </p>
+        )}
 
         {showDropdown && (isLoading || results.length > 0) && !disabled && (
           <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-[#E3E5E8] bg-white shadow-lg">

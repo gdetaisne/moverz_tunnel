@@ -980,6 +980,34 @@ function DevisGratuitsV3Content() {
   // V2 handlers
   const handleSubmitQualificationV2 = (e: FormEvent) => {
     e.preventDefault();
+    const isOriginValid = state.originCity.trim().length >= 2;
+    const isDestinationValid = state.destinationCity.trim().length >= 2;
+    const isHousingValid = !!state.originHousingType?.trim();
+    const isSurfaceValid = (() => {
+      const n = Number.parseInt(String(state.surfaceM2 || "").trim(), 10);
+      return Number.isFinite(n) && n >= 10 && n <= 500;
+    })();
+
+    if (!isOriginValid || !isDestinationValid || !isHousingValid || !isSurfaceValid) {
+      setShowValidationStep1(true);
+      requestAnimationFrame(() => {
+        const focusId = !isOriginValid
+          ? "v2-origin-city"
+          : !isDestinationValid
+          ? "v2-destination-city"
+          : !isHousingValid
+          ? "v2-housing-type"
+          : "v2-surface-m2";
+        document
+          .getElementById(focusId)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById(focusId) as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Missing required fields", 1, "PROJECT", "qualification_v2");
+      return;
+    }
+
+    setShowValidationStep1(false);
     trackStepChange(1, 2, "PROJECT", "RECAP", "estimation_v2", "forward");
     goToStep(2);
   };
@@ -991,6 +1019,20 @@ function DevisGratuitsV3Content() {
   };
 
   const handleSubmitAccessV2 = async () => {
+    // Validation adresses (requis)
+    const isOriginAddrValid = state.originAddress.trim().length >= 5;
+    const isDestinationAddrValid = state.destinationAddress.trim().length >= 5;
+    if (!isOriginAddrValid || !isDestinationAddrValid) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        const focusId = !isOriginAddrValid ? "v2-origin-address" : "v2-destination-address";
+        document.getElementById(focusId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById(focusId) as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Missing required address", 3, "PROJECT", "acces_v2");
+      return;
+    }
+
     // Validation date: bloquer historique + 15 prochains jours
     const minMovingDateV2 = (() => {
       const d = new Date();
@@ -1471,6 +1513,7 @@ function DevisGratuitsV3Content() {
                 onFieldChange={(field, value) => updateField(field as any, value)}
                 onSubmit={handleSubmitQualificationV2}
                 isSubmitting={false}
+                showValidation={showValidationStep1}
               />
             </div>
           )}
@@ -1523,6 +1566,7 @@ function DevisGratuitsV3Content() {
                 onFieldChange={(field, value) => updateField(field as any, value)}
                 onSubmit={handleSubmitAccessV2}
                 isSubmitting={false}
+                showValidation={showValidationStep3}
                 access_type={state.access_type ?? "simple"}
                 narrow_access={!!state.narrow_access}
                 long_carry={!!state.long_carry}

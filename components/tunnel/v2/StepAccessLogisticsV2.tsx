@@ -21,6 +21,7 @@ interface StepAccessLogisticsV2Props {
   onFieldChange: (field: string, value: any) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
+  showValidation?: boolean;
   access_type: "simple" | "constrained";
   narrow_access: boolean;
   long_carry: boolean;
@@ -71,6 +72,11 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     d.setDate(d.getDate() + 15);
     return d.toISOString().split("T")[0]!;
   }, []);
+  const showValidation = !!props.showValidation;
+  const isOriginAddressValid = (props.originAddress || "").trim().length >= 5;
+  const isDestinationAddressValid = (props.destinationAddress || "").trim().length >= 5;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((props.email || "").trim());
+  const isMovingDateValid = !!props.movingDate && props.movingDate >= minMovingDate;
   const answered = useMemo(
     () => ({
       narrow_access: props.narrow_access,
@@ -149,6 +155,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           placeholder="10 rue de la Paix, Paris"
           inputId="v2-origin-address"
           initialValue={props.originAddress || [props.originPostalCode, props.originCity].join(" ")}
+          required
+          errorMessage={
+            showValidation && !isOriginAddressValid ? "Adresse de départ requise" : null
+          }
           onInputChange={(raw) => {
             props.onFieldChange("originAddress", raw);
           }}
@@ -164,6 +174,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           inputId="v2-destination-address"
           initialValue={
             props.destinationAddress || [props.destinationPostalCode, props.destinationCity].join(" ")
+          }
+          required
+          errorMessage={
+            showValidation && !isDestinationAddressValid ? "Adresse d’arrivée requise" : null
           }
           onInputChange={(raw) => {
             props.onFieldChange("destinationAddress", raw);
@@ -187,8 +201,18 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           value={props.movingDate}
           onChange={(e) => props.onFieldChange("movingDate", e.target.value)}
           min={minMovingDate}
-          className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
+          className={[
+            "w-full rounded-xl border-2 px-4 py-3 text-base transition-all",
+            showValidation && !isMovingDateValid
+              ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
+              : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+          ].join(" ")}
         />
+        {showValidation && !isMovingDateValid && (
+          <p className="text-sm font-medium text-[#EF4444]">
+            Date requise (au moins J+15)
+          </p>
+        )}
         <label className="flex items-center gap-2 text-sm text-[#0F172A]">
           <input
             type="checkbox"
@@ -345,10 +369,18 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 type="email"
                 value={props.email}
                 onChange={(e) => props.onFieldChange("email", e.target.value)}
-                className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
+                className={[
+                  "w-full rounded-xl border-2 px-4 py-3 text-base transition-all",
+                  showValidation && !isEmailValid
+                    ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
+                    : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+                ].join(" ")}
                 placeholder="vous@email.fr"
                 required
               />
+              {showValidation && !isEmailValid && (
+                <p className="text-sm font-medium text-[#EF4444]">Email requis</p>
+              )}
             </div>
 
             {!showPhone ? (

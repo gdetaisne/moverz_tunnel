@@ -14,6 +14,7 @@ interface StepQualificationV2Props {
   onFieldChange: (field: string, value: any) => void;
   onSubmit: (e: FormEvent) => void;
   isSubmitting: boolean;
+  showValidation?: boolean;
 }
 
 export function StepQualificationV2({
@@ -26,8 +27,16 @@ export function StepQualificationV2({
   onFieldChange,
   onSubmit,
   isSubmitting,
+  showValidation = false,
 }: StepQualificationV2Props) {
   const housingIsApartment = housingType !== "house";
+  const isOriginValid = originCity.trim().length >= 2;
+  const isDestinationValid = destinationCity.trim().length >= 2;
+  const isHousingValid = !!housingType?.trim();
+  const isSurfaceValid = (() => {
+    const n = Number.parseInt(String(surfaceM2 || "").trim(), 10);
+    return Number.isFinite(n) && n >= 10 && n <= 500;
+  })();
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -42,6 +51,8 @@ export function StepQualificationV2({
           placeholder="Paris"
           inputId="v2-origin-city"
           initialValue={originCity || originPostalCode}
+          required
+          errorMessage={showValidation && !isOriginValid ? "Ville de départ requise" : null}
           onInputChange={(raw) => {
             onFieldChange("originCity", raw);
             onFieldChange("originPostalCode", "");
@@ -57,6 +68,8 @@ export function StepQualificationV2({
           placeholder="Lyon"
           inputId="v2-destination-city"
           initialValue={destinationCity || destinationPostalCode}
+          required
+          errorMessage={showValidation && !isDestinationValid ? "Ville d’arrivée requise" : null}
           onInputChange={(raw) => {
             onFieldChange("destinationCity", raw);
             onFieldChange("destinationPostalCode", "");
@@ -69,9 +82,12 @@ export function StepQualificationV2({
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Home className="w-5 h-5 text-[#6BCFCF]" />
-          <p className="text-sm font-semibold text-[#0F172A]">Type de logement</p>
+        <div className="flex items-center justify-between gap-2" id="v2-housing-type">
+          <div className="flex items-center gap-2">
+            <Home className="w-5 h-5 text-[#6BCFCF]" />
+            <p className="text-sm font-semibold text-[#0F172A]">Type de logement</p>
+          </div>
+          <span className="text-[11px] font-semibold text-[#1E293B]/50">Requis</span>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <button
@@ -97,25 +113,40 @@ export function StepQualificationV2({
             Maison
           </button>
         </div>
+        {showValidation && !isHousingValid && (
+          <p className="text-sm font-medium text-[#EF4444]">Type de logement requis</p>
+        )}
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#0F172A]">
-            Surface approximative (m²)
-          </label>
+          <div className="flex items-center justify-between gap-3">
+            <label className="block text-sm font-medium text-[#0F172A]" htmlFor="v2-surface-m2">
+              Surface approximative (m²)
+            </label>
+            <span className="text-[11px] font-semibold text-[#1E293B]/50">Requis</span>
+          </div>
           <div className="relative">
             <input
+              id="v2-surface-m2"
               type="number"
               min={10}
               max={500}
               value={surfaceM2}
               onChange={(e) => onFieldChange("surfaceM2", e.target.value)}
-              className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base text-[#0F172A]"
+              className={[
+                "w-full rounded-xl border-2 px-4 py-3 text-base text-[#0F172A] transition-all",
+                showValidation && !isSurfaceValid
+                  ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
+                  : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+              ].join(" ")}
               placeholder="60"
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1E293B]/60 text-sm">
               m²
             </span>
           </div>
+          {showValidation && !isSurfaceValid && (
+            <p className="text-sm font-medium text-[#EF4444]">Surface requise (10–500 m²)</p>
+          )}
         </div>
       </div>
 

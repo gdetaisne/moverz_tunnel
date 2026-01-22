@@ -225,6 +225,20 @@
 - **Back Office payload**:
   - Aucun changement.
 
+### 2026-01-22 — V2: champs requis + validation discrète + scroll 1er champ manquant
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-validation-premium)
+- **Décision**: rendre les champs critiques “presque tous obligatoires” en V2, avec un feedback discret (tag “Requis”) et une navigation fluide (scroll/focus sur le premier champ manquant) lors du passage à l’étape suivante.
+- **Changements UI** (flag V2 uniquement):
+  - Step 1: tags “Requis” sur ville départ/arrivée, type logement, m²; affichage d’erreurs uniquement après tentative de continuer.
+  - Step 3: tags “Requis” sur adresses + date + email; erreurs affichées uniquement après tentative de continuer.
+- **Validation**:
+  - Step 1: validation avant Step 2 + scroll/focus sur le premier champ invalide.
+  - Step 3: validation adresses + date + email avant Step 4 + scroll/focus sur le premier champ invalide.
+- **Notes techniques**:
+  - `AddressAutocomplete` supporte désormais `required` + `errorMessage` (props optionnelles, backward compatible).
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
