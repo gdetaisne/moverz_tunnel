@@ -265,7 +265,7 @@
 - **Auteur**: (hotfix-build-jsx)
 - **Décision**: corriger un crash Turbopack dû à un texte `"<2 min"` interprété comme du JSX.
 - **Changements UI**:
-  - Step 4 (Photos V2): micro-copy affichée comme `&lt;2 min` au lieu de `<2 min`.
+  - Step 4 (Photos V2): micro-copy affichée comme `&lt;2 min` au lieu de `<2 min` (corrigé sur toutes les occurrences).
 - **Tracking / payload**:
   - Aucun changement.
 - **Risques / points à vérifier sur staging**:

@@ -271,7 +271,7 @@ export function StepContactPhotosV2({
           variant="primary"
         />
         <p className="text-xs text-center text-[#1E293B]/60">
-          🔒 0 spam • uniquement pour recevoir vos photos • <2 min
+          🔒 0 spam • uniquement pour recevoir vos photos • &lt;2 min
         </p>
       </div>
 
