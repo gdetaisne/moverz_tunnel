@@ -259,6 +259,18 @@
   - Compréhension: les users “arrivée seulement” doivent naturellement utiliser la zone précisions.
   - Friction: vérifier que l’affichage du textarea en mode contraint n’augmente pas le drop.
 
+### 2026-01-22 — Hotfix build: texte JSX avec “<” dans StepContactPhotosV2
+
+- **Date**: 2026-01-22
+- **Auteur**: (hotfix-build-jsx)
+- **Décision**: corriger un crash Turbopack dû à un texte `"<2 min"` interprété comme du JSX.
+- **Changements UI**:
+  - Step 4 (Photos V2): micro-copy affichée comme `&lt;2 min` au lieu de `<2 min`.
+- **Tracking / payload**:
+  - Aucun changement.
+- **Risques / points à vérifier sur staging**:
+  - Aucun (pure correction de build).
+
 ### 2026-01-22 — V2 Step 4: micro-ajustements UI (copy + logo mock WhatsApp)
 
 - **Date**: 2026-01-22
