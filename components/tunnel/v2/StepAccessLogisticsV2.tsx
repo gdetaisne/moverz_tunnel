@@ -65,6 +65,12 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
   const [revealedCount, setRevealedCount] = useState(1);
   const [showOptions, setShowOptions] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
+  const minMovingDate = useMemo(() => {
+    // Bloquer historique + 15 prochains jours (min = aujourd'hui + 15 jours)
+    const d = new Date();
+    d.setDate(d.getDate() + 15);
+    return d.toISOString().split("T")[0]!;
+  }, []);
   const answered = useMemo(
     () => ({
       narrow_access: props.narrow_access,
@@ -176,9 +182,11 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           <p className="text-sm font-semibold text-[#0F172A]">Date souhaitée</p>
         </div>
         <input
+          id="v2-moving-date"
           type="date"
           value={props.movingDate}
           onChange={(e) => props.onFieldChange("movingDate", e.target.value)}
+          min={minMovingDate}
           className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
         />
         <label className="flex items-center gap-2 text-sm text-[#0F172A]">

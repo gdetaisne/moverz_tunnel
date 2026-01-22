@@ -991,6 +991,29 @@ function DevisGratuitsV3Content() {
   };
 
   const handleSubmitAccessV2 = async () => {
+    // Validation date: bloquer historique + 15 prochains jours
+    const minMovingDateV2 = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 15);
+      return d.toISOString().split("T")[0]!;
+    })();
+    const isMovingDateValid =
+      typeof state.movingDate === "string" &&
+      state.movingDate.length > 0 &&
+      state.movingDate >= minMovingDateV2;
+    if (!isMovingDateValid) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        document.getElementById("v2-moving-date")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        (document.getElementById("v2-moving-date") as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Invalid moving date", 3, "PROJECT", "acces_v2");
+      return;
+    }
+
     // Validation contact (email obligatoire) — déplacé en fin de Step 3
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim())) {
       setShowValidationStep3(true);

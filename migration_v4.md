@@ -209,6 +209,22 @@
   - Vérifier la validation email en Step 3 (scroll/focus).
   - Vérifier que Step 4 a bien `leadId` et que les CTAs WhatsApp/upload fonctionnent.
 
+### 2026-01-22 — V2: contrainte date (J+15 min, historique bloqué)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-date-min)
+- **Décision**: appliquer la contrainte business “pas de date passée / pas dans les 15 prochains jours” en V2 comme en V1.
+- **Changements UI** (flag V2 uniquement):
+  - Step 3: input date (`movingDate`) a désormais un `min = aujourd’hui + 15 jours` (ce qui bloque aussi l’historique).
+- **Validation**:
+  - Au submit Step 3, validation renforcée (si date < min ou vide ⇒ scroll/focus sur l’input + erreur).
+- **Tracking**:
+  - Ajout d’un `TUNNEL_ERROR` validation côté V2 (`acces_v2`) en cas de date invalide.
+- **Champs / Inputs**:
+  - Aucun changement.
+- **Back Office payload**:
+  - Aucun changement.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
