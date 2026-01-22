@@ -510,11 +510,11 @@
     5. Check marks ✓✓
     6. Réponse "Parfait! 🎉 Faites pareil pour chaque pièce"
     7. Reset et loop
-  - **Photos réalistes** (salon uniquement, tons chauds):
-    - Gradients ambre/orange/jaune
-    - Effets de lumière (radial-gradient)
-    - Ombres et profondeur
-    - 4 photos différentes du même salon (angles variés)
+  - **Photos réalistes** (salon uniquement, via Unsplash):
+    - Photo 1: vue large salon moderne (canapé, déco)
+    - Photos 2 & 3: angles différents (zoom meubles, vue diagonale)
+    - Photo 4: détail salon (table basse, plantes)
+    - URLs Unsplash optimisées (`w=400&h=400&fit=crop&q=80`)
   - Mockup plus compact (`max-w-[300px]`) et discret (pas de grid, juste centré).
 - **Objectif UX**:
   - **Pédagogie**: montrer concrètement "3-4 photos **par pièce**" (pas juste "envoyer des photos")
