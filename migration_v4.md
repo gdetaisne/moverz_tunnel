@@ -261,6 +261,14 @@
 - **Tracking / payload**:
   - Aucun changement.
 
+### 2026-01-22 — V2 Step 4: restyle carte impact photos (look & feel premium Moverz)
+
+- **Date**: 2026-01-22
+- **Auteur**: (v2-step4-premium-restyle)
+- **Décision**: rendre la carte “gain” plus premium (moins “promo”), mieux alignée au style Moverz (badge soft, typo plus sobre, avant/après lisible).
+- **Changements UI** (flag V2 uniquement):
+  - Carte impact photos: suppression du gros titre “GAGNEZ” + réduction hiérarchie, ajout d’un badge “Impact des photos”, chiffres plus sobres (tabular nums), et avant/après en lignes compactes avec badge “-10%”.
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21

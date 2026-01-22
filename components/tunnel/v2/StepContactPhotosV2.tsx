@@ -41,6 +41,11 @@ export function StepContactPhotosV2({
       maximumFractionDigits: 0,
     }).format(Math.round(n));
 
+  const eur = (n: number) =>
+    new Intl.NumberFormat("fr-FR", {
+      maximumFractionDigits: 0,
+    }).format(Math.round(n));
+
   // Impact photos: on affiche un gain basé sur la fourchette précédente.
   // Hypothèse UX: des photos détaillées améliorent la précision et peuvent réduire le prix final (~10%).
   const DISCOUNT_RATE = 0.1;
@@ -51,8 +56,8 @@ export function StepContactPhotosV2({
   const savingsText =
     hasEstimate && savingsMin > 0 && savingsMax > 0
       ? savingsMin === savingsMax
-        ? euro(savingsMax)
-        : `${euro(savingsMin)} – ${euro(savingsMax)}`
+        ? `${eur(savingsMax)} €`
+        : `${eur(savingsMin)}–${eur(savingsMax)} €`
       : null;
 
   return (
@@ -94,26 +99,45 @@ export function StepContactPhotosV2({
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#6BCFCF]" />
               
               <div className="relative">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6BCFCF] mb-2">
-                  Gagnez
-                </p>
-                <p className="text-5xl md:text-6xl font-black text-[#0F172A] tracking-tight mb-2">
-                  {savingsText ?? "—"}
-                </p>
-                <p className="text-sm text-[#1E293B]/60 mb-4">
-                  en 5 minutes en ajoutant des photos
-                </p>
+                <div className="flex items-start justify-between gap-6">
+                  <div className="min-w-0">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-3 py-1 text-xs font-semibold text-[#2B7A78]">
+                      Impact des photos
+                    </div>
+                    <p className="mt-3 text-2xl md:text-3xl font-black text-[#0F172A] tracking-tight tabular-nums">
+                      Gagnez {savingsText ?? "—"}
+                    </p>
+                    <p className="mt-1 text-sm text-[#1E293B]/70">
+                      en ~5 minutes, en ajoutant des photos détaillées
+                    </p>
+                  </div>
 
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-                  <span className="text-[#1E293B]/60">
-                    Estimation : <span className="font-semibold text-[#0F172A]">{`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}</span>
-                  </span>
-                  <span className="text-[#1E293B]/40">→</span>
-                  <span className="text-[#1E293B]/60">
-                    Avec photos :{" "}
-                    <span className="font-semibold text-[#0F172A]">{`${euro(discountedMin)} – ${euro(discountedMax)}`}</span>{" "}
-                    <span className="text-xs font-semibold text-[#2B7A78]">(-10%)</span>
-                  </span>
+                  <div className="hidden md:block text-right">
+                    <div className="text-[11px] font-semibold text-[#1E293B]/60">Estimation</div>
+                    <div className="text-sm font-semibold text-[#0F172A] tabular-nums">
+                      {`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-2 text-sm">
+                  <div className="flex items-center justify-between gap-3 text-[#1E293B]/70">
+                    <span>Estimation</span>
+                    <span className="font-semibold text-[#0F172A] tabular-nums">
+                      {`${euro(estimateMinEur)} – ${euro(estimateMaxEur)}`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-[#1E293B]/70">
+                      <span>Avec photos</span>
+                      <span className="rounded-full bg-[#E7FAFA] px-2 py-0.5 text-[11px] font-semibold text-[#2B7A78]">
+                        -10%
+                      </span>
+                    </div>
+                    <span className="font-semibold text-[#0F172A] tabular-nums">
+                      {`${euro(discountedMin)} – ${euro(discountedMax)}`}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
