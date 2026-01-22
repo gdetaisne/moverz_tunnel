@@ -293,7 +293,7 @@ export function StepContactPhotosV2({
                 {/* Chat content */}
                 <div className="p-3 space-y-2 h-[420px] overflow-hidden bg-[#ECE5DD]">
                   {/* Message bubble */}
-                  <div className="flex justify-start mb-3">
+                  <div className="flex justify-start mb-2">
                     <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[75%] shadow-sm">
                       <p className="text-[10px] text-[#0F172A] leading-relaxed">
                         Bonjour! Envoyez-moi <strong>3 à 8 photos</strong> 📸 par pièce pour recevoir des devis précis 💰
@@ -302,38 +302,74 @@ export function StepContactPhotosV2({
                     </div>
                   </div>
 
-                  {/* Photo grid bubbles - realistic */}
-                  <div className="flex justify-end">
-                    <div className="grid grid-cols-2 gap-1 max-w-[80%]">
-                      {/* Real-looking photo thumbnails */}
+                  {/* First batch: Salon (3 photos) */}
+                  <div className="flex justify-end mb-1">
+                    <div className="grid grid-cols-3 gap-0.5 max-w-[85%]">
                       <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-amber-100 via-orange-50 to-yellow-100" />
-                        <div className="absolute bottom-1 right-1 text-[8px] text-white bg-black/40 px-1.5 py-0.5 rounded">
+                        <div className="absolute inset-0 bg-gradient-to-br from-amber-200 via-orange-100 to-yellow-50" />
+                        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_30%_30%,transparent_30%,rgba(0,0,0,0.1))]" />
+                      </div>
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100" />
+                        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_60%_40%,transparent_40%,rgba(0,0,0,0.15))]" />
+                      </div>
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-yellow-100 via-amber-100 to-orange-50" />
+                        <div className="absolute bottom-1 right-1 text-[8px] text-white bg-black/50 px-1.5 py-0.5 rounded">
                           Salon
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Second batch: Cuisine (4 photos) */}
+                  <div className="flex justify-end mb-1">
+                    <div className="grid grid-cols-2 gap-0.5 max-w-[75%]">
                       <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-cyan-50 to-teal-100" />
-                        <div className="absolute bottom-1 right-1 text-[8px] text-white bg-black/40 px-1.5 py-0.5 rounded">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-cyan-50 to-teal-50" />
+                        <div className="absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_70%_30%,transparent_35%,rgba(0,0,0,0.1))]" />
+                      </div>
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-100 via-blue-50 to-teal-100" />
+                        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_40%_60%,transparent_30%,rgba(0,0,0,0.12))]" />
+                      </div>
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-cyan-100 to-blue-50" />
+                      </div>
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-teal-100 to-cyan-50" />
+                        <div className="absolute bottom-1 right-1 text-[8px] text-white bg-black/50 px-1.5 py-0.5 rounded">
                           Cuisine
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Third batch: Chambres + SdB (5 photos) */}
+                  <div className="flex justify-end mb-1">
+                    <div className="grid grid-cols-3 gap-0.5 max-w-[85%]">
                       <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-rose-100" />
-                        <div className="absolute bottom-1 right-1 text-[8px] text-white bg-black/40 px-1.5 py-0.5 rounded">
-                          Chambre
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-rose-50" />
+                        <div className="absolute bottom-1 right-1 text-[8px] text-white bg-black/50 px-1.5 py-0.5 rounded">
+                          Ch. 1
                         </div>
                       </div>
                       <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-green-100 via-emerald-50 to-lime-100" />
-                        <div className="absolute bottom-1 right-1 text-[8px] text-white bg-black/40 px-1.5 py-0.5 rounded">
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-50" />
+                        <div className="absolute bottom-1 right-1 text-[8px] text-white bg-black/50 px-1.5 py-0.5 rounded">
+                          Ch. 2
+                        </div>
+                      </div>
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-green-100 via-emerald-50 to-teal-50" />
+                        <div className="absolute bottom-1 right-1 text-[8px] text-white bg-black/50 px-1.5 py-0.5 rounded">
                           SdB
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex justify-end">
+                  <div className="flex justify-end mb-2">
                     <div className="text-[8px] text-[#1E293B]/40">✓✓ 10:44</div>
                   </div>
 
