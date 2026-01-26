@@ -590,9 +590,15 @@ function DevisGratuitsV3Content() {
     };
 
     // Petite temporisation: évite de spammer OSRM quand on tape/blur rapidement.
-    const t = window.setTimeout(() => {
-      void run();
-    }, 250);
+    // HOTFIX: Désactivé temporairement - boucle infinie à corriger
+    // const t = window.setTimeout(() => {
+    //   void run();
+    // }, 250);
+    
+    // Fallback direct sans appel API
+    setRouteDistanceKm(null);
+    setRouteDistanceProvider("fallback");
+    const t = 0 as any;
 
     return () => {
       window.clearTimeout(t);
