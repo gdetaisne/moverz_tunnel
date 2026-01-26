@@ -21,6 +21,23 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-26 — Précision copy "avec photos" sur carte économies (V2)
+
+- **Date**: 2026-01-26
+- **Auteur**: (copywriting)
+- **Décision**: préciser que les économies sont obtenues "avec photos" pour clarifier le bénéfice.
+- **Changements UI**:
+  - Texte carte 1 : "économisés en moyenne" → "économisés en moyenne **avec photos**"
+  - Desktop et mobile
+- **Tracking**:
+  - Aucun impact
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés: copywriting uniquement
+- **Back Office payload**:
+  - changements: **AUCUN**
+
 ### 2026-01-26 — Style sobre et premium pour grid incentives (V2)
 
 - **Date**: 2026-01-26
