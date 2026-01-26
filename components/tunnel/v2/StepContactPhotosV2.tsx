@@ -183,7 +183,7 @@ export function StepContactPhotosV2({
               {hasEstimate ? `${eur(savingsMin)}-${eur(savingsMax)}€` : "60-170€"}
             </p>
             <p className="text-xs font-medium text-[#1E293B]/60">
-              économisés en moyenne
+              économisés en moyenne avec photos
             </p>
           </div>
 
@@ -303,7 +303,7 @@ export function StepContactPhotosV2({
             {hasEstimate ? `${eur(savingsMin)}-${eur(savingsMax)}€` : "60-170€"}
           </p>
           <p className="text-xs font-medium text-[#1E293B]/60">
-            économisés en moyenne
+            économisés en moyenne avec photos
           </p>
         </div>
 
