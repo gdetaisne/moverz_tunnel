@@ -21,6 +21,36 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-26 — Titre punchy "Vos photos = meilleur prix garanti" (V2)
+
+- **Date**: 2026-01-26
+- **Auteur**: (copywriting conversion)
+- **Décision**: remplacer le titre générique "Ajoutez vos photos" par un titre bénéfice-centré ultra-punchy dans l'esprit Moverz.
+- **Changements UI**:
+  - **Titre H1** : "Ajoutez vos photos" → **"Vos photos = meilleur prix garanti"**
+  - **Sous-titre** : "3-8 photos par pièce • angles larges • bonne lumière" → **"60-170€ économisés en 2 min chrono"**
+  - Desktop et mobile
+- **Objectif**:
+  - Maximiser la conversion upload photos
+  - Bénéfice immédiat et chiffré
+  - Ton direct et impactant (esprit Moverz)
+- **Tracking**:
+  - Aucun impact
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés: copywriting uniquement (titre + sous-titre)
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Copywriting rationale**:
+  - Équation visuelle simple : "Vos photos = meilleur prix"
+  - Bénéfice chiffré : "60-170€ économisés"
+  - Friction minimisée : "en 2 min chrono"
+  - "Garanti" = confiance et engagement
+- **Risques / points à vérifier sur staging**:
+  - Vérifier la longueur du titre sur mobile (pas de wrap bizarre)
+  - Vérifier que le ton reste cohérent avec le reste du tunnel
+
 ### 2026-01-26 — Précision copy "avec photos" sur carte économies (V2)
 
 - **Date**: 2026-01-26
