@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Clock, FileText, Smartphone, Upload } from "lucide-react";
+import { Check, Clock, FileText, Smartphone, Upload, TrendingUp, Users, Zap } from "lucide-react";
 import WhatsAppCTA from "./WhatsAppCTA";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
@@ -65,12 +65,54 @@ export default function ConfirmationPage({
             Photographiez <span className="text-[#6BCFCF]">toutes</span> vos pièces
           </h2>
           
-          <p className="text-base md:text-lg text-[#1E293B]/70 mb-10 leading-relaxed">
+          <p className="text-base md:text-lg text-[#1E293B]/70 mb-8 leading-relaxed">
             Plus vous envoyez de photos détaillées, plus les déménageurs peuvent estimer précisément <strong>le volume et le temps nécessaire</strong>
           </p>
 
-          {/* Estimate impact - ULTRA SIMPLE */}
-          {hasEstimate && (
+          {/* Benefits Grid - Impact visuel */}
+          <div className="grid md:grid-cols-3 gap-4 mb-10">
+            {/* Bénéfice 1 : Économies */}
+            <div className="relative rounded-2xl bg-white border-2 border-[#6BCFCF] p-6 text-center">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-3">
+                <TrendingUp className="w-6 h-6 text-[#6BCFCF]" strokeWidth={2.5} />
+              </div>
+              <p className="text-3xl md:text-4xl font-black text-[#0F172A] mb-1">
+                {hasEstimate ? euro(savingsMax) : "60-170€"}
+              </p>
+              <p className="text-xs font-semibold text-[#1E293B]/70">
+                économisés en moyenne
+              </p>
+            </div>
+
+            {/* Bénéfice 2 : Taux de réponse */}
+            <div className="relative rounded-2xl bg-white border-2 border-[#E3E5E8] p-6 text-center">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-green-100 mx-auto mb-3">
+                <Users className="w-6 h-6 text-green-600" strokeWidth={2.5} />
+              </div>
+              <p className="text-3xl md:text-4xl font-black text-[#0F172A] mb-1">
+                +50%
+              </p>
+              <p className="text-xs font-semibold text-[#1E293B]/70">
+                de taux de réponse avec photos
+              </p>
+            </div>
+
+            {/* Bénéfice 3 : Nombre de devis */}
+            <div className="relative rounded-2xl bg-white border-2 border-[#E3E5E8] p-6 text-center">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100 mx-auto mb-3">
+                <Zap className="w-6 h-6 text-amber-600" strokeWidth={2.5} />
+              </div>
+              <p className="text-3xl md:text-4xl font-black text-[#0F172A] mb-1">
+                2x
+              </p>
+              <p className="text-xs font-semibold text-[#1E293B]/70">
+                plus de devis reçus sous 48-72h
+              </p>
+            </div>
+          </div>
+
+          {/* Estimate impact - ULTRA SIMPLE - DEPRECATED (remplacé par benefits grid ci-dessus) */}
+          {false && hasEstimate && (
             <div className="relative rounded-3xl bg-white border border-[#E3E5E8] p-8 md:p-10 mb-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#6BCFCF]" />
               
@@ -200,31 +242,9 @@ export default function ConfirmationPage({
       {/* CTA Section - light style like moverz.fr */}
       <div className="mb-16 text-center">
         <div className="max-w-md mx-auto space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
-            Dernière étape
-          </p>
-          <p className="text-sm text-[#1E293B]/70">
-            Envoyez quelques photos pour transformer cette estimation en devis concrets.
-          </p>
-          <WhatsAppCTA 
-            source="tunnel-confirmation" 
-            linkingCode={linkingCode} 
-            leadId={leadId}
-            variant="primary"
-          />
-
-          {/* Desktop upload option */}
+          {/* Desktop upload option - EN PREMIER */}
           {mounted && !isMobile && (
             <>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#E3E5E8]"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-[#1E293B]/60">ou</span>
-                </div>
-              </div>
-
               <button
                 onClick={() => {
                   const url = new URL("/upload-photos", window.location.origin);
@@ -233,13 +253,30 @@ export default function ConfirmationPage({
                   window.location.href = url.toString();
                 }}
                 disabled={!leadId}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white border-2 border-[#E3E5E8] px-8 py-4 text-base font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#6BCFCF]/5 transition-all duration-200"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white hover:bg-[#1E293B] transition-all duration-200"
               >
                 <Upload className="w-5 h-5" />
-                <span>Depuis cet ordinateur</span>
+                <span>Glissez-déposez vos photos ici</span>
               </button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[#E3E5E8]"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-white text-[#1E293B]/60">ou</span>
+                </div>
+              </div>
             </>
           )}
+
+          {/* WhatsApp - EN SECOND sur desktop, en premier sur mobile */}
+          <WhatsAppCTA 
+            source="tunnel-confirmation" 
+            linkingCode={linkingCode} 
+            leadId={leadId}
+            variant={mounted && !isMobile ? "secondary" : "primary"}
+          />
         </div>
       </div>
 

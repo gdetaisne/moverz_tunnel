@@ -225,6 +225,10 @@ export function useTunnelState() {
               ? parsed.destinationElevatorTouched
               : merged.destinationElevator !== INITIAL_STATE.destinationElevator;
 
+          // Force "easy" si les champs d'accès sont vides (rétrocompatibilité + UX par défaut)
+          if (!merged.originAccess) merged.originAccess = "easy";
+          if (!merged.destinationAccess) merged.destinationAccess = "easy";
+
           return merged;
         } catch (e) {
           console.error("Failed to parse saved state:", e);

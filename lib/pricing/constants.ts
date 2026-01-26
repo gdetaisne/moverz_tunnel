@@ -1,16 +1,16 @@
 export const TYPE_COEFFICIENTS = {
-  // 0,35 pour T1/T2/T3 ; 0,3 pour le reste
-  studio: 0.3,
+  // 0,35 pour T1/T2/T3 ; 0,4 pour le reste
+  studio: 0.4,
   t1: 0.35,
   t2: 0.35,
   t3: 0.35,
-  t4: 0.3,
-  t5: 0.3,
-  house: 0.3,
+  t4: 0.4,
+  t5: 0.4,
+  house: 0.4,
   // Variantes maison étagée
-  house_1floor: 0.3,
-  house_2floors: 0.3,
-  house_3floors: 0.3,
+  house_1floor: 0.4,
+  house_2floors: 0.4,
+  house_3floors: 0.4,
 } as const;
 
 export const DENSITY_COEFFICIENTS = {

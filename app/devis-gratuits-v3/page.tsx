@@ -1622,8 +1622,10 @@ function DevisGratuitsV3Content() {
             <Step1Contact
               firstName={state.firstName}
               email={state.email}
+              phone={state.phone}
               onFirstNameChange={(value) => updateField("firstName", value)}
               onEmailChange={(value) => updateField("email", value)}
+              onPhoneChange={(value) => updateField("phone", value)}
               onSubmit={handleSubmitStep1}
               isSubmitting={false}
               error={null}
