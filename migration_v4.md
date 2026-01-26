@@ -21,6 +21,40 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-26 — Style sobre et premium pour grid incentives (V2)
+
+- **Date**: 2026-01-26
+- **Auteur**: (UX refinement)
+- **Décision**: rendre le grid des 3 cartes incentives plus sobre, cohérent et premium pour mieux s'aligner avec le reste du tunnel.
+- **Changements UI**:
+  - **Cartes incentives** : 
+    - Toutes les bordures **uniformisées en gris clair** (`border` au lieu de `border-2 border-[#6BCFCF]`)
+    - Toutes les icônes en **turquoise #6BCFCF** (au lieu de vert/orange différenciés)
+    - Fonds d'icônes uniformisés : `bg-[#6BCFCF]/10` pour toutes
+    - Icônes plus petites et discrètes : `w-10 h-10` au lieu de `w-12 h-12`
+    - Typographie plus sobre : `font-bold` au lieu de `font-black`, `text-2xl/3xl` au lieu de `3xl/4xl`
+    - Labels plus discrets : `text-[#1E293B]/60` au lieu de `/70`
+  - **Dropzone (upload desktop)** :
+    - Bordure **solide** au lieu de pointillés (`border-[#E3E5E8]` au lieu de `border-dashed`)
+    - Border radius réduit : `rounded-2xl` au lieu de `rounded-3xl`
+    - Hover effect plus subtil : fond turquoise très léger (`bg-[#F0FAFA]/30`)
+    - Suppression de l'effet `scale-[1.01]` lors du drag
+    - Icône uniformisée : `bg-[#6BCFCF]/10` avec `text-[#6BCFCF]`
+    - Lien "choisissez des fichiers" en turquoise cohérent
+- **Tracking**:
+  - Aucun impact
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés: style visuel uniquement (design plus sobre et cohérent)
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Risques / points à vérifier sur staging**:
+  - Vérifier que le nouveau style est cohérent avec le reste du tunnel
+  - Vérifier la lisibilité sur desktop et mobile
+  - Vérifier que les bordures grises se distinguent bien du fond
+  - Vérifier le hover effect de la dropzone
+
 ### 2026-01-26 — Fix couleur boutons Non/Oui dans StepAccessLogisticsV2
 
 - **Date**: 2026-01-26
