@@ -21,6 +21,27 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-26 — Fix couleur boutons Non/Oui dans StepAccessLogisticsV2
+
+- **Date**: 2026-01-26
+- **Auteur**: (UX fix)
+- **Décision**: corriger les boutons Non/Oui pour qu'ils aient la couleur turquoise (#6BCFCF) quand sélectionnés, au lieu de rester gris.
+- **Changements UI**:
+  - Boutons "Oui, accès simple" / "Non, accès contraint" : couleur #6BCFCF (au lieu de #0F172A noir)
+  - Boutons "Non" / "Oui" dans les sous-questions d'accès : couleur #6BCFCF quand sélectionnés
+  - Boutons "Non" / "Oui" dans les services en plus : couleur #6BCFCF quand sélectionnés
+- **Tracking**:
+  - Aucun impact
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés: style visuel uniquement (couleur des boutons actifs)
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Risques / points à vérifier sur staging**:
+  - Vérifier que les boutons ont bien la couleur turquoise quand on clique dessus
+  - Vérifier la lisibilité du texte blanc sur fond turquoise
+
 ### 2026-01-26 — Application des améliorations UX sur tunnel V2 (NEXT_PUBLIC_FUNNEL_V2=true)
 
 - **Date**: 2026-01-26
