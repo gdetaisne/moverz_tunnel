@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Check, Upload, ImagePlus, X, Loader2, Smartphone, Mail } from "lucide-react";
+import { Check, Upload, ImagePlus, X, Loader2, Smartphone, Mail, TrendingUp, Users, Zap } from "lucide-react";
 import WhatsAppCTA from "@/components/tunnel/WhatsAppCTA";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { uploadBackofficePhotos } from "@/lib/api/client";
@@ -170,12 +170,48 @@ export function StepContactPhotosV2({
           <p className="text-sm text-[#1E293B]/70">
             3–8 photos par pièce
           </p>
-          {savingsText && (
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] border border-[#6BCFCF]/30 px-4 py-2 text-sm font-semibold text-[#2B7A78]">
-              <span className="text-xs">💰</span>
-              <span>Gagnez jusqu'à {savingsText}</span>
+        </div>
+
+        {/* Benefits Grid - Impact visuel Mobile */}
+        <div className="space-y-3">
+          {/* Bénéfice 1 : Économies */}
+          <div className="relative rounded-2xl bg-white border-2 border-[#6BCFCF] p-4 text-center">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-2">
+              <TrendingUp className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2.5} />
             </div>
-          )}
+            <p className="text-2xl font-black text-[#0F172A] mb-1">
+              {hasEstimate ? `${eur(savingsMin)}-${eur(savingsMax)}€` : "60-170€"}
+            </p>
+            <p className="text-xs font-semibold text-[#1E293B]/70">
+              économisés en moyenne
+            </p>
+          </div>
+
+          {/* Bénéfice 2 : Taux de réponse */}
+          <div className="relative rounded-2xl bg-white border-2 border-[#E3E5E8] p-4 text-center">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-green-100 mx-auto mb-2">
+              <Users className="w-5 h-5 text-green-600" strokeWidth={2.5} />
+            </div>
+            <p className="text-2xl font-black text-[#0F172A] mb-1">
+              +50%
+            </p>
+            <p className="text-xs font-semibold text-[#1E293B]/70">
+              de taux de réponse avec photos
+            </p>
+          </div>
+
+          {/* Bénéfice 3 : Nombre de devis */}
+          <div className="relative rounded-2xl bg-white border-2 border-[#E3E5E8] p-4 text-center">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-100 mx-auto mb-2">
+              <Zap className="w-5 h-5 text-amber-600" strokeWidth={2.5} />
+            </div>
+            <p className="text-2xl font-black text-[#0F172A] mb-1">
+              2x
+            </p>
+            <p className="text-xs font-semibold text-[#1E293B]/70">
+              plus de devis reçus sous 48-72h
+            </p>
+          </div>
         </div>
 
         <WhatsAppCTA 
@@ -254,38 +290,52 @@ export function StepContactPhotosV2({
         <p className="text-base text-[#1E293B]/70">
           3–8 photos par pièce • angles larges • bonne lumière
         </p>
-        {savingsText && (
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] border border-[#6BCFCF]/30 px-4 py-2 text-sm font-semibold text-[#2B7A78]">
-            <span className="text-xs">💰</span>
-            <span>Gagnez jusqu'à {savingsText}</span>
-          </div>
-        )}
       </div>
 
-      {/* CTA WhatsApp (principal) */}
-      <div className="space-y-3">
-        <WhatsAppCTA 
-          source="tunnel-v2-desktop" 
-          linkingCode={linkingCode || undefined} 
-          leadId={leadId || undefined}
-          variant="primary"
-        />
-        <p className="text-xs text-center text-[#1E293B]/60">
-          🔒 0 spam • uniquement pour recevoir vos photos • &lt;2 min
-        </p>
-      </div>
-
-      {/* Alternative : Upload depuis cet ordinateur */}
-      <div className="space-y-4">
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[#E3E5E8]"></div>
+      {/* Benefits Grid - Impact visuel */}
+      <div className="grid md:grid-cols-3 gap-4">
+        {/* Bénéfice 1 : Économies */}
+        <div className="relative rounded-2xl bg-white border-2 border-[#6BCFCF] p-6 text-center">
+          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-3">
+            <TrendingUp className="w-6 h-6 text-[#6BCFCF]" strokeWidth={2.5} />
           </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="px-4 bg-white text-[#1E293B]/60">ou</span>
-          </div>
+          <p className="text-3xl md:text-4xl font-black text-[#0F172A] mb-1">
+            {hasEstimate ? `${eur(savingsMin)}-${eur(savingsMax)}€` : "60-170€"}
+          </p>
+          <p className="text-xs font-semibold text-[#1E293B]/70">
+            économisés en moyenne
+          </p>
         </div>
 
+        {/* Bénéfice 2 : Taux de réponse */}
+        <div className="relative rounded-2xl bg-white border-2 border-[#E3E5E8] p-6 text-center">
+          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-green-100 mx-auto mb-3">
+            <Users className="w-6 h-6 text-green-600" strokeWidth={2.5} />
+          </div>
+          <p className="text-3xl md:text-4xl font-black text-[#0F172A] mb-1">
+            +50%
+          </p>
+          <p className="text-xs font-semibold text-[#1E293B]/70">
+            de taux de réponse avec photos
+          </p>
+        </div>
+
+        {/* Bénéfice 3 : Nombre de devis */}
+        <div className="relative rounded-2xl bg-white border-2 border-[#E3E5E8] p-6 text-center">
+          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100 mx-auto mb-3">
+            <Zap className="w-6 h-6 text-amber-600" strokeWidth={2.5} />
+          </div>
+          <p className="text-3xl md:text-4xl font-black text-[#0F172A] mb-1">
+            2x
+          </p>
+          <p className="text-xs font-semibold text-[#1E293B]/70">
+            plus de devis reçus sous 48-72h
+          </p>
+        </div>
+      </div>
+
+      {/* Upload depuis cet ordinateur (EN PREMIER sur desktop) */}
+      <div className="space-y-4">
         {/* Dropzone */}
         <input
           ref={fileInputRef}
@@ -404,6 +454,29 @@ export function StepContactPhotosV2({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Séparateur "ou" */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-[#E3E5E8]"></div>
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="px-4 bg-white text-[#1E293B]/60">ou</span>
+        </div>
+      </div>
+
+      {/* CTA WhatsApp (EN SECOND sur desktop) */}
+      <div className="space-y-3">
+        <WhatsAppCTA 
+          source="tunnel-v2-desktop" 
+          linkingCode={linkingCode || undefined} 
+          leadId={leadId || undefined}
+          variant="secondary"
+        />
+        <p className="text-xs text-center text-[#1E293B]/60">
+          🔒 0 spam • uniquement pour recevoir vos photos • &lt;2 min
+        </p>
       </div>
 
       {/* Mockup iPhone (exemple pédagogique: 3-4 photos salon) */}

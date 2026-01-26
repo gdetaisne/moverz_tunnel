@@ -65,7 +65,6 @@ const SERVICE_LABELS: Array<{ key: keyof StepAccessLogisticsV2Props; label: stri
 export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
   const [revealedCount, setRevealedCount] = useState(1);
   const [showOptions, setShowOptions] = useState(false);
-  const [showPhone, setShowPhone] = useState(false);
   const minMovingDate = useMemo(() => {
     // Bloquer historique + 15 prochains jours (min = aujourd'hui + 15 jours)
     const d = new Date();
@@ -382,29 +381,19 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               )}
             </div>
 
-            {!showPhone ? (
-              <button
-                type="button"
-                onClick={() => setShowPhone(true)}
-                className="text-left text-sm font-semibold text-[#0F172A]"
-              >
-                + Ajouter un téléphone (optionnel)
-              </button>
-            ) : (
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
-                  <Phone className="w-4 h-4 text-[#6BCFCF]" />
-                  Téléphone (optionnel)
-                </label>
-                <input
-                  type="tel"
-                  value={props.phone}
-                  onChange={(e) => props.onFieldChange("phone", e.target.value)}
-                  className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
-                  placeholder="+33 6..."
-                />
-              </div>
-            )}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
+                <Phone className="w-4 h-4 text-[#6BCFCF]" />
+                Téléphone (optionnel)
+              </label>
+              <input
+                type="tel"
+                value={props.phone}
+                onChange={(e) => props.onFieldChange("phone", e.target.value)}
+                className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
+                placeholder="+33 6..."
+              />
+            </div>
           </div>
         </div>
       </div>

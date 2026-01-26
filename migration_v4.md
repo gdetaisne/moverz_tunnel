@@ -21,6 +21,43 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-26 — Application des améliorations UX sur tunnel V2 (NEXT_PUBLIC_FUNNEL_V2=true)
+
+- **Date**: 2026-01-26
+- **Auteur**: (UX consistency)
+- **Décision**: appliquer les mêmes améliorations UX que sur le tunnel principal aux composants V2 pour assurer une expérience cohérente quelle que soit la version active.
+- **Changements UI**:
+  - **StepAccessLogisticsV2**: Champ téléphone **visible par défaut** (suppression du toggle "+ Ajouter téléphone")
+  - **StepAccessLogisticsV2**: Accès déjà initialisé à **"simple" par défaut** dans `useTunnelState` (pas de changement code, déjà présent)
+  - **StepContactPhotosV2 (Desktop)**: Grid de 3 cartes incentives avec stats impactantes :
+    1. 💰 "60-170€ économisés en moyenne" (ou montant dynamique) - bordure turquoise
+    2. 👥 "+50% de taux de réponse avec photos" - bordure grise
+    3. ⚡ "2x plus de devis reçus sous 48-72h" - bordure grise
+  - **StepContactPhotosV2 (Desktop)**: Ordre CTA **inversé** :
+    - **EN PREMIER**: Drag & drop upload (depuis cet ordinateur)
+    - **EN SECOND**: WhatsApp CTA (variant="secondary")
+    - Séparateur "ou" entre les deux
+  - **StepContactPhotosV2 (Mobile)**: Grid incentives en version verticale (stack 3 cartes) + WhatsApp reste principal
+- **Tracking**:
+  - Aucun impact (mêmes events GA4)
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés: présentation visuelle uniquement (champ téléphone toujours visible, grid incentives, ordre CTAs)
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Fichiers modifiés**:
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx` (téléphone visible)
+  - `components/tunnel/v2/StepContactPhotosV2.tsx` (grid incentives + ordre CTA)
+  - Imports ajoutés: `TrendingUp`, `Users`, `Zap` from lucide-react
+- **Risques / points à vérifier sur staging**:
+  - Vérifier avec `NEXT_PUBLIC_FUNNEL_V2=true` sur CapRover
+  - Vérifier l'affichage du grid 3 colonnes desktop / stack vertical mobile
+  - Vérifier ordre CTA desktop (drag&drop puis WhatsApp)
+  - Vérifier que le champ téléphone est bien visible d'office
+  - Vérifier les montants dynamiques dans le grid si estimate disponible
+  - Vérifier que WhatsApp reste principal sur mobile
+
 ### 2026-01-26 — Hotfix validation téléphone (Step 1)
 
 - **Date**: 2026-01-26
