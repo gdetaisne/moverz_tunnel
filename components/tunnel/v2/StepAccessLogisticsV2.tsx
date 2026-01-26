@@ -120,8 +120,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         onClick={() => onChange(false)}
         className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
           !value
-            ? "bg-white border-2 border-[#E3E5E8] text-[#0F172A]/70"
-            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A]/70"
+            ? "bg-[#6BCFCF] text-white"
+            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A]"
         }`}
       >
         Non
@@ -130,7 +130,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         type="button"
         onClick={() => onChange(true)}
         className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-          value ? "bg-[#0F172A] text-white" : "bg-white border-2 border-[#E3E5E8] text-[#0F172A]"
+          value ? "bg-[#6BCFCF] text-white" : "bg-white border-2 border-[#E3E5E8] text-[#0F172A]"
         }`}
       >
         Oui
@@ -235,7 +235,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               onClick={() => handleAccessType("simple")}
               className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                 props.access_type === "simple"
-                  ? "bg-[#0F172A] text-white"
+                  ? "bg-[#6BCFCF] text-white"
                   : "bg-white border-2 border-[#E3E5E8] text-[#0F172A]"
               }`}
             >
@@ -246,7 +246,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               onClick={() => handleAccessType("constrained")}
               className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                 props.access_type === "constrained"
-                  ? "bg-[#0F172A] text-white"
+                  ? "bg-[#6BCFCF] text-white"
                   : "bg-white border-2 border-[#E3E5E8] text-[#0F172A]"
               }`}
             >
