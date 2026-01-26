@@ -165,10 +165,10 @@ export function StepContactPhotosV2({
             Dossier créé
           </div>
           <h1 className="text-3xl font-black text-[#0F172A]">
-            Ajoutez vos photos
+            Vos photos = meilleur prix garanti
           </h1>
           <p className="text-sm text-[#1E293B]/70">
-            3–8 photos par pièce
+            60-170€ économisés en 2 min chrono
           </p>
         </div>
 
@@ -285,10 +285,10 @@ export function StepContactPhotosV2({
           Dossier créé
         </div>
         <h1 className="text-4xl md:text-5xl font-black text-[#0F172A] leading-tight">
-          Ajoutez vos photos
+          Vos photos = meilleur prix garanti
         </h1>
         <p className="text-base text-[#1E293B]/70">
-          3–8 photos par pièce • angles larges • bonne lumière
+          60-170€ économisés en 2 min chrono
         </p>
       </div>
 
