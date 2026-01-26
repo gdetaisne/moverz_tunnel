@@ -172,43 +172,43 @@ export function StepContactPhotosV2({
           </p>
         </div>
 
-        {/* Benefits Grid - Impact visuel Mobile */}
+        {/* Benefits Grid - Style sobre Mobile */}
         <div className="space-y-3">
           {/* Bénéfice 1 : Économies */}
-          <div className="relative rounded-2xl bg-white border-2 border-[#6BCFCF] p-4 text-center">
+          <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-4 text-center">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-2">
-              <TrendingUp className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2.5} />
+              <TrendingUp className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
             </div>
-            <p className="text-2xl font-black text-[#0F172A] mb-1">
+            <p className="text-2xl font-bold text-[#0F172A] mb-1">
               {hasEstimate ? `${eur(savingsMin)}-${eur(savingsMax)}€` : "60-170€"}
             </p>
-            <p className="text-xs font-semibold text-[#1E293B]/70">
+            <p className="text-xs font-medium text-[#1E293B]/60">
               économisés en moyenne
             </p>
           </div>
 
           {/* Bénéfice 2 : Taux de réponse */}
-          <div className="relative rounded-2xl bg-white border-2 border-[#E3E5E8] p-4 text-center">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-green-100 mx-auto mb-2">
-              <Users className="w-5 h-5 text-green-600" strokeWidth={2.5} />
+          <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-4 text-center">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-2">
+              <Users className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
             </div>
-            <p className="text-2xl font-black text-[#0F172A] mb-1">
+            <p className="text-2xl font-bold text-[#0F172A] mb-1">
               +50%
             </p>
-            <p className="text-xs font-semibold text-[#1E293B]/70">
+            <p className="text-xs font-medium text-[#1E293B]/60">
               de taux de réponse avec photos
             </p>
           </div>
 
           {/* Bénéfice 3 : Nombre de devis */}
-          <div className="relative rounded-2xl bg-white border-2 border-[#E3E5E8] p-4 text-center">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-100 mx-auto mb-2">
-              <Zap className="w-5 h-5 text-amber-600" strokeWidth={2.5} />
+          <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-4 text-center">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-2">
+              <Zap className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
             </div>
-            <p className="text-2xl font-black text-[#0F172A] mb-1">
+            <p className="text-2xl font-bold text-[#0F172A] mb-1">
               2x
             </p>
-            <p className="text-xs font-semibold text-[#1E293B]/70">
+            <p className="text-xs font-medium text-[#1E293B]/60">
               plus de devis reçus sous 48-72h
             </p>
           </div>
@@ -292,43 +292,43 @@ export function StepContactPhotosV2({
         </p>
       </div>
 
-      {/* Benefits Grid - Impact visuel */}
+      {/* Benefits Grid - Style sobre */}
       <div className="grid md:grid-cols-3 gap-4">
         {/* Bénéfice 1 : Économies */}
-        <div className="relative rounded-2xl bg-white border-2 border-[#6BCFCF] p-6 text-center">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-3">
-            <TrendingUp className="w-6 h-6 text-[#6BCFCF]" strokeWidth={2.5} />
+        <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-6 text-center">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-3">
+            <TrendingUp className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
           </div>
-          <p className="text-3xl md:text-4xl font-black text-[#0F172A] mb-1">
+          <p className="text-2xl md:text-3xl font-bold text-[#0F172A] mb-1">
             {hasEstimate ? `${eur(savingsMin)}-${eur(savingsMax)}€` : "60-170€"}
           </p>
-          <p className="text-xs font-semibold text-[#1E293B]/70">
+          <p className="text-xs font-medium text-[#1E293B]/60">
             économisés en moyenne
           </p>
         </div>
 
         {/* Bénéfice 2 : Taux de réponse */}
-        <div className="relative rounded-2xl bg-white border-2 border-[#E3E5E8] p-6 text-center">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-green-100 mx-auto mb-3">
-            <Users className="w-6 h-6 text-green-600" strokeWidth={2.5} />
+        <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-6 text-center">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-3">
+            <Users className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
           </div>
-          <p className="text-3xl md:text-4xl font-black text-[#0F172A] mb-1">
+          <p className="text-2xl md:text-3xl font-bold text-[#0F172A] mb-1">
             +50%
           </p>
-          <p className="text-xs font-semibold text-[#1E293B]/70">
+          <p className="text-xs font-medium text-[#1E293B]/60">
             de taux de réponse avec photos
           </p>
         </div>
 
         {/* Bénéfice 3 : Nombre de devis */}
-        <div className="relative rounded-2xl bg-white border-2 border-[#E3E5E8] p-6 text-center">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100 mx-auto mb-3">
-            <Zap className="w-6 h-6 text-amber-600" strokeWidth={2.5} />
+        <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-6 text-center">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-3">
+            <Zap className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
           </div>
-          <p className="text-3xl md:text-4xl font-black text-[#0F172A] mb-1">
+          <p className="text-2xl md:text-3xl font-bold text-[#0F172A] mb-1">
             2x
           </p>
-          <p className="text-xs font-semibold text-[#1E293B]/70">
+          <p className="text-xs font-medium text-[#1E293B]/60">
             plus de devis reçus sous 48-72h
           </p>
         </div>
@@ -369,38 +369,38 @@ export function StepContactPhotosV2({
           }}
           onDrop={onDrop}
           className={[
-            "w-full rounded-3xl border-2 bg-white p-8 text-center transition-all duration-200",
+            "w-full rounded-2xl border-2 bg-white p-8 text-center transition-all duration-200",
             !leadId
               ? "border-[#E3E5E8] opacity-60"
               : isDragging
-              ? "border-[#6BCFCF] bg-[#F0FAFA] scale-[1.01]"
-              : "border-dashed border-[#E3E5E8] hover:border-[#6BCFCF]",
+              ? "border-[#6BCFCF] bg-[#F0FAFA]"
+              : "border-[#E3E5E8] hover:border-[#6BCFCF] hover:bg-[#F0FAFA]/30",
           ].join(" ")}
         >
           <div className="flex flex-col items-center gap-4">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6BCFCF]/15 text-[#2B7A78]">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#6BCFCF]/10">
               {uploading ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#6BCFCF]" />
               ) : (
-                <ImagePlus className="h-6 w-6" />
+                <ImagePlus className="h-6 w-6 text-[#6BCFCF]" />
               )}
             </div>
             <div>
               <p className="text-base font-semibold text-[#0F172A]">
                 Glissez-déposez vos photos ici
               </p>
-              <p className="mt-1 text-sm text-[#1E293B]/70">
+              <p className="mt-1 text-sm text-[#1E293B]/60">
                 ou{" "}
                 <button
                   type="button"
                   onClick={openFilePicker}
                   disabled={!canUpload || uploading}
-                  className="font-semibold text-[#2B7A78] underline underline-offset-2 hover:text-[#6BCFCF]"
+                  className="font-semibold text-[#6BCFCF] underline underline-offset-2 hover:text-[#2B7A78]"
                 >
                   choisissez des fichiers
                 </button>
               </p>
-              <p className="mt-3 text-xs text-[#1E293B]/60">
+              <p className="mt-3 text-xs text-[#1E293B]/50">
                 JPG, PNG, HEIC — jusqu'à {MAX_MB} Mo par photo
               </p>
             </div>
