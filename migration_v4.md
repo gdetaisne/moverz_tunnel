@@ -21,6 +21,28 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-26 — Hotfix validation téléphone (Step 1)
+
+- **Date**: 2026-01-26
+- **Auteur**: (hotfix)
+- **Décision**: corriger un bug de validation sur le champ téléphone qui empêchait la soumission du formulaire Step 1 quand `phone` était `undefined` au lieu d'une string vide.
+- **Changements UI**:
+  - Aucun changement visuel
+- **Tracking**:
+  - Aucun impact
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés: logique de validation du champ `phone` (gestion `undefined`)
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Bug corrigé**:
+  - Validation `isPhoneValid` plantait si `phone` était `undefined`
+  - Ajout de checks `!phone ||` avant `phone.trim()` et dans les conditions d'affichage d'erreur
+- **Risques / points à vérifier sur staging**:
+  - Vérifier que le formulaire Step 1 se soumet correctement avec ou sans téléphone
+  - Vérifier que la validation du téléphone fonctionne si on en saisit un
+
 ### 2026-01-26 — Incentives clairs pour upload photos (Step 4)
 
 - **Date**: 2026-01-26

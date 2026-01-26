@@ -37,17 +37,17 @@ export default function Step1Contact({
   const isFirstNameValid = firstName.trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   // Téléphone optionnel : si vide c'est OK, si rempli doit avoir au moins 10 chiffres
-  const isPhoneValid = !phone.trim() || phone.replace(/\D/g, '').length >= 10;
+  const isPhoneValid = !phone || !phone.trim() || phone.replace(/\D/g, '').length >= 10;
   const isFormValid = isFirstNameValid && isEmailValid && isPhoneValid;
 
   const missingFields: Array<{ id: string; label: string }> = [];
   if (!isFirstNameValid) missingFields.push({ id: "contact-firstName", label: "Prénom" });
   if (!isEmailValid) missingFields.push({ id: "contact-email", label: "Email" });
-  if (!isPhoneValid && phone.trim()) missingFields.push({ id: "contact-phone", label: "Téléphone" });
+  if (!isPhoneValid && phone && phone.trim()) missingFields.push({ id: "contact-phone", label: "Téléphone" });
 
   const showFirstNameError = (showValidation || firstNameTouched) && !isFirstNameValid;
   const showEmailError = (showValidation || emailTouched) && !isEmailValid;
-  const showPhoneError = (showValidation || phoneTouched) && !isPhoneValid && phone.trim();
+  const showPhoneError = (showValidation || phoneTouched) && !isPhoneValid && phone && phone.trim();
 
   const focusField = (id: string) => {
     const el = document.getElementById(id);
