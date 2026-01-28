@@ -109,6 +109,8 @@
 - **Affichage**:
   - FR: `Ville (CP)`
   - Hors FR: `Ville (CP si dispo) — Pays`
+- **Scope**:
+  - Recherche “Ville” côté Nominatim limitée à l’**Europe** par défaut (évite de proposer des villes homonymes hors Europe).
 - **Fichiers modifiés**:
   - `components/tunnel/AddressAutocomplete.tsx`
   - `components/tunnel/v2/StepQualificationV2.tsx`

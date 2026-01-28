@@ -94,9 +94,16 @@ async function fetchNominatimSuggestions(
   // Nominatim ne propose pas un filtre "postcode" dédié côté query-string;
   // on l'injecte dans la requête pour prioriser les résultats proches.
   const effectiveQuery = postalCode ? `${query} ${postalCode}` : query;
+  // Pour la recherche "ville", on limite au périmètre Europe par défaut (sinon on remonte USA, etc.).
+  // Note: Nominatim attend une liste de codes ISO2 séparés par des virgules.
+  const EUROPE_COUNTRYCODES =
+    "fr,de,es,it,pt,be,nl,lu,ie,gb,ch,at,pl,cz,sk,hu,si,hr,ba,rs,me,mk,al,gr,bg,ro,md,ua,by,lt,lv,ee,dk,se,no,fi,is,li";
+  const effectiveCountrycodes =
+    countryCode ||
+    (kind === "city" ? EUROPE_COUNTRYCODES : "");
   const url = `/api/geocode?q=${encodeURIComponent(effectiveQuery)}&limit=5&kind=${encodeURIComponent(
     kind
-  )}${countryCode ? `&countrycodes=${encodeURIComponent(countryCode)}` : ""}`;
+  )}${effectiveCountrycodes ? `&countrycodes=${encodeURIComponent(effectiveCountrycodes)}` : ""}`;
   const res = await fetch(url, { signal });
   if (!res.ok) return [];
   const data = (await res.json()) as {
