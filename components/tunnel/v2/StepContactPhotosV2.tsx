@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Check, Upload, ImagePlus, X, Loader2, Smartphone, Mail, TrendingUp, Users, Zap } from "lucide-react";
+import { Check, Upload, ImagePlus, X, Loader2, Smartphone, Mail, PiggyBank, Timer } from "lucide-react";
 import WhatsAppCTA from "@/components/tunnel/WhatsAppCTA";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { uploadBackofficePhotos } from "@/lib/api/client";
@@ -172,20 +172,20 @@ export function StepContactPhotosV2({
           {/* Bénéfice 1 : Économies */}
           <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-4 text-center">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-2">
-              <TrendingUp className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
+              <PiggyBank className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
             </div>
             <p className="text-2xl font-bold text-[#0F172A] mb-1">
               {savingsText ? savingsText : "—"}
             </p>
             <p className="text-xs font-medium text-[#1E293B]/60">
-              économisés en moyenne avec photos
+              Avec des photos vous économiserez jusqu&apos;à {savingsText ? savingsText : "—"}
             </p>
           </div>
 
           {/* Bénéfice 3 : Nombre de devis */}
           <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-4 text-center">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-2">
-              <Zap className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
+              <Timer className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
             </div>
             <p className="text-2xl font-bold text-[#0F172A] mb-1">
               2x
@@ -279,20 +279,20 @@ export function StepContactPhotosV2({
         {/* Bénéfice 1 : Économies */}
         <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-6 text-center">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-3">
-            <TrendingUp className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
+            <PiggyBank className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
           </div>
           <p className="text-2xl md:text-3xl font-bold text-[#0F172A] mb-1">
             {savingsText ? savingsText : "—"}
           </p>
           <p className="text-xs font-medium text-[#1E293B]/60">
-            économisés en moyenne avec photos
+            Avec des photos vous économiserez jusqu&apos;à {savingsText ? savingsText : "—"}
           </p>
         </div>
 
         {/* Bénéfice 3 : Nombre de devis */}
         <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-6 text-center">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-3">
-            <Zap className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
+            <Timer className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
           </div>
           <p className="text-2xl md:text-3xl font-bold text-[#0F172A] mb-1">
             2x

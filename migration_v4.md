@@ -195,6 +195,15 @@
 - **Fichiers modifiés**:
   - `components/tunnel/v2/StepContactPhotosV2.tsx`
 
+### 2026-01-28 — Photos: icônes cohérentes + copy “jusqu’à”
+
+- **Décision**:
+  - Icône économies: `PiggyBank`
+  - Icône vitesse/rapidité: `Timer`
+  - Copy économies: “Avec des photos vous économiserez jusqu&apos;à {montant}”
+- **Fichiers modifiés**:
+  - `components/tunnel/v2/StepContactPhotosV2.tsx`
+
 ### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
 
 - **Date**: 2026-01-28
