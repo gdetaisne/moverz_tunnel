@@ -38,8 +38,10 @@ export function StepQualificationV2({
   showValidation = false,
 }: StepQualificationV2Props) {
   const housingIsApartment = housingType !== "house";
-  const isOriginValid = originCity.trim().length >= 2;
-  const isDestinationValid = destinationCity.trim().length >= 2;
+  const isOriginCoordsOk = originLat != null && originLon != null;
+  const isDestinationCoordsOk = destinationLat != null && destinationLon != null;
+  const isOriginValid = originCity.trim().length >= 2 && isOriginCoordsOk;
+  const isDestinationValid = destinationCity.trim().length >= 2 && isDestinationCoordsOk;
   const isHousingValid = !!housingType?.trim();
   const isSurfaceValid = (() => {
     const n = Number.parseInt(String(surfaceM2 || "").trim(), 10);
@@ -60,9 +62,14 @@ export function StepQualificationV2({
           inputId="v2-origin-city"
           initialValue={originCity || originPostalCode}
           kind="city"
-          validated={originLat != null && originLon != null}
+          validated={isOriginCoordsOk}
+          invalidated={showValidation && !isOriginCoordsOk}
           required
-          errorMessage={showValidation && !isOriginValid ? "Ville de départ requise" : null}
+          errorMessage={
+            showValidation && !isOriginValid
+              ? "Sélectionnez une ville dans la liste"
+              : null
+          }
           onInputChange={(raw) => {
             onFieldChange("originCity", raw);
             onFieldChange("originPostalCode", "");
@@ -85,9 +92,14 @@ export function StepQualificationV2({
           inputId="v2-destination-city"
           initialValue={destinationCity || destinationPostalCode}
           kind="city"
-          validated={destinationLat != null && destinationLon != null}
+          validated={isDestinationCoordsOk}
+          invalidated={showValidation && !isDestinationCoordsOk}
           required
-          errorMessage={showValidation && !isDestinationValid ? "Ville d’arrivée requise" : null}
+          errorMessage={
+            showValidation && !isDestinationValid
+              ? "Sélectionnez une ville dans la liste"
+              : null
+          }
           onInputChange={(raw) => {
             onFieldChange("destinationCity", raw);
             onFieldChange("destinationPostalCode", "");

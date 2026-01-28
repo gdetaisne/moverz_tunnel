@@ -25,6 +25,7 @@ export interface AddressAutocompleteProps {
   contextCity?: string;
   contextCountryCode?: string; // ex: "fr"
   validated?: boolean; // affichage d'un indicateur "OK coords"
+  invalidated?: boolean; // affichage d'un indicateur rouge (tentative submit mais non exploitable)
   inputId?: string;
   required?: boolean;
   errorMessage?: string | null;
@@ -194,6 +195,7 @@ export function AddressAutocomplete({
   contextCity,
   contextCountryCode,
   validated,
+  invalidated,
   inputId,
   required = false,
   errorMessage = null,
@@ -368,6 +370,8 @@ export function AddressAutocomplete({
     return !!lastLabel && lastLabel === input.trim();
   })();
 
+  const selectionInvalidated = Boolean(invalidated) && !selectionValidated;
+
   // Fallback : si l'utilisateur ne clique pas une suggestion, on géocode le texte en blur.
   const resolveOnBlur = async () => {
     const trimmed = input.trim();
@@ -455,7 +459,7 @@ export function AddressAutocomplete({
           ].join(" ")}
         />
 
-        {selectionValidated && !errorMessage && (
+        {selectionValidated && !errorMessage && !selectionInvalidated && (
           <span
             className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6BCFCF]"
             aria-hidden="true"
@@ -474,6 +478,41 @@ export function AddressAutocomplete({
                 strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+              />
+              <path
+                d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                opacity="0.35"
+              />
+            </svg>
+          </span>
+        )}
+
+        {selectionInvalidated && (
+          <span
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#EF4444]"
+            aria-hidden="true"
+            title="Sélection requise"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 8v5"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
+              <path
+                d="M12 16.5h.01"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
               />
               <path
                 d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"

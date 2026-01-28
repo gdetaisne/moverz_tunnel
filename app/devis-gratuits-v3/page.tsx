@@ -968,8 +968,14 @@ function DevisGratuitsV3Content() {
   // V2 handlers
   const handleSubmitQualificationV2 = (e: FormEvent) => {
     e.preventDefault();
-    const isOriginValid = state.originCity.trim().length >= 2;
-    const isDestinationValid = state.destinationCity.trim().length >= 2;
+    const isOriginValid =
+      state.originCity.trim().length >= 2 &&
+      state.originLat != null &&
+      state.originLon != null;
+    const isDestinationValid =
+      state.destinationCity.trim().length >= 2 &&
+      state.destinationLat != null &&
+      state.destinationLon != null;
     const isHousingValid = !!state.originHousingType?.trim();
     const isSurfaceValid = (() => {
       const n = Number.parseInt(String(state.surfaceM2 || "").trim(), 10);
