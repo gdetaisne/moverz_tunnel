@@ -510,6 +510,7 @@ function DevisGratuitsV3Content() {
 
   // Distance “trajet” (route) via OSRM / OpenStreetMap
   const distanceCacheRef = useRef<Map<string, number>>(new Map());
+  const lastRouteKeyRef = useRef<string | null>(null);
   const [routeDistanceKm, setRouteDistanceKm] = useState<number | null>(null);
   const [routeDistanceProvider, setRouteDistanceProvider] = useState<
     "osrm" | "fallback" | null
@@ -552,6 +553,10 @@ function DevisGratuitsV3Content() {
 
     const run = async () => {
       try {
+        // Éviter de relancer si on a déjà demandé exactement la même paire de coords.
+        if (lastRouteKeyRef.current === key) return;
+        lastRouteKeyRef.current = key;
+
         const res = await fetch("/api/distance", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -590,15 +595,9 @@ function DevisGratuitsV3Content() {
     };
 
     // Petite temporisation: évite de spammer OSRM quand on tape/blur rapidement.
-    // HOTFIX: Désactivé temporairement - boucle infinie à corriger
-    // const t = window.setTimeout(() => {
-    //   void run();
-    // }, 250);
-    
-    // Fallback direct sans appel API
-    setRouteDistanceKm(null);
-    setRouteDistanceProvider("fallback");
-    const t = 0 as any;
+    const t = window.setTimeout(() => {
+      void run();
+    }, 300);
 
     return () => {
       window.clearTimeout(t);

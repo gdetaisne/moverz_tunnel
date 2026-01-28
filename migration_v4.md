@@ -63,6 +63,19 @@
   - `components/tunnel/AddressAutocomplete.tsx`
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
 
+### 2026-01-28 — Distance “route” réactivée (OSRM) pour éviter les distances placeholder
+
+- **Date**: 2026-01-28
+- **Auteur**: (data)
+- **Décision**: réactiver le calcul de distance **par route** via `/api/distance` (OSRM) au lieu de dépendre du fallback heuristique (risque de prix faux).
+- **Changements**:
+  - `app/devis-gratuits-v3/page.tsx`: le `useEffect` distance route relance l’appel `/api/distance` (debounce ~300ms) et mémorise la dernière paire de coords (`lastRouteKeyRef`) pour éviter les relances inutiles.
+- **Impact**:
+  - `distanceKm` dans `tunnelOptions.pricing` (Back Office) reflète une distance **route** quand possible.
+  - Le fallback reste uniquement en cas d’échec provider / coords manquantes.
+- **Tracking**:
+  - Aucun impact.
+
 ### 2026-01-26 — Titre punchy "Vos photos = meilleur prix garanti" (V2)
 
 - **Date**: 2026-01-26
