@@ -20,6 +20,7 @@ export interface AddressAutocompleteProps {
   onInputChange?: (rawText: string) => void;
   disabled?: boolean;
   mode?: "fr" | "world" | "auto";
+  kind?: "address" | "city";
   contextPostalCode?: string;
   contextCity?: string;
   contextCountryCode?: string; // ex: "fr"
@@ -34,13 +35,17 @@ export interface AddressAutocompleteProps {
 async function fetchBanSuggestions(
   query: string,
   context?: { postalCode?: string; city?: string },
+  options?: { kind?: "address" | "city" },
   signal?: AbortSignal
 ): Promise<AddressSuggestion[]> {
   const postalCode = (context?.postalCode || "").trim();
+  const kind = options?.kind ?? "address";
   // BAN supporte `postcode` pour filtrer par code postal.
+  // Pour les villes, `type=municipality` évite les rues/adresses.
+  const typeParam = kind === "city" ? "&type=municipality" : "";
   const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
     query
-  )}&limit=5${postalCode ? `&postcode=${encodeURIComponent(postalCode)}` : ""}`;
+  )}&limit=5${postalCode ? `&postcode=${encodeURIComponent(postalCode)}` : ""}${typeParam}`;
   const res = await fetch(url, { signal });
   if (!res.ok) return [];
   const data = (await res.json()) as {
@@ -53,31 +58,46 @@ async function fetchBanSuggestions(
       geometry?: { coordinates?: [number, number] };
     }[];
   };
-  return (data.features ?? []).map((f) => ({
-    label: f.properties.label,
-    addressLine: f.properties.label,
-    city: f.properties.city,
-    postalCode: f.properties.postcode,
-    countryCode: "fr",
-    lon: f.geometry?.coordinates?.[0],
-    lat: f.geometry?.coordinates?.[1],
-  }));
+  const formatCityLabel = (city?: string, postcode?: string) => {
+    const c = (city || "").trim();
+    const cp = (postcode || "").trim();
+    if (!c) return (postcode || "").trim();
+    return cp ? `${c} (${cp})` : c;
+  };
+  return (data.features ?? []).map((f) => {
+    const city = f.properties.city ?? undefined;
+    const postalCode = f.properties.postcode ?? undefined;
+    const baseLabel = f.properties.label;
+    const label = kind === "city" ? formatCityLabel(city ?? baseLabel, postalCode) : baseLabel;
+    return {
+      label,
+      addressLine: kind === "city" ? undefined : baseLabel,
+      city: city ?? (kind === "city" ? baseLabel : undefined),
+      postalCode,
+      countryCode: "fr",
+      lon: f.geometry?.coordinates?.[0],
+      lat: f.geometry?.coordinates?.[1],
+    };
+  });
 }
 
 // World/Europe (Nominatim OSM)
 async function fetchNominatimSuggestions(
   query: string,
   context?: { postalCode?: string; city?: string; countryCode?: string },
+  options?: { kind?: "address" | "city" },
   signal?: AbortSignal
 ): Promise<AddressSuggestion[]> {
   const countryCode = (context?.countryCode || "").trim().toLowerCase();
   const postalCode = (context?.postalCode || "").trim();
+  const kind = options?.kind ?? "address";
   // Nominatim ne propose pas un filtre "postcode" dédié côté query-string;
   // on l'injecte dans la requête pour prioriser les résultats proches.
   const effectiveQuery = postalCode ? `${query} ${postalCode}` : query;
+  const featuretype = kind === "city" ? "&featuretype=city" : "";
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
     effectiveQuery
-  )}&format=json&addressdetails=1&limit=5${countryCode ? `&countrycodes=${encodeURIComponent(countryCode)}` : ""}`;
+  )}&format=json&addressdetails=1&limit=5${countryCode ? `&countrycodes=${encodeURIComponent(countryCode)}` : ""}${featuretype}`;
   const res = await fetch(url, {
     signal,
   });
@@ -95,15 +115,37 @@ async function fetchNominatimSuggestions(
       country_code?: string;
     };
   }[];
+  const regionNames =
+    typeof Intl !== "undefined" && (Intl as any).DisplayNames
+      ? new (Intl as any).DisplayNames(["fr"], { type: "region" })
+      : null;
+
+  const formatCityLabel = (city?: string, postcode?: string, cc?: string) => {
+    const c = (city || "").trim();
+    const cp = (postcode || "").trim();
+    const code = (cc || "").trim().toLowerCase();
+    const countryName =
+      code && regionNames ? regionNames.of(code.toUpperCase()) : undefined;
+    if (!c) return "";
+    const left = cp ? `${c} (${cp})` : c;
+    if (!code || code === "fr") return left;
+    return countryName ? `${left} — ${countryName}` : `${left} — ${code.toUpperCase()}`;
+  };
+
   return (data ?? []).map((item) => {
     const addr = item.address ?? {};
     const city = addr.city || addr.town || addr.village || addr.hamlet || undefined;
+    const cc = addr.country_code;
+    const label =
+      kind === "city"
+        ? formatCityLabel(city, addr.postcode, cc) || item.display_name
+        : item.display_name;
     return {
-      label: item.display_name,
-      addressLine: item.display_name,
+      label,
+      addressLine: kind === "city" ? undefined : item.display_name,
       city,
       postalCode: addr.postcode,
-      countryCode: addr.country_code,
+      countryCode: cc,
       lat: Number.parseFloat(item.lat),
       lon: Number.parseFloat(item.lon),
     };
@@ -118,6 +160,7 @@ export function AddressAutocomplete({
   onInputChange,
   disabled,
   mode = "auto",
+  kind = "address",
   contextPostalCode,
   contextCity,
   contextCountryCode,
@@ -161,15 +204,15 @@ export function AddressAutocomplete({
       countryCode: contextCountryCode,
     };
     if (mode === "world") {
-      return fetchNominatimSuggestions(query, ctx, signal);
+      return fetchNominatimSuggestions(query, ctx, { kind }, signal);
     }
     if (mode === "fr") {
-      return fetchBanSuggestions(query, ctx, signal);
+      return fetchBanSuggestions(query, ctx, { kind }, signal);
     }
     // auto: BAN d'abord, puis Nominatim si aucun résultat
-    const ban = await fetchBanSuggestions(query, ctx, signal);
+    const ban = await fetchBanSuggestions(query, ctx, { kind }, signal);
     if (ban.length > 0) return ban;
-    return fetchNominatimSuggestions(query, ctx, signal);
+    return fetchNominatimSuggestions(query, ctx, { kind }, signal);
   };
 
   const runSearch = async (query: string) => {

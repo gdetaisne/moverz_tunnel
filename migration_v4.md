@@ -96,6 +96,23 @@
   - `app/devis-gratuits-v3/page.tsx`
   - `lib/api/client.ts`
 
+### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
+
+- **Date**: 2026-01-28
+- **Auteur**: (UX/data)
+- **Décision**: l’input “Ville” doit retourner des **villes**, pas des rues. On priorise la France mais on supporte aussi l’Europe.
+- **Changements**:
+  - `AddressAutocomplete` ajoute `kind="city"`:
+    - BAN: ajoute `type=municipality` pour éviter les rues.
+    - Nominatim: ajoute `featuretype=city` pour éviter les rues + formatage label.
+  - `StepQualificationV2`: les champs `Ville de départ` / `Ville d’arrivée` utilisent `kind="city"`.
+- **Affichage**:
+  - FR: `Ville (CP)`
+  - Hors FR: `Ville (CP si dispo) — Pays`
+- **Fichiers modifiés**:
+  - `components/tunnel/AddressAutocomplete.tsx`
+  - `components/tunnel/v2/StepQualificationV2.tsx`
+
 ### 2026-01-26 — Titre punchy "Vos photos = meilleur prix garanti" (V2)
 
 - **Date**: 2026-01-26

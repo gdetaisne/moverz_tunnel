@@ -51,6 +51,7 @@ export function StepQualificationV2({
           placeholder="Paris"
           inputId="v2-origin-city"
           initialValue={originCity || originPostalCode}
+          kind="city"
           required
           errorMessage={showValidation && !isOriginValid ? "Ville de départ requise" : null}
           onInputChange={(raw) => {
@@ -60,6 +61,7 @@ export function StepQualificationV2({
           onSelect={(s) => {
             onFieldChange("originCity", s.city ?? s.label ?? "");
             onFieldChange("originPostalCode", s.postalCode ?? "");
+            onFieldChange("originCountryCode", (s.countryCode ?? "fr").toLowerCase());
           }}
         />
 
@@ -68,6 +70,7 @@ export function StepQualificationV2({
           placeholder="Lyon"
           inputId="v2-destination-city"
           initialValue={destinationCity || destinationPostalCode}
+          kind="city"
           required
           errorMessage={showValidation && !isDestinationValid ? "Ville d’arrivée requise" : null}
           onInputChange={(raw) => {
@@ -77,6 +80,7 @@ export function StepQualificationV2({
           onSelect={(s) => {
             onFieldChange("destinationCity", s.city ?? s.label ?? "");
             onFieldChange("destinationPostalCode", s.postalCode ?? "");
+            onFieldChange("destinationCountryCode", (s.countryCode ?? "fr").toLowerCase());
           }}
         />
       </div>
