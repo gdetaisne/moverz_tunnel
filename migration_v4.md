@@ -21,6 +21,48 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-01-28 — Audit V3 (prod) vs staging : DB renseignée + calculs (prix/distance)
+
+- **Date**: 2026-01-28
+- **Auteur**: (audit data)
+- **Objectif**: permettre d’utiliser **uniquement `staging`** en garantissant que la **DB Back Office** est renseignée **comme en V3 prod** (mêmes champs + mêmes règles de calcul).
+- **Périmètre analysé**:
+  - Écritures Back Office: `createBackofficeLead` / `updateBackofficeLead` (tunnel V3) dans `app/devis-gratuits-v3/page.tsx`
+  - Calculs prix/volume/distance: `lib/pricing/calculate.ts`, `lib/pricing/constants.ts` + logique distance dans `app/devis-gratuits-v3/page.tsx`
+  - Note: la DB locale Prisma (SQLite `LeadTunnel`) existe via `/api/leads` mais **n’est pas utilisée** par le tunnel V3 (V3 écrit directement dans le Back Office).
+- **DB Back Office — champs renseignés (V3)**:
+  - **Step 1 (Contact)**: création/MAJ lead (prénom/email requis côté création) via `/public/leads`
+  - **Step 2 (Projet)**: adresses + date + logement/accès (étages, ascenseur, etc.) + `tunnelOptions.access` (JSON)
+  - **Step 3 (Estimation)**: `surfaceM2`, `estimatedVolume`, `density`, `formule`, `estimatedPriceMin/Avg/Max`, `estimatedSavingsEur` + `tunnelOptions` (pricing/access/services/notes…)
+- **Constat clé (écarts staging vs V3 prod)**:
+  - **Distance route (OSRM)**: en staging, l’appel `/api/distance` est **désactivé** (hotfix), donc `distanceProvider=fallback` et la distance passe par un **fallback heuristique** si pas de coords fiables (risque “placeholder”).
+  - **Volume**: en staging, `TYPE_COEFFICIENTS` a été modifié **0.3 → 0.4** pour `studio`, `t4`, `t5`, `house*` ⇒ **volume estimé + prix** (et donc champs Back Office) **différents** de la prod.
+- **Décisions à prendre (pour alignement strict sur V3 prod)**:
+  - Revenir aux coefficients V3 prod (0.3) **ou** assumer la rupture et l’annoncer comme évolution (non alignée V3).
+  - Réactiver OSRM (et corriger la cause de la boucle) **ou** documenter explicitement le fallback distance (et accepter la variance sur les prix).
+
+### 2026-01-28 — Step 3 (V2) : adresse non pré-remplie + suggestions filtrées par CP
+
+- **Date**: 2026-01-28
+- **Auteur**: (UX/data)
+- **Décision**: éviter de pré-remplir le champ “adresse” avec la ville/CP (source de confusion) et améliorer la pertinence des suggestions en filtrant par **code postal** quand disponible.
+- **Changements UI**:
+  - **StepAccessLogisticsV2**: labels dynamiques :
+    - “Adresse de départ” → **“Votre adresse à {Ville} ({CP})”**
+    - “Adresse d’arrivée” → **“Votre adresse à {Ville} ({CP})”**
+  - Les inputs `originAddress` / `destinationAddress` ne sont plus initialisés par défaut à `"{CP} {Ville}"`.
+- **Autocomplete**:
+  - `AddressAutocomplete` accepte un contexte (`contextPostalCode`, `contextCity`, `contextCountryCode`)
+  - Provider FR (BAN): ajout paramètre `postcode=` pour filtrer les résultats.
+  - Provider World (Nominatim): ajout de `countrycodes=` (si fourni) + injection du CP dans la query pour prioriser.
+- **Tracking**:
+  - Aucun impact.
+- **Back Office payload**:
+  - Aucun changement de champs; amélioration de la qualité des adresses saisies.
+- **Fichiers modifiés**:
+  - `components/tunnel/AddressAutocomplete.tsx`
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+
 ### 2026-01-26 — Titre punchy "Vos photos = meilleur prix garanti" (V2)
 
 - **Date**: 2026-01-26

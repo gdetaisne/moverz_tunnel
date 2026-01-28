@@ -147,11 +147,18 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           <p className="text-sm font-semibold text-[#0F172A]">Votre trajet</p>
         </div>
         <AddressAutocomplete
-          label="Adresse de départ"
+          label={
+            props.originCity
+              ? `Votre adresse à ${props.originCity}${props.originPostalCode ? ` (${props.originPostalCode})` : ""}`
+              : "Votre adresse de départ"
+          }
           placeholder="10 rue de la Paix, Paris"
           inputId="v2-origin-address"
-          initialValue={props.originAddress || [props.originPostalCode, props.originCity].join(" ")}
+          initialValue={props.originAddress || ""}
           required
+          contextPostalCode={props.originPostalCode || undefined}
+          contextCity={props.originCity || undefined}
+          contextCountryCode="fr"
           errorMessage={
             showValidation && !isOriginAddressValid ? "Adresse de départ requise" : null
           }
@@ -165,13 +172,22 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           }}
         />
         <AddressAutocomplete
-          label="Adresse d’arrivée"
+          label={
+            props.destinationCity
+              ? `Votre adresse à ${props.destinationCity}${
+                  props.destinationPostalCode ? ` (${props.destinationPostalCode})` : ""
+                }`
+              : "Votre adresse d’arrivée"
+          }
           placeholder="20 place Bellecour, Lyon"
           inputId="v2-destination-address"
           initialValue={
-            props.destinationAddress || [props.destinationPostalCode, props.destinationCity].join(" ")
+            props.destinationAddress || ""
           }
           required
+          contextPostalCode={props.destinationPostalCode || undefined}
+          contextCity={props.destinationCity || undefined}
+          contextCountryCode="fr"
           errorMessage={
             showValidation && !isDestinationAddressValid ? "Adresse d’arrivée requise" : null
           }

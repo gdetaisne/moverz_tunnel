@@ -20,6 +20,9 @@ export interface AddressAutocompleteProps {
   onInputChange?: (rawText: string) => void;
   disabled?: boolean;
   mode?: "fr" | "world" | "auto";
+  contextPostalCode?: string;
+  contextCity?: string;
+  contextCountryCode?: string; // ex: "fr"
   inputId?: string;
   required?: boolean;
   errorMessage?: string | null;
@@ -30,11 +33,14 @@ export interface AddressAutocompleteProps {
 // FR (BAN api-adresse.data.gouv.fr)
 async function fetchBanSuggestions(
   query: string,
+  context?: { postalCode?: string; city?: string },
   signal?: AbortSignal
 ): Promise<AddressSuggestion[]> {
+  const postalCode = (context?.postalCode || "").trim();
+  // BAN supporte `postcode` pour filtrer par code postal.
   const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
     query
-  )}&limit=5`;
+  )}&limit=5${postalCode ? `&postcode=${encodeURIComponent(postalCode)}` : ""}`;
   const res = await fetch(url, { signal });
   if (!res.ok) return [];
   const data = (await res.json()) as {
@@ -61,11 +67,17 @@ async function fetchBanSuggestions(
 // World/Europe (Nominatim OSM)
 async function fetchNominatimSuggestions(
   query: string,
+  context?: { postalCode?: string; city?: string; countryCode?: string },
   signal?: AbortSignal
 ): Promise<AddressSuggestion[]> {
+  const countryCode = (context?.countryCode || "").trim().toLowerCase();
+  const postalCode = (context?.postalCode || "").trim();
+  // Nominatim ne propose pas un filtre "postcode" dédié côté query-string;
+  // on l'injecte dans la requête pour prioriser les résultats proches.
+  const effectiveQuery = postalCode ? `${query} ${postalCode}` : query;
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-    query
-  )}&format=json&addressdetails=1&limit=5`;
+    effectiveQuery
+  )}&format=json&addressdetails=1&limit=5${countryCode ? `&countrycodes=${encodeURIComponent(countryCode)}` : ""}`;
   const res = await fetch(url, {
     signal,
   });
@@ -106,6 +118,9 @@ export function AddressAutocomplete({
   onInputChange,
   disabled,
   mode = "auto",
+  contextPostalCode,
+  contextCity,
+  contextCountryCode,
   inputId,
   required = false,
   errorMessage = null,
@@ -140,16 +155,21 @@ export function AddressAutocomplete({
     query: string,
     signal?: AbortSignal
   ): Promise<AddressSuggestion[]> => {
+    const ctx = {
+      postalCode: contextPostalCode,
+      city: contextCity,
+      countryCode: contextCountryCode,
+    };
     if (mode === "world") {
-      return fetchNominatimSuggestions(query, signal);
+      return fetchNominatimSuggestions(query, ctx, signal);
     }
     if (mode === "fr") {
-      return fetchBanSuggestions(query, signal);
+      return fetchBanSuggestions(query, ctx, signal);
     }
     // auto: BAN d'abord, puis Nominatim si aucun résultat
-    const ban = await fetchBanSuggestions(query, signal);
+    const ban = await fetchBanSuggestions(query, ctx, signal);
     if (ban.length > 0) return ban;
-    return fetchNominatimSuggestions(query, signal);
+    return fetchNominatimSuggestions(query, ctx, signal);
   };
 
   const runSearch = async (query: string) => {
