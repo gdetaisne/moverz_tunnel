@@ -4,6 +4,7 @@ import { FormEvent } from "react";
 
 interface StepEstimationV2Props {
   volume: number | null;
+  routeDistanceKm?: number | null;
   priceMin: number | null;
   priceMax: number | null;
   onSubmit: (e: FormEvent) => void;
@@ -19,6 +20,7 @@ interface StepEstimationV2Props {
 
 export function StepEstimationV2({
   volume,
+  routeDistanceKm = null,
   priceMin,
   priceMax,
   onSubmit,
@@ -32,6 +34,10 @@ export function StepEstimationV2({
       ? `${priceMin} – ${priceMax} €`
       : "—";
   const volumeText = volume != null ? `${volume} m³` : "—";
+  const distanceText =
+    routeDistanceKm != null && Number.isFinite(routeDistanceKm)
+      ? `${Math.round(routeDistanceKm)} km`
+      : "—";
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -49,9 +55,11 @@ export function StepEstimationV2({
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60 mb-1">
-                📦 Volume estimé
+                Pour
               </p>
-              <p className="text-lg font-semibold text-[#0F172A]">{volumeText}</p>
+              <p className="text-lg font-semibold text-[#0F172A]">
+                {volumeText} - {distanceText}
+              </p>
             </div>
           </div>
         </div>

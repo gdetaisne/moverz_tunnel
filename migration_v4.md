@@ -113,6 +113,13 @@
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
   - `app/devis-gratuits-v3/page.tsx`
 
+### 2026-01-28 — Libellé estimation: “Pour” + affichage Volume + Distance route
+
+- **Décision**: remplacer “Volume estimé” par “Pour” et afficher `"{volume} m³ - {distance} km"` (distance route, arrondie) sur l’écran d’estimation.
+- **Fichiers modifiés**:
+  - `components/tunnel/v2/StepEstimationV2.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
 
 - **Date**: 2026-01-28

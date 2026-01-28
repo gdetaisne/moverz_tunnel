@@ -1555,6 +1555,7 @@ function DevisGratuitsV3Content() {
             <div className="rounded-3xl bg-white p-5 shadow-sm relative">
               <StepEstimationV2
                 volume={activePricing?.volumeM3 ?? null}
+                routeDistanceKm={routeDistanceKm ?? null}
                 priceMin={activePricing?.prixMin ?? null}
                 priceMax={activePricing?.prixMax ?? null}
                 onSubmit={handleSubmitEstimationV2}
