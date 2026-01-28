@@ -976,21 +976,18 @@ function DevisGratuitsV3Content() {
       state.destinationCity.trim().length >= 2 &&
       state.destinationLat != null &&
       state.destinationLon != null;
-    const isHousingValid = !!state.originHousingType?.trim();
     const isSurfaceValid = (() => {
       const n = Number.parseInt(String(state.surfaceM2 || "").trim(), 10);
       return Number.isFinite(n) && n >= 10 && n <= 500;
     })();
 
-    if (!isOriginValid || !isDestinationValid || !isHousingValid || !isSurfaceValid) {
+    if (!isOriginValid || !isDestinationValid || !isSurfaceValid) {
       setShowValidationStep1(true);
       requestAnimationFrame(() => {
         const focusId = !isOriginValid
           ? "v2-origin-city"
           : !isDestinationValid
           ? "v2-destination-city"
-          : !isHousingValid
-          ? "v2-housing-type"
           : "v2-surface-m2";
         document
           .getElementById(focusId)
@@ -1541,7 +1538,6 @@ function DevisGratuitsV3Content() {
                 destinationPostalCode={state.destinationPostalCode}
                 destinationLat={state.destinationLat}
                 destinationLon={state.destinationLon}
-                housingType={state.originHousingType || "t2"}
                 surfaceM2={state.surfaceM2}
                 onFieldChange={(field, value) => updateField(field as any, value)}
                 onSubmit={handleSubmitQualificationV2}
@@ -1600,7 +1596,9 @@ function DevisGratuitsV3Content() {
                 destinationLat={state.destinationLat}
                 destinationLon={state.destinationLon}
                 originHousingType={state.originHousingType}
+                originFloor={state.originFloor}
                 destinationHousingType={state.destinationHousingType}
+                destinationFloor={state.destinationFloor}
                 movingDate={state.movingDate}
                 dateFlexible={state.dateFlexible}
                 onFieldChange={(field, value) => updateField(field as any, value)}

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent } from "react";
-import { Home, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 
 interface StepQualificationV2Props {
@@ -13,7 +13,6 @@ interface StepQualificationV2Props {
   destinationPostalCode: string;
   destinationLat?: number | null;
   destinationLon?: number | null;
-  housingType: string;
   surfaceM2: string;
   onFieldChange: (field: string, value: any) => void;
   onSubmit: (e: FormEvent) => void;
@@ -30,19 +29,16 @@ export function StepQualificationV2({
   destinationPostalCode,
   destinationLat,
   destinationLon,
-  housingType,
   surfaceM2,
   onFieldChange,
   onSubmit,
   isSubmitting,
   showValidation = false,
 }: StepQualificationV2Props) {
-  const housingIsApartment = housingType !== "house";
   const isOriginCoordsOk = originLat != null && originLon != null;
   const isDestinationCoordsOk = destinationLat != null && destinationLon != null;
   const isOriginValid = originCity.trim().length >= 2 && isOriginCoordsOk;
   const isDestinationValid = destinationCity.trim().length >= 2 && isDestinationCoordsOk;
-  const isHousingValid = !!housingType?.trim();
   const isSurfaceValid = (() => {
     const n = Number.parseInt(String(surfaceM2 || "").trim(), 10);
     return Number.isFinite(n) && n >= 10 && n <= 500;
@@ -118,41 +114,6 @@ export function StepQualificationV2({
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-2" id="v2-housing-type">
-          <div className="flex items-center gap-2">
-            <Home className="w-5 h-5 text-[#6BCFCF]" />
-            <p className="text-sm font-semibold text-[#0F172A]">Type de logement</p>
-          </div>
-          <span className="text-[11px] font-semibold text-[#1E293B]/50">Requis</span>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => onFieldChange("originHousingType", "t2")}
-            className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-              housingIsApartment
-                ? "bg-[#0F172A] text-white"
-                : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-            }`}
-          >
-            Appartement
-          </button>
-          <button
-            type="button"
-            onClick={() => onFieldChange("originHousingType", "house")}
-            className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-              !housingIsApartment
-                ? "bg-[#0F172A] text-white"
-                : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-            }`}
-          >
-            Maison
-          </button>
-        </div>
-        {showValidation && !isHousingValid && (
-          <p className="text-sm font-medium text-[#EF4444]">Type de logement requis</p>
-        )}
-
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
             <label className="block text-sm font-medium text-[#0F172A]" htmlFor="v2-surface-m2">

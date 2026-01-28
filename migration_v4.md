@@ -152,6 +152,19 @@
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
   - `components/tunnel/Step2ProjectComplete.tsx`
 
+### 2026-01-28 — Type de logement déplacé: Step 1 → Step 3 (+ étage si appartement)
+
+- **Problème**: en Step 1, “Type de logement” est ambigu (départ ou arrivée ?).
+- **Décision**:
+  - Retirer “Type de logement” de la **Step 1 (V2)**.
+  - Ajouter en **Step 3** (sous les adresses) un choix **Départ** + **Arrivée**: *Maison / Appartement*.
+  - Si *Appartement* → afficher la ligne **Étage** avec boutons: **RDV, 1er, 2e, 3e, 4e ou +**.
+- **Champs**: aucun champ supprimé, uniquement déplacement/clarification UI (réutilise `originHousingType`, `destinationHousingType`, `originFloor`, `destinationFloor`).
+- **Fichiers modifiés**:
+  - `components/tunnel/v2/StepQualificationV2.tsx`
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
 
 - **Date**: 2026-01-28
