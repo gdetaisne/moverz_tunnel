@@ -43,8 +43,10 @@ export interface TunnelFormState {
 
   // Meta: permet de distinguer "valeur par défaut UI" vs "choix explicite utilisateur"
   // (sans changer l'UI). Utilisé pour éviter d'envoyer des valeurs inventées au Back Office.
+  originHousingTypeTouched: boolean;
   originFloorTouched: boolean;
   originElevatorTouched: boolean;
+  destinationHousingTypeTouched: boolean;
   destinationFloorTouched: boolean;
   destinationElevatorTouched: boolean;
   
@@ -150,8 +152,10 @@ const INITIAL_STATE: TunnelFormState = {
   destinationAccess: "easy",
   destinationUnknown: false,
 
+  originHousingTypeTouched: false,
   originFloorTouched: false,
   originElevatorTouched: false,
+  destinationHousingTypeTouched: false,
   destinationFloorTouched: false,
   destinationElevatorTouched: false,
   
@@ -223,6 +227,10 @@ export function useTunnelState() {
 
           // Backward compat: si les flags n'existaient pas, on les déduit
           // quand la valeur diffère de la valeur par défaut.
+          merged.originHousingTypeTouched =
+            typeof parsed.originHousingTypeTouched === "boolean"
+              ? parsed.originHousingTypeTouched
+              : merged.originHousingType !== INITIAL_STATE.originHousingType;
           merged.originFloorTouched =
             typeof parsed.originFloorTouched === "boolean"
               ? parsed.originFloorTouched
@@ -231,6 +239,10 @@ export function useTunnelState() {
             typeof parsed.originElevatorTouched === "boolean"
               ? parsed.originElevatorTouched
               : merged.originElevator !== INITIAL_STATE.originElevator;
+          merged.destinationHousingTypeTouched =
+            typeof parsed.destinationHousingTypeTouched === "boolean"
+              ? parsed.destinationHousingTypeTouched
+              : merged.destinationHousingType !== INITIAL_STATE.destinationHousingType;
           merged.destinationFloorTouched =
             typeof parsed.destinationFloorTouched === "boolean"
               ? parsed.destinationFloorTouched
@@ -262,8 +274,10 @@ export function useTunnelState() {
 
       // Marquer certains champs "touched" dès qu'ils sont modifiés via updateField
       // (appelé depuis l'UI via onChange).
+      if (field === "originHousingType") next.originHousingTypeTouched = true;
       if (field === "originFloor") next.originFloorTouched = true;
       if (field === "originElevator") next.originElevatorTouched = true;
+      if (field === "destinationHousingType") next.destinationHousingTypeTouched = true;
       if (field === "destinationFloor") next.destinationFloorTouched = true;
       if (field === "destinationElevator") next.destinationElevatorTouched = true;
       
