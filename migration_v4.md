@@ -226,6 +226,7 @@
 - **Ajout**: ligne “Photos (malus)” = **+15%** du budget “avant photos”, avec aide `(?)`.
 - **Fix build**: correction typage TS (`lines` mutable) pour `pricingCart`.
 - **Fix build**: suppression d’une référence résiduelle à `pricingPanel` dans `StepAccessLogisticsV2`.
+- **Fix build**: suppression d’une double déclaration de `cart` dans `StepAccessLogisticsV2`.
 
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 
