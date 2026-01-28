@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Calendar, MapPin, Home, Mail, User, Phone } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
+import { PriceRangeInline } from "@/components/tunnel/PriceRangeInline";
 
 type QuestionKey = "narrow_access" | "long_carry" | "difficult_parking" | "lift_required";
 
@@ -29,6 +30,13 @@ interface StepAccessLogisticsV2Props {
   dateFlexible: boolean;
   routeDistanceKm?: number | null;
   routeDistanceProvider?: "osrm" | "fallback" | null;
+  pricingPanel?: {
+    currentMinEur: number | null;
+    currentMaxEur: number | null;
+    baselineMinEur: number | null;
+    baselineMaxEur: number | null;
+    assumptions: string[];
+  };
   onFieldChange: (field: string, value: any) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
@@ -258,8 +266,28 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     </div>
   );
 
+  const panel = props.pricingPanel;
+
+  const isHousingConfirmed =
+    (props.originHousingType || "").trim().length > 0 &&
+    (props.destinationHousingType || "").trim().length > 0 &&
+    (!isApartment(props.originHousingType) || (props.originFloor || "").trim().length > 0) &&
+    (!isApartment(props.destinationHousingType) || (props.destinationFloor || "").trim().length > 0);
+
+  const hasAnyOptionalService =
+    Boolean(props.serviceFurnitureStorage) ||
+    Boolean(props.serviceCleaning) ||
+    Boolean(props.serviceFullPacking) ||
+    Boolean(props.serviceFurnitureAssembly) ||
+    Boolean(props.serviceInsurance) ||
+    Boolean(props.serviceWasteRemoval) ||
+    Boolean(props.serviceHelpWithoutTruck) ||
+    Boolean(props.serviceSpecificSchedule) ||
+    Boolean((props.specificNotes || "").trim());
+
   return (
-    <div className="space-y-6">
+    <div className="md:grid md:grid-cols-[1fr,360px] md:gap-6">
+      <div className="space-y-6">
       {/* Addresses + date minimal */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
@@ -576,6 +604,80 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         </button>
         <p className="text-center text-sm text-[#1E293B]/70 mt-1">~30 sec restantes</p>
       </div>
+      </div>
+
+      {/* Desktop only: panneau Budget & hypothèses */}
+      <aside className="hidden md:block">
+        <div className="sticky top-4 rounded-2xl border border-[#E3E5E8] bg-white p-4 shadow-sm space-y-4">
+          <p className="text-sm font-semibold text-[#0F172A]">Votre budget</p>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+              Budget actuel
+            </p>
+            <PriceRangeInline minEur={panel?.currentMinEur ?? null} maxEur={panel?.currentMaxEur ?? null} />
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+              Budget initial (hypothèses)
+            </p>
+            <PriceRangeInline minEur={panel?.baselineMinEur ?? null} maxEur={panel?.baselineMaxEur ?? null} />
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+              Hypothèses
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(panel?.assumptions ?? []).map((a) => (
+                <span
+                  key={a}
+                  className="rounded-full bg-[#F8F9FA] px-3 py-1 text-[11px] font-semibold text-[#0F172A]/80 border border-[#E3E5E8]"
+                >
+                  {a}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+              Ce qui peut faire varier le prix
+            </p>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[#0F172A]">Distance précise (OSRM)</span>
+                <span className={`text-xs font-semibold ${isRouteDistanceValid ? "text-[#14532D]" : "text-[#1E293B]/60"}`}>
+                  {isRouteDistanceValid ? "confirmée" : "en cours"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[#0F172A]">Date (saison/urgence)</span>
+                <span className={`text-xs font-semibold ${isMovingDateValid ? "text-[#14532D]" : "text-[#1E293B]/60"}`}>
+                  {isMovingDateValid ? "confirmée" : "à renseigner"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[#0F172A]">Accès (logement/étage)</span>
+                <span className={`text-xs font-semibold ${isHousingConfirmed ? "text-[#14532D]" : "text-[#1E293B]/60"}`}>
+                  {isHousingConfirmed ? "confirmé" : "à préciser"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[#0F172A]">Services</span>
+                <span className={`text-xs font-semibold ${hasAnyOptionalService ? "text-[#0F172A]" : "text-[#1E293B]/60"}`}>
+                  {hasAnyOptionalService ? "sélectionnés" : "aucun (par défaut)"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-[#1E293B]/60">
+            Le budget se précise à mesure que vous complétez les informations.
+          </p>
+        </div>
+      </aside>
     </div>
   );
 }

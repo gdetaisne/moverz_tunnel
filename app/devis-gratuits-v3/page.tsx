@@ -751,6 +751,40 @@ function DevisGratuitsV3Content() {
     return pricingByFormule[state.formule as PricingFormuleType] ?? null;
   }, [pricingByFormule, state.formule]);
 
+  // Desktop reward panel (V2): budget initial avec hypothèses (distance +15km, appart 2e, ascenseur, sans services)
+  const v2PricingPanel = useMemo(() => {
+    if (!isFunnelV2) return null;
+    if (!activePricing) return null;
+    if (routeDistanceKm == null || !Number.isFinite(routeDistanceKm) || routeDistanceKm <= 0) return null;
+
+    const surface = parseInt(state.surfaceM2) || 60;
+    if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
+
+    const density = state.density;
+    const distanceKmBaseline = routeDistanceKm + 15;
+    const baseInput = {
+      surfaceM2: surface,
+      housingType: "t2" as const, // hypothèse: appartement
+      density,
+      distanceKm: distanceKmBaseline,
+      seasonFactor: 1, // pas de buffer saison
+      originFloor: 2,
+      originElevator: "yes" as const,
+      destinationFloor: 2,
+      destinationElevator: "yes" as const,
+      services: { monteMeuble: false, piano: null, debarras: false },
+    };
+    const baseline = calculatePricing({ ...baseInput, formule: state.formule as PricingFormuleType });
+
+    return {
+      currentMinEur: activePricing.prixMin ?? null,
+      currentMaxEur: activePricing.prixMax ?? null,
+      baselineMinEur: baseline.prixMin ?? null,
+      baselineMaxEur: baseline.prixMax ?? null,
+      assumptions: ["Distance +15 km", "Appart 2e", "Ascenseur", "Sans services"],
+    };
+  }, [isFunnelV2, activePricing, routeDistanceKm, state.surfaceM2, state.density, state.formule]);
+
   const estimateRange = useMemo(() => {
     if (!pricingByFormule) return null;
     const values = Object.values(pricingByFormule);
@@ -1630,6 +1664,7 @@ function DevisGratuitsV3Content() {
                 showValidation={showValidationStep3}
                 routeDistanceKm={routeDistanceKm}
                 routeDistanceProvider={routeDistanceProvider}
+                pricingPanel={v2PricingPanel}
                 access_type={state.access_type ?? "simple"}
                 narrow_access={!!state.narrow_access}
                 long_carry={!!state.long_carry}

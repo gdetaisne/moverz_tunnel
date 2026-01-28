@@ -177,6 +177,16 @@
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
   - `app/devis-gratuits-v3/page.tsx`
 
+### 2026-01-28 — Reward (desktop only): panneau “Budget & hypothèses” en Step 3 (V2)
+
+- **Décision**: implémenter **desktop uniquement** (pas mobile pour l’instant) un panneau sticky qui affiche:
+  - **Budget actuel**
+  - **Budget initial (hypothèses)**: `distance +15 km`, `appart 2e`, `ascenseur`, `sans services`, **sans buffer saison**
+  - Statuts “confirmé/en cours” pour distance/date/accès/services
+- **Fichiers modifiés**:
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 
 - **Décision**: remplacer l’affichage en fourchette par **un seul montant**:  
