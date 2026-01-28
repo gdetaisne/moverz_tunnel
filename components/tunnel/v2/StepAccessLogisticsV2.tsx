@@ -117,6 +117,96 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     }
   }, [props.access_type]);
 
+  // Par défaut sur Step 3 : on pré-sélectionne "Maison" (simple, non ambigu).
+  // Important: on ne met PAS de default plus tôt (Step 1/2) pour ne pas impacter l'estimation.
+  useEffect(() => {
+    if (!(props.originHousingType || "").trim()) props.onFieldChange("originHousingType", "house");
+    if (!(props.destinationHousingType || "").trim())
+      props.onFieldChange("destinationHousingType", "house");
+    if (!(props.originFloor || "").trim()) props.onFieldChange("originFloor", "0");
+    if (!(props.destinationFloor || "").trim()) props.onFieldChange("destinationFloor", "0");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const HousingInline = (p: { side: "origin" | "destination" }) => {
+    const isOrigin = p.side === "origin";
+    const housingType = isOrigin ? props.originHousingType : props.destinationHousingType;
+    const floor = isOrigin ? props.originFloor : props.destinationFloor;
+
+    const setHousingType = (v: "house" | "t2") => {
+      if (isOrigin) {
+        props.onFieldChange("originHousingType", v);
+        if (v === "house") props.onFieldChange("originFloor", "0");
+      } else {
+        props.onFieldChange("destinationHousingType", v);
+        if (v === "house") props.onFieldChange("destinationFloor", "0");
+      }
+    };
+    const setFloor = (v: string) => {
+      if (isOrigin) props.onFieldChange("originFloor", v);
+      else props.onFieldChange("destinationFloor", v);
+    };
+
+    return (
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-semibold text-[#0F172A]">Logement</span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setHousingType("house")}
+              className={[
+                "px-3 py-2 rounded-xl text-xs font-semibold transition-all",
+                !isApartment(housingType)
+                  ? "bg-[#0F172A] text-white"
+                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
+              ].join(" ")}
+            >
+              Maison
+            </button>
+            <button
+              type="button"
+              onClick={() => setHousingType("t2")}
+              className={[
+                "px-3 py-2 rounded-xl text-xs font-semibold transition-all",
+                isApartment(housingType)
+                  ? "bg-[#0F172A] text-white"
+                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
+              ].join(" ")}
+            >
+              Appartement
+            </button>
+          </div>
+        </div>
+
+        {isApartment(housingType) && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-[#1E293B]/60 uppercase tracking-[0.12em]">
+              Étage
+            </span>
+            <div className="flex items-center gap-2">
+              {FLOOR_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setFloor(o.value)}
+                  className={[
+                    "px-2.5 py-2 rounded-xl text-[11px] font-semibold transition-all",
+                    floor === o.value
+                      ? "bg-[#6BCFCF] text-white"
+                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
+                  ].join(" ")}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const handleAccessType = (value: "simple" | "constrained") => {
     props.onFieldChange("access_type", value);
     if (value === "simple") {
@@ -200,6 +290,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             props.onFieldChange("originLon", s.lon ?? null);
           }}
         />
+        <HousingInline side="origin" />
         <AddressAutocomplete
           label={
             props.destinationCity
@@ -233,6 +324,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             props.onFieldChange("destinationLon", s.lon ?? null);
           }}
         />
+        <HousingInline side="destination" />
         <div className="text-xs text-[#1E293B]/60">
           <span className="font-semibold">Distance route:</span>{" "}
           {isRouteDistanceValid ? (
@@ -248,154 +340,6 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             Distance route requise (merci de sélectionner des adresses valides)
           </p>
         )}
-      </div>
-
-      {/* Logement (départ / arrivée) */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Home className="w-5 h-5 text-[#6BCFCF]" />
-          <p className="text-sm font-semibold text-[#0F172A]">Logement</p>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-2">
-          {/* Départ */}
-          <div
-            id="origin-housingType"
-            className="rounded-2xl border border-[#E3E5E8] bg-white p-4 space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#0F172A]">Départ</p>
-              <span className="text-[11px] font-semibold text-[#1E293B]/50">Requis</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  props.onFieldChange("originHousingType", "t2");
-                  if (!props.originFloor) props.onFieldChange("originFloor", "0");
-                }}
-                className={[
-                  "px-4 py-3 rounded-xl text-sm font-semibold transition-all",
-                  isApartment(props.originHousingType)
-                    ? "bg-[#0F172A] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-                ].join(" ")}
-              >
-                Appartement
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  props.onFieldChange("originHousingType", "house");
-                  props.onFieldChange("originFloor", "0");
-                }}
-                className={[
-                  "px-4 py-3 rounded-xl text-sm font-semibold transition-all",
-                  !isApartment(props.originHousingType)
-                    ? "bg-[#0F172A] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-                ].join(" ")}
-              >
-                Maison
-              </button>
-            </div>
-
-            {isApartment(props.originHousingType) && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-                  Étage
-                </p>
-                <div className="grid grid-cols-5 gap-2">
-                  {FLOOR_OPTIONS.map((o) => (
-                    <button
-                      key={o.value}
-                      type="button"
-                      onClick={() => props.onFieldChange("originFloor", o.value)}
-                      className={[
-                        "px-2 py-2 rounded-xl text-xs font-semibold transition-all",
-                        props.originFloor === o.value
-                          ? "bg-[#6BCFCF] text-white"
-                          : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-                      ].join(" ")}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Arrivée */}
-          <div
-            id="destination-housingType"
-            className="rounded-2xl border border-[#E3E5E8] bg-white p-4 space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#0F172A]">Arrivée</p>
-              <span className="text-[11px] font-semibold text-[#1E293B]/50">Requis</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  props.onFieldChange("destinationHousingType", "t2");
-                  if (!props.destinationFloor) props.onFieldChange("destinationFloor", "0");
-                }}
-                className={[
-                  "px-4 py-3 rounded-xl text-sm font-semibold transition-all",
-                  isApartment(props.destinationHousingType)
-                    ? "bg-[#0F172A] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-                ].join(" ")}
-              >
-                Appartement
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  props.onFieldChange("destinationHousingType", "house");
-                  props.onFieldChange("destinationFloor", "0");
-                }}
-                className={[
-                  "px-4 py-3 rounded-xl text-sm font-semibold transition-all",
-                  !isApartment(props.destinationHousingType)
-                    ? "bg-[#0F172A] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-                ].join(" ")}
-              >
-                Maison
-              </button>
-            </div>
-
-            {isApartment(props.destinationHousingType) && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-                  Étage
-                </p>
-                <div className="grid grid-cols-5 gap-2">
-                  {FLOOR_OPTIONS.map((o) => (
-                    <button
-                      key={o.value}
-                      type="button"
-                      onClick={() => props.onFieldChange("destinationFloor", o.value)}
-                      className={[
-                        "px-2 py-2 rounded-xl text-xs font-semibold transition-all",
-                        props.destinationFloor === o.value
-                          ? "bg-[#6BCFCF] text-white"
-                          : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-                      ].join(" ")}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       <div className="space-y-3">

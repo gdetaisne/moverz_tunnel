@@ -158,8 +158,9 @@
 - **Problème**: en Step 1, “Type de logement” est ambigu (départ ou arrivée ?).
 - **Décision**:
   - Retirer “Type de logement” de la **Step 1 (V2)**.
-  - Ajouter en **Step 3** (sous les adresses) un choix **Départ** + **Arrivée**: *Maison / Appartement*.
-  - Si *Appartement* → afficher la ligne **Étage** avec boutons: **RDV, 1er, 2e, 3e, 4e ou +**.
+  - En **Step 3**, afficher l’info logement **immédiatement sous chaque adresse concernée** (départ puis arrivée).
+  - **Par défaut**: *Maison* est sélectionné (simple, non ambigu).
+  - Si *Appartement* → afficher **sur la même ligne** la sélection **Étage** avec boutons: **RDV, 1er, 2e, 3e, 4e ou +**.
 - **Champs**: aucun champ supprimé, uniquement déplacement/clarification UI (réutilise `originHousingType`, `destinationHousingType`, `originFloor`, `destinationFloor`).
 - **Fichiers modifiés**:
   - `components/tunnel/v2/StepQualificationV2.tsx`
