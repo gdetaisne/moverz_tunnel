@@ -73,16 +73,16 @@ export function StepContactPhotosV2({
     Number.isFinite(estimateMaxEur) &&
     estimateMaxEur > 0;
 
-  const roundUpToHundred = (n: number) => Math.ceil(n / 100) * 100;
+  // Pour l'écran "photos", on n'arrondit PAS à la centaine:
+  // on affiche un montant en euros (arrondi à l'euro).
   const eur = (n: number) =>
-    new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(roundUpToHundred(n));
+    new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(Math.round(n));
 
   // Impact photos: 15% du montant moyen (formule sélectionnée)
   const DISCOUNT_RATE = 0.15;
   const estimateAvgRaw = hasEstimate ? (estimateMinEur + estimateMaxEur) / 2 : 0;
   const savingsRaw = hasEstimate ? Math.max(0, estimateAvgRaw * DISCOUNT_RATE) : 0;
-  const savingsEur = hasEstimate ? roundUpToHundred(savingsRaw) : null;
-  const savingsText = savingsEur != null ? `${eur(savingsEur)} €` : null;
+  const savingsText = hasEstimate ? `${eur(savingsRaw)} €` : null;
 
   const previewUrls = useMemo(() => {
     return lastSelection.map((f) => ({

@@ -181,6 +181,7 @@
 
 - **Décision**: remplacer l’affichage en fourchette par **un seul montant**:  
   \( économies = 15\% \times \frac{min + max}{2} \) de la **formule sélectionnée**.
+- **Affichage**: ce montant **n’est pas arrondi à la centaine** (arrondi à l’euro uniquement).
 - **Changement**: on base l’écran photos sur la **fourchette de la formule sélectionnée** (pas la fourchette globale).
 - **Fichiers modifiés**:
   - `components/tunnel/v2/StepContactPhotosV2.tsx`
