@@ -218,16 +218,17 @@ export function DatePickerFr({
           <div className="grid grid-cols-7 gap-1 px-1">
             {grid.cells.map((c, idx) => {
               if (!c.day || !c.iso) return <div key={idx} className="h-9" />;
-              const disabled = !canSelect(c.iso);
-              const selectedIso = value && c.iso === value;
-              const isToday = c.iso === todayIso;
+              const iso = c.iso as string;
+              const disabled = !canSelect(iso);
+              const selectedIso = value && iso === value;
+              const isToday = iso === todayIso;
               return (
                 <button
-                  key={c.iso}
+                  key={iso}
                   type="button"
                   disabled={disabled}
                   onClick={() => {
-                    onChange(c.iso);
+                    onChange(iso);
                     setOpen(false);
                   }}
                   className={[

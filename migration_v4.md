@@ -151,6 +151,7 @@
   - `components/tunnel/DatePickerFr.tsx` (nouveau)
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
   - `components/tunnel/Step2ProjectComplete.tsx`
+  - (fix build) `components/tunnel/DatePickerFr.tsx` : correction type TS (iso non-null)
 
 ### 2026-01-28 — Type de logement déplacé: Step 1 → Step 3 (+ étage si appartement)
 
