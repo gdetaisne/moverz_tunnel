@@ -162,6 +162,7 @@
   - **Par défaut**: *Maison* est sélectionné (simple, non ambigu).
   - Si *Appartement* → afficher **sur la même ligne** la sélection **Étage** avec boutons: **RDV, 1er, 2e, 3e, 4e ou +**.
 - **Champs**: aucun champ supprimé, uniquement déplacement/clarification UI (réutilise `originHousingType`, `destinationHousingType`, `originFloor`, `destinationFloor`).
+- **Mobile-first**: affichage compact et lisible (pas de chevauchement), avec retour à la ligne propre sur mobile.
 - **Fichiers modifiés**:
   - `components/tunnel/v2/StepQualificationV2.tsx`
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`

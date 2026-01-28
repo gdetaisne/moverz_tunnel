@@ -148,61 +148,65 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     };
 
     return (
-      <div className="mt-2 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm font-semibold text-[#0F172A]">Logement</span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setHousingType("house")}
-              className={[
-                "px-3 py-2 rounded-xl text-xs font-semibold transition-all",
-                !isApartment(housingType)
-                  ? "bg-[#0F172A] text-white"
-                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-              ].join(" ")}
-            >
-              Maison
-            </button>
-            <button
-              type="button"
-              onClick={() => setHousingType("t2")}
-              className={[
-                "px-3 py-2 rounded-xl text-xs font-semibold transition-all",
-                isApartment(housingType)
-                  ? "bg-[#0F172A] text-white"
-                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-              ].join(" ")}
-            >
-              Appartement
-            </button>
-          </div>
-        </div>
-
-        {isApartment(housingType) && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-[#1E293B]/60 uppercase tracking-[0.12em]">
-              Étage
-            </span>
+      <div className="mt-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          {/* Ligne logement (toujours visible) */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-[#0F172A]">Logement</span>
             <div className="flex items-center gap-2">
-              {FLOOR_OPTIONS.map((o) => (
-                <button
-                  key={o.value}
-                  type="button"
-                  onClick={() => setFloor(o.value)}
-                  className={[
-                    "px-2.5 py-2 rounded-xl text-[11px] font-semibold transition-all",
-                    floor === o.value
-                      ? "bg-[#6BCFCF] text-white"
-                      : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-                  ].join(" ")}
-                >
-                  {o.label}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setHousingType("house")}
+                className={[
+                  "px-3 py-2 rounded-xl text-xs font-semibold transition-all",
+                  !isApartment(housingType)
+                    ? "bg-[#0F172A] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
+                ].join(" ")}
+              >
+                Maison
+              </button>
+              <button
+                type="button"
+                onClick={() => setHousingType("t2")}
+                className={[
+                  "px-3 py-2 rounded-xl text-xs font-semibold transition-all",
+                  isApartment(housingType)
+                    ? "bg-[#0F172A] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
+                ].join(" ")}
+              >
+                Appartement
+              </button>
             </div>
           </div>
-        )}
+
+          {/* Ligne étage (uniquement si appartement) */}
+          {isApartment(housingType) && (
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
+              <span className="text-xs font-semibold text-[#1E293B]/60 uppercase tracking-[0.12em]">
+                Étage
+              </span>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {FLOOR_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setFloor(o.value)}
+                    className={[
+                      "px-2.5 py-2 rounded-xl text-[11px] font-semibold transition-all",
+                      floor === o.value
+                        ? "bg-[#6BCFCF] text-white"
+                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
+                    ].join(" ")}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
