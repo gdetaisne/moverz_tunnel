@@ -46,7 +46,15 @@ export function PriceRangeInline({
   const calc =
     typeof calculatedEur === "number" && Number.isFinite(calculatedEur)
       ? calculatedEur
-      : (minEur + maxEur) / 2;
+      : (() => {
+          // On pousse légèrement vers le max pour que le montant "à retenir"
+          // soit plus proche de ce que le client anticipe comme prix final.
+          // 0.5 = milieu; 0.6 = un peu plus haut.
+          const CENTER_BIAS = 0.6;
+          const raw = minEur + (maxEur - minEur) * CENTER_BIAS;
+          // garde-fou: ne jamais dépasser le max
+          return Math.min(raw, maxEur);
+        })();
 
   const size =
     variant === "compact"
