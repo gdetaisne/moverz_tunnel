@@ -232,6 +232,7 @@
   - **Date**: l’“urgence” ne s’applique plus que sur ≤ 15 jours (cohérent avec le min J+15).
   - **Distance**: ajout d’une composante distance continue dans `calculatePricing` (le buffer +15 km a toujours un impact).
 - **UI**: suppression de “Ce qui peut faire varier le prix” (doublon avec le panier).
+- **Fix build**: import manquant `COEF_DISTANCE` dans `app/devis-gratuits-v3/page.tsx`.
 
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 
