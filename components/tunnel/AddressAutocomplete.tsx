@@ -94,27 +94,23 @@ async function fetchNominatimSuggestions(
   // Nominatim ne propose pas un filtre "postcode" dédié côté query-string;
   // on l'injecte dans la requête pour prioriser les résultats proches.
   const effectiveQuery = postalCode ? `${query} ${postalCode}` : query;
-  const featuretype = kind === "city" ? "&featuretype=city" : "";
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-    effectiveQuery
-  )}&format=json&addressdetails=1&limit=5${countryCode ? `&countrycodes=${encodeURIComponent(countryCode)}` : ""}${featuretype}`;
-  const res = await fetch(url, {
-    signal,
-  });
+  const url = `/api/geocode?q=${encodeURIComponent(effectiveQuery)}&limit=5&kind=${encodeURIComponent(
+    kind
+  )}${countryCode ? `&countrycodes=${encodeURIComponent(countryCode)}` : ""}`;
+  const res = await fetch(url, { signal });
   if (!res.ok) return [];
   const data = (await res.json()) as {
-    display_name: string;
-    lat: string;
-    lon: string;
-    address?: {
+    provider?: string;
+    results?: Array<{
+      label: string;
+      addressLine?: string;
       city?: string;
-      town?: string;
-      village?: string;
-      hamlet?: string;
-      postcode?: string;
-      country_code?: string;
-    };
-  }[];
+      postalCode?: string;
+      countryCode?: string;
+      lat?: number;
+      lon?: number;
+    }>;
+  };
   const regionNames =
     typeof Intl !== "undefined" && (Intl as any).DisplayNames
       ? new (Intl as any).DisplayNames(["fr"], { type: "region" })
@@ -132,22 +128,20 @@ async function fetchNominatimSuggestions(
     return countryName ? `${left} — ${countryName}` : `${left} — ${code.toUpperCase()}`;
   };
 
-  return (data ?? []).map((item) => {
-    const addr = item.address ?? {};
-    const city = addr.city || addr.town || addr.village || addr.hamlet || undefined;
-    const cc = addr.country_code;
+  return (data.results ?? []).map((item) => {
+    const cc = item.countryCode;
     const label =
       kind === "city"
-        ? formatCityLabel(city, addr.postcode, cc) || item.display_name
-        : item.display_name;
+        ? formatCityLabel(item.city, item.postalCode, cc) || item.label
+        : item.label;
     return {
       label,
-      addressLine: kind === "city" ? undefined : item.display_name,
-      city,
-      postalCode: addr.postcode,
+      addressLine: kind === "city" ? undefined : item.addressLine ?? item.label,
+      city: item.city,
+      postalCode: item.postalCode,
       countryCode: cc,
-      lat: Number.parseFloat(item.lat),
-      lon: Number.parseFloat(item.lon),
+      lat: item.lat,
+      lon: item.lon,
     };
   });
 }

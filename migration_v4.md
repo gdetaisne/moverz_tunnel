@@ -112,6 +112,7 @@
 - **Fichiers modifiés**:
   - `components/tunnel/AddressAutocomplete.tsx`
   - `components/tunnel/v2/StepQualificationV2.tsx`
+  - `app/api/geocode/route.ts` (proxy Nominatim côté serveur pour éviter CORS/UA)
 
 ### 2026-01-26 — Titre punchy "Vos photos = meilleur prix garanti" (V2)
 
