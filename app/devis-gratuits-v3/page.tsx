@@ -794,35 +794,17 @@ function DevisGratuitsV3Content() {
   const v2PricingPanel = useMemo(() => {
     if (!isFunnelV2) return null;
     if (!activePricing) return null;
-    if (routeDistanceKm == null || !Number.isFinite(routeDistanceKm) || routeDistanceKm <= 0) return null;
-
-    const surface = parseInt(state.surfaceM2) || 60;
-    if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
-
-    const density = state.density;
-    const distanceKmBaseline = routeDistanceKm + 15;
-    const baseInput = {
-      surfaceM2: surface,
-      housingType: "t2" as const, // hypothèse: appartement
-      density,
-      distanceKm: distanceKmBaseline,
-      seasonFactor: 1, // pas de buffer saison
-      originFloor: 2,
-      originElevator: "yes" as const,
-      destinationFloor: 2,
-      destinationElevator: "yes" as const,
-      services: { monteMeuble: false, piano: null, debarras: false },
-    };
-    const baseline = calculatePricing({ ...baseInput, formule: state.formule as PricingFormuleType });
-
+    // Baseline figé (capturé en Step 2) — ne doit PAS bouger en Step 3
+    const baselineMinEur = state.rewardBaselineMinEur;
+    const baselineMaxEur = state.rewardBaselineMaxEur;
     return {
       currentMinEur: activePricing.prixMin ?? null,
       currentMaxEur: activePricing.prixMax ?? null,
-      baselineMinEur: baseline.prixMin ?? null,
-      baselineMaxEur: baseline.prixMax ?? null,
+      baselineMinEur,
+      baselineMaxEur,
       assumptions: ["Distance +15 km", "Appart 2e", "Ascenseur", "Sans services"],
     };
-  }, [isFunnelV2, activePricing, routeDistanceKm, state.surfaceM2, state.density, state.formule]);
+  }, [isFunnelV2, activePricing, state.rewardBaselineMinEur, state.rewardBaselineMaxEur]);
 
   const estimateRange = useMemo(() => {
     if (!pricingByFormule) return null;
@@ -1078,6 +1060,17 @@ function DevisGratuitsV3Content() {
 
   const handleSubmitEstimationV2 = (e: FormEvent) => {
     e.preventDefault();
+    // Reward: figer la valeur Step 2 (avec buffers) au passage vers Step 3
+    if (v2PricingByFormuleStep2 && activePricingStep2) {
+      const baselineDistanceKm =
+        routeDistanceKm != null && Number.isFinite(routeDistanceKm) ? routeDistanceKm + 15 : null;
+      updateFields({
+        rewardBaselineMinEur: activePricingStep2.prixMin ?? null,
+        rewardBaselineMaxEur: activePricingStep2.prixMax ?? null,
+        rewardBaselineDistanceKm: baselineDistanceKm,
+        rewardBaselineFormule: state.formule,
+      });
+    }
     trackStepChange(2, 3, "RECAP", "PROJECT", "acces_v2", "forward");
     goToStep(3);
   };

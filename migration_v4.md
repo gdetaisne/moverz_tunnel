@@ -201,6 +201,14 @@
 
 - **Fix build**: passage `pricingPanel` en `undefined` (pas `null`) pour respecter le typage TS.
 
+### 2026-01-28 — Reward: budget initial figé (Step 2) en Step 3
+
+- **Pourquoi**: le “Budget initial (hypothèses)” ne doit pas se recalculer quand l’utilisateur précise ses infos en Step 3.
+- **Changement**: on capture un snapshot (`rewardBaseline*`) au submit de la Step 2, puis le panneau desktop réutilise ce baseline figé.
+- **Fichiers modifiés**:
+  - `hooks/useTunnelState.ts`
+  - `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 
 - **Décision**: remplacer l’affichage en fourchette par **un seul montant**:  

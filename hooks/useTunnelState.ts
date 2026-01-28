@@ -103,6 +103,12 @@ export interface TunnelFormState {
   leadId: string | null;
   currentStep: 1 | 2 | 3 | 4;
   linkingCode: string | null;
+
+  // Reward: baseline figé capturé en Step 2 (V2) et affiché en Step 3
+  rewardBaselineMinEur: number | null;
+  rewardBaselineMaxEur: number | null;
+  rewardBaselineDistanceKm: number | null;
+  rewardBaselineFormule: "ECONOMIQUE" | "STANDARD" | "PREMIUM" | null;
 }
 
 const INITIAL_STATE: TunnelFormState = {
@@ -198,6 +204,11 @@ const INITIAL_STATE: TunnelFormState = {
   leadId: null,
   currentStep: 1,
   linkingCode: null,
+
+  rewardBaselineMinEur: null,
+  rewardBaselineMaxEur: null,
+  rewardBaselineDistanceKm: null,
+  rewardBaselineFormule: null,
 };
 
 export function useTunnelState() {
