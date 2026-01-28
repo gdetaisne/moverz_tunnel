@@ -143,6 +143,15 @@
 - **Fichiers modifiés**:
   - `components/tunnel/v2/StepEstimationV2.tsx`
 
+### 2026-01-28 — Datepicker: suppression de l’UI navigateur (anglais) → sélecteur FR
+
+- **Problème**: l’`<input type="date">` natif affiche des libellés en **anglais** (“Today”, “Clear”, mois…) selon le navigateur/OS.
+- **Décision**: utiliser un sélecteur **100% français** (mois/jours + “Aujourd’hui/Effacer”), tout en conservant le stockage en `YYYY-MM-DD`.
+- **Fichiers modifiés/ajoutés**:
+  - `components/tunnel/DatePickerFr.tsx` (nouveau)
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+  - `components/tunnel/Step2ProjectComplete.tsx`
+
 ### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
 
 - **Date**: 2026-01-28

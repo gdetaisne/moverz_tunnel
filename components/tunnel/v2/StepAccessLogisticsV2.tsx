@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Calendar, MapPin, Home, Mail, User, Phone } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
+import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 
 type QuestionKey = "narrow_access" | "long_carry" | "difficult_parking" | "lift_required";
 
@@ -243,18 +244,12 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           <Calendar className="w-5 h-5 text-[#6BCFCF]" />
           <p className="text-sm font-semibold text-[#0F172A]">Date souhaitée</p>
         </div>
-        <input
+        <DatePickerFr
           id="v2-moving-date"
-          type="date"
           value={props.movingDate}
-          onChange={(e) => props.onFieldChange("movingDate", e.target.value)}
+          onChange={(v) => props.onFieldChange("movingDate", v)}
           min={minMovingDate}
-          className={[
-            "w-full rounded-xl border-2 px-4 py-3 text-base transition-all",
-            showValidation && !isMovingDateValid
-              ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
-              : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
-          ].join(" ")}
+          error={showValidation && !isMovingDateValid}
         />
         {showValidation && !isMovingDateValid && (
           <p className="text-sm font-medium text-[#EF4444]">

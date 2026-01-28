@@ -3,6 +3,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import { MapPin, Home, Calendar, Building2, Layers, ArrowRight, Check, AlertCircle } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
+import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 
 interface Step2ProjectCompleteProps {
   // Départ
@@ -779,16 +780,15 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
           <div>
             <label className="block text-sm font-medium text-[#0F172A] mb-2">Date de déménagement *</label>
-            <input
+            <DatePickerFr
               id="movingDate"
-              type="date"
               value={props.movingDate}
-              onChange={(e) => {
+              onChange={(v) => {
                 markTouched("movingDate");
-                props.onFieldChange("movingDate", e.target.value);
+                props.onFieldChange("movingDate", v);
               }}
               min={minMovingDate}
-              className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+              error={(showErrors || touchedFields.has("movingDate")) && !isDateValid}
             />
           </div>
 
