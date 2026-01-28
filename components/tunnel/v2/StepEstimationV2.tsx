@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent } from "react";
+import { PriceRangeInline } from "@/components/tunnel/PriceRangeInline";
 
 interface StepEstimationV2Props {
   volume: number | null;
@@ -29,10 +30,6 @@ export function StepEstimationV2({
   selectedFormule,
   onFormuleChange,
 }: StepEstimationV2Props) {
-  const budgetText =
-    priceMin != null && priceMax != null
-      ? `${priceMin} – ${priceMax} €`
-      : "—";
   const volumeText = volume != null ? `${volume} m³` : "—";
   const distanceText =
     routeDistanceKm != null && Number.isFinite(routeDistanceKm)
@@ -51,7 +48,7 @@ export function StepEstimationV2({
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6BCFCF] mb-1">
                 💰 Budget estimé
               </p>
-              <p className="text-2xl font-bold text-[#0F172A]">{budgetText}</p>
+              <PriceRangeInline minEur={priceMin} maxEur={priceMax} />
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60 mb-1">
@@ -108,9 +105,13 @@ export function StepEstimationV2({
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm font-semibold text-[#0F172A]">
-                    {price ? `${price.priceMin} – ${price.priceMax} €` : "—"}
-                  </p>
+                  <div className="mt-1">
+                    <PriceRangeInline
+                      minEur={price?.priceMin ?? null}
+                      maxEur={price?.priceMax ?? null}
+                      variant="compact"
+                    />
+                  </div>
                   <ul className="mt-2 space-y-1 text-xs text-[#1E293B]/70">
                     {f.bullets.map((b) => (
                       <li key={b}>• {b}</li>

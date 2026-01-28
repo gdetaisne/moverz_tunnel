@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { Package, Home, Sparkles, ArrowRight, Check } from "lucide-react";
+import { PriceRangeInline } from "@/components/tunnel/PriceRangeInline";
 
 type FormuleType = "ECONOMIQUE" | "STANDARD" | "PREMIUM";
 
@@ -240,9 +241,11 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6BCFCF] mb-1">
                 Budget estimé
               </p>
-              <p className="text-xl font-bold text-[#0F172A]">
-                {props.pricing ? `${props.pricing.priceMin} – ${props.pricing.priceMax} €` : "—"}
-              </p>
+              <PriceRangeInline
+                minEur={props.pricing?.priceMin ?? null}
+                maxEur={props.pricing?.priceMax ?? null}
+                variant="compact"
+              />
               <p className="text-xs text-[#1E293B]/60 mt-1">
                 Basé sur des déménagements similaires au vôtre.
               </p>
@@ -439,11 +442,13 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
 
                     <div className="mb-3 text-sm text-[#1E293B]/70">
                       💰{" "}
-                      <span className="font-semibold text-[#0F172A]">
-                        {props.pricingByFormule?.[f.id]
-                          ? `${props.pricingByFormule[f.id]!.priceMin} - ${props.pricingByFormule[f.id]!.priceMax}€`
-                          : "—"}
-                      </span>
+                      <div className="inline-block align-middle">
+                        <PriceRangeInline
+                          minEur={props.pricingByFormule?.[f.id]?.priceMin ?? null}
+                          maxEur={props.pricingByFormule?.[f.id]?.priceMax ?? null}
+                          variant="compact"
+                        />
+                      </div>
                     </div>
                     
                     <ul className="space-y-1">

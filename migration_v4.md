@@ -120,6 +120,21 @@
   - `components/tunnel/v2/StepEstimationV2.tsx`
   - `app/devis-gratuits-v3/page.tsx`
 
+### 2026-01-28 — Affichage des fourchettes: min / montant calculé / max + arrondi à la centaine supérieure
+
+- **Décision**: pour toutes les fourchettes, afficher en 1 ligne:
+  - **min** + montant min (petit, vert sombre)
+  - **montant calculé** (gras, valeur à retenir)
+  - **max** + montant max (petit, rouge sombre)
+- **Règle**: tous les montants sont **arrondis à la centaine supérieure**.
+- **Implémentation**: composant `PriceRangeInline` réutilisé sur les écrans concernés (estimation, formules, ribbon, photos).
+- **Fichiers modifiés/ajoutés**:
+  - `components/tunnel/PriceRangeInline.tsx` (nouveau)
+  - `components/tunnel/v2/StepEstimationV2.tsx`
+  - `components/tunnel/Step3VolumeServices.tsx`
+  - `components/tunnel/PricingRibbon.tsx`
+  - `components/tunnel/v2/StepContactPhotosV2.tsx`
+
 ### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
 
 - **Date**: 2026-01-28
