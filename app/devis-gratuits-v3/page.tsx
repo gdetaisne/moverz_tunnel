@@ -17,6 +17,7 @@ import {
   getVolumeEconomyScale,
 } from "@/lib/pricing/calculate";
 import {
+  COEF_DISTANCE,
   DENSITY_COEFFICIENTS,
   FORMULE_MULTIPLIERS,
   PRIX_MIN_SOCLE,
