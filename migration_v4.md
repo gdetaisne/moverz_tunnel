@@ -109,6 +109,7 @@
     - Nominatim: ajoute `featuretype=city` pour éviter les rues + formatage label.
     - Mode `auto` (city): fusion BAN + Nominatim + tri (match exact / prefix) pour éviter que des villes FR proches (ex: **Berling**) masquent la ville recherchée (ex: **Berlin**).
   - `StepQualificationV2`: les champs `Ville de départ` / `Ville d’arrivée` utilisent `kind="city"`.
+  - **Coords**: la sélection d’une ville renseigne aussi `originLat/Lon` et `destinationLat/Lon` pour permettre le calcul de **distance route** dès l’écran estimation.
 - **Affichage**:
   - FR: `Ville (CP)`
   - Hors FR: `Ville (CP si dispo) — Pays`

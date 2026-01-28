@@ -57,11 +57,16 @@ export function StepQualificationV2({
           onInputChange={(raw) => {
             onFieldChange("originCity", raw);
             onFieldChange("originPostalCode", "");
+            onFieldChange("originCountryCode", "");
+            onFieldChange("originLat", null);
+            onFieldChange("originLon", null);
           }}
           onSelect={(s) => {
             onFieldChange("originCity", s.city ?? s.label ?? "");
             onFieldChange("originPostalCode", s.postalCode ?? "");
             onFieldChange("originCountryCode", (s.countryCode ?? "fr").toLowerCase());
+            onFieldChange("originLat", s.lat ?? null);
+            onFieldChange("originLon", s.lon ?? null);
           }}
         />
 
@@ -76,11 +81,16 @@ export function StepQualificationV2({
           onInputChange={(raw) => {
             onFieldChange("destinationCity", raw);
             onFieldChange("destinationPostalCode", "");
+            onFieldChange("destinationCountryCode", "");
+            onFieldChange("destinationLat", null);
+            onFieldChange("destinationLon", null);
           }}
           onSelect={(s) => {
             onFieldChange("destinationCity", s.city ?? s.label ?? "");
             onFieldChange("destinationPostalCode", s.postalCode ?? "");
             onFieldChange("destinationCountryCode", (s.countryCode ?? "fr").toLowerCase());
+            onFieldChange("destinationLat", s.lat ?? null);
+            onFieldChange("destinationLon", s.lon ?? null);
           }}
         />
       </div>
