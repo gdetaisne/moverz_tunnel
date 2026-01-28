@@ -1058,17 +1058,26 @@ function DevisGratuitsV3Content() {
       return;
     }
 
-    // Validation contact (email obligatoire) — déplacé en fin de Step 3
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim())) {
+    // Validation contact (prénom + email obligatoires) — déplacé en fin de Step 3
+    const isFirstNameValid = state.firstName.trim().length >= 2;
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim());
+    if (!isFirstNameValid || !isEmailValid) {
       setShowValidationStep3(true);
       requestAnimationFrame(() => {
-        document.getElementById("v2-contact-email")?.scrollIntoView({
+        const focusId = !isFirstNameValid ? "v2-contact-firstName" : "v2-contact-email";
+        document.getElementById(focusId)?.scrollIntoView({
           behavior: "smooth",
           block: "center",
         });
-        (document.getElementById("v2-contact-email") as any)?.focus?.();
+        (document.getElementById(focusId) as any)?.focus?.();
       });
-      trackError("VALIDATION_ERROR", "Invalid email", 3, "PROJECT", "acces_v2");
+      trackError(
+        "VALIDATION_ERROR",
+        !isFirstNameValid ? "Missing first name" : "Invalid email",
+        3,
+        "PROJECT",
+        "acces_v2"
+      );
       return;
     }
 
@@ -1113,6 +1122,20 @@ function DevisGratuitsV3Content() {
             access_details: state.access_details || undefined,
           },
         },
+        // Logement (Back Office)
+        originHousingType: state.originHousingType || undefined,
+        originFloor:
+          (state.originHousingType || "").trim() === "house"
+            ? undefined
+            : Math.max(0, parseInt(state.originFloor || "0", 10) || 0),
+        destHousingType: state.destinationHousingType || undefined,
+        destFloor:
+          (state.destinationHousingType || "").trim() === "house"
+            ? undefined
+            : Math.max(0, parseInt(state.destinationFloor || "0", 10) || 0),
+        // Dates
+        movingDate: toIsoDate(state.movingDate),
+        dateFlexible: state.dateFlexible,
       };
 
       if (state.leadId) {

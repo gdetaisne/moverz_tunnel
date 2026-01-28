@@ -168,6 +168,15 @@
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
   - `app/devis-gratuits-v3/page.tsx`
 
+### 2026-01-28 — Step 3 (V2): prénom obligatoire + validation au clic “Finaliser mon estimation”
+
+- **Décision**: `Prénom` devient **obligatoire** (comme l’email).
+- **UX**: au clic sur “Finaliser mon estimation”, on met en évidence (rouge) et on scroll/focus le premier champ obligatoire manquant.
+- **Back Office**: le payload V2 inclut aussi les infos logement (type + étage) maintenant que le choix est en Step 3.
+- **Fichiers modifiés**:
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
 
 - **Date**: 2026-01-28

@@ -94,6 +94,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
   const showValidation = !!props.showValidation;
   const isOriginAddressValid = (props.originAddress || "").trim().length >= 5;
   const isDestinationAddressValid = (props.destinationAddress || "").trim().length >= 5;
+  const isFirstNameValid = (props.firstName || "").trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((props.email || "").trim());
   const isMovingDateValid = !!props.movingDate && props.movingDate >= minMovingDate;
   const isRouteDistanceValid =
@@ -500,15 +501,25 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
                 <User className="w-4 h-4 text-[#6BCFCF]" />
-                Prénom (optionnel)
+                Prénom (obligatoire)
               </label>
               <input
+                id="v2-contact-firstName"
                 type="text"
                 value={props.firstName}
                 onChange={(e) => props.onFieldChange("firstName", e.target.value)}
-                className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-base"
+                className={[
+                  "w-full rounded-xl border-2 px-4 py-3 text-base transition-all",
+                  showValidation && !isFirstNameValid
+                    ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
+                    : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+                ].join(" ")}
                 placeholder="Votre prénom"
+                required
               />
+              {showValidation && !isFirstNameValid && (
+                <p className="text-sm font-medium text-[#EF4444]">Prénom requis</p>
+              )}
             </div>
 
             <div className="space-y-2">
