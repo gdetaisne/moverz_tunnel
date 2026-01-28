@@ -177,6 +177,15 @@
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
   - `app/devis-gratuits-v3/page.tsx`
 
+### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
+
+- **Décision**: remplacer l’affichage en fourchette par **un seul montant**:  
+  \( économies = 15\% \times \frac{min + max}{2} \) de la **formule sélectionnée**.
+- **Changement**: on base l’écran photos sur la **fourchette de la formule sélectionnée** (pas la fourchette globale).
+- **Fichiers modifiés**:
+  - `components/tunnel/v2/StepContactPhotosV2.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
 
 - **Date**: 2026-01-28

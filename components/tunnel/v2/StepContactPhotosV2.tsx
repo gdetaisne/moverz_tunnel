@@ -5,7 +5,6 @@ import { Check, Upload, ImagePlus, X, Loader2, Smartphone, Mail, TrendingUp, Use
 import WhatsAppCTA from "@/components/tunnel/WhatsAppCTA";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { uploadBackofficePhotos } from "@/lib/api/client";
-import { PriceRangeInline } from "@/components/tunnel/PriceRangeInline";
 
 interface StepContactPhotosV2Props {
   leadId?: string | null;
@@ -78,14 +77,12 @@ export function StepContactPhotosV2({
   const eur = (n: number) =>
     new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(roundUpToHundred(n));
 
-  // Impact photos
-  const DISCOUNT_RATE = 0.1;
-  const savingsMinRaw = hasEstimate ? Math.max(0, estimateMinEur * DISCOUNT_RATE) : 0;
-  const savingsMaxRaw = hasEstimate ? Math.max(0, estimateMaxEur * DISCOUNT_RATE) : 0;
-  const savingsText =
-    hasEstimate && savingsMinRaw > 0 && savingsMaxRaw > 0
-      ? `${eur(savingsMinRaw)}–${eur(savingsMaxRaw)} €`
-      : null;
+  // Impact photos: 15% du montant moyen (formule sélectionnée)
+  const DISCOUNT_RATE = 0.15;
+  const estimateAvgRaw = hasEstimate ? (estimateMinEur + estimateMaxEur) / 2 : 0;
+  const savingsRaw = hasEstimate ? Math.max(0, estimateAvgRaw * DISCOUNT_RATE) : 0;
+  const savingsEur = hasEstimate ? roundUpToHundred(savingsRaw) : null;
+  const savingsText = savingsEur != null ? `${eur(savingsEur)} €` : null;
 
   const previewUrls = useMemo(() => {
     return lastSelection.map((f) => ({
@@ -165,7 +162,9 @@ export function StepContactPhotosV2({
           <h1 className="text-3xl font-black text-[#0F172A]">
             Vos photos = meilleur prix garanti
           </h1>
-          <p className="text-sm text-[#1E293B]/70">60-170€ économisés en 2 min chrono</p>
+          <p className="text-sm text-[#1E293B]/70">
+            {savingsText ? `${savingsText} économisés en 2 min chrono` : "Économies en 2 min chrono"}
+          </p>
         </div>
 
         {/* Benefits Grid - Style sobre Mobile */}
@@ -175,13 +174,9 @@ export function StepContactPhotosV2({
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-2">
               <TrendingUp className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
             </div>
-            <div className="mb-1">
-              <PriceRangeInline
-                minEur={hasEstimate ? roundUpToHundred(savingsMinRaw) : 60}
-                maxEur={hasEstimate ? roundUpToHundred(savingsMaxRaw) : 170}
-                variant="compact"
-              />
-            </div>
+            <p className="text-2xl font-bold text-[#0F172A] mb-1">
+              {savingsText ? savingsText : "—"}
+            </p>
             <p className="text-xs font-medium text-[#1E293B]/60">
               économisés en moyenne avec photos
             </p>
@@ -287,7 +282,9 @@ export function StepContactPhotosV2({
         <h1 className="text-4xl md:text-5xl font-black text-[#0F172A] leading-tight">
           Vos photos = meilleur prix garanti
         </h1>
-          <p className="text-base text-[#1E293B]/70">60-170€ économisés en 2 min chrono</p>
+          <p className="text-base text-[#1E293B]/70">
+            {savingsText ? `${savingsText} économisés en 2 min chrono` : "Économies en 2 min chrono"}
+          </p>
       </div>
 
       {/* Benefits Grid - Style sobre */}
@@ -297,13 +294,9 @@ export function StepContactPhotosV2({
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-3">
             <TrendingUp className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
           </div>
-          <div className="mb-1">
-            <PriceRangeInline
-              minEur={hasEstimate ? roundUpToHundred(savingsMinRaw) : 60}
-              maxEur={hasEstimate ? roundUpToHundred(savingsMaxRaw) : 170}
-              variant="compact"
-            />
-          </div>
+          <p className="text-2xl md:text-3xl font-bold text-[#0F172A] mb-1">
+            {savingsText ? savingsText : "—"}
+          </p>
           <p className="text-xs font-medium text-[#1E293B]/60">
             économisés en moyenne avec photos
           </p>

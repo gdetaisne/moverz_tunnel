@@ -1657,8 +1657,9 @@ function DevisGratuitsV3Content() {
               <StepContactPhotosV2
                 leadId={state.leadId}
                 linkingCode={state.linkingCode}
-                estimateMinEur={estimateRange?.minEur ?? null}
-                estimateMaxEur={estimateRange?.maxEur ?? null}
+                // Économies basées sur la formule sélectionnée (pas la fourchette globale)
+                estimateMinEur={activePricing?.prixMin ?? null}
+                estimateMaxEur={activePricing?.prixMax ?? null}
                 estimateIsIndicative={estimateIsIndicative}
               />
             </div>
