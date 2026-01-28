@@ -137,6 +137,12 @@
   - `components/tunnel/PricingRibbon.tsx`
   - `components/tunnel/v2/StepContactPhotosV2.tsx`
 
+### 2026-01-28 — Formules (étape estimation): 3 cartes sans scroll horizontal (desktop)
+
+- **Décision**: afficher les 3 formules **sans barre de scroll droite/gauche** sur desktop (grid 3 colonnes). Sur mobile on conserve le scroll horizontal.
+- **Fichiers modifiés**:
+  - `components/tunnel/v2/StepEstimationV2.tsx`
+
 ### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
 
 - **Date**: 2026-01-28

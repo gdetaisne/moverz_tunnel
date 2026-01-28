@@ -65,7 +65,7 @@ export function StepEstimationV2({
       {pricingByFormule && (
         <div className="space-y-3">
           <p className="text-sm font-semibold text-[#0F172A]">Choisissez votre formule</p>
-          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:snap-none">
             {[
               {
                 id: "ECONOMIQUE" as const,
@@ -91,7 +91,7 @@ export function StepEstimationV2({
                   key={f.id}
                   type="button"
                   onClick={() => onFormuleChange(f.id)}
-                  className={`min-w-[240px] snap-start rounded-2xl border p-4 text-left transition-all duration-200 ${
+                  className={`w-[240px] flex-shrink-0 snap-start rounded-2xl border p-4 text-left transition-all duration-200 md:w-full md:flex-shrink md:snap-none ${
                     selected
                       ? "border-[#6BCFCF] bg-[#F0FAFA] shadow-sm"
                       : "border-[#E3E5E8] bg-white"
