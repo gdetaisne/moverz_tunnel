@@ -235,7 +235,7 @@
 - **Fix build**: import manquant `COEF_DISTANCE` dans `app/devis-gratuits-v3/page.tsx`.
 - **UI**: panneau “Votre panier” allégé et plus étroit (desktop) pour laisser plus de place au formulaire.
 - **UI**: panneau “Votre panier” en **flottant** desktop (position fixe) collé au bord droit du viewport.
-- **UI**: panier flottant activé à partir de **LG** (≥ 1024px) pour préserver la largeur du formulaire sur écrans moyens.
+- **UI**: panier flottant activé à partir de **XL** (≥ 1280px) et le formulaire ne “réserve” plus de place (pas de padding) → largeur inchangée.
 - **Panier**: le montant “Budget affiné” (centre) n’est plus arrondi à la centaine et correspond **exactement** à la somme (Budget initial centre + lignes).
 
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)

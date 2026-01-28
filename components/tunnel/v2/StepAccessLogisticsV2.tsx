@@ -296,7 +296,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
   return (
     <div className="relative">
-      <div className="space-y-6 lg:pr-[340px]">
+      {/* Le formulaire garde toute sa largeur; le panier flotte à droite sans "réserver" de place */}
+      <div className="space-y-6">
       {/* Addresses + date minimal */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
@@ -616,7 +617,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       </div>
 
       {/* Desktop only: panneau Budget & hypothèses */}
-      <aside className="hidden lg:block lg:fixed lg:top-24 lg:right-0 lg:w-[320px] lg:z-30">
+      {/* On l'active à partir de XL pour garantir assez d'espace sans recouvrement */}
+      <aside className="hidden xl:block xl:fixed xl:top-24 xl:right-0 xl:w-[320px] xl:z-30">
         <div className="rounded-2xl border border-[#E3E5E8] bg-white/90 backdrop-blur p-3 space-y-3">
           <p className="text-sm font-semibold text-[#0F172A]">Votre panier</p>
 
