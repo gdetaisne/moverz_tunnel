@@ -53,18 +53,19 @@ export function PriceRangeInline({
       ? {
           label: "text-[10px]",
           side: "text-[11px]",
-          center: "text-sm",
+          center: "text-base",
         }
       : {
           label: "text-[11px]",
           side: "text-xs",
-          center: "text-2xl",
+          center: "text-3xl",
         };
 
   return (
     <div
       className={[
-        "grid grid-cols-[1fr,auto,1fr] items-end gap-3",
+        // Resserre (mobile-first) : moins de gap, meilleur alignement visuel
+        "grid grid-cols-[1fr,auto,1fr] items-end gap-2",
         className ?? "",
       ].join(" ")}
       {...rest}
@@ -77,7 +78,7 @@ export function PriceRangeInline({
       </div>
 
       <div className="text-center">
-        <p className={`${size.center} font-black text-[#0F172A] leading-none`}>
+        <p className={`${size.center} font-black text-[#0F172A] leading-[0.95]`}>
           {euro(calc)}
         </p>
       </div>

@@ -128,6 +128,7 @@
   - **max** + montant max (petit, rouge sombre)
 - **Règle**: tous les montants sont **arrondis à la centaine supérieure**.
 - **Implémentation**: composant `PriceRangeInline` réutilisé sur les écrans concernés (estimation, formules, ribbon, photos).
+- **Ajustement UI**: resserrage des espacements + montant central (“à retenir”) légèrement plus grand.
 - **Fichiers modifiés/ajoutés**:
   - `components/tunnel/PriceRangeInline.tsx` (nouveau)
   - `components/tunnel/v2/StepEstimationV2.tsx`
