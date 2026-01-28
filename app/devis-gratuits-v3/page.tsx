@@ -1579,9 +1579,11 @@ function DevisGratuitsV3Content() {
                 originAddress={state.originAddress}
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
+                originCountryCode={state.originCountryCode}
                 destinationAddress={state.destinationAddress}
                 destinationCity={state.destinationCity}
                 destinationPostalCode={state.destinationPostalCode}
+                destinationCountryCode={state.destinationCountryCode}
                 originHousingType={state.originHousingType}
                 destinationHousingType={state.destinationHousingType}
                 movingDate={state.movingDate}

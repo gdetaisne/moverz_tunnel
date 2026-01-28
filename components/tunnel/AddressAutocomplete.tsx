@@ -269,6 +269,10 @@ export function AddressAutocomplete({
     // - address: BAN d'abord, puis Nominatim si aucun résultat
     // - city: BAN + Nominatim fusionnés (sinon "Berling" masque "Berlin")
     if (kind !== "city") {
+      // Si le pays n'est pas FR, BAN n'est pas pertinent: on utilise directement Nominatim filtré.
+      if ((ctx.countryCode || "").trim() && (ctx.countryCode || "").trim().toLowerCase() !== "fr") {
+        return fetchNominatimSuggestions(query, ctx, { kind }, signal);
+      }
       const ban = await fetchBanSuggestions(query, ctx, { kind }, signal);
       if (ban.length > 0) return ban;
       return fetchNominatimSuggestions(query, ctx, { kind }, signal);

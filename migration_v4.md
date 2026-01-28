@@ -56,6 +56,7 @@
   - Provider FR (BAN): ajout paramètre `postcode=` pour filtrer les résultats.
   - Provider World (Nominatim): ajout de `countrycodes=` (si fourni) + injection du CP dans la query pour prioriser.
   - **Filtre ville (Step 3)**: quand la ville est déjà connue, elle est injectée dans la requête (BAN+Nominatim) pour éviter des résultats hors ville.
+  - **International (Step 3)**: si le pays sélectionné ≠ FR, on **bypass BAN** et on utilise Nominatim filtré par `countryCode` (évite des résultats USA pour une ville EU).
 - **Tracking**:
   - Aucun impact.
 - **Back Office payload**:

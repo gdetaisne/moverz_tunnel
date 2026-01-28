@@ -11,9 +11,11 @@ interface StepAccessLogisticsV2Props {
   originAddress: string;
   originPostalCode: string;
   originCity: string;
+  originCountryCode?: string;
   destinationAddress: string;
   destinationPostalCode: string;
   destinationCity: string;
+  destinationCountryCode?: string;
   originHousingType: string;
   destinationHousingType: string;
   movingDate: string;
@@ -165,10 +167,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           required
           contextPostalCode={props.originPostalCode || undefined}
           contextCity={props.originCity || undefined}
-          // si CP FR → on force FR; sinon on laisse auto (international)
-          contextCountryCode={
-            /^\d{5}$/.test((props.originPostalCode || "").trim()) ? "fr" : undefined
-          }
+          contextCountryCode={(props.originCountryCode || "").trim() || undefined}
           errorMessage={
             showValidation && !isOriginAddressValid ? "Adresse de départ requise" : null
           }
@@ -200,9 +199,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           required
           contextPostalCode={props.destinationPostalCode || undefined}
           contextCity={props.destinationCity || undefined}
-          contextCountryCode={
-            /^\d{5}$/.test((props.destinationPostalCode || "").trim()) ? "fr" : undefined
-          }
+          contextCountryCode={(props.destinationCountryCode || "").trim() || undefined}
           errorMessage={
             showValidation && !isDestinationAddressValid ? "Adresse d’arrivée requise" : null
           }
