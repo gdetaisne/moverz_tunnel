@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, MapPin, Home, Mail, User, Phone } from "lucide-react";
+import { Calendar, MapPin, Home, Mail, User, Phone, HelpCircle } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 import { PriceRangeInline } from "@/components/tunnel/PriceRangeInline";
@@ -36,7 +36,7 @@ interface StepAccessLogisticsV2Props {
     refinedMinEur: number | null;
     refinedMaxEur: number | null;
     lines: Array<{
-      key: "distance" | "date" | "access" | "services";
+      key: "distance" | "date" | "access" | "services" | "photos";
       label: string;
       status: string;
       amountEur: number;
@@ -636,10 +636,21 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               {(cart?.lines ?? []).map((l) => {
                 const isPos = l.amountEur > 0;
                 const isNeg = l.amountEur < 0;
+                const isPhotos = l.key === "photos";
                 return (
                   <div key={l.key} className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#0F172A] truncate">{l.label}</p>
+                      <p className="text-sm font-medium text-[#0F172A] truncate flex items-center gap-1.5">
+                        <span className="truncate">{l.label}</span>
+                        {isPhotos && (
+                          <span
+                            className="inline-flex items-center"
+                            title="Plus un dossier est documenté, moins les déménageurs prennent de marge. Les photos rassurent les déménageurs et augmentent le nombre de devis à comparer :-)"
+                          >
+                            <HelpCircle className="w-4 h-4 text-[#1E293B]/50" />
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs text-[#1E293B]/60">{l.status}</p>
                     </div>
                     <div

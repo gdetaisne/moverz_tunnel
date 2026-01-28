@@ -979,8 +979,23 @@ function DevisGratuitsV3Content() {
           })
         : null;
 
-    const refinedMinEur = (s4 ?? s3 ?? s2 ?? s1 ?? activePricing).prixMin ?? null;
-    const refinedMaxEur = (s4 ?? s3 ?? s2 ?? s1 ?? activePricing).prixMax ?? null;
+    const prePhotoMinEur = (s4 ?? s3 ?? s2 ?? s1 ?? activePricing).prixMin ?? null;
+    const prePhotoMaxEur = (s4 ?? s3 ?? s2 ?? s1 ?? activePricing).prixMax ?? null;
+
+    // Photos malus: +15% du budget affiné "avant photos" (somme des lignes au-dessus)
+    const hasPrePhoto =
+      typeof prePhotoMinEur === "number" &&
+      typeof prePhotoMaxEur === "number" &&
+      Number.isFinite(prePhotoMinEur) &&
+      Number.isFinite(prePhotoMaxEur);
+    const prePhotoCenter = hasPrePhoto ? center(prePhotoMinEur, prePhotoMaxEur) : null;
+    const photoMalusEur =
+      typeof prePhotoCenter === "number" && Number.isFinite(prePhotoCenter)
+        ? Math.round(prePhotoCenter * 0.15)
+        : 0;
+
+    const refinedMinEur = hasPrePhoto ? Math.round(prePhotoMinEur * 1.15) : prePhotoMinEur;
+    const refinedMaxEur = hasPrePhoto ? Math.round(prePhotoMaxEur * 1.15) : prePhotoMaxEur;
 
     const lines = [
       {
@@ -1009,9 +1024,15 @@ function DevisGratuitsV3Content() {
         label: "Services",
         status: servicesSelected ? "sélectionnés" : "aucun",
         amountEur:
-          s3Center != null && typeof refinedMinEur === "number" && typeof refinedMaxEur === "number"
-            ? formatDelta(center(refinedMinEur, refinedMaxEur) - s3Center)
+          s3Center != null && typeof prePhotoMinEur === "number" && typeof prePhotoMaxEur === "number"
+            ? formatDelta(center(prePhotoMinEur, prePhotoMaxEur) - s3Center)
             : 0,
+      },
+      {
+        key: "photos",
+        label: "Photos (malus)",
+        status: "non envoyées",
+        amountEur: photoMalusEur,
       },
     ] as const;
 
