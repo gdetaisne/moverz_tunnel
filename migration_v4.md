@@ -237,6 +237,7 @@
 - **UI**: panneau “Votre panier” en **flottant** desktop (position fixe) collé au bord droit du viewport.
 - **UI**: panier flottant activé à partir de **XL** (≥ 1280px) et le formulaire ne “réserve” plus de place (pas de padding) → largeur inchangée.
 - **Panier**: le montant “Budget affiné” (centre) n’est plus arrondi à la centaine et correspond **exactement** à la somme (Budget initial centre + lignes).
+- **Pricing (V2)**: le choix **Maison/Appartement** en Step 3 n’impacte plus le volume/prix (la **surface m² de Step 1** reste la source de vérité).
 
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 

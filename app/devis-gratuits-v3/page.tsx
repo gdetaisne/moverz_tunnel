@@ -669,7 +669,11 @@ function DevisGratuitsV3Content() {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const housingType = coerceHousingType(state.originHousingType || state.destinationHousingType);
+    // V2: la surface (m²) est saisie en Step 1; le choix "Maison/Appartement" en Step 3
+    // ne doit pas modifier le volume (sinon les prix bougent alors que la surface est déjà connue).
+    const housingType = isFunnelV2
+      ? ("t2" as const)
+      : coerceHousingType(state.originHousingType || state.destinationHousingType);
     const density = state.density;
 
     // Exiger une distance route (OSRM). Pas de fallback heuristique.
@@ -946,9 +950,8 @@ function DevisGratuitsV3Content() {
     const destinationElevator = state.destinationElevatorTouched
       ? toPricingElevator(state.destinationElevator)
       : ("yes" as const);
-    const housingType = accessConfirmed
-      ? coerceHousingType(state.originHousingType || state.destinationHousingType)
-      : ("t2" as const);
+    // V2: ne pas faire varier le volume via le logement; on conserve housingType="t2" pour le pricing.
+    const housingType = "t2" as const;
 
     const s3 =
       accessConfirmed && (typeof s2Min === "number" && typeof s2Max === "number")
@@ -1130,7 +1133,9 @@ function DevisGratuitsV3Content() {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const housingType = coerceHousingType(state.originHousingType || state.destinationHousingType);
+    const housingType = isFunnelV2
+      ? ("t2" as const)
+      : coerceHousingType(state.originHousingType || state.destinationHousingType);
     const typeCoefficient = TYPE_COEFFICIENTS[housingType];
     const densityCoefficient = DENSITY_COEFFICIENTS[state.density];
 
