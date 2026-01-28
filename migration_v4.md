@@ -187,6 +187,14 @@
   - `components/tunnel/v2/StepContactPhotosV2.tsx`
   - `app/devis-gratuits-v3/page.tsx`
 
+### 2026-01-28 — Photos: suppression carte “+50%” + nouveau titre
+
+- **Décision**:
+  - Retirer le bloc **“+50%”** (taux de réponse) sur l’écran photos.
+  - Remplacer le titre par **“Envoyez nous des photos pour compléter”**.
+- **Fichiers modifiés**:
+  - `components/tunnel/v2/StepContactPhotosV2.tsx`
+
 ### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
 
 - **Date**: 2026-01-28

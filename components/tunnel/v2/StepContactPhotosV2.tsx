@@ -160,7 +160,7 @@ export function StepContactPhotosV2({
             Dossier créé
           </div>
           <h1 className="text-3xl font-black text-[#0F172A]">
-            Vos photos = meilleur prix garanti
+            Envoyez nous des photos pour compléter
           </h1>
           <p className="text-sm text-[#1E293B]/70">
             {savingsText ? `${savingsText} économisés en 2 min chrono` : "Économies en 2 min chrono"}
@@ -179,19 +179,6 @@ export function StepContactPhotosV2({
             </p>
             <p className="text-xs font-medium text-[#1E293B]/60">
               économisés en moyenne avec photos
-            </p>
-          </div>
-
-          {/* Bénéfice 2 : Taux de réponse */}
-          <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-4 text-center">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-2">
-              <Users className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
-            </div>
-            <p className="text-2xl font-bold text-[#0F172A] mb-1">
-              +50%
-            </p>
-            <p className="text-xs font-medium text-[#1E293B]/60">
-              de taux de réponse avec photos
             </p>
           </div>
 
@@ -272,7 +259,7 @@ export function StepContactPhotosV2({
 
   // Desktop layout (ULTRA-SIMPLE)
   return (
-    <div className="max-w-2xl mx-auto space-y-10">
+      <div className="max-w-2xl mx-auto space-y-10">
       {/* Header minimal */}
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#E7FAFA] px-3 py-1.5 text-xs font-semibold text-[#2B7A78]">
@@ -280,7 +267,7 @@ export function StepContactPhotosV2({
           Dossier créé
         </div>
         <h1 className="text-4xl md:text-5xl font-black text-[#0F172A] leading-tight">
-          Vos photos = meilleur prix garanti
+          Envoyez nous des photos pour compléter
         </h1>
           <p className="text-base text-[#1E293B]/70">
             {savingsText ? `${savingsText} économisés en 2 min chrono` : "Économies en 2 min chrono"}
@@ -299,19 +286,6 @@ export function StepContactPhotosV2({
           </p>
           <p className="text-xs font-medium text-[#1E293B]/60">
             économisés en moyenne avec photos
-          </p>
-        </div>
-
-        {/* Bénéfice 2 : Taux de réponse */}
-        <div className="relative rounded-2xl bg-white border border-[#E3E5E8] p-6 text-center">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#6BCFCF]/10 mx-auto mb-3">
-            <Users className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
-          </div>
-          <p className="text-2xl md:text-3xl font-bold text-[#0F172A] mb-1">
-            +50%
-          </p>
-          <p className="text-xs font-medium text-[#1E293B]/60">
-            de taux de réponse avec photos
           </p>
         </div>
 
