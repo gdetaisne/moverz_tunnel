@@ -187,6 +187,18 @@
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
   - `app/devis-gratuits-v3/page.tsx`
 
+### 2026-01-28 — Reward: Step 2 (V2) calcule le budget avec hypothèses (distance +15 km, accès/services)
+
+- **Décision**: l’estimation Step 2 (V2) utilise les hypothèses “reward”:
+  - distance \(OSRM\ ville\to ville\) + **15 km**
+  - **appartement 2e**, **ascenseur**
+  - **aucun service**
+  - **pas de buffer saison** (`seasonFactor=1`)
+- **UI**: l’affichage “km” Step 2 est aligné sur le **+15 km**.
+- **Fichiers modifiés**:
+  - `app/devis-gratuits-v3/page.tsx`
+  - `components/tunnel/v2/StepEstimationV2.tsx`
+
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 
 - **Décision**: remplacer l’affichage en fourchette par **un seul montant**:  

@@ -751,6 +751,45 @@ function DevisGratuitsV3Content() {
     return pricingByFormule[state.formule as PricingFormuleType] ?? null;
   }, [pricingByFormule, state.formule]);
 
+  // Step 2 (V2) : estimation basée sur hypothèses fixes (reward) tant qu'on n'a pas les adresses exactes.
+  // Hypothèses: distance +15km, appart 2e, ascenseur, aucun service, pas de buffer saison.
+  const v2PricingByFormuleStep2 = useMemo(() => {
+    if (!isFunnelV2) return null;
+    if (state.currentStep !== 2) return null;
+    if (routeDistanceKm == null || !Number.isFinite(routeDistanceKm) || routeDistanceKm <= 0) return null;
+
+    const surface = parseInt(state.surfaceM2) || 60;
+    if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
+
+    const distanceKm = routeDistanceKm + 15;
+    const baseInput = {
+      surfaceM2: surface,
+      housingType: "t2" as const,
+      density: state.density,
+      distanceKm,
+      seasonFactor: 1,
+      originFloor: 2,
+      originElevator: "yes" as const,
+      destinationFloor: 2,
+      destinationElevator: "yes" as const,
+      services: { monteMeuble: false, piano: null, debarras: false },
+    };
+
+    const formules: PricingFormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
+    return formules.reduce<Record<PricingFormuleType, ReturnType<typeof calculatePricing>>>(
+      (acc, formule) => {
+        acc[formule] = calculatePricing({ ...baseInput, formule });
+        return acc;
+      },
+      {} as any
+    );
+  }, [isFunnelV2, state.currentStep, routeDistanceKm, state.surfaceM2, state.density]);
+
+  const activePricingStep2 = useMemo(() => {
+    if (!v2PricingByFormuleStep2) return null;
+    return v2PricingByFormuleStep2[state.formule as PricingFormuleType] ?? null;
+  }, [v2PricingByFormuleStep2, state.formule]);
+
   // Desktop reward panel (V2): budget initial avec hypothèses (distance +15km, appart 2e, ascenseur, sans services)
   const v2PricingPanel = useMemo(() => {
     if (!isFunnelV2) return null;
@@ -1607,26 +1646,29 @@ function DevisGratuitsV3Content() {
           {state.currentStep === 2 && (
             <div className="rounded-3xl bg-white p-5 shadow-sm relative">
               <StepEstimationV2
-                volume={activePricing?.volumeM3 ?? null}
+                volume={activePricingStep2?.volumeM3 ?? activePricing?.volumeM3 ?? null}
                 routeDistanceKm={routeDistanceKm ?? null}
-                priceMin={activePricing?.prixMin ?? null}
-                priceMax={activePricing?.prixMax ?? null}
+                displayDistanceKm={
+                  routeDistanceKm != null && Number.isFinite(routeDistanceKm) ? routeDistanceKm + 15 : null
+                }
+                priceMin={activePricingStep2?.prixMin ?? activePricing?.prixMin ?? null}
+                priceMax={activePricingStep2?.prixMax ?? activePricing?.prixMax ?? null}
                 onSubmit={handleSubmitEstimationV2}
                 isSubmitting={false}
                   pricingByFormule={
-                    pricingByFormule
+                    (v2PricingByFormuleStep2 ?? pricingByFormule)
                       ? {
                           ECONOMIQUE: {
-                            priceMin: pricingByFormule.ECONOMIQUE.prixMin,
-                            priceMax: pricingByFormule.ECONOMIQUE.prixMax,
+                            priceMin: (v2PricingByFormuleStep2 ?? pricingByFormule)!.ECONOMIQUE.prixMin,
+                            priceMax: (v2PricingByFormuleStep2 ?? pricingByFormule)!.ECONOMIQUE.prixMax,
                           },
                           STANDARD: {
-                            priceMin: pricingByFormule.STANDARD.prixMin,
-                            priceMax: pricingByFormule.STANDARD.prixMax,
+                            priceMin: (v2PricingByFormuleStep2 ?? pricingByFormule)!.STANDARD.prixMin,
+                            priceMax: (v2PricingByFormuleStep2 ?? pricingByFormule)!.STANDARD.prixMax,
                           },
                           PREMIUM: {
-                            priceMin: pricingByFormule.PREMIUM.prixMin,
-                            priceMax: pricingByFormule.PREMIUM.prixMax,
+                            priceMin: (v2PricingByFormuleStep2 ?? pricingByFormule)!.PREMIUM.prixMin,
+                            priceMax: (v2PricingByFormuleStep2 ?? pricingByFormule)!.PREMIUM.prixMax,
                           },
                         }
                       : null

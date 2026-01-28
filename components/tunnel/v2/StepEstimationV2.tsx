@@ -6,6 +6,7 @@ import { PriceRangeInline } from "@/components/tunnel/PriceRangeInline";
 interface StepEstimationV2Props {
   volume: number | null;
   routeDistanceKm?: number | null;
+  displayDistanceKm?: number | null;
   priceMin: number | null;
   priceMax: number | null;
   onSubmit: (e: FormEvent) => void;
@@ -22,6 +23,7 @@ interface StepEstimationV2Props {
 export function StepEstimationV2({
   volume,
   routeDistanceKm = null,
+  displayDistanceKm = null,
   priceMin,
   priceMax,
   onSubmit,
@@ -31,9 +33,13 @@ export function StepEstimationV2({
   onFormuleChange,
 }: StepEstimationV2Props) {
   const volumeText = volume != null ? `${volume} m³` : "—";
+  const effectiveDistanceKm =
+    displayDistanceKm != null && Number.isFinite(displayDistanceKm)
+      ? displayDistanceKm
+      : routeDistanceKm;
   const distanceText =
-    routeDistanceKm != null && Number.isFinite(routeDistanceKm)
-      ? `${Math.round(routeDistanceKm)} km`
+    effectiveDistanceKm != null && Number.isFinite(effectiveDistanceKm)
+      ? `${Math.round(effectiveDistanceKm)} km`
       : "—";
 
   return (
