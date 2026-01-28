@@ -205,9 +205,11 @@
 
 - **Pourquoi**: le “Budget initial (hypothèses)” ne doit pas se recalculer quand l’utilisateur précise ses infos en Step 3.
 - **Changement**: on capture un snapshot (`rewardBaseline*`) au submit de la Step 2, puis le panneau desktop réutilise ce baseline figé.
+- **UX**: en cas de refresh direct en Step 3, on hydrate une fois le baseline (mêmes hypothèses Step 2) pour éviter l’affichage “—”.
 - **Fichiers modifiés**:
   - `hooks/useTunnelState.ts`
   - `app/devis-gratuits-v3/page.tsx`
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
 
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 

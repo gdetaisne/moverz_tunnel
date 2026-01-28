@@ -790,6 +790,50 @@ function DevisGratuitsV3Content() {
     return v2PricingByFormuleStep2[state.formule as PricingFormuleType] ?? null;
   }, [v2PricingByFormuleStep2, state.formule]);
 
+  // Reward baseline (figé) : en cas de refresh direct en Step 3, on hydrate une fois le baseline
+  // (mêmes hypothèses que la Step 2) pour éviter l'affichage vide.
+  useEffect(() => {
+    if (!isFunnelV2) return;
+    if (state.currentStep < 3) return;
+    if (state.rewardBaselineMinEur != null && state.rewardBaselineMaxEur != null) return;
+    if (routeDistanceKm == null || !Number.isFinite(routeDistanceKm) || routeDistanceKm <= 0) return;
+
+    const surface = parseInt(state.surfaceM2) || 60;
+    if (!Number.isFinite(surface) || surface < 10 || surface > 500) return;
+
+    const distanceKm = routeDistanceKm + 15;
+    const baseInput = {
+      surfaceM2: surface,
+      housingType: "t2" as const,
+      density: state.density,
+      distanceKm,
+      seasonFactor: 1,
+      originFloor: 2,
+      originElevator: "yes" as const,
+      destinationFloor: 2,
+      destinationElevator: "yes" as const,
+      services: { monteMeuble: false, piano: null, debarras: false },
+    };
+
+    const baseline = calculatePricing({ ...baseInput, formule: state.formule as PricingFormuleType });
+    updateFields({
+      rewardBaselineMinEur: baseline.prixMin ?? null,
+      rewardBaselineMaxEur: baseline.prixMax ?? null,
+      rewardBaselineDistanceKm: distanceKm,
+      rewardBaselineFormule: state.formule,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isFunnelV2,
+    state.currentStep,
+    state.rewardBaselineMinEur,
+    state.rewardBaselineMaxEur,
+    routeDistanceKm,
+    state.surfaceM2,
+    state.density,
+    state.formule,
+  ]);
+
   // Desktop reward panel (V2): budget initial avec hypothèses (distance +15km, appart 2e, ascenseur, sans services)
   const v2PricingPanel = useMemo(() => {
     if (!isFunnelV2) return null;

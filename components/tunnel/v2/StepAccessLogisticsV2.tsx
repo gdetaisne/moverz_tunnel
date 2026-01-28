@@ -110,6 +110,23 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     Number.isFinite(props.routeDistanceKm) &&
     props.routeDistanceKm > 0 &&
     props.routeDistanceProvider === "osrm";
+
+  const priceDelta = useMemo(() => {
+    const cMin = props.pricingPanel?.currentMinEur;
+    const cMax = props.pricingPanel?.currentMaxEur;
+    const bMin = props.pricingPanel?.baselineMinEur;
+    const bMax = props.pricingPanel?.baselineMaxEur;
+    const hasCurrent = typeof cMin === "number" && typeof cMax === "number" && Number.isFinite(cMin) && Number.isFinite(cMax);
+    const hasBaseline = typeof bMin === "number" && typeof bMax === "number" && Number.isFinite(bMin) && Number.isFinite(bMax);
+    if (!hasCurrent || !hasBaseline) return null;
+
+    const CENTER_BIAS = 0.6;
+    const currentCenter = cMin + (cMax - cMin) * CENTER_BIAS;
+    const baselineCenter = bMin + (bMax - bMin) * CENTER_BIAS;
+    const delta = currentCenter - baselineCenter;
+    if (!Number.isFinite(delta)) return null;
+    return delta;
+  }, [props.pricingPanel]);
   const answered = useMemo(
     () => ({
       narrow_access: props.narrow_access,
@@ -622,7 +639,22 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
               Budget initial (hypothèses)
             </p>
-            <PriceRangeInline minEur={panel?.baselineMinEur ?? null} maxEur={panel?.baselineMaxEur ?? null} />
+            {panel?.baselineMinEur == null || panel?.baselineMaxEur == null ? (
+              <div className="text-sm text-[#1E293B]/60">Chargement…</div>
+            ) : (
+              <div className="space-y-1">
+                <PriceRangeInline minEur={panel?.baselineMinEur ?? null} maxEur={panel?.baselineMaxEur ?? null} />
+                {typeof priceDelta === "number" && (
+                  <div className="text-xs text-[#1E293B]/70">
+                    Écart vs initial :{" "}
+                    <span className={`font-semibold ${priceDelta > 0 ? "text-[#7F1D1D]" : priceDelta < 0 ? "text-[#14532D]" : "text-[#0F172A]"}`}>
+                      {priceDelta > 0 ? "+" : ""}
+                      {Math.round(priceDelta)} €
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
