@@ -224,6 +224,7 @@
   - `hooks/useTunnelState.ts`
 
 - **Ajout**: ligne “Photos (malus)” = **+15%** du budget “avant photos”, avec aide `(?)`.
+- **Fix build**: correction typage TS (`lines` mutable) pour `pricingCart`.
 
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 
