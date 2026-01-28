@@ -273,7 +273,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     </div>
   );
 
-  const panel = props.pricingPanel;
+  // Panneau "panier" (budget) — renommé depuis pricingPanel
+  const cart = props.pricingCart;
 
   const isHousingConfirmed =
     (props.originHousingType || "").trim().length > 0 &&
