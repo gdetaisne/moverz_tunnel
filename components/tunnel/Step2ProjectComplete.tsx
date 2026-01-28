@@ -9,6 +9,7 @@ interface Step2ProjectCompleteProps {
   originPostalCode: string;
   originCity: string;
   originAddress: string;
+  originCountryCode: string;
   originLat: number | null;
   originLon: number | null;
   originHousingType: string;
@@ -24,6 +25,7 @@ interface Step2ProjectCompleteProps {
   destinationPostalCode: string;
   destinationCity: string;
   destinationAddress: string;
+  destinationCountryCode: string;
   destinationLat: number | null;
   destinationLon: number | null;
   destinationHousingType: string;
@@ -403,12 +405,20 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               props.originAddress ||
               [props.originPostalCode, props.originCity].filter(Boolean).join(" ")
             }
+            contextPostalCode={props.originPostalCode || undefined}
+            contextCity={props.originCity || undefined}
+            contextCountryCode={
+              /^\d{5}$/.test((props.originPostalCode || "").trim())
+                ? "fr"
+                : props.originCountryCode || undefined
+            }
             onInputChange={(raw) => {
               // V2-ish: dès qu'on retape une adresse, on reflète le texte dans le state
               // et on invalide les infos dérivées (CP/ville/coords) pour éviter du “stale”.
               props.onFieldChange("originAddress", raw);
               if (props.originPostalCode) props.onFieldChange("originPostalCode", "");
               if (props.originCity) props.onFieldChange("originCity", "");
+              if (props.originCountryCode) props.onFieldChange("originCountryCode", "");
               if (props.originLat != null) props.onFieldChange("originLat", null);
               if (props.originLon != null) props.onFieldChange("originLon", null);
             }}
@@ -417,6 +427,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               props.onFieldChange("originAddress", s.addressLine ?? s.label);
               props.onFieldChange("originPostalCode", s.postalCode ?? "");
               props.onFieldChange("originCity", s.city ?? "");
+              props.onFieldChange("originCountryCode", (s.countryCode ?? "fr").toLowerCase());
               props.onFieldChange("originLat", s.lat ?? null);
               props.onFieldChange("originLon", s.lon ?? null);
             }}
@@ -584,10 +595,19 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     .filter(Boolean)
                     .join(" ")
                 }
+                contextPostalCode={props.destinationPostalCode || undefined}
+                contextCity={props.destinationCity || undefined}
+                contextCountryCode={
+                  /^\d{5}$/.test((props.destinationPostalCode || "").trim())
+                    ? "fr"
+                    : props.destinationCountryCode || undefined
+                }
                 onInputChange={(raw) => {
                   props.onFieldChange("destinationAddress", raw);
                   if (props.destinationPostalCode) props.onFieldChange("destinationPostalCode", "");
                   if (props.destinationCity) props.onFieldChange("destinationCity", "");
+                  if (props.destinationCountryCode)
+                    props.onFieldChange("destinationCountryCode", "");
                   if (props.destinationLat != null) props.onFieldChange("destinationLat", null);
                   if (props.destinationLon != null) props.onFieldChange("destinationLon", null);
                 }}
@@ -596,6 +616,10 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   props.onFieldChange("destinationAddress", s.addressLine ?? s.label);
                   props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
                   props.onFieldChange("destinationCity", s.city ?? "");
+                  props.onFieldChange(
+                    "destinationCountryCode",
+                    (s.countryCode ?? "fr").toLowerCase()
+                  );
                   props.onFieldChange("destinationLat", s.lat ?? null);
                   props.onFieldChange("destinationLon", s.lon ?? null);
                 }}

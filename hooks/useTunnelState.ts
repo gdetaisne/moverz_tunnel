@@ -13,6 +13,7 @@ export interface TunnelFormState {
   originPostalCode: string;
   originCity: string;
   originAddress: string;
+  originCountryCode: string; // ISO2, ex: "fr"
   originLat: number | null;
   originLon: number | null;
   originHousingType: string;
@@ -27,6 +28,7 @@ export interface TunnelFormState {
   destinationPostalCode: string;
   destinationCity: string;
   destinationAddress: string;
+  destinationCountryCode: string; // ISO2, ex: "fr"
   destinationLat: number | null;
   destinationLon: number | null;
   destinationHousingType: string;
@@ -112,6 +114,7 @@ const INITIAL_STATE: TunnelFormState = {
   originPostalCode: "",
   originCity: "",
   originAddress: "",
+  originCountryCode: "fr",
   originLat: null,
   originLon: null,
   originHousingType: "",
@@ -127,6 +130,7 @@ const INITIAL_STATE: TunnelFormState = {
   destinationPostalCode: "",
   destinationCity: "",
   destinationAddress: "",
+  destinationCountryCode: "fr",
   destinationLat: null,
   destinationLon: null,
   destinationHousingType: "",

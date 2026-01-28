@@ -62,6 +62,7 @@ function DevisGratuitsV3Content() {
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep2, setShowValidationStep2] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
+  const [step3Error, setStep3Error] = useState<string | null>(null);
 
   const toInputDate = (raw: string | null | undefined): string | undefined => {
     if (!raw) return undefined;
@@ -669,18 +670,10 @@ function DevisGratuitsV3Content() {
     const housingType = coerceHousingType(state.originHousingType || state.destinationHousingType);
     const density = state.density;
 
-    const distanceKm =
-      state.destinationUnknown
-        ? 50
-        : routeDistanceKm ??
-          estimateDistanceKm(
-            state.originPostalCode,
-            state.destinationPostalCode,
-            state.originLat,
-            state.originLon,
-            state.destinationLat,
-            state.destinationLon
-          );
+    // Exiger une distance route (OSRM). Pas de fallback heuristique.
+    if (state.destinationUnknown) return null;
+    if (routeDistanceKm == null) return null;
+    const distanceKm = routeDistanceKm;
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
 
     const originIsHouse = isHouseType(state.originHousingType);
@@ -792,20 +785,10 @@ function DevisGratuitsV3Content() {
     const typeCoefficient = TYPE_COEFFICIENTS[housingType];
     const densityCoefficient = DENSITY_COEFFICIENTS[state.density];
 
-    const distanceKm =
-      state.destinationUnknown
-        ? 50
-        : routeDistanceKm ??
-          estimateDistanceKm(
-            state.originPostalCode,
-            state.destinationPostalCode,
-            state.originLat,
-            state.originLon,
-            state.destinationLat,
-            state.destinationLon
-          );
-    const distanceSource: "osrm" | "fallback" | null =
-      state.destinationUnknown ? null : routeDistanceKm != null ? "osrm" : "fallback";
+    if (state.destinationUnknown) return null;
+    if (routeDistanceKm == null) return null;
+    const distanceKm = routeDistanceKm;
+    const distanceSource: "osrm" | "fallback" | null = "osrm";
 
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
 
@@ -1024,10 +1007,21 @@ function DevisGratuitsV3Content() {
   };
 
   const handleSubmitAccessV2 = async () => {
-    // Validation adresses (requis)
+    // Validation adresses (requis) + complétude ville/CP/pays
     const isOriginAddrValid = state.originAddress.trim().length >= 5;
     const isDestinationAddrValid = state.destinationAddress.trim().length >= 5;
-    if (!isOriginAddrValid || !isDestinationAddrValid) {
+    const isOriginMetaValid =
+      state.originCity.trim().length >= 2 &&
+      state.originPostalCode.trim().length >= 2 &&
+      state.originCountryCode.trim().length >= 2;
+    const isDestMetaValid =
+      state.destinationCity.trim().length >= 2 &&
+      state.destinationPostalCode.trim().length >= 2 &&
+      state.destinationCountryCode.trim().length >= 2;
+
+    const isRouteDistanceValid = routeDistanceKm != null && routeDistanceProvider === "osrm";
+
+    if (!isOriginAddrValid || !isDestinationAddrValid || !isOriginMetaValid || !isDestMetaValid || !isRouteDistanceValid) {
       setShowValidationStep3(true);
       requestAnimationFrame(() => {
         const focusId = !isOriginAddrValid ? "v2-origin-address" : "v2-destination-address";
@@ -1094,7 +1088,19 @@ function DevisGratuitsV3Content() {
         phone: state.phone.trim() || undefined,
         source,
         estimationMethod: "FORM" as const,
+        originAddress: state.originAddress || undefined,
+        originCity: state.originCity || undefined,
+        originPostalCode: state.originPostalCode || undefined,
+        originCountryCode: state.originCountryCode || undefined,
+        destAddress: state.destinationAddress || undefined,
+        destCity: state.destinationCity || undefined,
+        destPostalCode: state.destinationPostalCode || undefined,
+        destCountryCode: state.destinationCountryCode || undefined,
         tunnelOptions: {
+          pricing: {
+            distanceKm: routeDistanceKm ?? undefined,
+            distanceProvider: routeDistanceProvider ?? undefined,
+          },
           accessV2: {
             access_type: state.access_type ?? "simple",
             narrow_access: !!state.narrow_access,
@@ -1186,11 +1192,18 @@ function DevisGratuitsV3Content() {
     e.preventDefault();
 
     const isOriginValid =
-      state.originAddress.trim().length >= 5 && state.originHousingType.trim().length > 0;
+      state.originAddress.trim().length >= 5 &&
+      state.originHousingType.trim().length > 0 &&
+      state.originCity.trim().length >= 2 &&
+      state.originPostalCode.trim().length >= 2 &&
+      state.originCountryCode.trim().length >= 2;
     const isDestinationValid =
-      state.destinationUnknown ||
-      (state.destinationAddress.trim().length >= 5 &&
-        state.destinationHousingType.trim().length > 0);
+      !state.destinationUnknown &&
+      state.destinationAddress.trim().length >= 5 &&
+      state.destinationHousingType.trim().length > 0 &&
+      state.destinationCity.trim().length >= 2 &&
+      state.destinationPostalCode.trim().length >= 2 &&
+      state.destinationCountryCode.trim().length >= 2;
     const MIN_DAYS_AHEAD = 14;
     const minMovingDate = (() => {
       const d = new Date();
@@ -1266,10 +1279,12 @@ function DevisGratuitsV3Content() {
           originAddress: state.originAddress || undefined,
           originCity: state.originCity || undefined,
           originPostalCode: state.originPostalCode || undefined,
+          originCountryCode: state.originCountryCode || undefined,
           destAddress: state.destinationUnknown ? undefined : state.destinationAddress || undefined,
           destCity: state.destinationUnknown ? undefined : state.destinationCity || undefined,
           destPostalCode:
             state.destinationUnknown ? undefined : state.destinationPostalCode || undefined,
+          destCountryCode: state.destinationUnknown ? undefined : state.destinationCountryCode || undefined,
 
           // Date
           movingDate: toIsoDate(state.movingDate),
@@ -1349,6 +1364,7 @@ function DevisGratuitsV3Content() {
 
   async function handleSubmitStep3(e: FormEvent) {
     e.preventDefault();
+    setStep3Error(null);
 
     const surface = parseInt(state.surfaceM2) || 60;
     if (surface < 10 || surface > 500) {
@@ -1369,6 +1385,12 @@ function DevisGratuitsV3Content() {
         updateFields({ leadId: effectiveLeadId });
       }
       if (effectiveLeadId) {
+        if (state.destinationUnknown) {
+          throw new Error("DESTINATION_REQUIRED");
+        }
+        if (routeDistanceKm == null || routeDistanceProvider !== "osrm") {
+          throw new Error("DISTANCE_NOT_READY");
+        }
         // Important: on reprend la pricing courante au moment du submit
         // (évite tout risque de valeur stale si l'utilisateur change vite de formule).
         const pricingForSubmit =
@@ -1383,18 +1405,7 @@ function DevisGratuitsV3Content() {
         const tunnelOptions = {
           pricing: {
             // Stockage indicatif pour debug/analytics (Neon via JSON).
-            distanceKm:
-              state.destinationUnknown
-                ? 50
-                : routeDistanceKm ??
-                  estimateDistanceKm(
-                    state.originPostalCode,
-                    state.destinationPostalCode,
-                    state.originLat,
-                    state.originLon,
-                    state.destinationLat,
-                    state.destinationLon
-                  ),
+            distanceKm: routeDistanceKm,
             distanceProvider: routeDistanceProvider ?? undefined,
           },
           // Important: conserver la structure envoyée en Step 2 (sinon Step 3 écrase et on perd l'accès)
@@ -1486,6 +1497,13 @@ function DevisGratuitsV3Content() {
       goToStep(4);
     } catch (err: any) {
       console.error("Error finalizing lead:", err);
+      if (err instanceof Error && err.message === "DISTANCE_NOT_READY") {
+        setStep3Error("Distance route en cours de calcul. Merci de patienter quelques secondes puis de réessayer.");
+      } else if (err instanceof Error && err.message === "DESTINATION_REQUIRED") {
+        setStep3Error("Adresse d’arrivée requise.");
+      } else {
+        setStep3Error(err?.message || "Erreur lors de la finalisation.");
+      }
       trackError("API_ERROR", err.message || "Failed to finalize lead", 3, "RECAP", "formules_v3");
     }
   }
@@ -1572,6 +1590,8 @@ function DevisGratuitsV3Content() {
                 onSubmit={handleSubmitAccessV2}
                 isSubmitting={false}
                 showValidation={showValidationStep3}
+                routeDistanceKm={routeDistanceKm}
+                routeDistanceProvider={routeDistanceProvider}
                 access_type={state.access_type ?? "simple"}
                 narrow_access={!!state.narrow_access}
                 long_carry={!!state.long_carry}
@@ -1643,6 +1663,7 @@ function DevisGratuitsV3Content() {
               originPostalCode={state.originPostalCode}
               originCity={state.originCity}
               originAddress={state.originAddress}
+              originCountryCode={state.originCountryCode}
               originLat={state.originLat}
               originLon={state.originLon}
               originHousingType={state.originHousingType}
@@ -1656,6 +1677,7 @@ function DevisGratuitsV3Content() {
               destinationPostalCode={state.destinationPostalCode}
               destinationCity={state.destinationCity}
               destinationAddress={state.destinationAddress}
+              destinationCountryCode={state.destinationCountryCode}
               destinationLat={state.destinationLat}
               destinationLon={state.destinationLon}
               destinationHousingType={state.destinationHousingType}
@@ -1731,7 +1753,7 @@ function DevisGratuitsV3Content() {
               }}
               onSubmit={handleSubmitStep3}
               isSubmitting={false}
-              error={null}
+              error={step3Error}
               showValidation={showValidationStep3}
             />
           )}

@@ -18,6 +18,8 @@ interface StepAccessLogisticsV2Props {
   destinationHousingType: string;
   movingDate: string;
   dateFlexible: boolean;
+  routeDistanceKm?: number | null;
+  routeDistanceProvider?: "osrm" | "fallback" | null;
   onFieldChange: (field: string, value: any) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
@@ -76,6 +78,11 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
   const isDestinationAddressValid = (props.destinationAddress || "").trim().length >= 5;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((props.email || "").trim());
   const isMovingDateValid = !!props.movingDate && props.movingDate >= minMovingDate;
+  const isRouteDistanceValid =
+    typeof props.routeDistanceKm === "number" &&
+    Number.isFinite(props.routeDistanceKm) &&
+    props.routeDistanceKm > 0 &&
+    props.routeDistanceProvider === "osrm";
   const answered = useMemo(
     () => ({
       narrow_access: props.narrow_access,
@@ -158,7 +165,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           required
           contextPostalCode={props.originPostalCode || undefined}
           contextCity={props.originCity || undefined}
-          contextCountryCode="fr"
+          // si CP FR → on force FR; sinon on laisse auto (international)
+          contextCountryCode={
+            /^\d{5}$/.test((props.originPostalCode || "").trim()) ? "fr" : undefined
+          }
           errorMessage={
             showValidation && !isOriginAddressValid ? "Adresse de départ requise" : null
           }
@@ -169,6 +179,9 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             props.onFieldChange("originAddress", s.addressLine ?? s.label ?? "");
             props.onFieldChange("originCity", s.city ?? "");
             props.onFieldChange("originPostalCode", s.postalCode ?? "");
+            props.onFieldChange("originCountryCode", (s.countryCode ?? "fr").toLowerCase());
+            props.onFieldChange("originLat", s.lat ?? null);
+            props.onFieldChange("originLon", s.lon ?? null);
           }}
         />
         <AddressAutocomplete
@@ -187,7 +200,9 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           required
           contextPostalCode={props.destinationPostalCode || undefined}
           contextCity={props.destinationCity || undefined}
-          contextCountryCode="fr"
+          contextCountryCode={
+            /^\d{5}$/.test((props.destinationPostalCode || "").trim()) ? "fr" : undefined
+          }
           errorMessage={
             showValidation && !isDestinationAddressValid ? "Adresse d’arrivée requise" : null
           }
@@ -198,8 +213,26 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             props.onFieldChange("destinationAddress", s.addressLine ?? s.label ?? "");
             props.onFieldChange("destinationCity", s.city ?? "");
             props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
+            props.onFieldChange("destinationCountryCode", (s.countryCode ?? "fr").toLowerCase());
+            props.onFieldChange("destinationLat", s.lat ?? null);
+            props.onFieldChange("destinationLon", s.lon ?? null);
           }}
         />
+        <div className="text-xs text-[#1E293B]/60">
+          <span className="font-semibold">Distance route:</span>{" "}
+          {isRouteDistanceValid ? (
+            <>
+              {Math.round(props.routeDistanceKm!)} km (OSRM)
+            </>
+          ) : (
+            <>calcul en cours…</>
+          )}
+        </div>
+        {showValidation && !isRouteDistanceValid && (
+          <p className="text-sm font-medium text-[#EF4444]">
+            Distance route requise (merci de sélectionner des adresses valides)
+          </p>
+        )}
       </div>
 
       <div className="space-y-3">

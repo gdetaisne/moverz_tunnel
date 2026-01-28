@@ -76,6 +76,26 @@
 - **Tracking**:
   - Aucun impact.
 
+### 2026-01-28 — Champs obligatoires: adresses complètes + pays + distance route (bloquant)
+
+- **Date**: 2026-01-28
+- **Auteur**: (data)
+- **Décision**: garantir que les champs suivants sont **toujours** renseignés avant envoi au Back Office :
+  - Départ: **adresse + ville + CP + pays**
+  - Arrivée: **adresse + ville + CP + pays**
+  - **Distance par route (OSRM)** (pas de fallback heuristique)
+- **Changements**:
+  - Ajout `originCountryCode` / `destinationCountryCode` dans l’état (`useTunnelState`) et remplissage depuis l’autocomplete.
+  - V2 (StepAccessLogisticsV2): affichage de la **distance route** et validation bloquante si non calculée.
+  - V3: suppression du fallback `estimateDistanceKm` pour l’estimation finale; blocage si distance route non prête.
+  - Back Office payload: envoi `originCountryCode` + `destCountryCode` quand disponible.
+- **Fichiers modifiés**:
+  - `hooks/useTunnelState.ts`
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+  - `components/tunnel/Step2ProjectComplete.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+  - `lib/api/client.ts`
+
 ### 2026-01-26 — Titre punchy "Vos photos = meilleur prix garanti" (V2)
 
 - **Date**: 2026-01-26
