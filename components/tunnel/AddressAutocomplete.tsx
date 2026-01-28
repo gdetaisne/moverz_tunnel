@@ -204,16 +204,71 @@ export function AddressAutocomplete({
       city: contextCity,
       countryCode: contextCountryCode,
     };
+    const normalize = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+
+    const dedupeKey = (s: AddressSuggestion) =>
+      [
+        normalize(s.city ?? s.label ?? ""),
+        normalize(s.postalCode ?? ""),
+        normalize(s.countryCode ?? ""),
+      ]
+        .filter(Boolean)
+        .join("|");
+
+    const rankCity = (s: AddressSuggestion) => {
+      const q = normalize(query);
+      const city = normalize(s.city ?? "");
+      const label = normalize(s.label ?? "");
+      const hay = city || label;
+      if (!q || !hay) return 100;
+      if (hay === q) return 0;
+      if (hay.startsWith(q)) return 5;
+      if (hay.includes(q)) return 20;
+      return 50;
+    };
+
     if (mode === "world") {
       return fetchNominatimSuggestions(query, ctx, { kind }, signal);
     }
     if (mode === "fr") {
       return fetchBanSuggestions(query, ctx, { kind }, signal);
     }
-    // auto: BAN d'abord, puis Nominatim si aucun résultat
-    const ban = await fetchBanSuggestions(query, ctx, { kind }, signal);
-    if (ban.length > 0) return ban;
-    return fetchNominatimSuggestions(query, ctx, { kind }, signal);
+    // auto:
+    // - address: BAN d'abord, puis Nominatim si aucun résultat
+    // - city: BAN + Nominatim fusionnés (sinon "Berling" masque "Berlin")
+    if (kind !== "city") {
+      const ban = await fetchBanSuggestions(query, ctx, { kind }, signal);
+      if (ban.length > 0) return ban;
+      return fetchNominatimSuggestions(query, ctx, { kind }, signal);
+    }
+
+    const [ban, world] = await Promise.all([
+      fetchBanSuggestions(query, ctx, { kind }, signal).catch(() => []),
+      fetchNominatimSuggestions(query, ctx, { kind }, signal).catch(() => []),
+    ]);
+
+    const merged = [...ban, ...world];
+    const map = new Map<string, AddressSuggestion>();
+    for (const item of merged) {
+      const key = dedupeKey(item);
+      if (!key) continue;
+      if (!map.has(key)) map.set(key, item);
+    }
+
+    return Array.from(map.values()).sort((a, b) => {
+      const ra = rankCity(a);
+      const rb = rankCity(b);
+      if (ra !== rb) return ra - rb;
+      const aIsFr = normalize(a.countryCode ?? "") === "fr";
+      const bIsFr = normalize(b.countryCode ?? "") === "fr";
+      if (aIsFr !== bIsFr) return aIsFr ? 1 : -1;
+      return (a.label ?? "").localeCompare(b.label ?? "", "fr");
+    });
   };
 
   const runSearch = async (query: string) => {

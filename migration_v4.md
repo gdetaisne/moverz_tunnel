@@ -105,6 +105,7 @@
   - `AddressAutocomplete` ajoute `kind="city"`:
     - BAN: ajoute `type=municipality` pour éviter les rues.
     - Nominatim: ajoute `featuretype=city` pour éviter les rues + formatage label.
+    - Mode `auto` (city): fusion BAN + Nominatim + tri (match exact / prefix) pour éviter que des villes FR proches (ex: **Berling**) masquent la ville recherchée (ex: **Berlin**).
   - `StepQualificationV2`: les champs `Ville de départ` / `Ville d’arrivée` utilisent `kind="city"`.
 - **Affichage**:
   - FR: `Ville (CP)`
