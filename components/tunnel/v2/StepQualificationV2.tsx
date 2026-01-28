@@ -7,8 +7,12 @@ import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 interface StepQualificationV2Props {
   originCity: string;
   originPostalCode: string;
+  originLat?: number | null;
+  originLon?: number | null;
   destinationCity: string;
   destinationPostalCode: string;
+  destinationLat?: number | null;
+  destinationLon?: number | null;
   housingType: string;
   surfaceM2: string;
   onFieldChange: (field: string, value: any) => void;
@@ -20,8 +24,12 @@ interface StepQualificationV2Props {
 export function StepQualificationV2({
   originCity,
   originPostalCode,
+  originLat,
+  originLon,
   destinationCity,
   destinationPostalCode,
+  destinationLat,
+  destinationLon,
   housingType,
   surfaceM2,
   onFieldChange,
@@ -52,6 +60,7 @@ export function StepQualificationV2({
           inputId="v2-origin-city"
           initialValue={originCity || originPostalCode}
           kind="city"
+          validated={originLat != null && originLon != null}
           required
           errorMessage={showValidation && !isOriginValid ? "Ville de départ requise" : null}
           onInputChange={(raw) => {
@@ -76,6 +85,7 @@ export function StepQualificationV2({
           inputId="v2-destination-city"
           initialValue={destinationCity || destinationPostalCode}
           kind="city"
+          validated={destinationLat != null && destinationLon != null}
           required
           errorMessage={showValidation && !isDestinationValid ? "Ville d’arrivée requise" : null}
           onInputChange={(raw) => {

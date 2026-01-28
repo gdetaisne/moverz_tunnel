@@ -1529,8 +1529,12 @@ function DevisGratuitsV3Content() {
               <StepQualificationV2
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
+                originLat={state.originLat}
+                originLon={state.originLon}
                 destinationCity={state.destinationCity}
                 destinationPostalCode={state.destinationPostalCode}
+                destinationLat={state.destinationLat}
+                destinationLon={state.destinationLon}
                 housingType={state.originHousingType || "t2"}
                 surfaceM2={state.surfaceM2}
                 onFieldChange={(field, value) => updateField(field as any, value)}
@@ -1580,10 +1584,14 @@ function DevisGratuitsV3Content() {
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
                 originCountryCode={state.originCountryCode}
+                originLat={state.originLat}
+                originLon={state.originLon}
                 destinationAddress={state.destinationAddress}
                 destinationCity={state.destinationCity}
                 destinationPostalCode={state.destinationPostalCode}
                 destinationCountryCode={state.destinationCountryCode}
+                destinationLat={state.destinationLat}
+                destinationLon={state.destinationLon}
                 originHousingType={state.originHousingType}
                 destinationHousingType={state.destinationHousingType}
                 movingDate={state.movingDate}

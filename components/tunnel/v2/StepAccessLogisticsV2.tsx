@@ -12,10 +12,14 @@ interface StepAccessLogisticsV2Props {
   originPostalCode: string;
   originCity: string;
   originCountryCode?: string;
+  originLat?: number | null;
+  originLon?: number | null;
   destinationAddress: string;
   destinationPostalCode: string;
   destinationCity: string;
   destinationCountryCode?: string;
+  destinationLat?: number | null;
+  destinationLon?: number | null;
   originHousingType: string;
   destinationHousingType: string;
   movingDate: string;
@@ -168,6 +172,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           contextPostalCode={props.originPostalCode || undefined}
           contextCity={props.originCity || undefined}
           contextCountryCode={(props.originCountryCode || "").trim() || undefined}
+          validated={props.originLat != null && props.originLon != null}
           errorMessage={
             showValidation && !isOriginAddressValid ? "Adresse de départ requise" : null
           }
@@ -200,6 +205,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           contextPostalCode={props.destinationPostalCode || undefined}
           contextCity={props.destinationCity || undefined}
           contextCountryCode={(props.destinationCountryCode || "").trim() || undefined}
+          validated={props.destinationLat != null && props.destinationLon != null}
           errorMessage={
             showValidation && !isDestinationAddressValid ? "Adresse d’arrivée requise" : null
           }

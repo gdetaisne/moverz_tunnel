@@ -98,6 +98,20 @@
   - `app/devis-gratuits-v3/page.tsx`
   - `lib/api/client.ts`
 
+### 2026-01-28 — Indicateur discret “validé” (coords OK) sur les inputs Ville/Adresse
+
+- **Date**: 2026-01-28
+- **Auteur**: (UX/data)
+- **Décision**: afficher un indicateur discret à droite des inputs quand les coordonnées (lat/lon) sont présentes, pour confirmer que l’info est exploitable.
+- **Implémentation**:
+  - `AddressAutocomplete`: option `validated` + fallback interne (dernière sélection) pour afficher un check “Coordonnées OK”.
+  - `StepQualificationV2` (villes) + `StepAccessLogisticsV2` (adresses): passent `validated` basé sur `originLat/Lon` et `destinationLat/Lon`.
+- **Fichiers modifiés**:
+  - `components/tunnel/AddressAutocomplete.tsx`
+  - `components/tunnel/v2/StepQualificationV2.tsx`
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-01-28 — Recherche “Ville” : résultats ville (pas rues) + Europe via Nominatim
 
 - **Date**: 2026-01-28

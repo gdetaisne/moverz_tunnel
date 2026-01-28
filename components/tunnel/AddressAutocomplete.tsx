@@ -24,6 +24,7 @@ export interface AddressAutocompleteProps {
   contextPostalCode?: string;
   contextCity?: string;
   contextCountryCode?: string; // ex: "fr"
+  validated?: boolean; // affichage d'un indicateur "OK coords"
   inputId?: string;
   required?: boolean;
   errorMessage?: string | null;
@@ -192,6 +193,7 @@ export function AddressAutocomplete({
   contextPostalCode,
   contextCity,
   contextCountryCode,
+  validated,
   inputId,
   required = false,
   errorMessage = null,
@@ -357,6 +359,15 @@ export function AddressAutocomplete({
     setHighlightIdx(-1);
   };
 
+  const selectionValidated = (() => {
+    if (typeof validated === "boolean") return validated;
+    const last = lastSelectionRef.current;
+    if (!last) return false;
+    if (last.lat == null || last.lon == null) return false;
+    const lastLabel = (last.addressLine ?? last.label ?? "").trim();
+    return !!lastLabel && lastLabel === input.trim();
+  })();
+
   // Fallback : si l'utilisateur ne clique pas une suggestion, on géocode le texte en blur.
   const resolveOnBlur = async () => {
     const trimmed = input.trim();
@@ -437,12 +448,42 @@ export function AddressAutocomplete({
           aria-invalid={!!errorMessage}
           aria-describedby={errorMessage ? `${inputId ?? "address"}-error` : undefined}
           className={[
-            "w-full rounded-xl border-2 bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:outline-none focus:ring-2 transition-all",
+            "w-full rounded-xl border-2 bg-white px-4 py-3 pr-10 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:outline-none focus:ring-2 transition-all",
             errorMessage
               ? "border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/15"
               : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:ring-[#6BCFCF]/20",
           ].join(" ")}
         />
+
+        {selectionValidated && !errorMessage && (
+          <span
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6BCFCF]"
+            aria-hidden="true"
+            title="Coordonnées OK"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9 12.5l2 2 4-5"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                opacity="0.35"
+              />
+            </svg>
+          </span>
+        )}
 
         {errorMessage && (
           <p
