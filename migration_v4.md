@@ -223,6 +223,8 @@
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
   - `hooks/useTunnelState.ts`
 
+- **Ajout**: ligne “Photos (malus)” = **+15%** du budget “avant photos”, avec aide `(?)`.
+
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 
 - **Décision**: remplacer l’affichage en fourchette par **un seul montant**:  
