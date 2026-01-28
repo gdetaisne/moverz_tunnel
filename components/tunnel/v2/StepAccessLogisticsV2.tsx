@@ -675,38 +675,6 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             <PriceRangeInline minEur={cart?.refinedMinEur ?? null} maxEur={cart?.refinedMaxEur ?? null} />
           </div>
 
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-              Ce qui peut faire varier le prix
-            </p>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[#0F172A]">Distance précise (OSRM)</span>
-                <span className={`text-xs font-semibold ${isRouteDistanceValid ? "text-[#14532D]" : "text-[#1E293B]/60"}`}>
-                  {isRouteDistanceValid ? "confirmée" : "en cours"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[#0F172A]">Date (saison/urgence)</span>
-                <span className={`text-xs font-semibold ${isMovingDateValid ? "text-[#14532D]" : "text-[#1E293B]/60"}`}>
-                  {isMovingDateValid ? "confirmée" : "à renseigner"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[#0F172A]">Accès (logement/étage)</span>
-                <span className={`text-xs font-semibold ${isHousingConfirmed ? "text-[#14532D]" : "text-[#1E293B]/60"}`}>
-                  {isHousingConfirmed ? "confirmé" : "à préciser"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[#0F172A]">Services</span>
-                <span className={`text-xs font-semibold ${hasAnyOptionalService ? "text-[#0F172A]" : "text-[#1E293B]/60"}`}>
-                  {hasAnyOptionalService ? "sélectionnés" : "aucun (par défaut)"}
-                </span>
-              </div>
-            </div>
-          </div>
-
           <p className="text-xs text-[#1E293B]/60">
             Le budget se précise à mesure que vous complétez les informations.
           </p>

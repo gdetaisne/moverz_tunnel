@@ -631,7 +631,8 @@ function DevisGratuitsV3Content() {
     const diffMs = d.getTime() - now.getTime();
     const diffDays = diffMs / (1000 * 60 * 60 * 24);
     if (diffDays <= 0 || diffDays > 365) return 1;
-    if (diffDays <= 30) return 1.15;
+    // Step 3 impose déjà un min J+15, donc on ne considère "urgent" que <= 15 jours.
+    if (diffDays <= 15) return 1.15;
     return 1;
   };
 
@@ -1160,10 +1161,9 @@ function DevisGratuitsV3Content() {
     const band = getDistanceBand(distanceKm);
     const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][formule];
     const volumeScale = getVolumeEconomyScale(volumeM3);
-    const baseNoSeasonEur = Math.max(
-      volumeM3 * rateEurPerM3 * volumeScale,
-      PRIX_MIN_SOCLE
-    );
+    const volumeCost = volumeM3 * rateEurPerM3 * volumeScale;
+    const distanceCost = Math.max(0, distanceKm) * COEF_DISTANCE;
+    const baseNoSeasonEur = Math.max(volumeCost, PRIX_MIN_SOCLE) + distanceCost;
 
     const coeffOrigin = getEtageCoefficient(originFloor, originElevator);
     const coeffDest = getEtageCoefficient(destinationFloor, destinationElevator);

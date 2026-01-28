@@ -274,10 +274,18 @@ export function useTunnelState() {
 
       // Marquer certains champs "touched" dès qu'ils sont modifiés via updateField
       // (appelé depuis l'UI via onChange).
-      if (field === "originHousingType") next.originHousingTypeTouched = true;
+      // Important: ne pas marquer "touched" lors de l'initialisation par défaut ("" -> "house")
+      // faite par l'UI en Step 3, sinon on considère à tort que l'utilisateur a "confirmé".
+      if (field === "originHousingType") {
+        const isDefaultInit = !prev.originHousingType && value === ("house" as any);
+        if (!isDefaultInit) next.originHousingTypeTouched = true;
+      }
       if (field === "originFloor") next.originFloorTouched = true;
       if (field === "originElevator") next.originElevatorTouched = true;
-      if (field === "destinationHousingType") next.destinationHousingTypeTouched = true;
+      if (field === "destinationHousingType") {
+        const isDefaultInit = !prev.destinationHousingType && value === ("house" as any);
+        if (!isDefaultInit) next.destinationHousingTypeTouched = true;
+      }
       if (field === "destinationFloor") next.destinationFloorTouched = true;
       if (field === "destinationElevator") next.destinationElevatorTouched = true;
       

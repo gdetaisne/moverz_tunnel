@@ -227,6 +227,11 @@
 - **Fix build**: correction typage TS (`lines` mutable) pour `pricingCart`.
 - **Fix build**: suppression d’une référence résiduelle à `pricingPanel` dans `StepAccessLogisticsV2`.
 - **Fix build**: suppression d’une double déclaration de `cart` dans `StepAccessLogisticsV2`.
+- **Correction calculs (panier)**:
+  - **Accès**: les defaults “Maison” en Step 3 ne sont plus considérés comme “confirmés” (flags `touched`).
+  - **Date**: l’“urgence” ne s’applique plus que sur ≤ 15 jours (cohérent avec le min J+15).
+  - **Distance**: ajout d’une composante distance continue dans `calculatePricing` (le buffer +15 km a toujours un impact).
+- **UI**: suppression de “Ce qui peut faire varier le prix” (doublon avec le panier).
 
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 

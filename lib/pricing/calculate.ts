@@ -4,6 +4,7 @@ import {
   FORMULE_MULTIPLIERS,
   SERVICES_PRIX,
   COEF_VOLUME,
+  COEF_DISTANCE,
   PRIX_MIN_SOCLE,
   getDistanceBand,
   LA_POSTE_RATES_EUR_PER_M3,
@@ -98,10 +99,10 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   const band = getDistanceBand(input.distanceKm);
   const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][input.formule];
   const volumeScale = getVolumeEconomyScale(volumeM3);
-  const baseNoSeason = Math.max(
-    volumeM3 * rateEurPerM3 * volumeScale,
-    PRIX_MIN_SOCLE
-  );
+  const volumeCost = volumeM3 * rateEurPerM3 * volumeScale;
+  // Composante distance continue (le buffer +15 km a toujours un effet)
+  const distanceCost = Math.max(0, input.distanceKm) * COEF_DISTANCE;
+  const baseNoSeason = Math.max(volumeCost, PRIX_MIN_SOCLE) + distanceCost;
   const baseSeasoned = baseNoSeason * input.seasonFactor;
 
   // 3. Coefficient étages (pire des deux accès)
