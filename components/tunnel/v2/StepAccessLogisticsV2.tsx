@@ -30,12 +30,17 @@ interface StepAccessLogisticsV2Props {
   dateFlexible: boolean;
   routeDistanceKm?: number | null;
   routeDistanceProvider?: "osrm" | "fallback" | null;
-  pricingPanel?: {
-    currentMinEur: number | null;
-    currentMaxEur: number | null;
+  pricingCart?: {
     baselineMinEur: number | null;
     baselineMaxEur: number | null;
-    assumptions: string[];
+    refinedMinEur: number | null;
+    refinedMaxEur: number | null;
+    lines: Array<{
+      key: "distance" | "date" | "access" | "services";
+      label: string;
+      status: string;
+      amountEur: number;
+    }>;
   };
   onFieldChange: (field: string, value: any) => void;
   onSubmit: () => void;
@@ -111,22 +116,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     props.routeDistanceKm > 0 &&
     props.routeDistanceProvider === "osrm";
 
-  const priceDelta = useMemo(() => {
-    const cMin = props.pricingPanel?.currentMinEur;
-    const cMax = props.pricingPanel?.currentMaxEur;
-    const bMin = props.pricingPanel?.baselineMinEur;
-    const bMax = props.pricingPanel?.baselineMaxEur;
-    const hasCurrent = typeof cMin === "number" && typeof cMax === "number" && Number.isFinite(cMin) && Number.isFinite(cMax);
-    const hasBaseline = typeof bMin === "number" && typeof bMax === "number" && Number.isFinite(bMin) && Number.isFinite(bMax);
-    if (!hasCurrent || !hasBaseline) return null;
-
-    const CENTER_BIAS = 0.6;
-    const currentCenter = cMin + (cMax - cMin) * CENTER_BIAS;
-    const baselineCenter = bMin + (bMax - bMin) * CENTER_BIAS;
-    const delta = currentCenter - baselineCenter;
-    if (!Number.isFinite(delta)) return null;
-    return delta;
-  }, [props.pricingPanel]);
+  const cart = props.pricingCart;
   const answered = useMemo(
     () => ({
       narrow_access: props.narrow_access,
@@ -626,51 +616,54 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       {/* Desktop only: panneau Budget & hypothèses */}
       <aside className="hidden md:block">
         <div className="sticky top-4 rounded-2xl border border-[#E3E5E8] bg-white p-4 shadow-sm space-y-4">
-          <p className="text-sm font-semibold text-[#0F172A]">Votre budget</p>
-
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-              Budget actuel
-            </p>
-            <PriceRangeInline minEur={panel?.currentMinEur ?? null} maxEur={panel?.currentMaxEur ?? null} />
-          </div>
+          <p className="text-sm font-semibold text-[#0F172A]">Votre panier</p>
 
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
               Budget initial (hypothèses)
             </p>
-            {panel?.baselineMinEur == null || panel?.baselineMaxEur == null ? (
-              <div className="text-sm text-[#1E293B]/60">Chargement…</div>
-            ) : (
-              <div className="space-y-1">
-                <PriceRangeInline minEur={panel?.baselineMinEur ?? null} maxEur={panel?.baselineMaxEur ?? null} />
-                {typeof priceDelta === "number" && (
-                  <div className="text-xs text-[#1E293B]/70">
-                    Écart vs initial :{" "}
-                    <span className={`font-semibold ${priceDelta > 0 ? "text-[#7F1D1D]" : priceDelta < 0 ? "text-[#14532D]" : "text-[#0F172A]"}`}>
-                      {priceDelta > 0 ? "+" : ""}
-                      {Math.round(priceDelta)} €
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+            <PriceRangeInline minEur={cart?.baselineMinEur ?? null} maxEur={cart?.baselineMaxEur ?? null} />
+            <p className="text-xs text-[#1E293B]/60">
+              Estimation basée sur : distance +15 km, appart 2e, ascenseur, sans services.
+            </p>
           </div>
 
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-              Hypothèses
+              Ajustements
             </p>
-            <div className="flex flex-wrap gap-2">
-              {(panel?.assumptions ?? []).map((a) => (
-                <span
-                  key={a}
-                  className="rounded-full bg-[#F8F9FA] px-3 py-1 text-[11px] font-semibold text-[#0F172A]/80 border border-[#E3E5E8]"
-                >
-                  {a}
-                </span>
-              ))}
+            <div className="space-y-2">
+              {(cart?.lines ?? []).map((l) => {
+                const isPos = l.amountEur > 0;
+                const isNeg = l.amountEur < 0;
+                return (
+                  <div key={l.key} className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#0F172A] truncate">{l.label}</p>
+                      <p className="text-xs text-[#1E293B]/60">{l.status}</p>
+                    </div>
+                    <div
+                      className={[
+                        "shrink-0 text-sm font-semibold tabular-nums",
+                        isPos ? "text-[#7F1D1D]" : isNeg ? "text-[#14532D]" : "text-[#1E293B]/60",
+                      ].join(" ")}
+                    >
+                      {l.amountEur > 0 ? "+" : ""}
+                      {l.amountEur} €
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+          </div>
+
+          <div className="h-px bg-[#E3E5E8]" />
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+              Budget affiné
+            </p>
+            <PriceRangeInline minEur={cart?.refinedMinEur ?? null} maxEur={cart?.refinedMaxEur ?? null} />
           </div>
 
           <div className="space-y-2">

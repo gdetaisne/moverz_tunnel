@@ -211,6 +211,18 @@
   - `app/devis-gratuits-v3/page.tsx`
   - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
 
+### 2026-01-28 — UX: panneau budget Step 3 en mode “panier” (initial → ajustements → affiné)
+
+- **Changement**: refonte du panneau desktop “Votre budget” pour afficher un panier:
+  - Budget initial (hypothèses)
+  - lignes d’ajustement (Distance / Date / Accès / Services)
+  - Budget affiné (résultat)
+- **Note**: les montants par ligne sont des deltas séquentiels (même hypothèses/moteur `calculatePricing`) pour rester explicables.
+- **Fichiers modifiés**:
+  - `app/devis-gratuits-v3/page.tsx`
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+  - `hooks/useTunnelState.ts`
+
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 
 - **Décision**: remplacer l’affichage en fourchette par **un seul montant**:  

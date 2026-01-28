@@ -834,21 +834,224 @@ function DevisGratuitsV3Content() {
     state.formule,
   ]);
 
-  // Desktop reward panel (V2): budget initial avec hypothèses (distance +15km, appart 2e, ascenseur, sans services)
-  const v2PricingPanel = useMemo(() => {
+  // Desktop reward "cart" (V2): Budget initial → lignes d'ajustement → Budget affiné
+  const v2PricingCart = useMemo(() => {
     if (!isFunnelV2) return null;
     if (!activePricing) return null;
-    // Baseline figé (capturé en Step 2) — ne doit PAS bouger en Step 3
+
     const baselineMinEur = state.rewardBaselineMinEur;
     const baselineMaxEur = state.rewardBaselineMaxEur;
-    return {
-      currentMinEur: activePricing.prixMin ?? null,
-      currentMaxEur: activePricing.prixMax ?? null,
-      baselineMinEur,
-      baselineMaxEur,
-      assumptions: ["Distance +15 km", "Appart 2e", "Ascenseur", "Sans services"],
+
+    const center = (minEur: number, maxEur: number) => {
+      const CENTER_BIAS = 0.6;
+      return minEur + (maxEur - minEur) * CENTER_BIAS;
     };
-  }, [isFunnelV2, activePricing, state.rewardBaselineMinEur, state.rewardBaselineMaxEur]);
+
+    const formatDelta = (delta: number) => Math.round(delta);
+
+    const hasBaseline =
+      typeof baselineMinEur === "number" &&
+      typeof baselineMaxEur === "number" &&
+      Number.isFinite(baselineMinEur) &&
+      Number.isFinite(baselineMaxEur);
+
+    // Base Step2 assumptions (pour recalculs intermédiaires). Le montant baseline affiché reste figé.
+    const surface = parseInt(state.surfaceM2) || 60;
+    const baseAssumptions = {
+      surfaceM2: surface,
+      housingType: "t2" as const,
+      density: state.density,
+      distanceKm:
+        typeof state.rewardBaselineDistanceKm === "number" && Number.isFinite(state.rewardBaselineDistanceKm)
+          ? state.rewardBaselineDistanceKm
+          : routeDistanceKm != null && Number.isFinite(routeDistanceKm)
+          ? routeDistanceKm + 15
+          : 15,
+      seasonFactor: 1,
+      originFloor: 2,
+      originElevator: "yes" as const,
+      destinationFloor: 2,
+      destinationElevator: "yes" as const,
+      services: { monteMeuble: false, piano: null, debarras: false },
+      formule: state.formule as PricingFormuleType,
+    };
+
+    const minMovingDate = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 15);
+      return d.toISOString().split("T")[0]!;
+    })();
+    const isMovingDateValid = !!state.movingDate && state.movingDate >= minMovingDate;
+    const isRouteDistanceValid =
+      routeDistanceKm != null &&
+      Number.isFinite(routeDistanceKm) &&
+      routeDistanceKm > 0 &&
+      routeDistanceProvider === "osrm";
+
+    const accessConfirmed =
+      !!state.originHousingTypeTouched ||
+      !!state.destinationHousingTypeTouched ||
+      !!state.originFloorTouched ||
+      !!state.destinationFloorTouched ||
+      !!state.originElevatorTouched ||
+      !!state.destinationElevatorTouched;
+
+    const monteMeuble = state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
+    const piano =
+      state.servicePiano === "droit"
+        ? ("droit" as const)
+        : state.servicePiano === "quart"
+        ? ("quart" as const)
+        : null;
+    const servicesSelected = !!monteMeuble || !!piano || !!state.serviceDebarras;
+
+    // Scénario 0 = baseline (affiché), puis on applique des ajustements séquentiels.
+    const baselineCenter = hasBaseline ? center(baselineMinEur, baselineMaxEur) : null;
+
+    // 1) Distance
+    const s1 = isRouteDistanceValid
+      ? calculatePricing({
+          ...baseAssumptions,
+          distanceKm: routeDistanceKm!,
+        })
+      : null;
+    const s1Min = s1?.prixMin ?? (hasBaseline ? baselineMinEur : null);
+    const s1Max = s1?.prixMax ?? (hasBaseline ? baselineMaxEur : null);
+    const s1Center = typeof s1Min === "number" && typeof s1Max === "number" ? center(s1Min, s1Max) : null;
+
+    // 2) Date (saison/urgence)
+    const seasonFactor = isMovingDateValid ? getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate) : 1;
+    const s2 =
+      s1 && seasonFactor !== 1
+        ? calculatePricing({
+            ...baseAssumptions,
+            distanceKm: isRouteDistanceValid ? routeDistanceKm! : baseAssumptions.distanceKm,
+            seasonFactor,
+          })
+        : null;
+    const s2Min = s2?.prixMin ?? s1Min;
+    const s2Max = s2?.prixMax ?? s1Max;
+    const s2Center = typeof s2Min === "number" && typeof s2Max === "number" ? center(s2Min, s2Max) : null;
+
+    // 3) Accès (logement/étage/ascenseur)
+    const originIsHouse = isHouseType(state.originHousingType);
+    const destIsHouse = isHouseType(state.destinationHousingType);
+    const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
+    const destinationFloor = state.destinationUnknown ? 0 : destIsHouse ? 0 : parseInt(state.destinationFloor || "0", 10) || 0;
+    const originElevator = state.originElevatorTouched ? toPricingElevator(state.originElevator) : ("yes" as const);
+    const destinationElevator = state.destinationElevatorTouched
+      ? toPricingElevator(state.destinationElevator)
+      : ("yes" as const);
+    const housingType = accessConfirmed
+      ? coerceHousingType(state.originHousingType || state.destinationHousingType)
+      : ("t2" as const);
+
+    const s3 =
+      accessConfirmed && (typeof s2Min === "number" && typeof s2Max === "number")
+        ? calculatePricing({
+            ...baseAssumptions,
+            distanceKm: isRouteDistanceValid ? routeDistanceKm! : baseAssumptions.distanceKm,
+            seasonFactor,
+            housingType,
+            originFloor,
+            originElevator,
+            destinationFloor,
+            destinationElevator,
+          })
+        : null;
+    const s3Min = s3?.prixMin ?? s2Min;
+    const s3Max = s3?.prixMax ?? s2Max;
+    const s3Center = typeof s3Min === "number" && typeof s3Max === "number" ? center(s3Min, s3Max) : null;
+
+    // 4) Services
+    const s4 =
+      servicesSelected && (typeof s3Min === "number" && typeof s3Max === "number")
+        ? calculatePricing({
+            ...baseAssumptions,
+            distanceKm: isRouteDistanceValid ? routeDistanceKm! : baseAssumptions.distanceKm,
+            seasonFactor,
+            housingType,
+            originFloor,
+            originElevator,
+            destinationFloor,
+            destinationElevator,
+            services: { monteMeuble, piano, debarras: state.serviceDebarras },
+          })
+        : null;
+
+    const refinedMinEur = (s4 ?? s3 ?? s2 ?? s1 ?? activePricing).prixMin ?? null;
+    const refinedMaxEur = (s4 ?? s3 ?? s2 ?? s1 ?? activePricing).prixMax ?? null;
+
+    const lines = [
+      {
+        key: "distance",
+        label: "Distance (OSRM)",
+        status: isRouteDistanceValid ? "confirmée" : "à confirmer",
+        amountEur:
+          baselineCenter != null && s1Center != null ? formatDelta(s1Center - baselineCenter) : 0,
+      },
+      {
+        key: "date",
+        label: "Date (saison/urgence)",
+        status: isMovingDateValid ? "confirmée" : "à renseigner",
+        amountEur:
+          s1Center != null && s2Center != null ? formatDelta(s2Center - s1Center) : 0,
+      },
+      {
+        key: "access",
+        label: "Accès (logement/étage)",
+        status: accessConfirmed ? "confirmé" : "par défaut",
+        amountEur:
+          s2Center != null && s3Center != null ? formatDelta(s3Center - s2Center) : 0,
+      },
+      {
+        key: "services",
+        label: "Services",
+        status: servicesSelected ? "sélectionnés" : "aucun",
+        amountEur:
+          s3Center != null && typeof refinedMinEur === "number" && typeof refinedMaxEur === "number"
+            ? formatDelta(center(refinedMinEur, refinedMaxEur) - s3Center)
+            : 0,
+      },
+    ] as const;
+
+    return {
+      baselineMinEur: hasBaseline ? baselineMinEur : null,
+      baselineMaxEur: hasBaseline ? baselineMaxEur : null,
+      refinedMinEur,
+      refinedMaxEur,
+      lines,
+    };
+  }, [
+    isFunnelV2,
+    activePricing,
+    routeDistanceKm,
+    routeDistanceProvider,
+    state.rewardBaselineMinEur,
+    state.rewardBaselineMaxEur,
+    state.rewardBaselineDistanceKm,
+    state.surfaceM2,
+    state.density,
+    state.formule,
+    state.movingDate,
+    state.originHousingType,
+    state.destinationHousingType,
+    state.originFloor,
+    state.destinationFloor,
+    state.originElevator,
+    state.destinationElevator,
+    state.originHousingTypeTouched,
+    state.destinationHousingTypeTouched,
+    state.originFloorTouched,
+    state.destinationFloorTouched,
+    state.originElevatorTouched,
+    state.destinationElevatorTouched,
+    state.originFurnitureLift,
+    state.destinationFurnitureLift,
+    state.servicePiano,
+    state.serviceDebarras,
+    state.destinationUnknown,
+  ]);
 
   const estimateRange = useMemo(() => {
     if (!pricingByFormule) return null;
@@ -1743,7 +1946,7 @@ function DevisGratuitsV3Content() {
                 showValidation={showValidationStep3}
                 routeDistanceKm={routeDistanceKm}
                 routeDistanceProvider={routeDistanceProvider}
-                pricingPanel={v2PricingPanel ?? undefined}
+                pricingCart={v2PricingCart ?? undefined}
                 access_type={state.access_type ?? "simple"}
                 narrow_access={!!state.narrow_access}
                 long_carry={!!state.long_carry}
