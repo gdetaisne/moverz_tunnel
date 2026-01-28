@@ -55,6 +55,7 @@
   - `AddressAutocomplete` accepte un contexte (`contextPostalCode`, `contextCity`, `contextCountryCode`)
   - Provider FR (BAN): ajout paramètre `postcode=` pour filtrer les résultats.
   - Provider World (Nominatim): ajout de `countrycodes=` (si fourni) + injection du CP dans la query pour prioriser.
+  - **Filtre ville (Step 3)**: quand la ville est déjà connue, elle est injectée dans la requête (BAN+Nominatim) pour éviter des résultats hors ville.
 - **Tracking**:
   - Aucun impact.
 - **Back Office payload**:

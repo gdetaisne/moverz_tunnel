@@ -39,12 +39,27 @@ async function fetchBanSuggestions(
   signal?: AbortSignal
 ): Promise<AddressSuggestion[]> {
   const postalCode = (context?.postalCode || "").trim();
+  const city = (context?.city || "").trim();
   const kind = options?.kind ?? "address";
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
+  // Pour une recherche d'adresse, on contraint par la ville si on la connaît déjà.
+  // BAN ne fournit pas un filtre "city" fiable sans citycode; on biaise donc la requête.
+  const effectiveQuery =
+    kind === "address" && city && !normalize(query).includes(normalize(city))
+      ? `${query} ${city}`
+      : query;
+
   // BAN supporte `postcode` pour filtrer par code postal.
   // Pour les villes, `type=municipality` évite les rues/adresses.
   const typeParam = kind === "city" ? "&type=municipality" : "";
   const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
-    query
+    effectiveQuery
   )}&limit=5${postalCode ? `&postcode=${encodeURIComponent(postalCode)}` : ""}${typeParam}`;
   const res = await fetch(url, { signal });
   if (!res.ok) return [];
@@ -90,10 +105,22 @@ async function fetchNominatimSuggestions(
 ): Promise<AddressSuggestion[]> {
   const countryCode = (context?.countryCode || "").trim().toLowerCase();
   const postalCode = (context?.postalCode || "").trim();
+  const city = (context?.city || "").trim();
   const kind = options?.kind ?? "address";
   // Nominatim ne propose pas un filtre "postcode" dédié côté query-string;
   // on l'injecte dans la requête pour prioriser les résultats proches.
-  const effectiveQuery = postalCode ? `${query} ${postalCode}` : query;
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
+  const base =
+    kind === "address" && city && !normalize(query).includes(normalize(city))
+      ? `${query} ${city}`
+      : query;
+  const effectiveQuery = postalCode ? `${base} ${postalCode}` : base;
   // Pour la recherche "ville", on limite au périmètre Europe par défaut (sinon on remonte USA, etc.).
   // Note: Nominatim attend une liste de codes ISO2 séparés par des virgules.
   const EUROPE_COUNTRYCODES =
