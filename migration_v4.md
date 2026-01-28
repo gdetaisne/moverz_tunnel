@@ -233,6 +233,9 @@
   - **Distance**: ajout d’une composante distance continue dans `calculatePricing` (le buffer +15 km a toujours un impact).
 - **UI**: suppression de “Ce qui peut faire varier le prix” (doublon avec le panier).
 - **Fix build**: import manquant `COEF_DISTANCE` dans `app/devis-gratuits-v3/page.tsx`.
+- **UI**: panneau “Votre panier” allégé et plus étroit (desktop) pour laisser plus de place au formulaire.
+- **UI**: panneau “Votre panier” en **flottant** desktop (position fixe) collé au bord droit du viewport.
+- **Panier**: le montant “Budget affiné” (centre) n’est plus arrondi à la centaine et correspond **exactement** à la somme (Budget initial centre + lignes).
 
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 

@@ -33,8 +33,10 @@ interface StepAccessLogisticsV2Props {
   pricingCart?: {
     baselineMinEur: number | null;
     baselineMaxEur: number | null;
+    baselineCenterEur: number | null;
     refinedMinEur: number | null;
     refinedMaxEur: number | null;
+    refinedCenterEur: number | null;
     lines: Array<{
       key: "distance" | "date" | "access" | "services" | "photos";
       label: string;
@@ -117,6 +119,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     props.routeDistanceProvider === "osrm";
 
   const cart = props.pricingCart;
+  const fmtEur = (n: number) =>
+    new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
   const answered = useMemo(
     () => ({
       narrow_access: props.narrow_access,
@@ -291,8 +295,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     Boolean((props.specificNotes || "").trim());
 
   return (
-    <div className="md:grid md:grid-cols-[1fr,360px] md:gap-6">
-      <div className="space-y-6">
+    <div className="relative">
+      <div className="space-y-6 md:pr-[340px]">
       {/* Addresses + date minimal */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
@@ -612,15 +616,37 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       </div>
 
       {/* Desktop only: panneau Budget & hypothèses */}
-      <aside className="hidden md:block">
-        <div className="sticky top-4 rounded-2xl border border-[#E3E5E8] bg-white p-4 shadow-sm space-y-4">
+      <aside className="hidden md:block md:fixed md:top-24 md:right-0 md:w-[320px] md:z-30">
+        <div className="rounded-2xl border border-[#E3E5E8] bg-white/90 backdrop-blur p-3 space-y-3">
           <p className="text-sm font-semibold text-[#0F172A]">Votre panier</p>
 
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
               Budget initial (hypothèses)
             </p>
-            <PriceRangeInline minEur={cart?.baselineMinEur ?? null} maxEur={cart?.baselineMaxEur ?? null} />
+            {typeof cart?.baselineCenterEur === "number" ? (
+              <div className="grid grid-cols-[1fr,auto,1fr] items-end gap-2">
+                <div className="text-left">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">min</p>
+                  <p className="text-[11px] font-semibold text-[#14532D]">
+                    {typeof cart?.baselineMinEur === "number" ? fmtEur(cart.baselineMinEur) : "—"}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-base font-black text-[#0F172A] leading-[0.95] tabular-nums">
+                    {fmtEur(cart.baselineCenterEur)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">max</p>
+                  <p className="text-[11px] font-semibold text-[#7F1D1D]">
+                    {typeof cart?.baselineMaxEur === "number" ? fmtEur(cart.baselineMaxEur) : "—"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-[#1E293B]/60">—</div>
+            )}
             <p className="text-xs text-[#1E293B]/60">
               Estimation basée sur : distance +15 km, appart 2e, ascenseur, sans services.
             </p>
@@ -672,7 +698,29 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
               Budget affiné
             </p>
-            <PriceRangeInline minEur={cart?.refinedMinEur ?? null} maxEur={cart?.refinedMaxEur ?? null} />
+            {typeof cart?.refinedCenterEur === "number" ? (
+              <div className="grid grid-cols-[1fr,auto,1fr] items-end gap-2">
+                <div className="text-left">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">min</p>
+                  <p className="text-[11px] font-semibold text-[#14532D]">
+                    {typeof cart?.refinedMinEur === "number" ? fmtEur(cart.refinedMinEur) : "—"}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-base font-black text-[#0F172A] leading-[0.95] tabular-nums">
+                    {fmtEur(cart.refinedCenterEur)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">max</p>
+                  <p className="text-[11px] font-semibold text-[#7F1D1D]">
+                    {typeof cart?.refinedMaxEur === "number" ? fmtEur(cart.refinedMaxEur) : "—"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-[#1E293B]/60">—</div>
+            )}
           </div>
 
           <p className="text-xs text-[#1E293B]/60">

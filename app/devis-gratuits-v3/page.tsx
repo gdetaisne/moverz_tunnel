@@ -844,9 +844,9 @@ function DevisGratuitsV3Content() {
     const baselineMinEur = state.rewardBaselineMinEur;
     const baselineMaxEur = state.rewardBaselineMaxEur;
 
-    const center = (minEur: number, maxEur: number) => {
+    const centerEur = (minEur: number, maxEur: number): number => {
       const CENTER_BIAS = 0.6;
-      return minEur + (maxEur - minEur) * CENTER_BIAS;
+      return Math.round(minEur + (maxEur - minEur) * CENTER_BIAS);
     };
 
     const formatDelta = (delta: number) => Math.round(delta);
@@ -908,7 +908,7 @@ function DevisGratuitsV3Content() {
     const servicesSelected = !!monteMeuble || !!piano || !!state.serviceDebarras;
 
     // Scénario 0 = baseline (affiché), puis on applique des ajustements séquentiels.
-    const baselineCenter = hasBaseline ? center(baselineMinEur, baselineMaxEur) : null;
+    const baselineCenterEur = hasBaseline ? centerEur(baselineMinEur, baselineMaxEur) : null;
 
     // 1) Distance
     const s1 = isRouteDistanceValid
@@ -919,7 +919,8 @@ function DevisGratuitsV3Content() {
       : null;
     const s1Min = s1?.prixMin ?? (hasBaseline ? baselineMinEur : null);
     const s1Max = s1?.prixMax ?? (hasBaseline ? baselineMaxEur : null);
-    const s1Center = typeof s1Min === "number" && typeof s1Max === "number" ? center(s1Min, s1Max) : null;
+    const s1CenterEur =
+      typeof s1Min === "number" && typeof s1Max === "number" ? centerEur(s1Min, s1Max) : null;
 
     // 2) Date (saison/urgence)
     const seasonFactor = isMovingDateValid ? getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate) : 1;
@@ -933,7 +934,8 @@ function DevisGratuitsV3Content() {
         : null;
     const s2Min = s2?.prixMin ?? s1Min;
     const s2Max = s2?.prixMax ?? s1Max;
-    const s2Center = typeof s2Min === "number" && typeof s2Max === "number" ? center(s2Min, s2Max) : null;
+    const s2CenterEur =
+      typeof s2Min === "number" && typeof s2Max === "number" ? centerEur(s2Min, s2Max) : null;
 
     // 3) Accès (logement/étage/ascenseur)
     const originIsHouse = isHouseType(state.originHousingType);
@@ -963,7 +965,8 @@ function DevisGratuitsV3Content() {
         : null;
     const s3Min = s3?.prixMin ?? s2Min;
     const s3Max = s3?.prixMax ?? s2Max;
-    const s3Center = typeof s3Min === "number" && typeof s3Max === "number" ? center(s3Min, s3Max) : null;
+    const s3CenterEur =
+      typeof s3Min === "number" && typeof s3Max === "number" ? centerEur(s3Min, s3Max) : null;
 
     // 4) Services
     const s4 =
@@ -990,10 +993,10 @@ function DevisGratuitsV3Content() {
       typeof prePhotoMaxEur === "number" &&
       Number.isFinite(prePhotoMinEur) &&
       Number.isFinite(prePhotoMaxEur);
-    const prePhotoCenter = hasPrePhoto ? center(prePhotoMinEur, prePhotoMaxEur) : null;
+    const prePhotoCenterEur = hasPrePhoto ? centerEur(prePhotoMinEur, prePhotoMaxEur) : null;
     const photoMalusEur =
-      typeof prePhotoCenter === "number" && Number.isFinite(prePhotoCenter)
-        ? Math.round(prePhotoCenter * 0.15)
+      typeof prePhotoCenterEur === "number" && Number.isFinite(prePhotoCenterEur)
+        ? Math.round(prePhotoCenterEur * 0.15)
         : 0;
 
     const refinedMinEur: number | null = hasPrePhoto
@@ -1002,6 +1005,10 @@ function DevisGratuitsV3Content() {
     const refinedMaxEur: number | null = hasPrePhoto
       ? Math.round(prePhotoMaxEur * 1.15)
       : (prePhotoMaxEur ?? null);
+    const refinedCenterEur =
+      typeof prePhotoCenterEur === "number" && Number.isFinite(prePhotoCenterEur)
+        ? prePhotoCenterEur + photoMalusEur
+        : null;
 
     const lines: Array<{
       key: "distance" | "date" | "access" | "services" | "photos";
@@ -1014,29 +1021,35 @@ function DevisGratuitsV3Content() {
         label: "Distance (OSRM)",
         status: isRouteDistanceValid ? "confirmée" : "à confirmer",
         amountEur:
-          baselineCenter != null && s1Center != null ? formatDelta(s1Center - baselineCenter) : 0,
+          baselineCenterEur != null && s1CenterEur != null
+            ? formatDelta(s1CenterEur - baselineCenterEur)
+            : 0,
       },
       {
         key: "date",
         label: "Date (saison/urgence)",
         status: isMovingDateValid ? "confirmée" : "à renseigner",
         amountEur:
-          s1Center != null && s2Center != null ? formatDelta(s2Center - s1Center) : 0,
+          s1CenterEur != null && s2CenterEur != null
+            ? formatDelta(s2CenterEur - s1CenterEur)
+            : 0,
       },
       {
         key: "access",
         label: "Accès (logement/étage)",
         status: accessConfirmed ? "confirmé" : "par défaut",
         amountEur:
-          s2Center != null && s3Center != null ? formatDelta(s3Center - s2Center) : 0,
+          s2CenterEur != null && s3CenterEur != null
+            ? formatDelta(s3CenterEur - s2CenterEur)
+            : 0,
       },
       {
         key: "services",
         label: "Services",
         status: servicesSelected ? "sélectionnés" : "aucun",
         amountEur:
-          s3Center != null && typeof prePhotoMinEur === "number" && typeof prePhotoMaxEur === "number"
-            ? formatDelta(center(prePhotoMinEur, prePhotoMaxEur) - s3Center)
+          s3CenterEur != null && typeof prePhotoCenterEur === "number"
+            ? formatDelta(prePhotoCenterEur - s3CenterEur)
             : 0,
       },
       {
@@ -1050,8 +1063,10 @@ function DevisGratuitsV3Content() {
     return {
       baselineMinEur: hasBaseline ? baselineMinEur : null,
       baselineMaxEur: hasBaseline ? baselineMaxEur : null,
+      baselineCenterEur,
       refinedMinEur,
       refinedMaxEur,
+      refinedCenterEur,
       lines,
     };
   }, [
