@@ -994,10 +994,19 @@ function DevisGratuitsV3Content() {
         ? Math.round(prePhotoCenter * 0.15)
         : 0;
 
-    const refinedMinEur = hasPrePhoto ? Math.round(prePhotoMinEur * 1.15) : prePhotoMinEur;
-    const refinedMaxEur = hasPrePhoto ? Math.round(prePhotoMaxEur * 1.15) : prePhotoMaxEur;
+    const refinedMinEur: number | null = hasPrePhoto
+      ? Math.round(prePhotoMinEur * 1.15)
+      : (prePhotoMinEur ?? null);
+    const refinedMaxEur: number | null = hasPrePhoto
+      ? Math.round(prePhotoMaxEur * 1.15)
+      : (prePhotoMaxEur ?? null);
 
-    const lines = [
+    const lines: Array<{
+      key: "distance" | "date" | "access" | "services" | "photos";
+      label: string;
+      status: string;
+      amountEur: number;
+    }> = [
       {
         key: "distance",
         label: "Distance (OSRM)",
@@ -1034,7 +1043,7 @@ function DevisGratuitsV3Content() {
         status: "non envoyées",
         amountEur: photoMalusEur,
       },
-    ] as const;
+    ];
 
     return {
       baselineMinEur: hasBaseline ? baselineMinEur : null,
