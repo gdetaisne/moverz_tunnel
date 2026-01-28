@@ -1706,7 +1706,7 @@ function DevisGratuitsV3Content() {
                 showValidation={showValidationStep3}
                 routeDistanceKm={routeDistanceKm}
                 routeDistanceProvider={routeDistanceProvider}
-                pricingPanel={v2PricingPanel}
+                pricingPanel={v2PricingPanel ?? undefined}
                 access_type={state.access_type ?? "simple"}
                 narrow_access={!!state.narrow_access}
                 long_carry={!!state.long_carry}

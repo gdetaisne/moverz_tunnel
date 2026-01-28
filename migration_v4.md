@@ -199,6 +199,8 @@
   - `app/devis-gratuits-v3/page.tsx`
   - `components/tunnel/v2/StepEstimationV2.tsx`
 
+- **Fix build**: passage `pricingPanel` en `undefined` (pas `null`) pour respecter le typage TS.
+
 ### 2026-01-28 — Photos: un seul montant “économisé” = 15% du montant moyen (formule sélectionnée)
 
 - **Décision**: remplacer l’affichage en fourchette par **un seul montant**:  
