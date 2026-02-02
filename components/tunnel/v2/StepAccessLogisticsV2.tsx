@@ -601,9 +601,29 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         </div>
       </div>
 
-      <div className="pb-24 md:pb-0" />
+      <div className="pb-32 md:pb-0" />
 
-      <div className="md:static fixed left-0 right-0 bottom-0 bg-white/95 backdrop-blur px-4 py-4 md:px-0 md:py-0">
+      {/* Mobile only: sticky budget bar */}
+      <div className="xl:hidden fixed left-0 right-0 bottom-20 bg-gradient-to-b from-transparent to-white/95 backdrop-blur pt-3 pb-1 px-4 z-20">
+        <div className="rounded-xl border border-[#E3E5E8] bg-white/90 backdrop-blur px-3 py-2.5 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+              Budget actuel
+            </p>
+            <p className="text-xl font-black text-[#0F172A] tabular-nums">
+              {typeof cart?.refinedCenterEur === "number" ? fmtEur(cart.refinedCenterEur) : "—"}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-semibold text-[#6BCFCF]">
+              {(cart?.lines ?? []).filter((l) => l.confirmed).length}/{(cart?.lines ?? []).length}
+            </p>
+            <p className="text-[10px] text-[#1E293B]/60">confirmées</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="md:static fixed left-0 right-0 bottom-0 bg-white/95 backdrop-blur px-4 py-4 md:px-0 md:py-0 z-30">
         <button
           type="button"
           disabled={props.isSubmitting}
@@ -641,13 +661,20 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           </div>
 
           <div className="space-y-2 rounded-xl bg-[#6BCFCF]/5 p-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6BCFCF]">
-              Votre budget actuel
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6BCFCF]">
+                Votre budget actuel
+              </p>
+              {(cart?.lines ?? []).filter((l) => l.confirmed).length === (cart?.lines ?? []).length && (
+                <span className="rounded-full bg-[#14532D] px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wide">
+                  Optimisé
+                </span>
+              )}
+            </div>
             {typeof cart?.refinedCenterEur === "number" ? (
               <>
                 <div className="text-center">
-                  <p className="text-3xl font-black text-[#0F172A] leading-[0.95] tabular-nums">
+                  <p className="text-3xl font-black text-[#0F172A] leading-[0.95] tabular-nums transition-all duration-300">
                     {fmtEur(cart.refinedCenterEur)}
                   </p>
                 </div>
