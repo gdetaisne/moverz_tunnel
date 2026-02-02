@@ -990,14 +990,14 @@ function DevisGratuitsV3Content() {
     const prePhotoMinEur = (s4 ?? s3 ?? s2 ?? s1 ?? activePricing).prixMin ?? null;
     const prePhotoMaxEur = (s4 ?? s3 ?? s2 ?? s1 ?? activePricing).prixMax ?? null;
 
-    // Photos malus: +15% du budget affiné "avant photos" (somme des lignes au-dessus)
+    // Photos: +15% marge de sécurité si non fournies
     const hasPrePhoto =
       typeof prePhotoMinEur === "number" &&
       typeof prePhotoMaxEur === "number" &&
       Number.isFinite(prePhotoMinEur) &&
       Number.isFinite(prePhotoMaxEur);
     const prePhotoCenterEur = hasPrePhoto ? centerEur(prePhotoMinEur, prePhotoMaxEur) : null;
-    const photoMalusEur =
+    const photoMarginEur =
       typeof prePhotoCenterEur === "number" && Number.isFinite(prePhotoCenterEur)
         ? Math.round(prePhotoCenterEur * 0.15)
         : 0;
@@ -1010,7 +1010,7 @@ function DevisGratuitsV3Content() {
       : (prePhotoMaxEur ?? null);
     const refinedCenterEur =
       typeof prePhotoCenterEur === "number" && Number.isFinite(prePhotoCenterEur)
-        ? prePhotoCenterEur + photoMalusEur
+        ? prePhotoCenterEur + photoMarginEur
         : null;
 
     const lines: Array<{
@@ -1057,9 +1057,9 @@ function DevisGratuitsV3Content() {
       },
       {
         key: "photos",
-        label: "Photos (malus)",
+        label: "Sans photos : marge de sécurité",
         status: "non envoyées",
-        amountEur: photoMalusEur,
+        amountEur: photoMarginEur,
       },
     ];
 
