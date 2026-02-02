@@ -588,7 +588,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           <>
               <AddressAutocomplete
                 label="Adresse d'arrivée *"
-                placeholder="20 place Bellecour, 69002 Lyon"
+                placeholder={props.destinationCity ? `Ex: 20 avenue de la Gare` : "Ex: 20 avenue de la Gare, Lyon"}
                 inputId="destination-address"
                 initialValue={
                   props.destinationAddress ||

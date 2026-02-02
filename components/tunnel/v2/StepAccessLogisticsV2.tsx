@@ -310,7 +310,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               ? `Votre adresse à ${props.originCity}${props.originPostalCode ? ` (${props.originPostalCode})` : ""}`
               : "Votre adresse de départ"
           }
-          placeholder="10 rue de la Paix, Paris"
+          placeholder={props.originCity ? `Ex: 10 rue de la République` : "Ex: 10 rue de la République, Paris"}
           inputId="v2-origin-address"
           initialValue={props.originAddress || ""}
           required
@@ -340,9 +340,9 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               ? `Votre adresse à ${props.destinationCity}${
                   props.destinationPostalCode ? ` (${props.destinationPostalCode})` : ""
                 }`
-              : "Votre adresse d’arrivée"
+              : "Votre adresse d'arrivée"
           }
-          placeholder="20 place Bellecour, Lyon"
+          placeholder={props.destinationCity ? `Ex: 20 avenue de la Gare` : "Ex: 20 avenue de la Gare, Lyon"}
           inputId="v2-destination-address"
           initialValue={
             props.destinationAddress || ""
