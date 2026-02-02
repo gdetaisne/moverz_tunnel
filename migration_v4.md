@@ -638,6 +638,31 @@
   - Vérifier que les events `TUNNEL_STEP_CHANGED` et `TUNNEL_ERROR` ont un `screenId` explicite
   - Vérifier que la CI bloque bien toute modif Prisma + exige `migration_v4.md`
 
+### 2026-02-02 — Désamorçage "sticker shock" sur écran estimation (Step 3)
+
+- **Date**: 2026-02-02
+- **Auteur**: (UX/conversion)
+- **Décision**: réduire le "sticker shock" (choc du prix) en ajoutant du **contexte avant le montant** et en clarifiant la nature **provisoire** de l'estimation.
+- **Changements UI**:
+  - **Bloc "Budget estimé"** (Step3VolumeServices):
+    - Ajout d'une ligne de contexte **avant** le prix : "Pour {volume} m³ · {distance} km" (ou "Basé sur volume et distance estimés" si données non dispo)
+    - Disclaimer modifié : "Estimation basée sur distance + volume estimé. **Prix final après infos + photos.**" (mise en gras du prix final)
+  - **Cartes formules** (Éco/Standard/Premium):
+    - Ajout d'un label "À PARTIR DE" (uppercase, petit, discret) au-dessus de chaque fourchette de prix
+- **Tracking**:
+  - Aucun impact
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés: copywriting et ordre d'affichage uniquement
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Risques / points à vérifier sur staging**:
+  - Vérifier que le contexte (volume + distance) s'affiche correctement avant le prix
+  - Vérifier la lisibilité du disclaimer sur mobile (pas de wrap bizarre)
+  - Vérifier que le label "À partir de" ne casse pas le layout des cartes formules
+  - Vérifier que le montant reste lisible et impactant malgré le contexte ajouté
+
 ### Entrée template (à copier)
 
 - **Date**: YYYY-MM-DD
@@ -651,7 +676,7 @@
   - notes: (ex: ré-ordonnancement steps, mapping conservé)
 - **Champs / Inputs**:
   - supprimés: **AUCUN**
-  - ajoutés: (si oui => marqués “non connectés” + justification)
+  - ajoutés: (si oui => marqués "non connectés" + justification)
   - modifiés (UX only): (si oui)
 - **Back Office payload**:
   - changements: **AUCUN** (sauf mention explicite)

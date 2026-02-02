@@ -241,13 +241,25 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6BCFCF] mb-1">
                 Budget estimé
               </p>
+              
+              {/* Contexte AVANT le prix pour désamorcer le choc */}
+              <p className="text-xs text-[#1E293B]/70 mb-2 font-medium">
+                {props.pricing?.volumeM3 && props.pricingDetails?.distanceKm ? (
+                  <>Pour {props.pricing.volumeM3} m³ · {Math.round(props.pricingDetails.distanceKm)} km</>
+                ) : (
+                  <>Basé sur volume et distance estimés</>
+                )}
+              </p>
+              
               <PriceRangeInline
                 minEur={props.pricing?.priceMin ?? null}
                 maxEur={props.pricing?.priceMax ?? null}
                 variant="compact"
               />
-              <p className="text-xs text-[#1E293B]/60 mt-1">
-                Basé sur des déménagements similaires au vôtre.
+              
+              {/* Disclaimer rassurant sur la nature de l'estimation */}
+              <p className="text-xs text-[#1E293B]/60 mt-2 leading-relaxed">
+                Estimation basée sur distance + volume estimé. <span className="font-semibold">Prix final après infos + photos.</span>
               </p>
             </div>
             <div className="h-px bg-[#E3E5E8]" />
@@ -441,7 +453,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                     </div>
 
                     <div className="mb-3 text-sm text-[#1E293B]/70">
-                      💰{" "}
+                      <span className="text-[10px] uppercase tracking-wide opacity-60 font-semibold">À partir de</span>{" "}
                       <div className="inline-block align-middle">
                         <PriceRangeInline
                           minEur={props.pricingByFormule?.[f.id]?.priceMin ?? null}
