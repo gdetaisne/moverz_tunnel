@@ -452,15 +452,15 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                       )}
                     </div>
 
-                    <div className="mb-3 text-sm text-[#1E293B]/70">
-                      <span className="text-[10px] uppercase tracking-wide opacity-60 font-semibold">À partir de</span>{" "}
-                      <div className="inline-block align-middle">
-                        <PriceRangeInline
-                          minEur={props.pricingByFormule?.[f.id]?.priceMin ?? null}
-                          maxEur={props.pricingByFormule?.[f.id]?.priceMax ?? null}
-                          variant="compact"
-                        />
-                      </div>
+                    <div className="mb-3">
+                      <p className="text-[10px] uppercase tracking-wide text-[#1E293B]/50 font-semibold mb-1">
+                        À partir de
+                      </p>
+                      <PriceRangeInline
+                        minEur={props.pricingByFormule?.[f.id]?.priceMin ?? null}
+                        maxEur={props.pricingByFormule?.[f.id]?.priceMax ?? null}
+                        variant="compact"
+                      />
                     </div>
                     
                     <ul className="space-y-1">
