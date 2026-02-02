@@ -620,7 +620,25 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       {/* On l'active à partir de XL pour garantir assez d'espace sans recouvrement */}
       <aside className="hidden xl:block xl:fixed xl:top-24 xl:right-0 xl:w-[320px] xl:z-30">
         <div className="rounded-2xl border border-[#E3E5E8] bg-white/90 backdrop-blur p-3 space-y-3">
-          <p className="text-sm font-semibold text-[#0F172A]">Votre panier</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-[#0F172A]">Votre panier</p>
+            <p className="text-xs font-semibold text-[#6BCFCF]">
+              {(cart?.lines ?? []).filter((l) => l.confirmed).length}/{(cart?.lines ?? []).length} confirmées
+            </p>
+          </div>
+
+          <div className="h-1.5 bg-[#E3E5E8] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#6BCFCF] transition-all duration-300"
+              style={{
+                width: `${
+                  ((cart?.lines ?? []).filter((l) => l.confirmed).length /
+                    Math.max((cart?.lines ?? []).length, 1)) *
+                  100
+                }%`,
+              }}
+            />
+          </div>
 
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">

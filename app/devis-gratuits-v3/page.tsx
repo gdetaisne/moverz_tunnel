@@ -1018,24 +1018,14 @@ function DevisGratuitsV3Content() {
       label: string;
       status: string;
       amountEur: number;
+      confirmed: boolean;
     }> = [
       {
-        key: "distance",
-        label: "Distance (OSRM)",
-        status: isRouteDistanceValid ? "confirmée" : "à confirmer",
-        amountEur:
-          baselineCenterEur != null && s1CenterEur != null
-            ? formatDelta(s1CenterEur - baselineCenterEur)
-            : 0,
-      },
-      {
-        key: "date",
-        label: "Date (saison/urgence)",
-        status: isMovingDateValid ? "confirmée" : "à renseigner",
-        amountEur:
-          s1CenterEur != null && s2CenterEur != null
-            ? formatDelta(s2CenterEur - s1CenterEur)
-            : 0,
+        key: "photos",
+        label: "Sans photos : marge de sécurité",
+        status: "non envoyées",
+        amountEur: photoMarginEur,
+        confirmed: false,
       },
       {
         key: "access",
@@ -1045,6 +1035,7 @@ function DevisGratuitsV3Content() {
           s2CenterEur != null && s3CenterEur != null
             ? formatDelta(s3CenterEur - s2CenterEur)
             : 0,
+        confirmed: accessConfirmed,
       },
       {
         key: "services",
@@ -1054,12 +1045,27 @@ function DevisGratuitsV3Content() {
           s3CenterEur != null && typeof prePhotoCenterEur === "number"
             ? formatDelta(prePhotoCenterEur - s3CenterEur)
             : 0,
+        confirmed: servicesSelected,
       },
       {
-        key: "photos",
-        label: "Sans photos : marge de sécurité",
-        status: "non envoyées",
-        amountEur: photoMarginEur,
+        key: "date",
+        label: "Date (saison/urgence)",
+        status: isMovingDateValid ? "confirmée" : "à renseigner",
+        amountEur:
+          s1CenterEur != null && s2CenterEur != null
+            ? formatDelta(s2CenterEur - s1CenterEur)
+            : 0,
+        confirmed: isMovingDateValid,
+      },
+      {
+        key: "distance",
+        label: "Distance (OSRM)",
+        status: isRouteDistanceValid ? "confirmée" : "à confirmer",
+        amountEur:
+          baselineCenterEur != null && s1CenterEur != null
+            ? formatDelta(s1CenterEur - baselineCenterEur)
+            : 0,
+        confirmed: isRouteDistanceValid,
       },
     ];
 
