@@ -640,36 +640,35 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             />
           </div>
 
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-              Budget initial (hypothèses)
+          <div className="space-y-2 rounded-xl bg-[#6BCFCF]/5 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6BCFCF]">
+              Votre budget actuel
             </p>
-            {typeof cart?.baselineCenterEur === "number" ? (
-              <div className="grid grid-cols-[1fr,auto,1fr] items-end gap-2">
-                <div className="text-left">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">min</p>
-                  <p className="text-[11px] font-semibold text-[#14532D]">
-                    {typeof cart?.baselineMinEur === "number" ? fmtEur(cart.baselineMinEur) : "—"}
-                  </p>
-                </div>
+            {typeof cart?.refinedCenterEur === "number" ? (
+              <>
                 <div className="text-center">
-                  <p className="text-base font-black text-[#0F172A] leading-[0.95] tabular-nums">
-                    {fmtEur(cart.baselineCenterEur)}
+                  <p className="text-3xl font-black text-[#0F172A] leading-[0.95] tabular-nums">
+                    {fmtEur(cart.refinedCenterEur)}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">max</p>
-                  <p className="text-[11px] font-semibold text-[#7F1D1D]">
-                    {typeof cart?.baselineMaxEur === "number" ? fmtEur(cart.baselineMaxEur) : "—"}
-                  </p>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">min</p>
+                    <p className="text-sm font-semibold text-[#14532D]">
+                      {typeof cart?.refinedMinEur === "number" ? fmtEur(cart.refinedMinEur) : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">max</p>
+                    <p className="text-sm font-semibold text-[#7F1D1D]">
+                      {typeof cart?.refinedMaxEur === "number" ? fmtEur(cart.refinedMaxEur) : "—"}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </>
             ) : (
               <div className="text-sm text-[#1E293B]/60">—</div>
             )}
-            <p className="text-xs text-[#1E293B]/60">
-              Estimation basée sur : distance +15 km, appart 2e, ascenseur, sans services.
-            </p>
           </div>
 
           <div className="space-y-2">
@@ -681,15 +680,24 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 const isPos = l.amountEur > 0;
                 const isNeg = l.amountEur < 0;
                 const isPhotos = l.key === "photos";
+                const isAccess = l.key === "access";
+                const isDate = l.key === "date";
+                
+                const tooltips: Record<string, string> = {
+                  photos: "Les photos permettent d'estimer le volume exact et d'éviter les marges de sécurité",
+                  access: "Un accès difficile nécessite plus de temps et de manutention",
+                  date: "Les périodes de forte demande (été, fin de mois) impactent les tarifs",
+                };
+                
                 return (
                   <div key={l.key} className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-[#0F172A] truncate flex items-center gap-1.5">
                         <span className="truncate">{l.label}</span>
-                        {isPhotos && (
+                        {(isPhotos || isAccess || isDate) && (
                           <span
                             className="inline-flex items-center"
-                            title="Plus un dossier est documenté, moins les déménageurs prennent de marge. Les photos rassurent les déménageurs et augmentent le nombre de devis à comparer :-)"
+                            title={tooltips[l.key]}
                           >
                             <HelpCircle className="w-4 h-4 text-[#1E293B]/50" />
                           </span>
@@ -714,38 +722,21 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
           <div className="h-px bg-[#E3E5E8]" />
 
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-              Budget affiné
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/40">
+              Budget initial (hypothèses)
             </p>
-            {typeof cart?.refinedCenterEur === "number" ? (
-              <div className="grid grid-cols-[1fr,auto,1fr] items-end gap-2">
-                <div className="text-left">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">min</p>
-                  <p className="text-[11px] font-semibold text-[#14532D]">
-                    {typeof cart?.refinedMinEur === "number" ? fmtEur(cart.refinedMinEur) : "—"}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-base font-black text-[#0F172A] leading-[0.95] tabular-nums">
-                    {fmtEur(cart.refinedCenterEur)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">max</p>
-                  <p className="text-[11px] font-semibold text-[#7F1D1D]">
-                    {typeof cart?.refinedMaxEur === "number" ? fmtEur(cart.refinedMaxEur) : "—"}
-                  </p>
-                </div>
-              </div>
+            {typeof cart?.baselineCenterEur === "number" ? (
+              <p className="text-xs text-[#1E293B]/60 line-through">
+                {fmtEur(cart.baselineCenterEur)} ({fmtEur(cart.baselineMinEur ?? 0)}–{fmtEur(cart.baselineMaxEur ?? 0)})
+              </p>
             ) : (
-              <div className="text-sm text-[#1E293B]/60">—</div>
+              <p className="text-xs text-[#1E293B]/40">—</p>
             )}
+            <p className="text-[10px] text-[#1E293B]/50">
+              distance +15 km • appart 2e • sans services
+            </p>
           </div>
-
-          <p className="text-xs text-[#1E293B]/60">
-            Le budget se précise à mesure que vous complétez les informations.
-          </p>
         </div>
       </aside>
     </div>
