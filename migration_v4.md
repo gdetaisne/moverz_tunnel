@@ -648,7 +648,8 @@
     - Ajout d'une ligne de contexte **avant** le prix : "Pour {volume} m³ · {distance} km" (ou "Basé sur volume et distance estimés" si données non dispo)
     - Disclaimer modifié : "Estimation basée sur distance + volume estimé. **Prix final après infos + photos.**" (mise en gras du prix final)
   - **Cartes formules** (Éco/Standard/Premium):
-    - Ajout d'un label "À PARTIR DE" (uppercase, petit, discret) au-dessus de chaque fourchette de prix
+    - Ajout d'un label "À PARTIR DE" (uppercase, petit, discret, 10px) sur ligne dédiée **au-dessus** de chaque fourchette de prix
+    - Fix layout : le label est maintenant sur sa propre ligne (`<p>` block) pour éviter conflit avec le grid de `PriceRangeInline`
 - **Tracking**:
   - Aucun impact
 - **Champs / Inputs**:
@@ -660,7 +661,7 @@
 - **Risques / points à vérifier sur staging**:
   - Vérifier que le contexte (volume + distance) s'affiche correctement avant le prix
   - Vérifier la lisibilité du disclaimer sur mobile (pas de wrap bizarre)
-  - Vérifier que le label "À partir de" ne casse pas le layout des cartes formules
+  - Vérifier que le label "À partir de" s'affiche bien sur chaque carte formule (nouvelle ligne dédiée)
   - Vérifier que le montant reste lisible et impactant malgré le contexte ajouté
 
 ### Entrée template (à copier)
