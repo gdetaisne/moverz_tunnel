@@ -664,6 +664,62 @@
   - Vérifier que le label "À partir de" s'affiche bien sur chaque carte formule (nouvelle ligne dédiée)
   - Vérifier que le montant reste lisible et impactant malgré le contexte ajouté
 
+### 2026-02-02 — Amélioration panier Step 3 (confiance + clarté + momentum)
+
+- **Date**: 2026-02-02
+- **Auteur**: (UX/conversion)
+- **Décision**: améliorer le panier (desktop sidebar + mobile sticky) pour maximiser confiance, clarté et sentiment de progression.
+- **Changements UI**:
+  - **Placeholders adresse cohérents**:
+    - Les placeholders des champs adresse sont maintenant génériques ("Ex: 10 rue de la République") au lieu de hardcodés ("Lyon" alors que label dit "Marseille")
+    - Fix dans StepAccessLogisticsV2 et Step2ProjectComplete
+  - **Reframe ligne Photos** (moins punitif):
+    - Ancien: "Photos (malus) +660€"
+    - Nouveau: "Sans photos : marge de sécurité +660€"
+    - Renommage variable: `photoMalusEur` → `photoMarginEur`
+  - **Progress bar** (momentum):
+    - Affichage "X/5 confirmées" en haut du panier
+    - Barre de progression visuelle (turquoise) qui se remplit à mesure que l'utilisateur confirme les infos
+  - **Ordre lignes par impact** (guide l'attention):
+    - Nouveau: Photos → Accès → Services → Date → Distance
+    - Ancien: Distance → Date → Accès → Services → Photos
+    - Ajout champ `confirmed: boolean` sur chaque ligne pour calculer le progress
+  - **Hiérarchie budget améliorée** (clarté visuelle):
+    - Budget actuel: en premier, gros (3xl), fond turquoise léger, label "Votre budget actuel"
+    - Fourchette min/max: en grid 2 colonnes sous le montant principal
+    - Budget initial: en bas, petit, barré, grisé, label "Budget initial (hypothèses)"
+  - **Tooltips explicatifs** (confiance):
+    - Photos: "Les photos permettent d'estimer le volume exact et d'éviter les marges de sécurité"
+    - Accès: "Un accès difficile nécessite plus de temps et de manutention"
+    - Date: "Les périodes de forte demande (été, fin de mois) impactent les tarifs"
+    - Icône HelpCircle au survol
+  - **Sticky mobile bar** (visibilité budget):
+    - Affichage du budget actuel + progress (X/5) dans une card sticky en bas sur mobile (< xl)
+    - Positionné au-dessus du bouton CTA
+    - Gradient fade-in pour transition douce
+  - **Animation montant** (feedback visuel):
+    - Transition CSS (300ms) sur le montant du budget actuel quand il change
+  - **Badge "Optimisé"** (gratification):
+    - Affichage badge vert "Optimisé" quand toutes les lignes sont confirmées
+    - Positionné à côté du titre "Votre budget actuel"
+- **Tracking**:
+  - Aucun impact
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: champ `confirmed` (booléen) sur chaque ligne du panier (frontend only, pas envoyé au BO)
+  - modifiés: ordre d'affichage des lignes, copywriting, hiérarchie visuelle
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Risques / points à vérifier sur staging**:
+  - Vérifier placeholders adresse cohérents avec ville sélectionnée
+  - Vérifier progress bar et calcul correct du nombre de lignes confirmées
+  - Vérifier sticky mobile bar positionnement (doit être au-dessus du bouton CTA)
+  - Vérifier hiérarchie visuelle budget (actuel gros et visible, initial discret)
+  - Vérifier tooltips au survol (desktop) et au tap (mobile)
+  - Vérifier badge "Optimisé" quand toutes infos confirmées
+  - Vérifier animation du montant lors des changements
+  - Vérifier mobile: sticky bar ne cache pas le contenu important
+
 ### Entrée template (à copier)
 
 - **Date**: YYYY-MM-DD
