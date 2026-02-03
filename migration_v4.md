@@ -25,7 +25,9 @@
 
 - **Date**: 2026-02-03
 - **Auteur**: (tunnel)
-- **Décision**: ajouter un bouton PayPal **optionnel** sur l’écran de confirmation, pour permettre un test rapide via lien de paiement (sans intégration Checkout).
+- **Décision**:
+  - Ajouter un bouton PayPal **optionnel** sur l’écran de confirmation, pour permettre un test rapide via lien de paiement (sans intégration Checkout).
+  - **Suite** (paiement robuste): privilégier un flux **Webhook PayPal → Back Office** (Option B) afin que la création/MAJ des enregistrements `Payment` se fasse côté Back Office (Postgres) et non côté tunnel.
 - **Changements UI**:
   - Ajout d’un bouton **“Payer via PayPal”** sur `ConfirmationPage`, affiché uniquement si `NEXT_PUBLIC_PAYPAL_PAYMENT_URL` est défini.
 - **Tracking**:
