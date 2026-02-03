@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Clock, FileText, Smartphone, Upload, TrendingUp, Users, Zap } from "lucide-react";
+import { Check, Clock, CreditCard, FileText, Smartphone, Upload, TrendingUp, Users, Zap } from "lucide-react";
 import WhatsAppCTA from "./WhatsAppCTA";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
@@ -28,6 +28,7 @@ export default function ConfirmationPage({
 }: ConfirmationPageProps) {
   const { isMobile } = useDeviceDetection();
   const [mounted, setMounted] = useState(false);
+  const paypalPaymentUrl = process.env.NEXT_PUBLIC_PAYPAL_PAYMENT_URL;
 
   useEffect(() => {
     setMounted(true);
@@ -277,6 +278,22 @@ export default function ConfirmationPage({
             leadId={leadId}
             variant={mounted && !isMobile ? "secondary" : "primary"}
           />
+
+          {/* PayPal payment link (optional, configured via env) */}
+          {paypalPaymentUrl && (
+            <div className="space-y-2">
+              <a
+                href={paypalPaymentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#003087] px-8 py-4 text-base font-semibold text-white hover:bg-[#002a78] transition-all duration-200"
+              >
+                <CreditCard className="w-5 h-5" />
+                <span>Payer via PayPal</span>
+              </a>
+              <p className="text-xs text-[#1E293B]/60">Vous serez redirigé vers PayPal.</p>
+            </div>
+          )}
         </div>
       </div>
 

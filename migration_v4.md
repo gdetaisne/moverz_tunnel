@@ -21,6 +21,24 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-02-03 — Ajout d’un CTA PayPal (lien de paiement) en fin de tunnel
+
+- **Date**: 2026-02-03
+- **Auteur**: (tunnel)
+- **Décision**: ajouter un bouton PayPal **optionnel** sur l’écran de confirmation, pour permettre un test rapide via lien de paiement (sans intégration Checkout).
+- **Changements UI**:
+  - Ajout d’un bouton **“Payer via PayPal”** sur `ConfirmationPage`, affiché uniquement si `NEXT_PUBLIC_PAYPAL_PAYMENT_URL` est défini.
+- **Tracking**:
+  - Aucun changement (pas de modification de `logicalStep` / `screenId`).
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Risques / points à vérifier sur staging**:
+  - Config CapRover: ajouter `NEXT_PUBLIC_PAYPAL_PAYMENT_URL` (build arg / env) et vérifier que le bouton apparaît.
+  - Mobile-first: vérifier que les CTA restent visibles et cliquables sur mobile.
+
 ### 2026-01-28 — Audit V3 (prod) vs staging : DB renseignée + calculs (prix/distance)
 
 - **Date**: 2026-01-28
