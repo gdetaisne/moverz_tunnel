@@ -191,6 +191,12 @@
 - **Fix**: suppression du guard `lastRouteKeyRef` (le cache + deps du `useEffect` suffisent, et on peut retenter).
 - **Fichier**: `app/devis-gratuits-v3/page.tsx`
 
+### 2026-02-06 — Step 3 (V2) : distance “villes” plus réaliste (coords ville figées)
+
+- **Problème**: l’heuristique CP (diff de départements) peut sur-estimer très fortement certaines routes (ex: 33 → 17) et créer des deltas Distance énormes.
+- **Fix**: mémoriser les coords “ville” (Step 1/2) dans un `useRef` et utiliser ces coords (Haversine) pour la baseline “villes”, sans dépendre des coords d’adresse.
+- **Fichier**: `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-02-03 — Ajout d'un CTA PayPal (lien de paiement) en fin de tunnel
 
 - **Date**: 2026-02-03

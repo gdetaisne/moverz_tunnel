@@ -976,7 +976,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               <div className="text-sm text-[#1E293B]/60">—</div>
             )}
             <p className="text-[10px] text-[#1E293B]/60">
-              villes +20 km • densité très meublé • cuisine 3 équipements • pas de saison • accès RAS
+              villes +5 km • densité très meublé • cuisine 3 équipements • pas de saison • accès RAS
             </p>
           </div>
 

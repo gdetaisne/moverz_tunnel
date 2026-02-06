@@ -514,9 +514,60 @@ function DevisGratuitsV3Content() {
     return Math.min(1000, 40 + diff * 40);
   };
 
-  // Baseline "villes": ne doit JAMAIS dépendre des coordonnées d'adresse (sinon la baseline bouge quand on sélectionne une adresse).
-  const estimateCityDistanceKm = (originPostalCode: string, destinationPostalCode: string) =>
-    estimateDistanceKm(originPostalCode, destinationPostalCode, null, null, null, null);
+  // Baseline "villes": doit être stable et ne pas bouger quand on sélectionne une adresse.
+  // On mémorise donc les coords "ville" (Step 1/2) et on les utilise pour la baseline,
+  // sans dépendre des coords d'adresse (Step 3).
+  const v2CityCoordsRef = useRef<{
+    originLat: number;
+    originLon: number;
+    destinationLat: number;
+    destinationLon: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!isFunnelV2) return;
+    // On ne fige/rafraîchit que tant qu'on est avant Step 3 (donc avant la sélection d'adresses).
+    if (state.currentStep >= 3) return;
+    if (state.destinationUnknown) return;
+    if (
+      state.originLat == null ||
+      state.originLon == null ||
+      state.destinationLat == null ||
+      state.destinationLon == null
+    ) {
+      return;
+    }
+    v2CityCoordsRef.current = {
+      originLat: state.originLat,
+      originLon: state.originLon,
+      destinationLat: state.destinationLat,
+      destinationLon: state.destinationLon,
+    };
+  }, [
+    isFunnelV2,
+    state.currentStep,
+    state.destinationUnknown,
+    state.originLat,
+    state.originLon,
+    state.destinationLat,
+    state.destinationLon,
+  ]);
+
+  const estimateCityDistanceKm = (originPostalCode: string, destinationPostalCode: string) => {
+    const c = v2CityCoordsRef.current;
+    if (c) {
+      return estimateDistanceKm(
+        originPostalCode,
+        destinationPostalCode,
+        c.originLat,
+        c.originLon,
+        c.destinationLat,
+        c.destinationLon
+      );
+    }
+    // Fallback (refresh direct en Step 3, coords ville absentes): heuristique CP.
+    return estimateDistanceKm(originPostalCode, destinationPostalCode, null, null, null, null);
+  };
 
   // Distance “trajet” (route) via OSRM / OpenStreetMap
   const distanceCacheRef = useRef<Map<string, number>>(new Map());
