@@ -131,6 +131,16 @@
   - `hooks/useTunnelState.ts`
   - `lib/pricing/calculate.ts`
   - `app/devis-gratuits-v3/page.tsx`
+  - `components/tunnel/Step2ProjectComplete.tsx`
+
+### 2026-02-06 — Step 2 (V3) : contraintes d’accès en tableau “Départ / Arrivée” (boutons “Oui” uniquement)
+
+- **Décision**: simplifier l’UI des contraintes: remplacer les toggles Oui/Non par une grille à 2 colonnes (**Départ** / **Arrivée**) avec uniquement des boutons **“Oui”** (toggle).
+- **Règles**:
+  - Cliquer “Oui” sur une colonne force l’accès correspondant à **Contraint** si ce n’est pas déjà le cas.
+  - “Arrivée” est désactivé si `destinationUnknown=true`.
+- **Champs**: aucun champ supprimé (réutilise `origin/destination*CarryDistance`, `*TightAccess`, `*FurnitureLift`, `*ParkingAuth`).
+- **Fichier**: `components/tunnel/Step2ProjectComplete.tsx`
 
 ### 2026-02-03 — Ajout d'un CTA PayPal (lien de paiement) en fin de tunnel
 
