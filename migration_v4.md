@@ -150,6 +150,12 @@
   - Desktop: 2 colonnes (Départ / Arrivée)
 - **Fichier**: `components/tunnel/v2/StepAccessLogisticsV2.tsx`
 
+### 2026-02-06 — Step 3 (V2) : contraintes en tableau “Départ / Arrivée” (boutons “Oui” uniquement)
+
+- **Décision**: remplacer les toggles Oui/Non (question par question) par un tableau **Départ / Arrivée** avec uniquement des boutons **“Oui”** (toggle).
+- **Donnée**: pas de nouveaux champs — le côté (départ/arrivée) est sérialisé dans `access_details` (`__accessSidesV1=...`) et les bools existants restent la source envoyée/pricing (OR des deux côtés).
+- **Fichier**: `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+
 ### 2026-02-03 — Ajout d'un CTA PayPal (lien de paiement) en fin de tunnel
 
 - **Date**: 2026-02-03

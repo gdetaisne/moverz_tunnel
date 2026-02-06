@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, MapPin, Home, Mail, User, Phone, HelpCircle } from "lucide-react";
+import { Calendar, MapPin, Home, Mail, User, Phone, HelpCircle, Check } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 import { PriceRangeInline } from "@/components/tunnel/PriceRangeInline";
@@ -94,7 +94,6 @@ const SERVICE_LABELS: Array<{ key: keyof StepAccessLogisticsV2Props; label: stri
 ];
 
 export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
-  const [revealedCount, setRevealedCount] = useState(1);
   const [showOptions, setShowOptions] = useState(false);
   const minMovingDate = useMemo(() => {
     // Bloquer historique + 15 prochains jours (min = aujourd'hui + 15 jours)
@@ -138,12 +137,6 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     }),
     [props.narrow_access, props.long_carry, props.difficult_parking, props.lift_required]
   );
-
-  useEffect(() => {
-    if (props.access_type === "simple") {
-      setRevealedCount(1);
-    }
-  }, [props.access_type]);
 
   // Par défaut sur Step 3 : on pré-sélectionne "Maison" (simple, non ambigu).
   // Important: on ne met PAS de default plus tôt (Step 1/2) pour ne pas impacter l'estimation.
@@ -247,18 +240,93 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       props.onFieldChange("difficult_parking", false);
       props.onFieldChange("lift_required", false);
       props.onFieldChange("access_details", "");
-    } else {
-      setRevealedCount(1);
     }
   };
 
-  const handleAnswer = (key: QuestionKey, value: boolean) => {
-    props.onFieldChange(key, value);
-    const idx = questions.findIndex((q) => q.key === key);
-    if (idx >= 0) {
-      setRevealedCount(Math.max(revealedCount, idx + 2));
-    }
+  const ACCESS_SIDES_MARKER = "__accessSidesV1=";
+  type AccessSidesState = Record<QuestionKey, { origin: boolean; destination: boolean }>;
+
+  const splitAccessDetails = (raw: string): { userText: string; markerJson: string | null } => {
+    const s = String(raw || "");
+    const re = new RegExp(`\\n?\\n?${ACCESS_SIDES_MARKER}([^\\n]*)\\s*$`);
+    const m = s.match(re);
+    if (!m) return { userText: s, markerJson: null };
+    return { userText: s.replace(re, ""), markerJson: (m[1] ?? "").trim() || null };
   };
+
+  const parseAccessSides = (): AccessSidesState => {
+    const blank: AccessSidesState = {
+      narrow_access: { origin: false, destination: false },
+      long_carry: { origin: false, destination: false },
+      difficult_parking: { origin: false, destination: false },
+      lift_required: { origin: false, destination: false },
+    };
+
+    const { markerJson } = splitAccessDetails(props.access_details ?? "");
+    if (markerJson) {
+      try {
+        const parsed = JSON.parse(markerJson) as any;
+        const next = { ...blank };
+        (Object.keys(blank) as QuestionKey[]).forEach((k) => {
+          const v = parsed?.[k];
+          next[k] = {
+            origin: Boolean(v?.origin),
+            destination: Boolean(v?.destination) && !props.destinationUnknown,
+          };
+        });
+        return next;
+      } catch {
+        // ignore
+      }
+    }
+
+    // Fallback: ancien modèle (un bool global) => on l'affiche sur les 2 colonnes.
+    const next = { ...blank };
+    (Object.keys(blank) as QuestionKey[]).forEach((k) => {
+      const on = Boolean((answered as any)[k]);
+      next[k] = { origin: on, destination: on && !props.destinationUnknown };
+    });
+    return next;
+  };
+
+  const serializeAccessDetails = (userText: string, sides: AccessSidesState): string => {
+    const cleanUserText = String(userText || "").replace(/\s+$/g, "");
+    return `${cleanUserText}${cleanUserText ? "\n\n" : ""}${ACCESS_SIDES_MARKER}${JSON.stringify(
+      sides
+    )}`;
+  };
+
+  const setAccessSides = (sides: AccessSidesState) => {
+    const { userText } = splitAccessDetails(props.access_details ?? "");
+    props.onFieldChange("access_details", serializeAccessDetails(userText, sides));
+  };
+
+  const setUserAccessDetailsText = (userText: string) => {
+    const currentSides = parseAccessSides();
+    props.onFieldChange("access_details", serializeAccessDetails(userText, currentSides));
+  };
+
+  const toggleSide = (key: QuestionKey, side: "origin" | "destination") => {
+    if (side === "destination" && props.destinationUnknown) return;
+    const current = parseAccessSides();
+    const next: AccessSidesState = {
+      ...current,
+      [key]: {
+        ...current[key],
+        [side]: !current[key][side],
+      },
+    };
+    if (props.destinationUnknown) {
+      next[key].destination = false;
+    }
+    setAccessSides(next);
+    props.onFieldChange(key, Boolean(next[key].origin || next[key].destination));
+  };
+
+  const userAccessDetailsText = useMemo(() => {
+    const { userText } = splitAccessDetails(props.access_details ?? "");
+    return userText;
+  }, [props.access_details]);
 
   const YesNo = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
     <div className="grid grid-cols-2 gap-2">
@@ -283,6 +351,33 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         Oui
       </button>
     </div>
+  );
+
+  const ToggleYes = (p: {
+    active: boolean;
+    disabled?: boolean;
+    onToggle: () => void;
+    ariaLabel: string;
+  }) => (
+    <button
+      type="button"
+      disabled={!!p.disabled}
+      aria-label={p.ariaLabel}
+      onClick={() => {
+        if (p.disabled) return;
+        p.onToggle();
+      }}
+      className={[
+        "inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-all",
+        p.disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
+        p.active
+          ? "bg-[#6BCFCF] text-white"
+          : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
+      ].join(" ")}
+    >
+      <span>Oui</span>
+      {p.active && <Check className="w-4 h-4" />}
+    </button>
   );
 
   const isHousingConfirmed =
@@ -641,27 +736,54 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
         {props.access_type === "constrained" && (
           <div className="space-y-3">
-            {questions.map((q, idx) => {
-              if (idx + 1 > revealedCount) return null;
-              const value = answered[q.key];
-              return (
-                <div key={q.key} className="flex items-center justify-between gap-3 rounded-xl border border-[#E3E5E8] bg-white p-3">
-                  <p className="text-sm text-[#0F172A]">{q.label}</p>
-                  <YesNo
-                    value={!!value}
-                    onChange={(v) => handleAnswer(q.key, v)}
-                  />
+            {/* Contraintes en tableau départ / arrivée, "Oui" uniquement (toggle) */}
+            <div className="overflow-hidden rounded-2xl border border-[#E3E5E8] bg-white">
+              <div className="grid grid-cols-[1fr,140px,140px] bg-[#F8F9FA]">
+                <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70">Contraintes</div>
+                <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70 text-center">
+                  Départ
                 </div>
-              );
-            })}
+                <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70 text-center">
+                  Arrivée
+                </div>
+              </div>
+
+              {questions.map((q) => {
+                const sides = parseAccessSides()[q.key];
+                const destDisabled = props.destinationUnknown;
+                return (
+                  <div
+                    key={q.key}
+                    className="grid grid-cols-[1fr,140px,140px] items-center border-t border-[#E3E5E8]"
+                  >
+                    <div className="px-3 py-3 text-sm font-medium text-[#0F172A]">{q.label}</div>
+                    <div className="px-3 py-2 flex justify-center">
+                      <ToggleYes
+                        active={Boolean(sides?.origin)}
+                        onToggle={() => toggleSide(q.key, "origin")}
+                        ariaLabel={`Départ: ${q.label}`}
+                      />
+                    </div>
+                    <div className="px-3 py-2 flex justify-center">
+                      <ToggleYes
+                        active={Boolean(sides?.destination)}
+                        disabled={destDisabled}
+                        onToggle={() => toggleSide(q.key, "destination")}
+                        ariaLabel={`Arrivée: ${q.label}`}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
         {props.access_type === "constrained" && (
           <div>
             <textarea
-              value={props.access_details ?? ""}
-              onChange={(e) => props.onFieldChange("access_details", e.target.value)}
+              value={userAccessDetailsText ?? ""}
+              onChange={(e) => setUserAccessDetailsText(e.target.value)}
               placeholder="Ex : arrivée uniquement (rue étroite), départ simple…"
               className="w-full rounded-xl border-2 border-[#E3E5E8] px-4 py-3 text-sm"
               rows={3}
