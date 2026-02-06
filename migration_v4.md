@@ -142,6 +142,14 @@
 - **Champs**: aucun champ supprimé (réutilise `origin/destination*CarryDistance`, `*TightAccess`, `*FurnitureLift`, `*ParkingAuth`).
 - **Fichier**: `components/tunnel/Step2ProjectComplete.tsx`
 
+### 2026-02-06 — Step 3 (V2) : adresses regroupées (départ + arrivée)
+
+- **Décision**: regrouper les 2 champs d’adresse (départ/arrivée) dans un seul bloc “Adresses”.
+- **UI**:
+  - Mobile: 1 colonne (Départ puis Arrivée)
+  - Desktop: 2 colonnes (Départ / Arrivée)
+- **Fichier**: `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+
 ### 2026-02-03 — Ajout d'un CTA PayPal (lien de paiement) en fin de tunnel
 
 - **Date**: 2026-02-03

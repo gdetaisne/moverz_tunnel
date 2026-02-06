@@ -312,35 +312,81 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           <MapPin className="w-5 h-5 text-[#6BCFCF]" />
           <p className="text-sm font-semibold text-[#0F172A]">Votre trajet</p>
         </div>
-        <AddressAutocomplete
-          label={
-            props.originCity
-              ? `Votre adresse à ${props.originCity}${props.originPostalCode ? ` (${props.originPostalCode})` : ""}`
-              : "Votre adresse de départ"
-          }
-          placeholder={props.originCity ? `Ex: 10 rue de la République` : "Ex: 10 rue de la République, Paris"}
-          inputId="v2-origin-address"
-          initialValue={props.originAddress || ""}
-          required
-          contextPostalCode={props.originPostalCode || undefined}
-          contextCity={props.originCity || undefined}
-          contextCountryCode={(props.originCountryCode || "").trim() || undefined}
-          validated={props.originLat != null && props.originLon != null}
-          errorMessage={
-            showValidation && !isOriginAddressValid ? "Adresse de départ requise" : null
-          }
-          onInputChange={(raw) => {
-            props.onFieldChange("originAddress", raw);
-          }}
-          onSelect={(s) => {
-            props.onFieldChange("originAddress", s.addressLine ?? s.label ?? "");
-            props.onFieldChange("originCity", s.city ?? "");
-            props.onFieldChange("originPostalCode", s.postalCode ?? "");
-            props.onFieldChange("originCountryCode", (s.countryCode ?? "fr").toLowerCase());
-            props.onFieldChange("originLat", s.lat ?? null);
-            props.onFieldChange("originLon", s.lon ?? null);
-          }}
-        />
+        {/* Adresses regroupées (départ + arrivée) */}
+        <div className="rounded-2xl border border-[#E3E5E8] bg-white p-4">
+          <p className="text-sm font-semibold text-[#0F172A]">Adresses</p>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <AddressAutocomplete
+              label={
+                props.originCity
+                  ? `Départ · ${props.originCity}${
+                      props.originPostalCode ? ` (${props.originPostalCode})` : ""
+                    }`
+                  : "Adresse de départ"
+              }
+              placeholder={
+                props.originCity ? `Ex: 10 rue de la République` : "Ex: 10 rue de la République, Paris"
+              }
+              inputId="v2-origin-address"
+              initialValue={props.originAddress || ""}
+              required
+              contextPostalCode={props.originPostalCode || undefined}
+              contextCity={props.originCity || undefined}
+              contextCountryCode={(props.originCountryCode || "").trim() || undefined}
+              validated={props.originLat != null && props.originLon != null}
+              errorMessage={showValidation && !isOriginAddressValid ? "Adresse de départ requise" : null}
+              onInputChange={(raw) => {
+                props.onFieldChange("originAddress", raw);
+              }}
+              onSelect={(s) => {
+                props.onFieldChange("originAddress", s.addressLine ?? s.label ?? "");
+                props.onFieldChange("originCity", s.city ?? "");
+                props.onFieldChange("originPostalCode", s.postalCode ?? "");
+                props.onFieldChange("originCountryCode", (s.countryCode ?? "fr").toLowerCase());
+                props.onFieldChange("originLat", s.lat ?? null);
+                props.onFieldChange("originLon", s.lon ?? null);
+              }}
+            />
+
+            <AddressAutocomplete
+              label={
+                props.destinationCity
+                  ? `Arrivée · ${props.destinationCity}${
+                      props.destinationPostalCode ? ` (${props.destinationPostalCode})` : ""
+                    }`
+                  : "Adresse d’arrivée"
+              }
+              placeholder={
+                props.destinationCity
+                  ? `Ex: 20 avenue de la Gare`
+                  : "Ex: 20 avenue de la Gare, Lyon"
+              }
+              inputId="v2-destination-address"
+              initialValue={props.destinationAddress || ""}
+              required
+              contextPostalCode={props.destinationPostalCode || undefined}
+              contextCity={props.destinationCity || undefined}
+              contextCountryCode={(props.destinationCountryCode || "").trim() || undefined}
+              validated={props.destinationLat != null && props.destinationLon != null}
+              errorMessage={
+                showValidation && !isDestinationAddressValid ? "Adresse d’arrivée requise" : null
+              }
+              onInputChange={(raw) => {
+                props.onFieldChange("destinationAddress", raw);
+              }}
+              onSelect={(s) => {
+                props.onFieldChange("destinationAddress", s.addressLine ?? s.label ?? "");
+                props.onFieldChange("destinationCity", s.city ?? "");
+                props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
+                props.onFieldChange("destinationCountryCode", (s.countryCode ?? "fr").toLowerCase());
+                props.onFieldChange("destinationLat", s.lat ?? null);
+                props.onFieldChange("destinationLon", s.lon ?? null);
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Logement + options (rattachés au départ) */}
         <HousingInline side="origin" />
 
         {/* Densité + Cuisine (rattachés au logement de départ) */}
@@ -504,39 +550,6 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             )}
           </div>
         </div>
-        <AddressAutocomplete
-          label={
-            props.destinationCity
-              ? `Votre adresse à ${props.destinationCity}${
-                  props.destinationPostalCode ? ` (${props.destinationPostalCode})` : ""
-                }`
-              : "Votre adresse d'arrivée"
-          }
-          placeholder={props.destinationCity ? `Ex: 20 avenue de la Gare` : "Ex: 20 avenue de la Gare, Lyon"}
-          inputId="v2-destination-address"
-          initialValue={
-            props.destinationAddress || ""
-          }
-          required
-          contextPostalCode={props.destinationPostalCode || undefined}
-          contextCity={props.destinationCity || undefined}
-          contextCountryCode={(props.destinationCountryCode || "").trim() || undefined}
-          validated={props.destinationLat != null && props.destinationLon != null}
-          errorMessage={
-            showValidation && !isDestinationAddressValid ? "Adresse d’arrivée requise" : null
-          }
-          onInputChange={(raw) => {
-            props.onFieldChange("destinationAddress", raw);
-          }}
-          onSelect={(s) => {
-            props.onFieldChange("destinationAddress", s.addressLine ?? s.label ?? "");
-            props.onFieldChange("destinationCity", s.city ?? "");
-            props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
-            props.onFieldChange("destinationCountryCode", (s.countryCode ?? "fr").toLowerCase());
-            props.onFieldChange("destinationLat", s.lat ?? null);
-            props.onFieldChange("destinationLon", s.lon ?? null);
-          }}
-        />
         <HousingInline side="destination" />
 
         <div className="text-xs text-[#1E293B]/60">
