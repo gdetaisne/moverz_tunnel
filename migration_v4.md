@@ -21,7 +21,58 @@
 
 ## 1) Changelog (ordre chronologique)
 
-### 2026-02-03 — Ajout d’un CTA PayPal (lien de paiement) en fin de tunnel
+### 2026-02-06 — Refonte étape photos : vraiment optionnelle, sans discount/culpabilisation
+
+- **Date**: 2026-02-06
+- **Auteur**: (UX stratégique)
+- **Décision**: rendre l'étape photos vraiment optionnelle sans culpabilisation. Problème actuel : personne ne prend de photos, et le message "Vous économisez X€" fait penser aux clients que sans photos ce n'est pas ok. Solution : retirer discount, ajouter bouton clair "Terminer sans photos".
+- **Changements UI**:
+  - Titre modifié : "Envoyez des photos (optionnel)" au lieu de "Photographiez toutes vos pièces"
+  - **Suppression totale** du bloc "Vous économisez X€ en envoyant vos photos"
+  - **Suppression du mockup iPhone WhatsApp** (trop visuel, trop poussé)
+  - Layout simplifié : centré, max-w-3xl (au lieu de grid 2 colonnes avec iPhone)
+  - **CTA principal** : "Terminer et recevoir mes devis" (bouton noir, primaire)
+  - Photos reléguées après séparateur "Ou envoyer des photos maintenant"
+  - **WhatsApp complètement retiré** : aucun usage de WhatsAppCTA sur cette page
+  - Un seul bouton upload simple (desktop + mobile)
+  - Copy adapté : valorise les photos ("devis plus précis, moins de surprises") tout en restant rassurant ("vous recevrez vos devis dans tous les cas")
+  - Section "Prochaines étapes" mise à jour pour refléter le caractère optionnel
+  - Affichage simple de l'estimation actuelle (sans pression)
+- **Tracking**:
+  - Aucun changement de tracking (même logicalStep: THANK_YOU, même screenId: confirmation_v3)
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés (UX only): copy et structure visuelle de ConfirmationPage
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Risques / points à vérifier sur staging**:
+  - Clarté du message "optionnel" sur mobile
+  - Égalité visuelle entre "Envoyer photos" et "Terminer sans photos" (pas de hiérarchie culpabilisante)
+  - Taux de conversion/skip : observer si plus d'utilisateurs terminent le tunnel
+  - Lien "Terminer sans photos" redirige vers moverz.fr (à valider si besoin d'une autre page)
+
+### 2026-02-06 — Clarification label superficie (garages et dépendances inclus)
+
+- **Date**: 2026-02-06
+- **Auteur**: (UX copy)
+- **Décision**: ajouter la mention "garages et dépendances inclus" au label de superficie pour clarifier l'attente.
+- **Changements UI**:
+  - Label modifié de "Surface approximative (m²)" vers "Surface approximative (m²) - garages et dépendances inclus"
+  - Impacté dans : Step3VolumeServices.tsx (V3) et devis-gratuits-v2/page.tsx (V2)
+- **Tracking**:
+  - Aucun changement
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+  - modifiés (UX only): label `surfaceM2` uniquement (texte affiché)
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Risques / points à vérifier sur staging**:
+  - Lisibilité mobile du label plus long
+  - Clarté du message pour l'utilisateur
+
+### 2026-02-03 — Ajout d'un CTA PayPal (lien de paiement) en fin de tunnel
 
 - **Date**: 2026-02-03
 - **Auteur**: (tunnel)
