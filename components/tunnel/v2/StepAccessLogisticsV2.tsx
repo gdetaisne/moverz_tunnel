@@ -350,11 +350,11 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         <HousingInline side="origin" />
 
         {/* Densité + Cuisine (rattachés au logement de départ) */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           {/* Densité (volume) */}
           <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white p-4">
             <p className="text-sm font-semibold text-[#0F172A]">Densité</p>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <button
                 type="button"
                 onClick={() => props.onFieldChange("density", "light")}
@@ -408,7 +408,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           {/* Cuisine / équipements */}
           <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white p-4">
             <p className="text-sm font-semibold text-[#0F172A]">Cuisine</p>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <button
                 type="button"
                 onClick={() => {
@@ -464,30 +464,32 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             </div>
 
             {props.kitchenIncluded === "appliances" && (
-              <div className="mt-2">
-                <label className="block text-xs font-semibold text-[#1E293B]/70 mb-2">
-                  Nombre d’équipements
+              <div className="mt-2 sm:flex sm:items-end sm:gap-3">
+                <label className="block text-xs font-semibold text-[#1E293B]/70 mb-2 sm:mb-0 sm:flex-1">
+                  Nombre d’équipements (réfrigérateur, lave-linge, four, etc.)
                 </label>
-                <input
-                  id="v2-kitchen-appliance-count"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={props.kitchenApplianceCount}
-                  onChange={(e) => props.onFieldChange("kitchenApplianceCount", e.target.value)}
-                  className={[
-                    "w-full rounded-xl border-2 bg-white px-4 py-3 text-base text-[#0F172A] transition-all",
-                    showValidation && !isKitchenValid
-                      ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
-                      : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
-                  ].join(" ")}
-                  placeholder="Ex: 3"
-                />
+                <div className="sm:w-40">
+                  <input
+                    id="v2-kitchen-appliance-count"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={props.kitchenApplianceCount}
+                    onChange={(e) => props.onFieldChange("kitchenApplianceCount", e.target.value)}
+                    className={[
+                      "w-full rounded-xl border-2 bg-white px-4 py-3 text-base text-[#0F172A] transition-all",
+                      showValidation && !isKitchenValid
+                        ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
+                        : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+                    ].join(" ")}
+                    placeholder="Ex: 3"
+                  />
+                </div>
                 {showValidation && !isKitchenValid && (
-                  <p className="mt-2 text-sm font-medium text-[#EF4444]">
-                    Indiquez le nombre d’équipements (min. 1)
+                  <p className="mt-2 text-sm font-medium text-[#EF4444] sm:mt-0">
+                    (min. 1)
                   </p>
                 )}
               </div>
