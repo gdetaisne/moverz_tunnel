@@ -514,6 +514,10 @@ function DevisGratuitsV3Content() {
     return Math.min(1000, 40 + diff * 40);
   };
 
+  // Baseline "villes": ne doit JAMAIS dépendre des coordonnées d'adresse (sinon la baseline bouge quand on sélectionne une adresse).
+  const estimateCityDistanceKm = (originPostalCode: string, destinationPostalCode: string) =>
+    estimateDistanceKm(originPostalCode, destinationPostalCode, null, null, null, null);
+
   // Distance “trajet” (route) via OSRM / OpenStreetMap
   const distanceCacheRef = useRef<Map<string, number>>(new Map());
   const lastRouteKeyRef = useRef<string | null>(null);
@@ -811,14 +815,7 @@ function DevisGratuitsV3Content() {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const cityDistanceKm = estimateDistanceKm(
-      state.originPostalCode,
-      state.destinationPostalCode,
-      state.originLat,
-      state.originLon,
-      state.destinationLat,
-      state.destinationLon
-    );
+    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
     const distanceKm = Math.max(0, cityDistanceKm + 20);
 
     const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
@@ -849,10 +846,6 @@ function DevisGratuitsV3Content() {
     state.surfaceM2,
     state.originPostalCode,
     state.destinationPostalCode,
-    state.originLat,
-    state.originLon,
-    state.destinationLat,
-    state.destinationLon,
   ]);
 
   const activePricingStep2 = useMemo(() => {
@@ -863,14 +856,7 @@ function DevisGratuitsV3Content() {
   const v2FirstEstimateDistanceKm = useMemo(() => {
     if (!isFunnelV2) return null;
     if (state.destinationUnknown) return null;
-    const cityDistanceKm = estimateDistanceKm(
-      state.originPostalCode,
-      state.destinationPostalCode,
-      state.originLat,
-      state.originLon,
-      state.destinationLat,
-      state.destinationLon
-    );
+    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
     if (!Number.isFinite(cityDistanceKm) || cityDistanceKm <= 0) return null;
     return Math.round(cityDistanceKm + 20);
   }, [
@@ -878,10 +864,6 @@ function DevisGratuitsV3Content() {
     state.destinationUnknown,
     state.originPostalCode,
     state.destinationPostalCode,
-    state.originLat,
-    state.originLon,
-    state.destinationLat,
-    state.destinationLon,
   ]);
 
   // Reward baseline (figé) : en cas de refresh direct en Step 3, on hydrate une fois le baseline
@@ -894,14 +876,7 @@ function DevisGratuitsV3Content() {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return;
 
-    const cityDistanceKm = estimateDistanceKm(
-      state.originPostalCode,
-      state.destinationPostalCode,
-      state.originLat,
-      state.originLon,
-      state.destinationLat,
-      state.destinationLon
-    );
+    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
     const distanceKm = Math.max(0, cityDistanceKm + 20);
 
     const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
@@ -935,10 +910,6 @@ function DevisGratuitsV3Content() {
     state.formule,
     state.originPostalCode,
     state.destinationPostalCode,
-    state.originLat,
-    state.originLon,
-    state.destinationLat,
-    state.destinationLon,
   ]);
 
   // Panier (V2 Step 3): Première estimation (hypothèses fixes) → deltas → Budget affiné
@@ -957,14 +928,7 @@ function DevisGratuitsV3Content() {
 
     // Première estimation: distance "villes" +20km, densité=Très meublé, cuisine=3 équipements,
     // date sans saison, accès RAS.
-    const cityDistanceKm = estimateDistanceKm(
-      state.originPostalCode,
-      state.destinationPostalCode,
-      state.originLat,
-      state.originLon,
-      state.destinationLat,
-      state.destinationLon
-    );
+    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
     const baseDistanceKm = Math.max(0, cityDistanceKm + 20);
 
     const baselineInput: Parameters<typeof calculatePricing>[0] = {
@@ -1191,10 +1155,6 @@ function DevisGratuitsV3Content() {
     state.formule,
     state.originPostalCode,
     state.destinationPostalCode,
-    state.originLat,
-    state.originLon,
-    state.destinationLat,
-    state.destinationLon,
     state.density,
     state.kitchenIncluded,
     state.kitchenApplianceCount,
@@ -1495,13 +1455,9 @@ function DevisGratuitsV3Content() {
     e.preventDefault();
     // Reward: figer la valeur Step 2 (avec buffers) au passage vers Step 3
     if (v2PricingByFormuleStep2 && activePricingStep2) {
-      const cityDistanceKm = estimateDistanceKm(
+      const cityDistanceKm = estimateCityDistanceKm(
         state.originPostalCode,
-        state.destinationPostalCode,
-        state.originLat,
-        state.originLon,
-        state.destinationLat,
-        state.destinationLon
+        state.destinationPostalCode
       );
       const baselineDistanceKm = Number.isFinite(cityDistanceKm) ? cityDistanceKm + 20 : null;
       updateFields({

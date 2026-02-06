@@ -169,6 +169,15 @@
   - `lib/pricing/calculate.ts`
   - `app/devis-gratuits-v3/page.tsx` (miroir détail)
 
+### 2026-02-06 — Step 3 (V2) : baseline “villes +20km” stabilisée (distance)
+
+- **Problème**: la baseline “villes” utilisait `estimateDistanceKm` qui bascule sur une distance Haversine dès que des coordonnées d’adresse existent → la baseline change quand on sélectionne une adresse, et le delta OSRM peut apparaître positif même si la distance “ressentie” baisse.
+- **Fix**: nouvelle helper `estimateCityDistanceKm()` qui **ignore les coords** et se base uniquement sur les codes postaux. Utilisée pour:
+  - Step 2 V2 (reward baseline)
+  - Première estimation Step 3 V2 (“villes +20km”)
+  - baseline figée au passage Step 2 → Step 3
+- **Fichier**: `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-02-03 — Ajout d'un CTA PayPal (lien de paiement) en fin de tunnel
 
 - **Date**: 2026-02-03
