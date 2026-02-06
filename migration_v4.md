@@ -179,6 +179,18 @@
   - baseline figée au passage Step 2 → Step 3
 - **Fichier**: `app/devis-gratuits-v3/page.tsx`
 
+### 2026-02-06 — Step 3 (V2) : buffer baseline distance réduit (+5 km au lieu de +20 km)
+
+- **Décision**: remplacer le buffer “villes +20 km” par **“villes +5 km”** dans les baselines Step 2/3 (V2).
+- **Pourquoi**: éviter qu’entrer des adresses “réduise” la distance mais “augmente” le prix (baseline trop gonflée).
+- **Fichier**: `app/devis-gratuits-v3/page.tsx`
+
+### 2026-02-06 — Distance route (OSRM) : retry possible sur même paire de coords
+
+- **Problème**: un échec OSRM pouvait bloquer définitivement la même paire de coords (guard `lastRouteKeyRef`), empêchant la ligne Distance de basculer en “adresses (OSRM)”.
+- **Fix**: suppression du guard `lastRouteKeyRef` (le cache + deps du `useEffect` suffisent, et on peut retenter).
+- **Fichier**: `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-02-03 — Ajout d'un CTA PayPal (lien de paiement) en fin de tunnel
 
 - **Date**: 2026-02-03

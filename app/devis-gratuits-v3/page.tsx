@@ -520,7 +520,6 @@ function DevisGratuitsV3Content() {
 
   // Distance “trajet” (route) via OSRM / OpenStreetMap
   const distanceCacheRef = useRef<Map<string, number>>(new Map());
-  const lastRouteKeyRef = useRef<string | null>(null);
   const [routeDistanceKm, setRouteDistanceKm] = useState<number | null>(null);
   const [routeDistanceProvider, setRouteDistanceProvider] = useState<
     "osrm" | "fallback" | null
@@ -563,10 +562,6 @@ function DevisGratuitsV3Content() {
 
     const run = async () => {
       try {
-        // Éviter de relancer si on a déjà demandé exactement la même paire de coords.
-        if (lastRouteKeyRef.current === key) return;
-        lastRouteKeyRef.current = key;
-
         const res = await fetch("/api/distance", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -803,7 +798,7 @@ function DevisGratuitsV3Content() {
 
   // Step 2 (V2) : estimation basée sur hypothèses fixes (reward) tant qu'on n'a pas les adresses exactes.
   // Hypothèses (alignées sur "Première estimation" du panier Step 3):
-  // - distance villes +20km
+  // - distance villes +5km
   // - densité très meublé
   // - cuisine = 3 équipements (0,6m³/équipement)
   // - pas de saison
@@ -816,7 +811,7 @@ function DevisGratuitsV3Content() {
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
     const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
-    const distanceKm = Math.max(0, cityDistanceKm + 20);
+    const distanceKm = Math.max(0, cityDistanceKm + 5);
 
     const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
       surfaceM2: surface,
@@ -858,7 +853,7 @@ function DevisGratuitsV3Content() {
     if (state.destinationUnknown) return null;
     const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
     if (!Number.isFinite(cityDistanceKm) || cityDistanceKm <= 0) return null;
-    return Math.round(cityDistanceKm + 20);
+    return Math.round(cityDistanceKm + 5);
   }, [
     isFunnelV2,
     state.destinationUnknown,
@@ -877,7 +872,7 @@ function DevisGratuitsV3Content() {
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return;
 
     const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
-    const distanceKm = Math.max(0, cityDistanceKm + 20);
+    const distanceKm = Math.max(0, cityDistanceKm + 5);
 
     const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
       surfaceM2: surface,
@@ -929,7 +924,7 @@ function DevisGratuitsV3Content() {
     // Première estimation: distance "villes" +20km, densité=Très meublé, cuisine=3 équipements,
     // date sans saison, accès RAS.
     const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
-    const baseDistanceKm = Math.max(0, cityDistanceKm + 20);
+    const baseDistanceKm = Math.max(0, cityDistanceKm + 5);
 
     const baselineInput: Parameters<typeof calculatePricing>[0] = {
       surfaceM2: surface,
@@ -1104,7 +1099,7 @@ function DevisGratuitsV3Content() {
       {
         key: "distance",
         label: "Distance",
-        status: canUseOsrmDistance ? "adresses (OSRM)" : "villes +20 km",
+        status: canUseOsrmDistance ? "adresses (OSRM)" : "villes +5 km",
         amountEur: deltaDistanceEur,
         confirmed: canUseOsrmDistance,
       },
@@ -1459,7 +1454,7 @@ function DevisGratuitsV3Content() {
         state.originPostalCode,
         state.destinationPostalCode
       );
-      const baselineDistanceKm = Number.isFinite(cityDistanceKm) ? cityDistanceKm + 20 : null;
+      const baselineDistanceKm = Number.isFinite(cityDistanceKm) ? cityDistanceKm + 5 : null;
       updateFields({
         rewardBaselineMinEur: activePricingStep2.prixMin ?? null,
         rewardBaselineMaxEur: activePricingStep2.prixMax ?? null,
