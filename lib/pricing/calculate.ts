@@ -32,6 +32,8 @@ export interface PricingInput {
   destinationElevator: "yes" | "no" | "partial";
   formule: FormuleType;
   services: PricingServicesInput;
+  // Ajustement volume (ex: cuisine complète, électroménager)
+  extraVolumeM3?: number;
 }
 
 export interface PricingOutput {
@@ -87,11 +89,15 @@ export function getEtageCoefficient(
 
 export function calculatePricing(input: PricingInput): PricingOutput {
   // 1. Volume avec densité
-  const volumeM3 = calculateVolume(
+  const baseVolumeM3 = calculateVolume(
     input.surfaceM2,
     input.housingType,
     input.density
   );
+  const extra = typeof input.extraVolumeM3 === "number" && Number.isFinite(input.extraVolumeM3)
+    ? Math.max(0, input.extraVolumeM3)
+    : 0;
+  const volumeM3 = Math.round((baseVolumeM3 + extra) * 10) / 10;
 
   // 2. Prix base (La Poste): tarif €/m³ dépendant de la tranche distance + formule.
   // On conserve l'esprit V2 "max(..., socle)" mais la composante distance est en €/m³,

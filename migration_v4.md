@@ -72,6 +72,42 @@
   - Lisibilité mobile du label plus long
   - Clarté du message pour l'utilisateur
 
+### 2026-02-06 — Step 1 (V2) : autocomplete villes fiabilisé (tri FR + blur/Enter + affichage CP)
+
+- **Date**: 2026-02-06
+- **Auteur**: (audit UX)
+- **Problème**:
+  - Autocomplete “Ville d’arrivée / départ” perçu comme dysfonctionnel: entrées courtes (ex: *Lyon*) non résolues en blur, sélection à l’aveugle en cas d’homonymes (ex: *Mérignac*), et résultats FR parfois masqués par le tri.
+- **Décisions / Correctifs**:
+  - `AddressAutocomplete`:
+    - tri des résultats: **France prioritaire** (bug de tri inversé)
+    - blur: en mode `kind="city"`, accepter dès **3 caractères** (au lieu de 5)
+    - blur: ne pas auto-sélectionner une ville **ambiguë** (plusieurs résultats) sans indice (ex: CP)
+    - clavier: `Enter` sélectionne la **première suggestion** si aucune n’est surlignée
+  - `StepQualificationV2`: afficher l’input sous forme **“Ville (CP)”** quand le CP est connu (meilleure lisibilité, moins d’erreurs silencieuses).
+  - Copy Step 1: libellé surface → **“Surface approximative, garages et dépendances inclues (m2)”**.
+  - Copy Step 1: baseline → **“Gratuit • Sans engagement • 2 minutes”**.
+  - Step 3 (V2): ajout du choix **densité** (light/normal/dense) après la sélection logement (impacte l’estimation via `state.density`).
+  - Step 3 (V2): ajout **Cuisine / électroménager** (connecté) :
+    - choix: none / appliances / full
+    - appliances: quantité × **0,6 m³**
+    - full: **+3 m³**
+    - impacte le volume/prix via `extraVolumeM3` et est **archivé côté Back Office** dans `tunnelOptions.volumeAdjustments` (JSON) **sans migration DB**.
+- **Tracking**:
+  - Aucun changement (pas de modification de `logicalStep` / `screenId`).
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+- **Back Office payload**:
+  - changements: **AUCUN**
+- **Fichiers modifiés**:
+  - `components/tunnel/AddressAutocomplete.tsx`
+  - `components/tunnel/v2/StepQualificationV2.tsx`
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+  - `hooks/useTunnelState.ts`
+  - `lib/pricing/calculate.ts`
+  - `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-02-03 — Ajout d'un CTA PayPal (lien de paiement) en fin de tunnel
 
 - **Date**: 2026-02-03

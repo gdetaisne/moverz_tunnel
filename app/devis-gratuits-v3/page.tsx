@@ -707,6 +707,15 @@ function DevisGratuitsV3Content() {
         ? ("quart" as const)
         : null;
 
+    const kitchenExtraVolumeM3 = (() => {
+      if (state.kitchenIncluded === "full") return 3;
+      if (state.kitchenIncluded === "appliances") {
+        const n = Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+        return Math.max(0, n) * 0.6;
+      }
+      return 0;
+    })();
+
     const baseInput = {
       surfaceM2: surface,
       housingType,
@@ -722,6 +731,7 @@ function DevisGratuitsV3Content() {
         piano,
         debarras: state.serviceDebarras,
       },
+      extraVolumeM3: kitchenExtraVolumeM3,
     };
 
     const formules: PricingFormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
@@ -737,6 +747,8 @@ function DevisGratuitsV3Content() {
     state.originHousingType,
     state.destinationHousingType,
     state.density,
+    state.kitchenIncluded,
+    state.kitchenApplianceCount,
     state.originPostalCode,
     state.destinationPostalCode,
     state.destinationUnknown,
@@ -1451,6 +1463,22 @@ function DevisGratuitsV3Content() {
       return;
     }
 
+    // Validation cuisine (si électroménager uniquement)
+    const kitchenAppliancesCount =
+      Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+    const isKitchenValid =
+      state.kitchenIncluded !== "appliances" || kitchenAppliancesCount >= 1;
+    if (!isKitchenValid) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        const focusId = "v2-kitchen-appliance-count";
+        document.getElementById(focusId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById(focusId) as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Invalid kitchen appliances count", 3, "PROJECT", "acces_v2");
+      return;
+    }
+
     // Normalise accès simple
     if (state.access_type === "simple") {
       updateFields({
@@ -1464,6 +1492,12 @@ function DevisGratuitsV3Content() {
 
     // Création / MAJ lead Back Office à la fin de Step 3 (avant les photos)
     try {
+      const kitchenExtraVolumeM3 =
+        state.kitchenIncluded === "full"
+          ? 3
+          : state.kitchenIncluded === "appliances"
+          ? Math.max(0, kitchenAppliancesCount) * 0.6
+          : 0;
       const payload = {
         firstName: state.firstName.trim(), // obligatoire côté contrat BO (string, possiblement vide)
         email: state.email.trim().toLowerCase(),
@@ -1490,6 +1524,12 @@ function DevisGratuitsV3Content() {
             difficult_parking: !!state.difficult_parking,
             lift_required: !!state.lift_required,
             access_details: state.access_details || undefined,
+          },
+          volumeAdjustments: {
+            kitchenIncluded: state.kitchenIncluded,
+            kitchenApplianceCount:
+              state.kitchenIncluded === "appliances" ? kitchenAppliancesCount : undefined,
+            extraVolumeM3: kitchenExtraVolumeM3,
           },
         },
         // Logement (Back Office)
@@ -1804,6 +1844,23 @@ function DevisGratuitsV3Content() {
             distanceKm: routeDistanceKm,
             distanceProvider: routeDistanceProvider ?? undefined,
           },
+          volumeAdjustments: {
+            kitchenIncluded: state.kitchenIncluded,
+            kitchenApplianceCount:
+              state.kitchenIncluded === "appliances"
+                ? Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0
+                : undefined,
+            extraVolumeM3:
+              state.kitchenIncluded === "full"
+                ? 3
+                : state.kitchenIncluded === "appliances"
+                ? (Math.max(
+                    0,
+                    Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0
+                  ) *
+                    0.6)
+                : 0,
+          },
           // Important: conserver la structure envoyée en Step 2 (sinon Step 3 écrase et on perd l'accès)
           access: {
             origin: {
@@ -1995,6 +2052,9 @@ function DevisGratuitsV3Content() {
                 originFloor={state.originFloor}
                 destinationHousingType={state.destinationHousingType}
                 destinationFloor={state.destinationFloor}
+                density={state.density}
+                kitchenIncluded={state.kitchenIncluded}
+                kitchenApplianceCount={state.kitchenApplianceCount}
                 movingDate={state.movingDate}
                 dateFlexible={state.dateFlexible}
                 onFieldChange={(field, value) => updateField(field as any, value)}

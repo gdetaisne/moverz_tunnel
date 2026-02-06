@@ -59,6 +59,10 @@ export interface TunnelFormState {
   surfaceTouched: boolean; // V2 behavior: ne pas écraser la surface si l'utilisateur l'a modifiée
   density: "light" | "normal" | "dense";
   formule: "ECONOMIQUE" | "STANDARD" | "PREMIUM";
+
+  // Cuisine (NOUVEAU) — utilisé pour ajuster le volume/prix + archivé dans tunnelOptions (BO)
+  kitchenIncluded: "none" | "appliances" | "full";
+  kitchenApplianceCount: string; // input UI (si appliances)
   
   // Services en plus
   serviceFurnitureStorage: boolean;
@@ -169,6 +173,9 @@ const INITIAL_STATE: TunnelFormState = {
   surfaceTouched: false,
   density: "normal",
   formule: "STANDARD",
+
+  kitchenIncluded: "none",
+  kitchenApplianceCount: "",
   
   serviceFurnitureStorage: false,
   serviceCleaning: false,

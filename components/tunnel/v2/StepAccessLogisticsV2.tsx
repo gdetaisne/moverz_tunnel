@@ -26,6 +26,10 @@ interface StepAccessLogisticsV2Props {
   destinationLon?: number | null;
   destinationHousingType: string;
   destinationFloor: string;
+  // Volume
+  density: "light" | "normal" | "dense";
+  kitchenIncluded: "none" | "appliances" | "full";
+  kitchenApplianceCount: string;
   movingDate: string;
   dateFlexible: boolean;
   routeDistanceKm?: number | null;
@@ -118,6 +122,9 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     Number.isFinite(props.routeDistanceKm) &&
     props.routeDistanceKm > 0 &&
     props.routeDistanceProvider === "osrm";
+  const isKitchenValid =
+    props.kitchenIncluded !== "appliances" ||
+    (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
 
   const cart = props.pricingCart;
   const fmtEur = (n: number) =>
@@ -137,6 +144,12 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       setRevealedCount(1);
     }
   }, [props.access_type]);
+
+  useEffect(() => {
+    // Sécurité: si jamais la valeur est vide (state legacy), on force "normal".
+    if (!(props.density as any)) props.onFieldChange("density", "normal");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Par défaut sur Step 3 : on pré-sélectionne "Maison" (simple, non ambigu).
   // Important: on ne met PAS de default plus tôt (Step 1/2) pour ne pas impacter l'estimation.
@@ -369,6 +382,153 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           }}
         />
         <HousingInline side="destination" />
+
+        {/* Densité (volume) */}
+        <div className="mt-2 space-y-2 rounded-2xl border border-[#E3E5E8] bg-white p-4">
+          <p className="text-sm font-semibold text-[#0F172A]">Densité</p>
+          <div className="grid grid-cols-1 gap-2">
+            <button
+              type="button"
+              onClick={() => props.onFieldChange("density", "light")}
+              className={[
+                "rounded-xl border-2 px-4 py-3 text-left transition-all",
+                props.density === "light"
+                  ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
+                  : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+              ].join(" ")}
+            >
+              <div className="text-sm font-semibold text-[#0F172A]">Plutôt peu meublé</div>
+              <div className="mt-0.5 text-xs text-[#1E293B]/70">
+                Peu de meubles, peu d’objets stockés
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => props.onFieldChange("density", "normal")}
+              className={[
+                "rounded-xl border-2 px-4 py-3 text-left transition-all",
+                props.density === "normal"
+                  ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
+                  : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+              ].join(" ")}
+            >
+              <div className="text-sm font-semibold text-[#0F172A]">Normalement meublé</div>
+              <div className="mt-0.5 text-xs text-[#1E293B]/70">
+                Un logement “classique”, sans accumulation particulière
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => props.onFieldChange("density", "dense")}
+              className={[
+                "rounded-xl border-2 px-4 py-3 text-left transition-all",
+                props.density === "dense"
+                  ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
+                  : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+              ].join(" ")}
+            >
+              <div className="text-sm font-semibold text-[#0F172A]">Très meublé / beaucoup d’affaires</div>
+              <div className="mt-0.5 text-xs text-[#1E293B]/70">
+                Beaucoup de meubles, cartons, objets, stockage
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Cuisine / équipements */}
+        <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white p-4">
+          <p className="text-sm font-semibold text-[#0F172A]">Cuisine</p>
+          <div className="grid grid-cols-1 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                props.onFieldChange("kitchenIncluded", "none");
+                props.onFieldChange("kitchenApplianceCount", "");
+              }}
+              className={[
+                "rounded-xl border-2 px-4 py-3 text-left transition-all",
+                props.kitchenIncluded === "none"
+                  ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
+                  : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+              ].join(" ")}
+            >
+              <div className="text-sm font-semibold text-[#0F172A]">Non, rien de la cuisine</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                props.onFieldChange("kitchenIncluded", "appliances");
+                if (!(props.kitchenApplianceCount || "").trim()) {
+                  props.onFieldChange("kitchenApplianceCount", "1");
+                }
+              }}
+              className={[
+                "rounded-xl border-2 px-4 py-3 text-left transition-all",
+                props.kitchenIncluded === "appliances"
+                  ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
+                  : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+              ].join(" ")}
+            >
+              <div className="text-sm font-semibold text-[#0F172A]">Oui, seulement l’électroménager</div>
+              <div className="mt-0.5 text-xs text-[#1E293B]/70">
+                Réfrigérateur, lave-linge, four, etc. (0,6 m³ par équipement)
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                props.onFieldChange("kitchenIncluded", "full");
+                props.onFieldChange("kitchenApplianceCount", "");
+              }}
+              className={[
+                "rounded-xl border-2 px-4 py-3 text-left transition-all",
+                props.kitchenIncluded === "full"
+                  ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
+                  : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+              ].join(" ")}
+            >
+              <div className="text-sm font-semibold text-[#0F172A]">
+                Oui, cuisine complète (meubles + électroménager)
+              </div>
+              <div className="mt-0.5 text-xs text-[#1E293B]/70">+3 m³</div>
+            </button>
+          </div>
+
+          {props.kitchenIncluded === "appliances" && (
+            <div className="mt-2">
+              <label className="block text-xs font-semibold text-[#1E293B]/70 mb-2">
+                Nombre d’équipements (réfrigérateur, lave-linge, four, etc.)
+              </label>
+              <input
+                id="v2-kitchen-appliance-count"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                type="number"
+                min={1}
+                max={30}
+                value={props.kitchenApplianceCount}
+                onChange={(e) => props.onFieldChange("kitchenApplianceCount", e.target.value)}
+                className={[
+                  "w-full rounded-xl border-2 bg-white px-4 py-3 text-base text-[#0F172A] transition-all",
+                  showValidation && !isKitchenValid
+                    ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
+                    : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+                ].join(" ")}
+                placeholder="Ex: 3"
+              />
+              {showValidation && !isKitchenValid && (
+                <p className="mt-2 text-sm font-medium text-[#EF4444]">
+                  Indiquez le nombre d’équipements (min. 1)
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="text-xs text-[#1E293B]/60">
           <span className="font-semibold">Distance route:</span>{" "}
           {isRouteDistanceValid ? (
