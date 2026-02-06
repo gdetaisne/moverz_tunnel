@@ -99,6 +99,7 @@
     - Lignes (deltas): **Distance** (adresses OSRM vs villes), **Densité**, **Cuisine**, **Date** (coef sur base), **Accès**
     - En bas: **Budget affiné**
     - Règle: le delta **Distance** ne s’applique que quand **les 2 adresses** sont renseignées (sinon on reste sur “villes +20 km” et delta=0).
+  - Alignement: l’estimation **Step 2 (V2)** utilise désormais les **mêmes hypothèses** que “Première estimation” en Step 3.
   - Fix: en Step 1 (V2), la saisie de surface marque `surfaceTouched=true` pour éviter que changer “Maison/Appartement” en Step 3 écrase la surface via les defaults.
 - **Tracking**:
   - Aucun changement (pas de modification de `logicalStep` / `screenId`).

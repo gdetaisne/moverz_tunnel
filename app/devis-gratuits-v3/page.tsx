@@ -770,27 +770,41 @@ function DevisGratuitsV3Content() {
   }, [pricingByFormule, state.formule]);
 
   // Step 2 (V2) : estimation basée sur hypothèses fixes (reward) tant qu'on n'a pas les adresses exactes.
-  // Hypothèses: distance +15km, appart 2e, ascenseur, aucun service, pas de buffer saison.
+  // Hypothèses (alignées sur "Première estimation" du panier Step 3):
+  // - distance villes +20km
+  // - densité très meublé
+  // - cuisine = 3 équipements (0,6m³/équipement)
+  // - pas de saison
+  // - accès RAS
   const v2PricingByFormuleStep2 = useMemo(() => {
     if (!isFunnelV2) return null;
     if (state.currentStep !== 2) return null;
-    if (routeDistanceKm == null || !Number.isFinite(routeDistanceKm) || routeDistanceKm <= 0) return null;
 
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const distanceKm = routeDistanceKm + 15;
-    const baseInput = {
+    const cityDistanceKm = estimateDistanceKm(
+      state.originPostalCode,
+      state.destinationPostalCode,
+      state.originLat,
+      state.originLon,
+      state.destinationLat,
+      state.destinationLon
+    );
+    const distanceKm = Math.max(0, cityDistanceKm + 20);
+
+    const baseInput: Parameters<typeof calculatePricing>[0] = {
       surfaceM2: surface,
       housingType: "t2" as const,
-      density: state.density,
+      density: "dense" as const,
       distanceKm,
       seasonFactor: 1,
-      originFloor: 2,
+      originFloor: 0,
       originElevator: "yes" as const,
-      destinationFloor: 2,
+      destinationFloor: 0,
       destinationElevator: "yes" as const,
       services: { monteMeuble: false, piano: null, debarras: false },
+      extraVolumeM3: 3 * 0.6,
     };
 
     const formules: PricingFormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
@@ -801,12 +815,46 @@ function DevisGratuitsV3Content() {
       },
       {} as any
     );
-  }, [isFunnelV2, state.currentStep, routeDistanceKm, state.surfaceM2, state.density]);
+  }, [
+    isFunnelV2,
+    state.currentStep,
+    state.surfaceM2,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    state.originLat,
+    state.originLon,
+    state.destinationLat,
+    state.destinationLon,
+  ]);
 
   const activePricingStep2 = useMemo(() => {
     if (!v2PricingByFormuleStep2) return null;
     return v2PricingByFormuleStep2[state.formule as PricingFormuleType] ?? null;
   }, [v2PricingByFormuleStep2, state.formule]);
+
+  const v2FirstEstimateDistanceKm = useMemo(() => {
+    if (!isFunnelV2) return null;
+    if (state.destinationUnknown) return null;
+    const cityDistanceKm = estimateDistanceKm(
+      state.originPostalCode,
+      state.destinationPostalCode,
+      state.originLat,
+      state.originLon,
+      state.destinationLat,
+      state.destinationLon
+    );
+    if (!Number.isFinite(cityDistanceKm) || cityDistanceKm <= 0) return null;
+    return Math.round(cityDistanceKm + 20);
+  }, [
+    isFunnelV2,
+    state.destinationUnknown,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    state.originLat,
+    state.originLon,
+    state.destinationLat,
+    state.destinationLon,
+  ]);
 
   // Reward baseline (figé) : en cas de refresh direct en Step 3, on hydrate une fois le baseline
   // (mêmes hypothèses que la Step 2) pour éviter l'affichage vide.
@@ -814,23 +862,32 @@ function DevisGratuitsV3Content() {
     if (!isFunnelV2) return;
     if (state.currentStep < 3) return;
     if (state.rewardBaselineMinEur != null && state.rewardBaselineMaxEur != null) return;
-    if (routeDistanceKm == null || !Number.isFinite(routeDistanceKm) || routeDistanceKm <= 0) return;
 
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return;
 
-    const distanceKm = routeDistanceKm + 15;
-    const baseInput = {
+    const cityDistanceKm = estimateDistanceKm(
+      state.originPostalCode,
+      state.destinationPostalCode,
+      state.originLat,
+      state.originLon,
+      state.destinationLat,
+      state.destinationLon
+    );
+    const distanceKm = Math.max(0, cityDistanceKm + 20);
+
+    const baseInput: Parameters<typeof calculatePricing>[0] = {
       surfaceM2: surface,
       housingType: "t2" as const,
-      density: state.density,
+      density: "dense" as const,
       distanceKm,
       seasonFactor: 1,
-      originFloor: 2,
+      originFloor: 0,
       originElevator: "yes" as const,
-      destinationFloor: 2,
+      destinationFloor: 0,
       destinationElevator: "yes" as const,
       services: { monteMeuble: false, piano: null, debarras: false },
+      extraVolumeM3: 3 * 0.6,
     };
 
     const baseline = calculatePricing({ ...baseInput, formule: state.formule as PricingFormuleType });
@@ -846,10 +903,14 @@ function DevisGratuitsV3Content() {
     state.currentStep,
     state.rewardBaselineMinEur,
     state.rewardBaselineMaxEur,
-    routeDistanceKm,
     state.surfaceM2,
-    state.density,
     state.formule,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    state.originLat,
+    state.originLon,
+    state.destinationLat,
+    state.destinationLon,
   ]);
 
   // Panier (V2 Step 3): Première estimation (hypothèses fixes) → deltas → Budget affiné
@@ -1335,8 +1396,15 @@ function DevisGratuitsV3Content() {
     e.preventDefault();
     // Reward: figer la valeur Step 2 (avec buffers) au passage vers Step 3
     if (v2PricingByFormuleStep2 && activePricingStep2) {
-      const baselineDistanceKm =
-        routeDistanceKm != null && Number.isFinite(routeDistanceKm) ? routeDistanceKm + 15 : null;
+      const cityDistanceKm = estimateDistanceKm(
+        state.originPostalCode,
+        state.destinationPostalCode,
+        state.originLat,
+        state.originLon,
+        state.destinationLat,
+        state.destinationLon
+      );
+      const baselineDistanceKm = Number.isFinite(cityDistanceKm) ? cityDistanceKm + 20 : null;
       updateFields({
         rewardBaselineMinEur: activePricingStep2.prixMin ?? null,
         rewardBaselineMaxEur: activePricingStep2.prixMax ?? null,
@@ -1958,10 +2026,8 @@ function DevisGratuitsV3Content() {
             <div className="rounded-3xl bg-white p-5 shadow-sm relative">
               <StepEstimationV2
                 volume={activePricingStep2?.volumeM3 ?? activePricing?.volumeM3 ?? null}
-                routeDistanceKm={routeDistanceKm ?? null}
-                displayDistanceKm={
-                  routeDistanceKm != null && Number.isFinite(routeDistanceKm) ? routeDistanceKm + 15 : null
-                }
+                routeDistanceKm={v2FirstEstimateDistanceKm}
+                displayDistanceKm={v2FirstEstimateDistanceKm}
                 priceMin={activePricingStep2?.prixMin ?? activePricing?.prixMin ?? null}
                 priceMax={activePricingStep2?.prixMax ?? activePricing?.prixMax ?? null}
                 onSubmit={handleSubmitEstimationV2}
