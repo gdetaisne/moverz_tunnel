@@ -701,8 +701,9 @@ function DevisGratuitsV3Content() {
       ? "yes"
       : toPricingElevator(state.destinationElevator);
 
-    const monteMeuble =
-      state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
+    const monteMeuble = isFunnelV2
+      ? !!state.lift_required
+      : state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
 
     const piano =
       state.servicePiano === "droit"
@@ -724,6 +725,21 @@ function DevisGratuitsV3Content() {
       return 0;
     })();
 
+    const longCarry = isFunnelV2
+      ? !!state.long_carry
+      : (state.originCarryDistance || "").trim().length > 0 ||
+        (state.destinationCarryDistance || "").trim().length > 0;
+    const difficultParking = isFunnelV2
+      ? !!state.difficult_parking
+      : !!state.originParkingAuth ||
+        (!!state.destinationParkingAuth && !state.destinationUnknown) ||
+        !!state.accessTruckDifficult;
+    const tightAccess = isFunnelV2
+      ? !!state.narrow_access
+      : !!state.originTightAccess ||
+        (!!state.destinationTightAccess && !state.destinationUnknown) ||
+        !!state.accessSmallElevator;
+
     const baseInput = {
       surfaceM2: surface,
       housingType,
@@ -739,6 +755,9 @@ function DevisGratuitsV3Content() {
         piano,
         debarras: state.serviceDebarras,
       },
+      longCarry,
+      difficultParking,
+      tightAccess,
       extraVolumeM3: kitchenExtraVolumeM3,
     };
 
@@ -1029,7 +1048,10 @@ function DevisGratuitsV3Content() {
     // 5) Accès (logement/étage/ascenseur)
     const originIsHouse = isHouseType(state.originHousingType);
     const destIsHouse = isHouseType(state.destinationHousingType);
+    const accessExtrasConfirmed =
+      !!state.narrow_access || !!state.long_carry || !!state.difficult_parking || !!state.lift_required;
     const accessConfirmed =
+      accessExtrasConfirmed ||
       !!state.originHousingTypeTouched ||
       !!state.destinationHousingTypeTouched ||
       !!state.originFloorTouched ||
@@ -1048,6 +1070,7 @@ function DevisGratuitsV3Content() {
       const originElevator = toPricingElevator(state.originElevator);
       const destinationElevator = toPricingElevator(state.destinationElevator);
       const needsMonteMeuble =
+        !!state.lift_required ||
         (originElevator === "no" && originFloor >= 4) ||
         (destinationElevator === "no" && destinationFloor >= 4);
       return {
@@ -1069,6 +1092,14 @@ function DevisGratuitsV3Content() {
         originElevator: accessMeta!.originElevator,
         destinationFloor: accessMeta!.destinationFloor,
         destinationElevator: accessMeta!.destinationElevator,
+        // Accès difficiles (V2)
+        longCarry: !!state.long_carry,
+        tightAccess: !!state.narrow_access,
+        difficultParking: !!state.difficult_parking,
+        services: {
+          ...inputDate.services,
+          monteMeuble: !!state.lift_required,
+        },
       };
     })();
     const sAccess = calculatePricing(inputAccess);
@@ -1241,8 +1272,9 @@ function DevisGratuitsV3Content() {
       ? "yes"
       : toPricingElevator(state.destinationElevator);
 
-    const monteMeuble =
-      state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
+    const monteMeuble = isFunnelV2
+      ? !!state.lift_required
+      : state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
 
     const piano =
       state.servicePiano === "droit"
@@ -1277,9 +1309,29 @@ function DevisGratuitsV3Content() {
 
     // On ne ré-expose pas le détail des services depuis constants ici,
     // mais on a déjà servicesTotal dans activePricing (issu de calculatePricing).
+    const longCarry = isFunnelV2
+      ? !!state.long_carry
+      : (state.originCarryDistance || "").trim().length > 0 ||
+        (state.destinationCarryDistance || "").trim().length > 0;
+    const difficultParking = isFunnelV2
+      ? !!state.difficult_parking
+      : !!state.originParkingAuth ||
+        (!!state.destinationParkingAuth && !state.destinationUnknown) ||
+        !!state.accessTruckDifficult;
+    const tightAccess = isFunnelV2
+      ? !!state.narrow_access
+      : !!state.originTightAccess ||
+        (!!state.destinationTightAccess && !state.destinationUnknown) ||
+        !!state.accessSmallElevator;
+    const hasTightAccess = tightAccess || originElevator === "partial" || destinationElevator === "partial";
+    const coeffAccess =
+      (longCarry ? 1.05 : 1) *
+      (hasTightAccess ? 1.05 : 1) *
+      (difficultParking ? 1.03 : 1);
+
     const servicesTotalEur = activePricing.servicesTotal;
-    const centreNoSeasonEur = centreNoSeasonSansServices + servicesTotalEur;
-    const centreSeasonedEur = centreSeasonedSansServices + servicesTotalEur;
+    const centreNoSeasonEur = centreNoSeasonSansServices * coeffAccess + servicesTotalEur;
+    const centreSeasonedEur = centreSeasonedSansServices * coeffAccess + servicesTotalEur;
 
     return {
       surfaceM2: surface,

@@ -370,11 +370,19 @@ On prend le pire des deux accès:
 
 - \(coeffEtage = \max(coeffOrigin, coeffDest)\)
 
+### 6.4 bis Majorations “accès difficile” (sur le total hors services)
+
+Appliquées en plus de `coeffEtage`, multiplicatives:
+
+- **Portage > 10 m** → +5% (× 1.05)
+- **Petit ascenseur / passages étroits** → +5% (× 1.05)
+- **Stationnement compliqué** → +3% (× 1.03)
+
 ### 6.5 Services additionnels (forfaits)
 
 `SERVICES_PRIX`:
 
-- monteMeuble: 150
+- monteMeuble: 200
 - pianoDroit: 200
 - pianoQuart: 250
 - debarras: 100

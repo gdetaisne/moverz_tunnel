@@ -32,6 +32,13 @@ export interface PricingInput {
   destinationElevator: "yes" | "no" | "partial";
   formule: FormuleType;
   services: PricingServicesInput;
+  // Ajustements d'accès (majorations sur le total hors services)
+  // - portage > 10m => +5%
+  // - petit ascenseur / passages étroits => +5%
+  // - stationnement compliqué => +3%
+  longCarry?: boolean;
+  tightAccess?: boolean;
+  difficultParking?: boolean;
   // Ajustement volume (ex: cuisine complète, électroménager)
   extraVolumeM3?: number;
 }
@@ -143,14 +150,26 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   );
   const coeffEtage = Math.max(coeffOrigin, coeffDest);
 
+  // 3b. Majorations accès (sur le total hors services)
+  const hasTightAccess =
+    Boolean(input.tightAccess) ||
+    input.originElevator === "partial" ||
+    input.destinationElevator === "partial";
+  const coeffAccess =
+    (input.longCarry ? 1.05 : 1) *
+    (hasTightAccess ? 1.05 : 1) *
+    (input.difficultParking ? 1.03 : 1);
+
   // 4. Multiplicateur formule
   // La formule est déjà intégrée dans le tarif La Poste (rateEurPerM3),
   // donc on neutralise le multiplicateur pour éviter le double comptage.
   const formuleMultiplier = 1;
 
   // 5. Prix centres sans / avec saison (hors services)
-  const centreNoSeasonSansServices = baseNoSeason * formuleMultiplier * coeffEtage;
-  const centreSeasonedSansServices = baseSeasoned * formuleMultiplier * coeffEtage;
+  const centreNoSeasonSansServices =
+    baseNoSeason * formuleMultiplier * coeffEtage * coeffAccess;
+  const centreSeasonedSansServices =
+    baseSeasoned * formuleMultiplier * coeffEtage * coeffAccess;
 
   // 6. Services additionnels
   let servicesTotal = 0;

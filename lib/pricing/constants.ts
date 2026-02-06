@@ -27,7 +27,7 @@ export const FORMULE_MULTIPLIERS = {
 } as const;
 
 export const SERVICES_PRIX = {
-  monteMeuble: 150,
+  monteMeuble: 200,
   pianoDroit: 200,
   pianoQuart: 250,
   debarras: 100,

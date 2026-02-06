@@ -112,6 +112,11 @@
     - 2e: +10%
     - 3e: +15%
     - ≥4: **flag monte-meuble** (ajouté automatiquement au pricing si pas déjà inclus)
+  - **Règles accès — surcoûts “accès difficile”** (pricing engine):
+    - **Portage > 10 m**: +5% sur le total (hors services)
+    - **Petit ascenseur / passages étroits**: +5% sur le total (hors services)
+    - **Stationnement compliqué**: +3% sur le total (hors services)
+    - **Besoin d’un monte-meuble**: +200€ (et auto si ≥4 sans ascenseur)
 - **Tracking**:
   - Aucun changement (pas de modification de `logicalStep` / `screenId`).
 - **Champs / Inputs**:
