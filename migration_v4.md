@@ -195,6 +195,7 @@
 
 - **Problème**: l’heuristique CP (diff de départements) peut sur-estimer très fortement certaines routes (ex: 33 → 17) et créer des deltas Distance énormes.
 - **Fix**: mémoriser les coords “ville” (Step 1/2) dans un `useRef` et utiliser ces coords (Haversine) pour la baseline “villes”, sans dépendre des coords d’adresse.
+- **Garde-fou**: si aucune coord “ville” n’a été capturée (ex: saisie manuelle sans sélection), on fige une baseline à partir des **premières coords d’adresse** (Step 3) pour éviter l’heuristique CP trop grossière et les deltas Distance énormes.
 - **Fichier**: `app/devis-gratuits-v3/page.tsx`
 
 ### 2026-02-03 — Ajout d'un CTA PayPal (lien de paiement) en fin de tunnel

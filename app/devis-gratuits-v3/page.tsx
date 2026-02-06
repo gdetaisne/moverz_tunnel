@@ -554,7 +554,31 @@ function DevisGratuitsV3Content() {
   ]);
 
   const estimateCityDistanceKm = (originPostalCode: string, destinationPostalCode: string) => {
-    const c = v2CityCoordsRef.current;
+    let c = v2CityCoordsRef.current;
+
+    // Fallback anti "delta énorme": si on n'a pas réussi à capturer des coords ville en Step 1/2
+    // (ex: l'utilisateur a tapé sans sélectionner), on fige une baseline à partir des coords
+    // disponibles au moment où les adresses sont renseignées (Step 3). Ça évite une heuristique CP
+    // trop grossière qui peut surestimer massivement la distance et créer un -1000€ en delta.
+    if (
+      !c &&
+      isFunnelV2 &&
+      state.currentStep >= 3 &&
+      !state.destinationUnknown &&
+      state.originLat != null &&
+      state.originLon != null &&
+      state.destinationLat != null &&
+      state.destinationLon != null
+    ) {
+      c = {
+        originLat: state.originLat,
+        originLon: state.originLon,
+        destinationLat: state.destinationLat,
+        destinationLon: state.destinationLon,
+      };
+      v2CityCoordsRef.current = c;
+    }
+
     if (c) {
       return estimateDistanceKm(
         originPostalCode,
