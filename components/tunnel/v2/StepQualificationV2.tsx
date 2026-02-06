@@ -138,7 +138,13 @@ export function StepQualificationV2({
               min={10}
               max={500}
               value={surfaceM2}
-              onChange={(e) => onFieldChange("surfaceM2", e.target.value)}
+              onChange={(e) => {
+                onFieldChange("surfaceM2", e.target.value);
+                // Important: en V2, la surface est déclarée en Step 1.
+                // On la marque comme "touchée" pour éviter qu'un changement de logement en Step 3
+                // écrase la surface via les defaults par type de logement.
+                onFieldChange("surfaceTouched", true);
+              }}
               className={[
                 "w-full rounded-xl border-2 px-4 py-3 text-base text-[#0F172A] transition-all",
                 showValidation && !isSurfaceValid
