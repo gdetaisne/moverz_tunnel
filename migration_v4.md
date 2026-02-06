@@ -101,6 +101,11 @@
     - Règle: le delta **Distance** ne s’applique que quand **les 2 adresses** sont renseignées (sinon on reste sur “villes +20 km” et delta=0).
   - Alignement: l’estimation **Step 2 (V2)** utilise désormais les **mêmes hypothèses** que “Première estimation” en Step 3.
   - Fix: en Step 1 (V2), la saisie de surface marque `surfaceTouched=true` pour éviter que changer “Maison/Appartement” en Step 3 écrase la surface via les defaults.
+  - **Règle “champs à zéro tant que non touchés” (Step 3 V2)**:
+    - UI: **aucune pré-sélection** sur **Densité** et **Cuisine** en arrivant en Step 3.
+    - Calcul (hypothèses par défaut): tant que non touché, on suppose **Densité=très meublé** et **Cuisine=3 équipements**.
+    - Panier: les lignes **Densité** / **Cuisine** restent à **0€** tant que l’utilisateur n’a pas fait un choix (status “par défaut …”).
+    - Accès: tant que non touché, on reste sur l’hypothèse “RAS” (pas d’impact prix).
 - **Tracking**:
   - Aucun changement (pas de modification de `logicalStep` / `screenId`).
 - **Champs / Inputs**:

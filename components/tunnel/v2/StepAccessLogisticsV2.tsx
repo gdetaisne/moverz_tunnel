@@ -27,8 +27,8 @@ interface StepAccessLogisticsV2Props {
   destinationHousingType: string;
   destinationFloor: string;
   // Volume
-  density: "light" | "normal" | "dense";
-  kitchenIncluded: "none" | "appliances" | "full";
+  density: "" | "light" | "normal" | "dense";
+  kitchenIncluded: "" | "none" | "appliances" | "full";
   kitchenApplianceCount: string;
   movingDate: string;
   dateFlexible: boolean;
@@ -144,12 +144,6 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       setRevealedCount(1);
     }
   }, [props.access_type]);
-
-  useEffect(() => {
-    // Sécurité: si jamais la valeur est vide (state legacy), on force "normal".
-    if (!(props.density as any)) props.onFieldChange("density", "normal");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Par défaut sur Step 3 : on pré-sélectionne "Maison" (simple, non ambigu).
   // Important: on ne met PAS de default plus tôt (Step 1/2) pour ne pas impacter l'estimation.
@@ -353,7 +347,14 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         <div className="space-y-4">
           {/* Densité (volume) */}
           <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white p-4">
-            <p className="text-sm font-semibold text-[#0F172A]">Densité</p>
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-sm font-semibold text-[#0F172A]">Densité</p>
+              {props.density === "" && (
+                <p className="text-[11px] font-semibold text-[#1E293B]/50">
+                  Par défaut : très meublé
+                </p>
+              )}
+            </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <button
                 type="button"
@@ -407,7 +408,14 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
           {/* Cuisine / équipements */}
           <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white p-4">
-            <p className="text-sm font-semibold text-[#0F172A]">Cuisine</p>
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-sm font-semibold text-[#0F172A]">Cuisine</p>
+              {props.kitchenIncluded === "" && (
+                <p className="text-[11px] font-semibold text-[#1E293B]/50">
+                  Par défaut : 3 équipements
+                </p>
+              )}
+            </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <button
                 type="button"
@@ -431,7 +439,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 onClick={() => {
                   props.onFieldChange("kitchenIncluded", "appliances");
                   if (!(props.kitchenApplianceCount || "").trim()) {
-                    props.onFieldChange("kitchenApplianceCount", "1");
+                    props.onFieldChange("kitchenApplianceCount", "3");
                   }
                 }}
                 className={[

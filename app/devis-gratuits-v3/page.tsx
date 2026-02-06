@@ -420,8 +420,11 @@ function DevisGratuitsV3Content() {
     }
   }, [state.currentStep, isFunnelV2]);
 
-  const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" =>
-    d === "light" ? "LIGHT" : d === "dense" ? "HEAVY" : "MEDIUM";
+  const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" => {
+    // "" (non choisi) => hypothèse par défaut "très meublé"
+    if (!d) return "HEAVY";
+    return d === "light" ? "LIGHT" : d === "dense" ? "HEAVY" : "MEDIUM";
+  };
 
   const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" => {
     // UI values: "", "none", "no", "yes" (et potentiellement "small" / "partial")
@@ -674,7 +677,8 @@ function DevisGratuitsV3Content() {
     const housingType = isFunnelV2
       ? ("t2" as const)
       : coerceHousingType(state.originHousingType || state.destinationHousingType);
-    const density = state.density;
+    // UI: pas de pré-sélection en Step 3. Calcul: hypothèse par défaut "très meublé".
+    const density = (state.density || "dense") as "light" | "normal" | "dense";
 
     // Exiger une distance route (OSRM). Pas de fallback heuristique.
     if (state.destinationUnknown) return null;
@@ -708,11 +712,15 @@ function DevisGratuitsV3Content() {
         : null;
 
     const kitchenExtraVolumeM3 = (() => {
-      if (state.kitchenIncluded === "full") return 6;
-      if (state.kitchenIncluded === "appliances") {
-        const n = Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
-        return Math.max(0, n) * 0.6;
-      }
+      // UI: pas de pré-sélection en Step 3. Calcul: hypothèse par défaut = 3 équipements.
+      const effectiveMode = state.kitchenIncluded || "appliances";
+      const effectiveCount =
+        state.kitchenIncluded === ""
+          ? 3
+          : Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+
+      if (effectiveMode === "full") return 6;
+      if (effectiveMode === "appliances") return Math.max(0, effectiveCount) * 0.6;
       return 0;
     })();
 
@@ -982,25 +990,33 @@ function DevisGratuitsV3Content() {
     const deltaDistanceEur = canUseOsrmDistance ? formatDelta(sDist.prixBase - s0.prixBase) : 0;
 
     // 2) Densité (delta vs "Très meublé")
+    const densityTouched = state.density !== "";
+    const effectiveDensity = (state.density || "dense") as "light" | "normal" | "dense";
     const inputDensity: Parameters<typeof calculatePricing>[0] = {
       ...inputDistance,
-      density: state.density,
+      density: effectiveDensity,
     };
     const sDensity = calculatePricing(inputDensity);
-    const deltaDensityEur = formatDelta(sDensity.prixBase - sDist.prixBase);
+    const deltaDensityEur = densityTouched ? formatDelta(sDensity.prixBase - sDist.prixBase) : 0;
 
     // 3) Cuisine (delta vs "3 équipements")
     const kitchenApplianceCount =
       Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
-    const kitchenExtraVolumeM3 =
-      state.kitchenIncluded === "full"
-        ? 6
-        : state.kitchenIncluded === "appliances"
-        ? Math.max(0, kitchenApplianceCount) * 0.6
-        : 0;
+    const kitchenTouched =
+      state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
+    const baselineKitchenExtraVolumeM3 = 3 * 0.6;
+    const kitchenExtraVolumeM3 = (() => {
+      // UI: pas de pré-sélection. Calcul: hypothèse par défaut = 3 équipements.
+      if (!kitchenTouched) return baselineKitchenExtraVolumeM3;
+
+      if (state.kitchenIncluded === "full") return 6;
+      if (state.kitchenIncluded === "appliances") return Math.max(0, kitchenApplianceCount) * 0.6;
+      // "none" ou invalide => 0
+      return 0;
+    })();
     const inputKitchen = { ...inputDensity, extraVolumeM3: kitchenExtraVolumeM3 };
     const sKitchen = calculatePricing(inputKitchen);
-    const deltaKitchenEur = formatDelta(sKitchen.prixBase - sDensity.prixBase);
+    const deltaKitchenEur = kitchenTouched ? formatDelta(sKitchen.prixBase - sDensity.prixBase) : 0;
 
     // 4) Date (saison/urgence) — appliqué uniquement sur la valeur de base (avant accès)
     const seasonFactor = isMovingDateValid
@@ -1013,15 +1029,6 @@ function DevisGratuitsV3Content() {
     // 5) Accès (logement/étage/ascenseur)
     const originIsHouse = isHouseType(state.originHousingType);
     const destIsHouse = isHouseType(state.destinationHousingType);
-    const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
-    const destinationFloor = state.destinationUnknown
-      ? 0
-      : destIsHouse
-      ? 0
-      : parseInt(state.destinationFloor || "0", 10) || 0;
-    const originElevator = toPricingElevator(state.originElevator);
-    const destinationElevator = toPricingElevator(state.destinationElevator);
-
     const accessConfirmed =
       !!state.originHousingTypeTouched ||
       !!state.destinationHousingTypeTouched ||
@@ -1030,26 +1037,44 @@ function DevisGratuitsV3Content() {
       !!state.originElevatorTouched ||
       !!state.destinationElevatorTouched;
 
-    const inputAccess = {
-      ...inputDate,
-      originFloor,
-      originElevator,
-      destinationFloor,
-      destinationElevator,
-    };
+    const inputAccess = (() => {
+      // Tant que l'accès n'est pas "touché", on reste sur l'hypothèse baseline (RAS).
+      if (!accessConfirmed) return inputDate;
+
+      const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
+      const destinationFloor = state.destinationUnknown
+        ? 0
+        : destIsHouse
+        ? 0
+        : parseInt(state.destinationFloor || "0", 10) || 0;
+      const originElevator = toPricingElevator(state.originElevator);
+      const destinationElevator = toPricingElevator(state.destinationElevator);
+
+      return {
+        ...inputDate,
+        originFloor,
+        originElevator,
+        destinationFloor,
+        destinationElevator,
+      };
+    })();
     const sAccess = calculatePricing(inputAccess);
-    const deltaAccessEur = formatDelta(sAccess.prixFinal - sDate.prixFinal);
+    const deltaAccessEur = accessConfirmed ? formatDelta(sAccess.prixFinal - sDate.prixFinal) : 0;
 
     const refinedCenterEur = centerEur(sAccess.prixMin, sAccess.prixMax);
 
     const densityLabel =
-      state.density === "light"
+      !densityTouched
+        ? "par défaut (très meublé)"
+        : effectiveDensity === "light"
         ? "peu meublé"
-        : state.density === "dense"
+        : effectiveDensity === "dense"
         ? "très meublé"
         : "normal";
     const kitchenLabel =
-      state.kitchenIncluded === "full"
+      !kitchenTouched
+        ? "par défaut (3 équipements)"
+        : state.kitchenIncluded === "full"
         ? "cuisine complète"
         : state.kitchenIncluded === "appliances"
         ? `${Math.max(0, kitchenApplianceCount)} équipement(s)`
@@ -1074,14 +1099,14 @@ function DevisGratuitsV3Content() {
         label: "Densité",
         status: densityLabel,
         amountEur: deltaDensityEur,
-        confirmed: true,
+        confirmed: densityTouched,
       },
       {
         key: "kitchen",
         label: "Cuisine",
         status: kitchenLabel,
         amountEur: deltaKitchenEur,
-        confirmed: true,
+        confirmed: kitchenTouched,
       },
       {
         key: "date",
@@ -1173,7 +1198,8 @@ function DevisGratuitsV3Content() {
       ? ("t2" as const)
       : coerceHousingType(state.originHousingType || state.destinationHousingType);
     const typeCoefficient = TYPE_COEFFICIENTS[housingType];
-    const densityCoefficient = DENSITY_COEFFICIENTS[state.density];
+    const effectiveDensity = (state.density || "dense") as "light" | "normal" | "dense";
+    const densityCoefficient = DENSITY_COEFFICIENTS[effectiveDensity];
 
     if (state.destinationUnknown) return null;
     if (routeDistanceKm == null) return null;
@@ -1240,7 +1266,7 @@ function DevisGratuitsV3Content() {
     return {
       surfaceM2: surface,
       housingType,
-      density: state.density,
+      density: effectiveDensity,
       distanceKm,
       distanceSource,
       seasonFactor,
@@ -1517,12 +1543,23 @@ function DevisGratuitsV3Content() {
 
     // Création / MAJ lead Back Office à la fin de Step 3 (avant les photos)
     try {
-      const kitchenExtraVolumeM3 =
-        state.kitchenIncluded === "full"
-          ? 6
-          : state.kitchenIncluded === "appliances"
-          ? Math.max(0, kitchenAppliancesCount) * 0.6
-          : 0;
+      const kitchenExtraVolumeM3 = (() => {
+        // UI: pas de pré-sélection. Calcul: hypothèse par défaut = 3 équipements.
+        const kitchenTouched =
+          state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
+        if (!kitchenTouched) return 3 * 0.6;
+
+        if (state.kitchenIncluded === "full") return 6;
+        if (state.kitchenIncluded === "appliances") return Math.max(0, kitchenAppliancesCount) * 0.6;
+        return 0;
+      })();
+      const kitchenIncludedForBo = state.kitchenIncluded || "appliances";
+      const kitchenApplianceCountForBo =
+        state.kitchenIncluded === ""
+          ? 3
+          : kitchenIncludedForBo === "appliances"
+          ? kitchenAppliancesCount
+          : undefined;
       const payload = {
         firstName: state.firstName.trim(), // obligatoire côté contrat BO (string, possiblement vide)
         email: state.email.trim().toLowerCase(),
@@ -1551,9 +1588,8 @@ function DevisGratuitsV3Content() {
             access_details: state.access_details || undefined,
           },
           volumeAdjustments: {
-            kitchenIncluded: state.kitchenIncluded,
-            kitchenApplianceCount:
-              state.kitchenIncluded === "appliances" ? kitchenAppliancesCount : undefined,
+            kitchenIncluded: kitchenIncludedForBo,
+            kitchenApplianceCount: kitchenApplianceCountForBo,
             extraVolumeM3: kitchenExtraVolumeM3,
           },
         },
@@ -1870,21 +1906,27 @@ function DevisGratuitsV3Content() {
             distanceProvider: routeDistanceProvider ?? undefined,
           },
           volumeAdjustments: {
-            kitchenIncluded: state.kitchenIncluded,
+            kitchenIncluded: state.kitchenIncluded || "appliances",
             kitchenApplianceCount:
-              state.kitchenIncluded === "appliances"
+              state.kitchenIncluded === ""
+                ? 3
+                : (state.kitchenIncluded || "appliances") === "appliances"
                 ? Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0
                 : undefined,
-            extraVolumeM3:
-              state.kitchenIncluded === "full"
-                ? 6
-                : state.kitchenIncluded === "appliances"
-                ? (Math.max(
-                    0,
-                    Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0
-                  ) *
-                    0.6)
-                : 0,
+            extraVolumeM3: (() => {
+              const kitchenTouched =
+                state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
+              if (!kitchenTouched) return 3 * 0.6;
+
+              if (state.kitchenIncluded === "full") return 6;
+              if (state.kitchenIncluded === "appliances") {
+                return (
+                  Math.max(0, Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0) *
+                  0.6
+                );
+              }
+              return 0;
+            })(),
           },
           // Important: conserver la structure envoyée en Step 2 (sinon Step 3 écrase et on perd l'accès)
           access: {
@@ -1934,7 +1976,7 @@ function DevisGratuitsV3Content() {
         const payload = {
           surfaceM2: surface,
           estimatedVolume: pricingForSubmit.volumeM3,
-          density: mapDensity(state.density),
+          density: mapDensity(state.density || "dense"),
           formule: state.formule,
           estimatedPriceMin: pricingForSubmit.prixMin,
           estimatedPriceAvg: Math.round((pricingForSubmit.prixMin + pricingForSubmit.prixMax) / 2),

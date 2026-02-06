@@ -57,11 +57,13 @@ export interface TunnelFormState {
   // Volume & Services (Step 3)
   surfaceM2: string; // vide par défaut, puis auto-estimé selon logement (logique V2)
   surfaceTouched: boolean; // V2 behavior: ne pas écraser la surface si l'utilisateur l'a modifiée
-  density: "light" | "normal" | "dense";
+  // "" = non choisi (UI), mais le calcul peut appliquer une hypothèse par défaut
+  density: "" | "light" | "normal" | "dense";
   formule: "ECONOMIQUE" | "STANDARD" | "PREMIUM";
 
   // Cuisine (NOUVEAU) — utilisé pour ajuster le volume/prix + archivé dans tunnelOptions (BO)
-  kitchenIncluded: "none" | "appliances" | "full";
+  // "" = non choisi (UI), mais le calcul peut appliquer une hypothèse par défaut
+  kitchenIncluded: "" | "none" | "appliances" | "full";
   kitchenApplianceCount: string; // input UI (si appliances)
   
   // Services en plus
@@ -171,10 +173,10 @@ const INITIAL_STATE: TunnelFormState = {
   // (l’UI fait déjà un fallback à 60 si vide pour ne pas casser l’affichage).
   surfaceM2: "",
   surfaceTouched: false,
-  density: "normal",
+  density: "",
   formule: "STANDARD",
 
-  kitchenIncluded: "none",
+  kitchenIncluded: "",
   kitchenApplianceCount: "",
   
   serviceFurnitureStorage: false,
