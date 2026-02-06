@@ -852,47 +852,49 @@ function DevisGratuitsV3Content() {
     state.formule,
   ]);
 
-  // Desktop reward "cart" (V2): Budget initial → lignes d'ajustement → Budget affiné
+  // Panier (V2 Step 3): Première estimation (hypothèses fixes) → deltas → Budget affiné
   const v2PricingCart = useMemo(() => {
     if (!isFunnelV2) return null;
-    if (!activePricing) return null;
 
-    const baselineMinEur = state.rewardBaselineMinEur;
-    const baselineMaxEur = state.rewardBaselineMaxEur;
-
-    const centerEur = (minEur: number, maxEur: number): number => {
-      const CENTER_BIAS = 0.6;
-      return Math.round(minEur + (maxEur - minEur) * CENTER_BIAS);
-    };
-
+    const CENTER_BIAS = 0.6;
+    const centerEur = (minEur: number, maxEur: number): number =>
+      Math.round(minEur + (maxEur - minEur) * CENTER_BIAS);
     const formatDelta = (delta: number) => Math.round(delta);
 
-    const hasBaseline =
-      typeof baselineMinEur === "number" &&
-      typeof baselineMaxEur === "number" &&
-      Number.isFinite(baselineMinEur) &&
-      Number.isFinite(baselineMaxEur);
-
-    // Base Step2 assumptions (pour recalculs intermédiaires). Le montant baseline affiché reste figé.
     const surface = parseInt(state.surfaceM2) || 60;
-    const baseAssumptions = {
+    if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
+
+    const formule = state.formule as PricingFormuleType;
+
+    // Première estimation: distance "villes" +20km, densité=Très meublé, cuisine=3 équipements,
+    // date sans saison, accès RAS.
+    const cityDistanceKm = estimateDistanceKm(
+      state.originPostalCode,
+      state.destinationPostalCode,
+      state.originLat,
+      state.originLon,
+      state.destinationLat,
+      state.destinationLon
+    );
+    const baseDistanceKm = Math.max(0, cityDistanceKm + 20);
+
+    const baselineInput: Parameters<typeof calculatePricing>[0] = {
       surfaceM2: surface,
       housingType: "t2" as const,
-      density: state.density,
-      distanceKm:
-        typeof state.rewardBaselineDistanceKm === "number" && Number.isFinite(state.rewardBaselineDistanceKm)
-          ? state.rewardBaselineDistanceKm
-          : routeDistanceKm != null && Number.isFinite(routeDistanceKm)
-          ? routeDistanceKm + 15
-          : 15,
+      density: "dense" as const,
+      distanceKm: baseDistanceKm,
       seasonFactor: 1,
-      originFloor: 2,
+      originFloor: 0,
       originElevator: "yes" as const,
-      destinationFloor: 2,
+      destinationFloor: 0,
       destinationElevator: "yes" as const,
-      services: { monteMeuble: false, piano: null, debarras: false },
-      formule: state.formule as PricingFormuleType,
+      services: { monteMeuble: false, piano: null as null, debarras: false },
+      formule,
+      extraVolumeM3: 3 * 0.6, // cuisine = 3 équipements
     };
+
+    const s0 = calculatePricing(baselineInput);
+    const firstEstimateCenterEur = centerEur(s0.prixMin, s0.prixMax);
 
     const minMovingDate = (() => {
       const d = new Date();
@@ -900,11 +902,59 @@ function DevisGratuitsV3Content() {
       return d.toISOString().split("T")[0]!;
     })();
     const isMovingDateValid = !!state.movingDate && state.movingDate >= minMovingDate;
+
     const isRouteDistanceValid =
       routeDistanceKm != null &&
       Number.isFinite(routeDistanceKm) &&
       routeDistanceKm > 0 &&
       routeDistanceProvider === "osrm";
+    const refinedDistanceKm = isRouteDistanceValid ? routeDistanceKm! : baseDistanceKm;
+
+    // 1) Distance (recalcule prix de base, delta vs baseDistanceKm)
+    const inputDistance = { ...baselineInput, distanceKm: refinedDistanceKm };
+    const sDist = calculatePricing(inputDistance);
+    const deltaDistanceEur = formatDelta(sDist.prixBase - s0.prixBase);
+
+    // 2) Densité (delta vs "Très meublé")
+    const inputDensity: Parameters<typeof calculatePricing>[0] = {
+      ...inputDistance,
+      density: state.density,
+    };
+    const sDensity = calculatePricing(inputDensity);
+    const deltaDensityEur = formatDelta(sDensity.prixBase - sDist.prixBase);
+
+    // 3) Cuisine (delta vs "3 équipements")
+    const kitchenApplianceCount =
+      Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+    const kitchenExtraVolumeM3 =
+      state.kitchenIncluded === "full"
+        ? 6
+        : state.kitchenIncluded === "appliances"
+        ? Math.max(0, kitchenApplianceCount) * 0.6
+        : 0;
+    const inputKitchen = { ...inputDensity, extraVolumeM3: kitchenExtraVolumeM3 };
+    const sKitchen = calculatePricing(inputKitchen);
+    const deltaKitchenEur = formatDelta(sKitchen.prixBase - sDensity.prixBase);
+
+    // 4) Date (saison/urgence) — appliqué uniquement sur la valeur de base (avant accès)
+    const seasonFactor = isMovingDateValid
+      ? getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate)
+      : 1;
+    const inputDate = { ...inputKitchen, seasonFactor };
+    const sDate = calculatePricing(inputDate);
+    const deltaDateEur = formatDelta(sDate.prixFinal - sKitchen.prixFinal);
+
+    // 5) Accès (logement/étage/ascenseur)
+    const originIsHouse = isHouseType(state.originHousingType);
+    const destIsHouse = isHouseType(state.destinationHousingType);
+    const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
+    const destinationFloor = state.destinationUnknown
+      ? 0
+      : destIsHouse
+      ? 0
+      : parseInt(state.destinationFloor || "0", 10) || 0;
+    const originElevator = toPricingElevator(state.originElevator);
+    const destinationElevator = toPricingElevator(state.destinationElevator);
 
     const accessConfirmed =
       !!state.originHousingTypeTouched ||
@@ -914,193 +964,99 @@ function DevisGratuitsV3Content() {
       !!state.originElevatorTouched ||
       !!state.destinationElevatorTouched;
 
-    const monteMeuble = state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
-    const piano =
-      state.servicePiano === "droit"
-        ? ("droit" as const)
-        : state.servicePiano === "quart"
-        ? ("quart" as const)
-        : null;
-    const servicesSelected = !!monteMeuble || !!piano || !!state.serviceDebarras;
+    const inputAccess = {
+      ...inputDate,
+      originFloor,
+      originElevator,
+      destinationFloor,
+      destinationElevator,
+    };
+    const sAccess = calculatePricing(inputAccess);
+    const deltaAccessEur = formatDelta(sAccess.prixFinal - sDate.prixFinal);
 
-    // Scénario 0 = baseline (affiché), puis on applique des ajustements séquentiels.
-    const baselineCenterEur = hasBaseline ? centerEur(baselineMinEur, baselineMaxEur) : null;
+    const refinedCenterEur = centerEur(sAccess.prixMin, sAccess.prixMax);
 
-    // 1) Distance
-    const s1 = isRouteDistanceValid
-      ? calculatePricing({
-          ...baseAssumptions,
-          distanceKm: routeDistanceKm!,
-        })
-      : null;
-    const s1Min = s1?.prixMin ?? (hasBaseline ? baselineMinEur : null);
-    const s1Max = s1?.prixMax ?? (hasBaseline ? baselineMaxEur : null);
-    const s1CenterEur =
-      typeof s1Min === "number" && typeof s1Max === "number" ? centerEur(s1Min, s1Max) : null;
-
-    // 2) Date (saison/urgence)
-    const seasonFactor = isMovingDateValid ? getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate) : 1;
-    const s2 =
-      s1 && seasonFactor !== 1
-        ? calculatePricing({
-            ...baseAssumptions,
-            distanceKm: isRouteDistanceValid ? routeDistanceKm! : baseAssumptions.distanceKm,
-            seasonFactor,
-          })
-        : null;
-    const s2Min = s2?.prixMin ?? s1Min;
-    const s2Max = s2?.prixMax ?? s1Max;
-    const s2CenterEur =
-      typeof s2Min === "number" && typeof s2Max === "number" ? centerEur(s2Min, s2Max) : null;
-
-    // 3) Accès (logement/étage/ascenseur)
-    const originIsHouse = isHouseType(state.originHousingType);
-    const destIsHouse = isHouseType(state.destinationHousingType);
-    const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
-    const destinationFloor = state.destinationUnknown ? 0 : destIsHouse ? 0 : parseInt(state.destinationFloor || "0", 10) || 0;
-    const originElevator = state.originElevatorTouched ? toPricingElevator(state.originElevator) : ("yes" as const);
-    const destinationElevator = state.destinationElevatorTouched
-      ? toPricingElevator(state.destinationElevator)
-      : ("yes" as const);
-    // V2: ne pas faire varier le volume via le logement; on conserve housingType="t2" pour le pricing.
-    const housingType = "t2" as const;
-
-    const s3 =
-      accessConfirmed && (typeof s2Min === "number" && typeof s2Max === "number")
-        ? calculatePricing({
-            ...baseAssumptions,
-            distanceKm: isRouteDistanceValid ? routeDistanceKm! : baseAssumptions.distanceKm,
-            seasonFactor,
-            housingType,
-            originFloor,
-            originElevator,
-            destinationFloor,
-            destinationElevator,
-          })
-        : null;
-    const s3Min = s3?.prixMin ?? s2Min;
-    const s3Max = s3?.prixMax ?? s2Max;
-    const s3CenterEur =
-      typeof s3Min === "number" && typeof s3Max === "number" ? centerEur(s3Min, s3Max) : null;
-
-    // 4) Services
-    const s4 =
-      servicesSelected && (typeof s3Min === "number" && typeof s3Max === "number")
-        ? calculatePricing({
-            ...baseAssumptions,
-            distanceKm: isRouteDistanceValid ? routeDistanceKm! : baseAssumptions.distanceKm,
-            seasonFactor,
-            housingType,
-            originFloor,
-            originElevator,
-            destinationFloor,
-            destinationElevator,
-            services: { monteMeuble, piano, debarras: state.serviceDebarras },
-          })
-        : null;
-
-    const prePhotoMinEur = (s4 ?? s3 ?? s2 ?? s1 ?? activePricing).prixMin ?? null;
-    const prePhotoMaxEur = (s4 ?? s3 ?? s2 ?? s1 ?? activePricing).prixMax ?? null;
-
-    // Photos: +15% marge de sécurité si non fournies
-    const hasPrePhoto =
-      typeof prePhotoMinEur === "number" &&
-      typeof prePhotoMaxEur === "number" &&
-      Number.isFinite(prePhotoMinEur) &&
-      Number.isFinite(prePhotoMaxEur);
-    const prePhotoCenterEur = hasPrePhoto ? centerEur(prePhotoMinEur, prePhotoMaxEur) : null;
-    const photoMarginEur =
-      typeof prePhotoCenterEur === "number" && Number.isFinite(prePhotoCenterEur)
-        ? Math.round(prePhotoCenterEur * 0.15)
-        : 0;
-
-    const refinedMinEur: number | null = hasPrePhoto
-      ? Math.round(prePhotoMinEur * 1.15)
-      : (prePhotoMinEur ?? null);
-    const refinedMaxEur: number | null = hasPrePhoto
-      ? Math.round(prePhotoMaxEur * 1.15)
-      : (prePhotoMaxEur ?? null);
-    const refinedCenterEur =
-      typeof prePhotoCenterEur === "number" && Number.isFinite(prePhotoCenterEur)
-        ? prePhotoCenterEur + photoMarginEur
-        : null;
+    const densityLabel =
+      state.density === "light"
+        ? "peu meublé"
+        : state.density === "dense"
+        ? "très meublé"
+        : "normal";
+    const kitchenLabel =
+      state.kitchenIncluded === "full"
+        ? "cuisine complète"
+        : state.kitchenIncluded === "appliances"
+        ? `${Math.max(0, kitchenApplianceCount)} équipement(s)`
+        : "rien";
 
     const lines: Array<{
-      key: "distance" | "date" | "access" | "services" | "photos";
+      key: "distance" | "density" | "kitchen" | "date" | "access";
       label: string;
       status: string;
       amountEur: number;
       confirmed: boolean;
     }> = [
       {
-        key: "photos",
-        label: "Sans photos : marge de sécurité",
-        status: "non envoyées",
-        amountEur: photoMarginEur,
-        confirmed: false,
+        key: "distance",
+        label: "Distance",
+        status: isRouteDistanceValid ? "adresses (OSRM)" : "villes +20 km",
+        amountEur: deltaDistanceEur,
+        confirmed: isRouteDistanceValid,
       },
       {
-        key: "access",
-        label: "Accès (logement/étage)",
-        status: accessConfirmed ? "confirmé" : "par défaut",
-        amountEur:
-          s2CenterEur != null && s3CenterEur != null
-            ? formatDelta(s3CenterEur - s2CenterEur)
-            : 0,
-        confirmed: accessConfirmed,
+        key: "density",
+        label: "Densité",
+        status: densityLabel,
+        amountEur: deltaDensityEur,
+        confirmed: true,
       },
       {
-        key: "services",
-        label: "Services",
-        status: servicesSelected ? "sélectionnés" : "aucun",
-        amountEur:
-          s3CenterEur != null && typeof prePhotoCenterEur === "number"
-            ? formatDelta(prePhotoCenterEur - s3CenterEur)
-            : 0,
-        confirmed: servicesSelected,
+        key: "kitchen",
+        label: "Cuisine",
+        status: kitchenLabel,
+        amountEur: deltaKitchenEur,
+        confirmed: true,
       },
       {
         key: "date",
-        label: "Date (saison/urgence)",
-        status: isMovingDateValid ? "confirmée" : "à renseigner",
-        amountEur:
-          s1CenterEur != null && s2CenterEur != null
-            ? formatDelta(s2CenterEur - s1CenterEur)
-            : 0,
+        label: "Date",
+        status: isMovingDateValid ? "confirmée" : "pas de coef saison",
+        amountEur: deltaDateEur,
         confirmed: isMovingDateValid,
       },
       {
-        key: "distance",
-        label: "Distance (OSRM)",
-        status: isRouteDistanceValid ? "confirmée" : "à confirmer",
-        amountEur:
-          baselineCenterEur != null && s1CenterEur != null
-            ? formatDelta(s1CenterEur - baselineCenterEur)
-            : 0,
-        confirmed: isRouteDistanceValid,
+        key: "access",
+        label: "Accès",
+        status: accessConfirmed ? "confirmé" : "RAS",
+        amountEur: deltaAccessEur,
+        confirmed: accessConfirmed,
       },
     ];
 
     return {
-      baselineMinEur: hasBaseline ? baselineMinEur : null,
-      baselineMaxEur: hasBaseline ? baselineMaxEur : null,
-      baselineCenterEur,
-      refinedMinEur,
-      refinedMaxEur,
+      firstEstimateMinEur: s0.prixMin,
+      firstEstimateMaxEur: s0.prixMax,
+      firstEstimateCenterEur,
+      refinedMinEur: sAccess.prixMin,
+      refinedMaxEur: sAccess.prixMax,
       refinedCenterEur,
       lines,
     };
   }, [
     isFunnelV2,
-    activePricing,
     routeDistanceKm,
     routeDistanceProvider,
-    state.rewardBaselineMinEur,
-    state.rewardBaselineMaxEur,
-    state.rewardBaselineDistanceKm,
     state.surfaceM2,
-    state.density,
     state.formule,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    state.originLat,
+    state.originLon,
+    state.destinationLat,
+    state.destinationLon,
+    state.density,
+    state.kitchenIncluded,
+    state.kitchenApplianceCount,
     state.movingDate,
     state.originHousingType,
     state.destinationHousingType,
@@ -1114,10 +1070,6 @@ function DevisGratuitsV3Content() {
     state.destinationFloorTouched,
     state.originElevatorTouched,
     state.destinationElevatorTouched,
-    state.originFurnitureLift,
-    state.destinationFurnitureLift,
-    state.servicePiano,
-    state.serviceDebarras,
     state.destinationUnknown,
   ]);
 

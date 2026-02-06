@@ -35,14 +35,14 @@ interface StepAccessLogisticsV2Props {
   routeDistanceKm?: number | null;
   routeDistanceProvider?: "osrm" | "fallback" | null;
   pricingCart?: {
-    baselineMinEur: number | null;
-    baselineMaxEur: number | null;
-    baselineCenterEur: number | null;
+    firstEstimateMinEur: number | null;
+    firstEstimateMaxEur: number | null;
+    firstEstimateCenterEur: number | null;
     refinedMinEur: number | null;
     refinedMaxEur: number | null;
     refinedCenterEur: number | null;
     lines: Array<{
-      key: "distance" | "date" | "access" | "services" | "photos";
+      key: "distance" | "density" | "kitchen" | "date" | "access";
       label: string;
       status: string;
       amountEur: number;
@@ -771,17 +771,11 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         <div className="rounded-xl border border-[#E3E5E8] bg-white/90 backdrop-blur px-3 py-2.5 flex items-center justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-              Budget actuel
+              Budget affiné
             </p>
             <p className="text-xl font-black text-[#0F172A] tabular-nums">
               {typeof cart?.refinedCenterEur === "number" ? fmtEur(cart.refinedCenterEur) : "—"}
             </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs font-semibold text-[#6BCFCF]">
-              {(cart?.lines ?? []).filter((l) => l.confirmed).length}/{(cart?.lines ?? []).length}
-            </p>
-            <p className="text-[10px] text-[#1E293B]/60">confirmées</p>
           </div>
         </div>
       </div>
@@ -803,55 +797,31 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       {/* On l'active à partir de XL pour garantir assez d'espace sans recouvrement */}
       <aside className="hidden xl:block xl:fixed xl:top-24 xl:right-0 xl:w-[320px] xl:z-30">
         <div className="rounded-2xl border border-[#E3E5E8] bg-white/90 backdrop-blur p-3 space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-[#0F172A]">Votre panier</p>
-            <p className="text-xs font-semibold text-[#6BCFCF]">
-              {(cart?.lines ?? []).filter((l) => l.confirmed).length}/{(cart?.lines ?? []).length} confirmées
+          <p className="text-sm font-semibold text-[#0F172A]">Votre panier</p>
+
+          {/* Première estimation */}
+          <div className="space-y-2 rounded-xl bg-[#0F172A]/5 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0F172A]/70">
+              Première estimation
             </p>
-          </div>
-
-          <div className="h-1.5 bg-[#E3E5E8] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#6BCFCF] transition-all duration-300"
-              style={{
-                width: `${
-                  ((cart?.lines ?? []).filter((l) => l.confirmed).length /
-                    Math.max((cart?.lines ?? []).length, 1)) *
-                  100
-                }%`,
-              }}
-            />
-          </div>
-
-          <div className="space-y-2 rounded-xl bg-[#6BCFCF]/5 p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6BCFCF]">
-                Votre budget actuel
-              </p>
-              {(cart?.lines ?? []).filter((l) => l.confirmed).length === (cart?.lines ?? []).length && (
-                <span className="rounded-full bg-[#14532D] px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wide">
-                  Optimisé
-                </span>
-              )}
-            </div>
-            {typeof cart?.refinedCenterEur === "number" ? (
+            {typeof cart?.firstEstimateCenterEur === "number" ? (
               <>
                 <div className="text-center">
-                  <p className="text-3xl font-black text-[#0F172A] leading-[0.95] tabular-nums transition-all duration-300">
-                    {fmtEur(cart.refinedCenterEur)}
+                  <p className="text-3xl font-black text-[#0F172A] leading-[0.95] tabular-nums">
+                    {fmtEur(cart.firstEstimateCenterEur)}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">min</p>
                     <p className="text-sm font-semibold text-[#14532D]">
-                      {typeof cart?.refinedMinEur === "number" ? fmtEur(cart.refinedMinEur) : "—"}
+                      {typeof cart?.firstEstimateMinEur === "number" ? fmtEur(cart.firstEstimateMinEur) : "—"}
                     </p>
                   </div>
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">max</p>
                     <p className="text-sm font-semibold text-[#7F1D1D]">
-                      {typeof cart?.refinedMaxEur === "number" ? fmtEur(cart.refinedMaxEur) : "—"}
+                      {typeof cart?.firstEstimateMaxEur === "number" ? fmtEur(cart.firstEstimateMaxEur) : "—"}
                     </p>
                   </div>
                 </div>
@@ -859,6 +829,9 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             ) : (
               <div className="text-sm text-[#1E293B]/60">—</div>
             )}
+            <p className="text-[10px] text-[#1E293B]/60">
+              villes +20 km • densité très meublé • cuisine 3 équipements • pas de saison • accès RAS
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -869,13 +842,13 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               {(cart?.lines ?? []).map((l) => {
                 const isPos = l.amountEur > 0;
                 const isNeg = l.amountEur < 0;
-                const isPhotos = l.key === "photos";
                 const isAccess = l.key === "access";
                 const isDate = l.key === "date";
+                const isDistance = l.key === "distance";
                 
                 const tooltips: Record<string, string> = {
-                  photos: "Les photos permettent d'estimer le volume exact et d'éviter les marges de sécurité",
-                  access: "Un accès difficile nécessite plus de temps et de manutention",
+                  distance: "La distance est recalculée à partir des adresses quand elles sont renseignées",
+                  access: "Les étages et l'absence d'ascenseur augmentent le temps de manutention",
                   date: "Les périodes de forte demande (été, fin de mois) impactent les tarifs",
                 };
                 
@@ -884,7 +857,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-[#0F172A] truncate flex items-center gap-1.5">
                         <span className="truncate">{l.label}</span>
-                        {(isPhotos || isAccess || isDate) && (
+                        {(isDistance || isAccess || isDate) && (
                           <span
                             className="inline-flex items-center"
                             title={tooltips[l.key]}
@@ -910,22 +883,36 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             </div>
           </div>
 
-          <div className="h-px bg-[#E3E5E8]" />
-
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/40">
-              Budget initial (hypothèses)
+          {/* Budget affiné */}
+          <div className="space-y-2 rounded-xl bg-[#6BCFCF]/5 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6BCFCF]">
+              Budget affiné
             </p>
-            {typeof cart?.baselineCenterEur === "number" ? (
-              <p className="text-xs text-[#1E293B]/60 line-through">
-                {fmtEur(cart.baselineCenterEur)} ({fmtEur(cart.baselineMinEur ?? 0)}–{fmtEur(cart.baselineMaxEur ?? 0)})
-              </p>
+            {typeof cart?.refinedCenterEur === "number" ? (
+              <>
+                <div className="text-center">
+                  <p className="text-3xl font-black text-[#0F172A] leading-[0.95] tabular-nums">
+                    {fmtEur(cart.refinedCenterEur)}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">min</p>
+                    <p className="text-sm font-semibold text-[#14532D]">
+                      {typeof cart?.refinedMinEur === "number" ? fmtEur(cart.refinedMinEur) : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">max</p>
+                    <p className="text-sm font-semibold text-[#7F1D1D]">
+                      {typeof cart?.refinedMaxEur === "number" ? fmtEur(cart.refinedMaxEur) : "—"}
+                    </p>
+                  </div>
+                </div>
+              </>
             ) : (
-              <p className="text-xs text-[#1E293B]/40">—</p>
+              <div className="text-sm text-[#1E293B]/60">—</div>
             )}
-            <p className="text-[10px] text-[#1E293B]/50">
-              distance +15 km • appart 2e • sans services
-            </p>
           </div>
         </div>
       </aside>

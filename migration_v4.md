@@ -94,6 +94,10 @@
     - full: **+6 m³**
     - impacte le volume/prix via `extraVolumeM3` et est **archivé côté Back Office** dans `tunnelOptions.volumeAdjustments` (JSON) **sans migration DB**.
   - UI: Densité + Cuisine sont rattachés visuellement au **logement de départ** et affichés **l’un au-dessus de l’autre** (pile), avec des choix internes en grille sur desktop.
+  - Panier (Step 3 V2) refondu:
+    - En haut: **Première estimation** (villes +20 km, densité=très meublé, cuisine=3 équipements, pas de saison, accès RAS)
+    - Lignes (deltas): **Distance** (adresses OSRM vs villes), **Densité**, **Cuisine**, **Date** (coef sur base), **Accès**
+    - En bas: **Budget affiné**
 - **Tracking**:
   - Aucun changement (pas de modification de `logicalStep` / `screenId`).
 - **Champs / Inputs**:
