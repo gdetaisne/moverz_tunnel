@@ -350,7 +350,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         <HousingInline side="origin" />
 
         {/* Densité + Cuisine (rattachés au logement de départ) */}
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-4">
           {/* Densité (volume) */}
           <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white p-4">
             <p className="text-sm font-semibold text-[#0F172A]">Densité</p>

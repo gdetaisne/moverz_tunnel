@@ -93,7 +93,7 @@
     - appliances: quantité × **0,6 m³**
     - full: **+3 m³**
     - impacte le volume/prix via `extraVolumeM3` et est **archivé côté Back Office** dans `tunnelOptions.volumeAdjustments` (JSON) **sans migration DB**.
-  - UI: sur desktop, Densité + Cuisine sont présentés en **grille** (plus compact) et rattachés visuellement au **logement de départ** (breakpoints ajustés pour être plus “desktop”).
+  - UI: Densité + Cuisine sont rattachés visuellement au **logement de départ** et affichés **l’un au-dessus de l’autre** (pile), avec des choix internes en grille sur desktop.
 - **Tracking**:
   - Aucun changement (pas de modification de `logicalStep` / `screenId`).
 - **Champs / Inputs**:
