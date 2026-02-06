@@ -156,6 +156,19 @@
 - **Donnée**: pas de nouveaux champs — le côté (départ/arrivée) est sérialisé dans `access_details` (`__accessSidesV1=...`) et les bools existants restent la source envoyée/pricing (OR des deux côtés).
 - **Fichier**: `components/tunnel/v2/StepAccessLogisticsV2.tsx`
 
+### 2026-02-06 — Pricing : ajout d’une décote globale (Option A)
+
+- **Décision**: ajouter une variable unique `DECOTE = -20%` (factor 0.8) pour baisser “le forfait de base” sans retoucher toutes les règles.
+- **Application (Option A)**:
+  - appliquée à `rateEurPerM3` (composante volume)
+  - appliquée à `COEF_DISTANCE` (composante distance)
+  - **non** appliquée à `PRIX_MIN_SOCLE` (socle)
+  - **non** appliquée aux **services** (monte‑meuble, piano, etc.)
+- **Fichiers**:
+  - `lib/pricing/constants.ts`
+  - `lib/pricing/calculate.ts`
+  - `app/devis-gratuits-v3/page.tsx` (miroir détail)
+
 ### 2026-02-03 — Ajout d'un CTA PayPal (lien de paiement) en fin de tunnel
 
 - **Date**: 2026-02-03

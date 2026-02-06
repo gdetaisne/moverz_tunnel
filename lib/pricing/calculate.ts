@@ -5,6 +5,7 @@ import {
   SERVICES_PRIX,
   COEF_VOLUME,
   COEF_DISTANCE,
+  DECOTE,
   PRIX_MIN_SOCLE,
   getDistanceBand,
   LA_POSTE_RATES_EUR_PER_M3,
@@ -131,11 +132,12 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   // On conserve l'esprit V2 "max(..., socle)" mais la composante distance est en €/m³,
   // donc elle dépend nécessairement du volume.
   const band = getDistanceBand(input.distanceKm);
-  const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][input.formule];
+  const DECOTE_FACTOR = 1 + DECOTE; // ex: -20% => 0.8
+  const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][input.formule] * DECOTE_FACTOR;
   const volumeScale = getVolumeEconomyScale(volumeM3);
   const volumeCost = volumeM3 * rateEurPerM3 * volumeScale;
   // Composante distance continue (le buffer +15 km a toujours un effet)
-  const distanceCost = Math.max(0, input.distanceKm) * COEF_DISTANCE;
+  const distanceCost = Math.max(0, input.distanceKm) * COEF_DISTANCE * DECOTE_FACTOR;
   const baseNoSeason = Math.max(volumeCost, PRIX_MIN_SOCLE) + distanceCost;
   const baseSeasoned = baseNoSeason * input.seasonFactor;
 

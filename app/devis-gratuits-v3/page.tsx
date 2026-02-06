@@ -19,6 +19,7 @@ import {
 import {
   COEF_DISTANCE,
   DENSITY_COEFFICIENTS,
+  DECOTE,
   FORMULE_MULTIPLIERS,
   PRIX_MIN_SOCLE,
   TYPE_COEFFICIENTS,
@@ -1292,10 +1293,12 @@ function DevisGratuitsV3Content() {
     const volumeM3 = Math.round(adjustedVolume * 10) / 10;
 
     const band = getDistanceBand(distanceKm);
-    const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][formule];
+    // Décote globale (Option A): appliquée à rate €/m³ + coef distance uniquement (pas au socle, ni aux services)
+    const DECOTE_FACTOR = 1 + DECOTE;
+    const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][formule] * DECOTE_FACTOR;
     const volumeScale = getVolumeEconomyScale(volumeM3);
     const volumeCost = volumeM3 * rateEurPerM3 * volumeScale;
-    const distanceCost = Math.max(0, distanceKm) * COEF_DISTANCE;
+    const distanceCost = Math.max(0, distanceKm) * COEF_DISTANCE * DECOTE_FACTOR;
     const baseNoSeasonEur = Math.max(volumeCost, PRIX_MIN_SOCLE) + distanceCost;
 
     const coeffOrigin = getEtageCoefficient(originFloor, originElevator);

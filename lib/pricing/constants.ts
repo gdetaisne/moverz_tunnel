@@ -33,6 +33,10 @@ export const SERVICES_PRIX = {
   debarras: 100,
 } as const;
 
+// Décote globale (pricing base). -0.2 => -20% (factor 0.8).
+// Option A: appliquée à `rateEurPerM3` + `COEF_DISTANCE` uniquement (pas au socle, ni aux services).
+export const DECOTE = -0.2 as const;
+
 // Coefficients de base (alignés sur le tunnel Marseille / La Poste)
 // Ces valeurs viennent de `moverz_main` et ont déjà été calibrées sur les cas réels.
 export const COEF_VOLUME = 80; // €/m3
