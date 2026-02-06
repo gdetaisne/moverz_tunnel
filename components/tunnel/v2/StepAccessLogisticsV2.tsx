@@ -459,7 +459,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 ].join(" ")}
               >
                 <div className="text-sm font-semibold text-[#0F172A]">Complète</div>
-                <div className="mt-0.5 text-xs text-[#1E293B]/70">+3 m³</div>
+                <div className="mt-0.5 text-xs text-[#1E293B]/70">+6 m³</div>
               </button>
             </div>
 

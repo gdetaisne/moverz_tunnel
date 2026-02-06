@@ -91,7 +91,7 @@
   - Step 3 (V2): ajout **Cuisine / électroménager** (connecté) :
     - choix: none / appliances / full
     - appliances: quantité × **0,6 m³**
-    - full: **+3 m³**
+    - full: **+6 m³**
     - impacte le volume/prix via `extraVolumeM3` et est **archivé côté Back Office** dans `tunnelOptions.volumeAdjustments` (JSON) **sans migration DB**.
   - UI: Densité + Cuisine sont rattachés visuellement au **logement de départ** et affichés **l’un au-dessus de l’autre** (pile), avec des choix internes en grille sur desktop.
 - **Tracking**:

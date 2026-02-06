@@ -708,7 +708,7 @@ function DevisGratuitsV3Content() {
         : null;
 
     const kitchenExtraVolumeM3 = (() => {
-      if (state.kitchenIncluded === "full") return 3;
+      if (state.kitchenIncluded === "full") return 6;
       if (state.kitchenIncluded === "appliances") {
         const n = Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
         return Math.max(0, n) * 0.6;
@@ -1494,7 +1494,7 @@ function DevisGratuitsV3Content() {
     try {
       const kitchenExtraVolumeM3 =
         state.kitchenIncluded === "full"
-          ? 3
+          ? 6
           : state.kitchenIncluded === "appliances"
           ? Math.max(0, kitchenAppliancesCount) * 0.6
           : 0;
@@ -1852,7 +1852,7 @@ function DevisGratuitsV3Content() {
                 : undefined,
             extraVolumeM3:
               state.kitchenIncluded === "full"
-                ? 3
+                ? 6
                 : state.kitchenIncluded === "appliances"
                 ? (Math.max(
                     0,
