@@ -24,6 +24,7 @@ interface StepAccessLogisticsV2Props {
   destinationCountryCode?: string;
   destinationLat?: number | null;
   destinationLon?: number | null;
+  destinationUnknown?: boolean;
   destinationHousingType: string;
   destinationFloor: string;
   // Volume
@@ -246,13 +247,15 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
   const ACCESS_SIDES_MARKER = "__accessSidesV1=";
   type AccessSidesState = Record<QuestionKey, { origin: boolean; destination: boolean }>;
 
-  const splitAccessDetails = (raw: string): { userText: string; markerJson: string | null } => {
+    const splitAccessDetails = (raw: string): { userText: string; markerJson: string | null } => {
     const s = String(raw || "");
     const re = new RegExp(`\\n?\\n?${ACCESS_SIDES_MARKER}([^\\n]*)\\s*$`);
     const m = s.match(re);
     if (!m) return { userText: s, markerJson: null };
     return { userText: s.replace(re, ""), markerJson: (m[1] ?? "").trim() || null };
   };
+
+  const destinationUnknown = !!props.destinationUnknown;
 
   const parseAccessSides = (): AccessSidesState => {
     const blank: AccessSidesState = {
@@ -271,7 +274,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           const v = parsed?.[k];
           next[k] = {
             origin: Boolean(v?.origin),
-            destination: Boolean(v?.destination) && !props.destinationUnknown,
+            destination: Boolean(v?.destination) && !destinationUnknown,
           };
         });
         return next;
@@ -284,7 +287,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
     const next = { ...blank };
     (Object.keys(blank) as QuestionKey[]).forEach((k) => {
       const on = Boolean((answered as any)[k]);
-      next[k] = { origin: on, destination: on && !props.destinationUnknown };
+      next[k] = { origin: on, destination: on && !destinationUnknown };
     });
     return next;
   };
@@ -307,7 +310,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
   };
 
   const toggleSide = (key: QuestionKey, side: "origin" | "destination") => {
-    if (side === "destination" && props.destinationUnknown) return;
+    if (side === "destination" && destinationUnknown) return;
     const current = parseAccessSides();
     const next: AccessSidesState = {
       ...current,
@@ -316,7 +319,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         [side]: !current[key][side],
       },
     };
-    if (props.destinationUnknown) {
+    if (destinationUnknown) {
       next[key].destination = false;
     }
     setAccessSides(next);
@@ -750,7 +753,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
               {questions.map((q) => {
                 const sides = parseAccessSides()[q.key];
-                const destDisabled = props.destinationUnknown;
+                const destDisabled = destinationUnknown;
                 return (
                   <div
                     key={q.key}

@@ -155,6 +155,7 @@
 - **Décision**: remplacer les toggles Oui/Non (question par question) par un tableau **Départ / Arrivée** avec uniquement des boutons **“Oui”** (toggle).
 - **Donnée**: pas de nouveaux champs — le côté (départ/arrivée) est sérialisé dans `access_details` (`__accessSidesV1=...`) et les bools existants restent la source envoyée/pricing (OR des deux côtés).
 - **Fichier**: `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+- **Fix build staging**: ajout du prop `destinationUnknown` dans `StepAccessLogisticsV2Props` + passage depuis `app/devis-gratuits-v3/page.tsx` (sinon erreur TS en build).
 
 ### 2026-02-06 — Pricing : ajout d’une décote globale (Option A)
 
