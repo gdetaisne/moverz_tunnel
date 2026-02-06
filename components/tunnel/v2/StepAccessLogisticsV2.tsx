@@ -42,6 +42,7 @@ interface StepAccessLogisticsV2Props {
       label: string;
       status: string;
       amountEur: number;
+      confirmed?: boolean;
     }>;
   };
   onFieldChange: (field: string, value: any) => void;
