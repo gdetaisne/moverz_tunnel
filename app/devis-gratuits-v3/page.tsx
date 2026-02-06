@@ -908,12 +908,17 @@ function DevisGratuitsV3Content() {
       Number.isFinite(routeDistanceKm) &&
       routeDistanceKm > 0 &&
       routeDistanceProvider === "osrm";
-    const refinedDistanceKm = isRouteDistanceValid ? routeDistanceKm! : baseDistanceKm;
+    const addressesFilled =
+      !state.destinationUnknown &&
+      (state.originAddress || "").trim().length >= 5 &&
+      (state.destinationAddress || "").trim().length >= 5;
+    const canUseOsrmDistance = addressesFilled && isRouteDistanceValid;
+    const refinedDistanceKm = canUseOsrmDistance ? routeDistanceKm! : baseDistanceKm;
 
     // 1) Distance (recalcule prix de base, delta vs baseDistanceKm)
     const inputDistance = { ...baselineInput, distanceKm: refinedDistanceKm };
     const sDist = calculatePricing(inputDistance);
-    const deltaDistanceEur = formatDelta(sDist.prixBase - s0.prixBase);
+    const deltaDistanceEur = canUseOsrmDistance ? formatDelta(sDist.prixBase - s0.prixBase) : 0;
 
     // 2) Densité (delta vs "Très meublé")
     const inputDensity: Parameters<typeof calculatePricing>[0] = {
@@ -999,9 +1004,9 @@ function DevisGratuitsV3Content() {
       {
         key: "distance",
         label: "Distance",
-        status: isRouteDistanceValid ? "adresses (OSRM)" : "villes +20 km",
+        status: canUseOsrmDistance ? "adresses (OSRM)" : "villes +20 km",
         amountEur: deltaDistanceEur,
-        confirmed: isRouteDistanceValid,
+        confirmed: canUseOsrmDistance,
       },
       {
         key: "density",
