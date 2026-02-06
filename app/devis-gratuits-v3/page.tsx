@@ -801,7 +801,7 @@ function DevisGratuitsV3Content() {
     );
     const distanceKm = Math.max(0, cityDistanceKm + 20);
 
-    const baseInput: Parameters<typeof calculatePricing>[0] = {
+    const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
       surfaceM2: surface,
       housingType: "t2" as const,
       density: "dense" as const,
@@ -884,7 +884,7 @@ function DevisGratuitsV3Content() {
     );
     const distanceKm = Math.max(0, cityDistanceKm + 20);
 
-    const baseInput: Parameters<typeof calculatePricing>[0] = {
+    const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
       surfaceM2: surface,
       housingType: "t2" as const,
       density: "dense" as const,
@@ -1037,10 +1037,8 @@ function DevisGratuitsV3Content() {
       !!state.originElevatorTouched ||
       !!state.destinationElevatorTouched;
 
-    const inputAccess = (() => {
-      // Tant que l'accès n'est pas "touché", on reste sur l'hypothèse baseline (RAS).
-      if (!accessConfirmed) return inputDate;
-
+    const accessMeta = (() => {
+      if (!accessConfirmed) return null;
       const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
       const destinationFloor = state.destinationUnknown
         ? 0
@@ -1049,13 +1047,28 @@ function DevisGratuitsV3Content() {
         : parseInt(state.destinationFloor || "0", 10) || 0;
       const originElevator = toPricingElevator(state.originElevator);
       const destinationElevator = toPricingElevator(state.destinationElevator);
+      const needsMonteMeuble =
+        (originElevator === "no" && originFloor >= 4) ||
+        (destinationElevator === "no" && destinationFloor >= 4);
+      return {
+        originFloor,
+        destinationFloor,
+        originElevator,
+        destinationElevator,
+        needsMonteMeuble,
+      };
+    })();
+
+    const inputAccess = (() => {
+      // Tant que l'accès n'est pas "touché", on reste sur l'hypothèse baseline (RAS).
+      if (!accessConfirmed) return inputDate;
 
       return {
         ...inputDate,
-        originFloor,
-        originElevator,
-        destinationFloor,
-        destinationElevator,
+        originFloor: accessMeta!.originFloor,
+        originElevator: accessMeta!.originElevator,
+        destinationFloor: accessMeta!.destinationFloor,
+        destinationElevator: accessMeta!.destinationElevator,
       };
     })();
     const sAccess = calculatePricing(inputAccess);
@@ -1079,6 +1092,11 @@ function DevisGratuitsV3Content() {
         : state.kitchenIncluded === "appliances"
         ? `${Math.max(0, kitchenApplianceCount)} équipement(s)`
         : "rien";
+    const accessLabel = !accessConfirmed
+      ? "RAS"
+      : accessMeta?.needsMonteMeuble
+      ? "≥4 sans ascenseur (monte-meuble)"
+      : "confirmé";
 
     const lines: Array<{
       key: "distance" | "density" | "kitchen" | "date" | "access";
@@ -1118,7 +1136,7 @@ function DevisGratuitsV3Content() {
       {
         key: "access",
         label: "Accès",
-        status: accessConfirmed ? "confirmé" : "RAS",
+        status: accessLabel,
         amountEur: deltaAccessEur,
         confirmed: accessConfirmed,
       },
@@ -1166,7 +1184,7 @@ function DevisGratuitsV3Content() {
 
   const estimateRange = useMemo(() => {
     if (!pricingByFormule) return null;
-    const values = Object.values(pricingByFormule);
+    const values = Object.values(pricingByFormule) as Array<ReturnType<typeof calculatePricing>>;
     const min = Math.min(...values.map((v) => v.prixMin));
     const max = Math.max(...values.map((v) => v.prixMax));
     if (!Number.isFinite(min) || !Number.isFinite(max)) return null;

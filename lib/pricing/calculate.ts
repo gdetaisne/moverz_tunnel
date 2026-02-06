@@ -81,10 +81,31 @@ export function getEtageCoefficient(
   elevator: "yes" | "no" | "partial"
 ): number {
   if (elevator === "yes") return 1.0;
-  if (floor === 0) return 1.0;
-  if (floor <= 2) return 1.05;
-  if (floor <= 5) return 1.1;
+  if (floor <= 0) return 1.0;
+
+  // Règles "sans ascenseur" (si pas déjà inclus)
+  // - 1er: +5%
+  // - 2e: +10%
+  // - 3e: +15%
+  // - ≥4: flag monte-meuble (coef capé à +15%, service géré séparément)
+  if (elevator === "no") {
+    if (floor === 1) return 1.05;
+    if (floor === 2) return 1.1;
+    return 1.15; // floor >= 3
+  }
+
+  // "partial" : comportement conservateur (proche "sans ascenseur", mais capé)
+  if (floor === 1) return 1.05;
+  if (floor === 2) return 1.1;
   return 1.15;
+}
+
+export function requiresMonteMeuble(
+  floor: number,
+  elevator: "yes" | "no" | "partial"
+): boolean {
+  // Règle métier: à partir du 4e sans ascenseur => monte-meuble requis.
+  return elevator === "no" && floor >= 4;
 }
 
 export function calculatePricing(input: PricingInput): PricingOutput {
@@ -133,7 +154,11 @@ export function calculatePricing(input: PricingInput): PricingOutput {
 
   // 6. Services additionnels
   let servicesTotal = 0;
-  if (input.services.monteMeuble) servicesTotal += SERVICES_PRIX.monteMeuble;
+  const needsMonteMeuble =
+    requiresMonteMeuble(input.originFloor, input.originElevator) ||
+    requiresMonteMeuble(input.destinationFloor, input.destinationElevator);
+  // "si pas déjà inclus": si l'accès l'impose, on l'ajoute même si l'utilisateur ne l'a pas coché.
+  if (input.services.monteMeuble || needsMonteMeuble) servicesTotal += SERVICES_PRIX.monteMeuble;
   if (input.services.piano === "droit") servicesTotal += SERVICES_PRIX.pianoDroit;
   if (input.services.piano === "quart") servicesTotal += SERVICES_PRIX.pianoQuart;
   if (input.services.debarras) servicesTotal += SERVICES_PRIX.debarras;

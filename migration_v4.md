@@ -106,6 +106,12 @@
     - Calcul (hypothèses par défaut): tant que non touché, on suppose **Densité=très meublé** et **Cuisine=3 équipements**.
     - Panier: les lignes **Densité** / **Cuisine** restent à **0€** tant que l’utilisateur n’a pas fait un choix (status “par défaut …”).
     - Accès: tant que non touché, on reste sur l’hypothèse “RAS” (pas d’impact prix).
+  - **Règles accès — Étages sans ascenseur (Step 3 V2 / pricing engine)**:
+    - RDC: 0
+    - 1er: +5%
+    - 2e: +10%
+    - 3e: +15%
+    - ≥4: **flag monte-meuble** (ajouté automatiquement au pricing si pas déjà inclus)
 - **Tracking**:
   - Aucun changement (pas de modification de `logicalStep` / `screenId`).
 - **Champs / Inputs**:

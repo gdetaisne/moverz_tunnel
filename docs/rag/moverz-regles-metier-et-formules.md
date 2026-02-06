@@ -357,10 +357,14 @@ Tarifs (LA_POSTE_RATES_EUR_PER_M3) — grille actuelle:
 `getEtageCoefficient(floor, elevator)`:
 
 - ascenseur `"yes"` → 1.0
-- floor = 0 → 1.0
-- floor ≤ 2 → 1.05
-- floor ≤ 5 → 1.1
-- sinon → 1.15
+- floor ≤ 0 → 1.0
+- ascenseur `"no"` (sans ascenseur):
+  - RDC → 1.0
+  - 1er → 1.05 (+5%)
+  - 2e → 1.10 (+10%)
+  - 3e → 1.15 (+15%)
+  - ≥4 → 1.15 (+15%) **+ monte-meuble requis** (voir `requiresMonteMeuble`)
+- ascenseur `"partial"`: comportement conservateur (proche sans ascenseur, capé à 1.15)
 
 On prend le pire des deux accès:
 
