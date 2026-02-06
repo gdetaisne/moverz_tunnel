@@ -43,6 +43,16 @@ export function StepQualificationV2({
     const n = Number.parseInt(String(surfaceM2 || "").trim(), 10);
     return Number.isFinite(n) && n >= 10 && n <= 500;
   })();
+  const originInitialValue = originCity
+    ? originPostalCode
+      ? `${originCity} (${originPostalCode})`
+      : originCity
+    : originPostalCode;
+  const destinationInitialValue = destinationCity
+    ? destinationPostalCode
+      ? `${destinationCity} (${destinationPostalCode})`
+      : destinationCity
+    : destinationPostalCode;
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -56,7 +66,7 @@ export function StepQualificationV2({
           label="Ville de départ"
           placeholder="Paris"
           inputId="v2-origin-city"
-          initialValue={originCity || originPostalCode}
+          initialValue={originInitialValue}
           kind="city"
           validated={isOriginCoordsOk}
           invalidated={showValidation && !isOriginCoordsOk}
@@ -86,7 +96,7 @@ export function StepQualificationV2({
           label="Ville d’arrivée"
           placeholder="Lyon"
           inputId="v2-destination-city"
-          initialValue={destinationCity || destinationPostalCode}
+          initialValue={destinationInitialValue}
           kind="city"
           validated={isDestinationCoordsOk}
           invalidated={showValidation && !isDestinationCoordsOk}
@@ -117,7 +127,7 @@ export function StepQualificationV2({
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
             <label className="block text-sm font-medium text-[#0F172A]" htmlFor="v2-surface-m2">
-              Surface approximative (m²)
+              Surface approximative, garages et dépendances inclues (m2)
             </label>
             <span className="text-[11px] font-semibold text-[#1E293B]/50">Requis</span>
           </div>
@@ -156,7 +166,7 @@ export function StepQualificationV2({
           {isSubmitting ? "Chargement..." : "Voir les options disponibles"}
         </button>
         <p className="text-center text-sm text-[#1E293B]/70">
-          Gratuit • Sans engagement • ~30 sec
+          Gratuit • Sans engagement • 2 minutes
         </p>
       </div>
     </form>

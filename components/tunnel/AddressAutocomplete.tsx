@@ -301,7 +301,8 @@ export function AddressAutocomplete({
       if (ra !== rb) return ra - rb;
       const aIsFr = normalize(a.countryCode ?? "") === "fr";
       const bIsFr = normalize(b.countryCode ?? "") === "fr";
-      if (aIsFr !== bIsFr) return aIsFr ? 1 : -1;
+      // Préférer la France en premier dans la liste (sinon les résultats FR sont "cachés").
+      if (aIsFr !== bIsFr) return aIsFr ? -1 : 1;
       return (a.label ?? "").localeCompare(b.label ?? "", "fr");
     });
   };
@@ -375,7 +376,9 @@ export function AddressAutocomplete({
   // Fallback : si l'utilisateur ne clique pas une suggestion, on géocode le texte en blur.
   const resolveOnBlur = async () => {
     const trimmed = input.trim();
-    if (trimmed.length < 5) return;
+    // En "ville", on accepte des entrées courtes (ex: "Lyon").
+    // En "adresse", on garde un seuil plus haut pour éviter des géocodages bruyants.
+    if (trimmed.length < (kind === "city" ? 3 : 5)) return;
     try {
       const last = lastSelectionRef.current;
       const lastLabel = last?.addressLine ?? last?.label ?? "";
@@ -391,6 +394,12 @@ export function AddressAutocomplete({
 
       const list = await fetchSuggestionsForQuery(trimmed);
       const first = list[0];
+      // Pour une recherche de ville ambiguë (plusieurs villes homonymes),
+      // on n'auto-sélectionne PAS sans indice (ex: code postal) — sinon on "choisit au hasard".
+      if (kind === "city") {
+        const hasDigits = /\d/.test(trimmed);
+        if (!hasDigits && list.length > 1) return;
+      }
       // En "world"/étranger, on peut ne pas avoir de CP/ville au format FR.
       // Si on a au moins une suggestion (et idéalement des coords), on la prend.
       if (first) await commitSelection(first);
@@ -440,9 +449,11 @@ export function AddressAutocomplete({
               e.preventDefault();
               setHighlightIdx((i) => Math.max(0, i - 1));
             } else if (e.key === "Enter") {
-              if (highlightIdx >= 0 && highlightIdx < results.length) {
+              // UX: si rien n'est surligné, "Entrée" sélectionne la première suggestion.
+              const idx = highlightIdx >= 0 ? highlightIdx : 0;
+              if (idx >= 0 && idx < results.length) {
                 e.preventDefault();
-                void commitSelection(results[highlightIdx]!);
+                void commitSelection(results[idx]!);
               }
             } else if (e.key === "Escape") {
               setShowDropdown(false);
