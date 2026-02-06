@@ -13,6 +13,7 @@ import {
   calculatePricing,
   type FormuleType as PricingFormuleType,
   type HousingType,
+  calculateVolume,
   getEtageCoefficient,
   getVolumeEconomyScale,
 } from "@/lib/pricing/calculate";
@@ -59,6 +60,7 @@ function DevisGratuitsV3Content() {
   const urlLeadId = (searchParams.get("leadId") || "").trim();
   const hydratedLeadRef = useRef<string | null>(null);
   const isFunnelV2 = useMemo(() => process.env.NEXT_PUBLIC_FUNNEL_V2 === "true", []);
+  const debugMode = (searchParams.get("debug") || "").trim() === "1" || (searchParams.get("debug") || "").trim() === "true";
 
   const [confirmationRequested, setConfirmationRequested] = useState(false);
   const [showValidationStep1, setShowValidationStep1] = useState(false);
@@ -934,6 +936,83 @@ function DevisGratuitsV3Content() {
     state.destinationUnknown,
     state.originPostalCode,
     state.destinationPostalCode,
+  ]);
+
+  const v2DebugRowsStep2 = useMemo(() => {
+    if (!debugMode) return null;
+    if (!isFunnelV2) return null;
+    if (state.currentStep !== 2) return null;
+
+    const surface = parseInt(state.surfaceM2) || 60;
+    const formule = state.formule as PricingFormuleType;
+    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
+    const distanceKm = Math.max(0, cityDistanceKm + 5);
+    const extraVolumeM3 = 3 * 0.6; // debug Step 2: cuisine=3 équipements
+    const baseVolumeM3 = calculateVolume(surface, "t2", "dense");
+    const volumeM3 = Math.round((baseVolumeM3 + extraVolumeM3) * 10) / 10;
+
+    const band = getDistanceBand(distanceKm);
+    const decoteFactor = 1 + DECOTE;
+    const rateRaw = LA_POSTE_RATES_EUR_PER_M3[band][formule];
+    const rateApplied = rateRaw * decoteFactor;
+    const volumeScale = getVolumeEconomyScale(volumeM3);
+    const volumeCost = volumeM3 * rateApplied * volumeScale;
+    const distanceCost = Math.max(0, distanceKm) * COEF_DISTANCE * decoteFactor;
+    const socleApplied = volumeCost < PRIX_MIN_SOCLE;
+    const baseNoSeason = Math.max(volumeCost, PRIX_MIN_SOCLE) + distanceCost;
+
+    // Baseline Step 2: accès RAS
+    const coeffEtage = getEtageCoefficient(0, "yes");
+    const coeffAccess = 1;
+    const centreNoSeasonSansServices = baseNoSeason * coeffEtage * coeffAccess;
+
+    const pricing = calculatePricing({
+      surfaceM2: surface,
+      housingType: "t2",
+      density: "dense",
+      distanceKm,
+      seasonFactor: 1,
+      originFloor: 0,
+      originElevator: "yes",
+      destinationFloor: 0,
+      destinationElevator: "yes",
+      formule,
+      services: { monteMeuble: false, piano: null, debarras: false },
+      extraVolumeM3,
+    });
+
+    const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(n);
+    const fmtEur = (n: number) =>
+      new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+
+    return [
+      { label: "distance baseline (villes +5)", value: `${Math.round(distanceKm)} km` },
+      { label: "band distance", value: band },
+      { label: "rate €/m³ (raw)", value: fmt(rateRaw) },
+      { label: `DECOTE`, value: `${Math.round(DECOTE * 100)}% (×${fmt(decoteFactor)})` },
+      { label: "rate €/m³ (appliquée)", value: fmt(rateApplied) },
+      { label: "volume base (t2×dense)", value: `${fmt(baseVolumeM3)} m³` },
+      { label: "extra volume cuisine", value: `${fmt(extraVolumeM3)} m³` },
+      { label: "volume total", value: `${fmt(volumeM3)} m³` },
+      { label: "volumeScale", value: fmt(volumeScale) },
+      { label: "volumeCost", value: fmtEur(volumeCost) },
+      { label: "distanceCost", value: fmtEur(distanceCost) },
+      { label: "socle appliqué ?", value: socleApplied ? `oui (${fmtEur(PRIX_MIN_SOCLE)})` : "non" },
+      { label: "baseNoSeason", value: fmtEur(baseNoSeason) },
+      { label: "coeffEtage", value: fmt(coeffEtage) },
+      { label: "coeffAccess", value: fmt(coeffAccess) },
+      { label: "centreNoSeason (hors services)", value: fmtEur(centreNoSeasonSansServices) },
+      { label: "prixMin / prixMax", value: `${fmtEur(pricing.prixMin)} — ${fmtEur(pricing.prixMax)}` },
+    ];
+  }, [
+    debugMode,
+    isFunnelV2,
+    state.currentStep,
+    state.surfaceM2,
+    state.formule,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    estimateCityDistanceKm,
   ]);
 
   // Reward baseline (figé) : en cas de refresh direct en Step 3, on hydrate une fois le baseline
@@ -2193,6 +2272,8 @@ function DevisGratuitsV3Content() {
                   }
                   selectedFormule={state.formule}
                   onFormuleChange={(v) => updateField("formule", v)}
+                  debug={debugMode}
+                  debugRows={v2DebugRowsStep2 ?? undefined}
               />
             </div>
           )}

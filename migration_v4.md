@@ -157,6 +157,16 @@
 - **Fichier**: `components/tunnel/v2/StepAccessLogisticsV2.tsx`
 - **Fix build staging**: ajout du prop `destinationUnknown` dans `StepAccessLogisticsV2Props` + passage depuis `app/devis-gratuits-v3/page.tsx` (sinon erreur TS en build).
 
+### 2026-02-06 — Debug pricing (V2) : détail du calcul en Step 2 + distance OSRM visible en Step 3
+
+- **Activation**: ajouter `?debug=1` à l’URL.
+- **Step 2 (V2)**: affiche un bloc “Debug — détail du calcul” (distance baseline, band, rate, décote, volumeCost, distanceCost, socle, base, prixMin/Max…).
+- **Step 3 (V2)**: affiche la **distance entre les deux adresses** directement sous le bloc “Adresses” (OSRM).
+- **Fichiers**:
+  - `components/tunnel/v2/StepEstimationV2.tsx`
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-02-06 — Pricing : ajout d’une décote globale (Option A)
 
 - **Décision**: ajouter une variable unique `DECOTE = -20%` (factor 0.8) pour baisser “le forfait de base” sans retoucher toutes les règles.

@@ -18,6 +18,8 @@ interface StepEstimationV2Props {
   } | null;
   selectedFormule: "ECONOMIQUE" | "STANDARD" | "PREMIUM";
   onFormuleChange: (v: "ECONOMIQUE" | "STANDARD" | "PREMIUM") => void;
+  debug?: boolean;
+  debugRows?: Array<{ label: string; value: string }>;
 }
 
 export function StepEstimationV2({
@@ -31,6 +33,8 @@ export function StepEstimationV2({
   pricingByFormule = null,
   selectedFormule,
   onFormuleChange,
+  debug = false,
+  debugRows = [],
 }: StepEstimationV2Props) {
   const volumeText = volume != null ? `${volume} m³` : "—";
   const effectiveDistanceKm =
@@ -126,6 +130,22 @@ export function StepEstimationV2({
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {debug && debugRows.length > 0 && (
+        <div className="rounded-2xl border border-[#E3E5E8] bg-white p-4">
+          <p className="text-sm font-semibold text-[#0F172A]">Debug — détail du calcul</p>
+          <div className="mt-3 space-y-2 text-sm">
+            {debugRows.map((r) => (
+              <div key={r.label} className="flex items-start justify-between gap-4">
+                <span className="text-[#1E293B]/70">{r.label}</span>
+                <span className="font-semibold text-[#0F172A] tabular-nums text-right">
+                  {r.value}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}

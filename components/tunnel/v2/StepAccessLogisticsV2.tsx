@@ -482,6 +482,22 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               }}
             />
           </div>
+
+          <div className="mt-3 text-xs text-[#1E293B]/60">
+            <span className="font-semibold">Distance entre les adresses :</span>{" "}
+            {isRouteDistanceValid ? (
+              <>
+                {Math.round(props.routeDistanceKm!)} km (OSRM)
+              </>
+            ) : (
+              <>calcul en cours…</>
+            )}
+          </div>
+          {showValidation && !isRouteDistanceValid && (
+            <p className="mt-2 text-sm font-medium text-[#EF4444]">
+              Distance route requise (merci de sélectionner des adresses valides)
+            </p>
+          )}
         </div>
 
         {/* Logement + options (rattachés au départ) */}
@@ -650,21 +666,6 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         </div>
         <HousingInline side="destination" />
 
-        <div className="text-xs text-[#1E293B]/60">
-          <span className="font-semibold">Distance route:</span>{" "}
-          {isRouteDistanceValid ? (
-            <>
-              {Math.round(props.routeDistanceKm!)} km (OSRM)
-            </>
-          ) : (
-            <>calcul en cours…</>
-          )}
-        </div>
-        {showValidation && !isRouteDistanceValid && (
-          <p className="text-sm font-medium text-[#EF4444]">
-            Distance route requise (merci de sélectionner des adresses valides)
-          </p>
-        )}
       </div>
 
       <div className="space-y-3">
