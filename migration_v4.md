@@ -21,6 +21,21 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-02-09 — Dernière étape : suppression photos + félicitations + email modifiable + récap exhaustif
+
+- **Décision**: retirer complètement la notion de photos (WhatsApp / upload) sur la dernière étape et la remplacer par un écran de confirmation simple.
+- **Écran final**:
+  - **Bravo**
+  - **Email modifiable** sur l’écran final (mise à jour BO + renvoi email de confirmation)
+  - **Récapitulatif exhaustif** incluant les champs non complétés (“Non renseigné”)
+  - Boutons “Modifier contact / projet / formules” pour revenir en arrière
+- **Back Office**:
+  - appel `POST /public/leads/:id/request-confirmation`
+  - suppression de l’envoi de `estimatedSavingsEur`
+- **Fichiers**:
+  - `components/tunnel/ConfirmationPage.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+
 ### 2026-01-21 — Retrait badge “TEST” (staging)
 
 - **Date**: 2026-01-21
