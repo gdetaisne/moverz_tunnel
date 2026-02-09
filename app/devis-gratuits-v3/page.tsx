@@ -1806,7 +1806,7 @@ function DevisGratuitsV3Content() {
       setShowValidationStep3(false);
       // Step 4 : confirmation (plus de photos)
       trackStepChange(3, 4, "PROJECT", "THANK_YOU", "confirmation_v2", "forward");
-      trackCompletion({ leadId: state.leadId });
+      trackCompletion({ leadId: state.leadId, screenId: "confirmation_v2" });
       goToStep(4);
     } catch (err: any) {
       console.error("Error creating/updating lead (V2 Step 3):", err);
@@ -1856,7 +1856,7 @@ function DevisGratuitsV3Content() {
       }
 
       trackStepChange(4, 4, "THANK_YOU", "THANK_YOU", "contact_v2", "forward");
-      trackCompletion({ leadId: state.leadId });
+      trackCompletion({ leadId: state.leadId, screenId: "confirmation_v2" });
     } catch (err: any) {
       console.error("Error creating/updating lead:", err);
       trackError("API_ERROR", err.message || "Failed to finalize lead", 4, "THANK_YOU", "contact_v2");

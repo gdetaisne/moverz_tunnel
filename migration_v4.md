@@ -32,6 +32,7 @@
 - **Tracking**:
   - V2 : Step 4 passe de `logicalStep=PHOTOS / screenId=photos_v2` à `logicalStep=THANK_YOU / screenId=confirmation_v2` (screenId explicite lié à l’écran).
   - V3 : conserve `logicalStep=THANK_YOU / screenId=confirmation_v3` (écran confirmation).
+- **Tracking (complétion)**: `TUNNEL_COMPLETED` utilise désormais `screenId=confirmation_v2` en V2 (au lieu de `confirmation_v3`).
 - **Back Office payload**:
   - suppression de l’envoi de `estimatedSavingsEur` (on retire aussi toute “économie générée” côté UI).
 - **Champs / Inputs**:
