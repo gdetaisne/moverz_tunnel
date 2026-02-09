@@ -1395,62 +1395,6 @@ function DevisGratuitsV3Content() {
               estimateMinEur={estimateRange?.minEur ?? null}
               estimateMaxEur={estimateRange?.maxEur ?? null}
               estimateIsIndicative={estimateIsIndicative}
-              recap={{
-                originCity: state.originCity,
-                originPostalCode: state.originPostalCode,
-                destinationCity: state.destinationCity,
-                destinationPostalCode: state.destinationPostalCode,
-                movingDate: state.movingDate,
-                formule: state.formule,
-                surfaceM2: state.surfaceM2,
-                lastName: state.lastName,
-                phone: state.phone,
-
-                originAddress: state.originAddress,
-                originHousingType: state.originHousingType,
-                originFloor: state.originFloor,
-                originElevator: state.originElevator,
-                originFurnitureLift: state.originFurnitureLift,
-                originCarryDistance: state.originCarryDistance,
-                originParkingAuth: state.originParkingAuth,
-                originTightAccess: state.originTightAccess,
-
-                destinationUnknown: state.destinationUnknown,
-                destinationAddress: state.destinationAddress,
-                destinationHousingType: state.destinationHousingType,
-                destinationFloor: state.destinationFloor,
-                destinationElevator: state.destinationElevator,
-                destinationFurnitureLift: state.destinationFurnitureLift,
-                destinationCarryDistance: state.destinationCarryDistance,
-                destinationParkingAuth: state.destinationParkingAuth,
-                destinationTightAccess: state.destinationTightAccess,
-
-                movingDateEnd: state.movingDateEnd,
-                dateFlexible: state.dateFlexible,
-                density: state.density,
-
-                serviceFurnitureStorage: state.serviceFurnitureStorage,
-                serviceCleaning: state.serviceCleaning,
-                serviceFullPacking: state.serviceFullPacking,
-                serviceFurnitureAssembly: state.serviceFurnitureAssembly,
-                serviceInsurance: state.serviceInsurance,
-                serviceWasteRemoval: state.serviceWasteRemoval,
-                serviceHelpWithoutTruck: state.serviceHelpWithoutTruck,
-                serviceSpecificSchedule: state.serviceSpecificSchedule,
-                serviceDebarras: state.serviceDebarras,
-                serviceDismantling: state.serviceDismantling,
-                accessNoElevator: state.accessNoElevator,
-                accessSmallElevator: state.accessSmallElevator,
-                accessTruckDifficult: state.accessTruckDifficult,
-                servicePiano: state.servicePiano,
-                hasFragileItems: state.hasFragileItems,
-                furnitureAmericanFridge: state.furnitureAmericanFridge,
-                furnitureSafe: state.furnitureSafe,
-                furnitureBilliard: state.furnitureBilliard,
-                furnitureAquarium: state.furnitureAquarium,
-                furnitureOver25kg: state.furnitureOver25kg,
-                specificNotes: state.specificNotes,
-              }}
               onEmailChange={(v) => updateField("email", v)}
               onGoToStep={(target) => {
                 const stepMap = {

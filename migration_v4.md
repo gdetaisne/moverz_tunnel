@@ -27,7 +27,7 @@
 - **Écran final**:
   - **Bravo**
   - **Email modifiable** sur l’écran final (mise à jour BO + renvoi email de confirmation)
-  - **Récapitulatif exhaustif** incluant les champs non complétés (“Non renseigné”)
+  - **Prochaines étapes** (liste simple)
   - Boutons “Modifier contact / projet / formules” pour revenir en arrière
 - **Back Office**:
   - appel `POST /public/leads/:id/request-confirmation`
