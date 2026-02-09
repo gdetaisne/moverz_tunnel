@@ -21,6 +21,29 @@
 
 ## 1) Changelog (ordre chronologique)
 
+### 2026-02-09 — Dernière étape (V2/V3) : suppression complète des photos + écran Félicitations
+
+- **Date**: 2026-02-09
+- **Statut**: implémenté (front)
+- **Décision**: retirer **totalement** la notion de photos (WhatsApp + upload) sur la dernière étape et la remplacer par un écran simple :
+  - (1) **Bravo**
+  - (2) **Merci de confirmer votre adresse email** (affiche l’email saisi) + message “Vous avez reçu un mail de confirmation”
+  - (3) **Récapitulatif du dossier**
+- **Tracking**:
+  - V2 : Step 4 passe de `logicalStep=PHOTOS / screenId=photos_v2` à `logicalStep=THANK_YOU / screenId=confirmation_v2` (screenId explicite lié à l’écran).
+  - V3 : conserve `logicalStep=THANK_YOU / screenId=confirmation_v3` (écran confirmation).
+- **Back Office payload**:
+  - suppression de l’envoi de `estimatedSavingsEur` (on retire aussi toute “économie générée” côté UI).
+- **Champs / Inputs**:
+  - supprimés: **AUCUN**
+  - ajoutés: **AUCUN**
+- **Fichiers modifiés**:
+  - `components/tunnel/v2/StepContactPhotosV2.tsx`
+  - `components/tunnel/ConfirmationPage.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+- **Notes impl**: `ConfirmationPage` (V3) affiche le même contenu “Bravo / email / récap” que la V2 et ne propose plus aucun envoi de photos.
+- **Tech**: correction typage index `stepMap` (TS) dans `app/devis-gratuits-v3/page.tsx` (pas d’impact UX).
+
 ### 2026-02-06 — Refonte étape photos : vraiment optionnelle, sans discount/culpabilisation
 
 - **Date**: 2026-02-06

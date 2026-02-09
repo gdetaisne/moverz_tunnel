@@ -402,7 +402,7 @@ function DevisGratuitsV3Content() {
         1: { logical: "PROJECT" as const, screen: "qualification_v2" },
         2: { logical: "RECAP" as const, screen: "estimation_v2" },
         3: { logical: "PROJECT" as const, screen: "acces_v2" },
-        4: { logical: "PHOTOS" as const, screen: "photos_v2" },
+        4: { logical: "THANK_YOU" as const, screen: "confirmation_v2" },
       };
       const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
       if (current) {
@@ -417,7 +417,7 @@ function DevisGratuitsV3Content() {
       4: { logical: "THANK_YOU" as const, screen: "confirmation_v3" },
     };
     
-    const current = stepMap[state.currentStep];
+    const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
     if (current) {
       trackStep(state.currentStep, current.logical, current.screen);
     }
@@ -1804,8 +1804,8 @@ function DevisGratuitsV3Content() {
       }
 
       setShowValidationStep3(false);
-      // Step 4 est désormais "Photos"
-      trackStepChange(3, 4, "PROJECT", "PHOTOS", "photos_v2", "forward");
+      // Step 4 : confirmation (plus de photos)
+      trackStepChange(3, 4, "PROJECT", "THANK_YOU", "confirmation_v2", "forward");
       trackCompletion({ leadId: state.leadId });
       goToStep(4);
     } catch (err: any) {
@@ -2159,11 +2159,6 @@ function DevisGratuitsV3Content() {
           estimatedPriceMin: pricingForSubmit.prixMin,
           estimatedPriceAvg: Math.round((pricingForSubmit.prixMin + pricingForSubmit.prixMax) / 2),
           estimatedPriceMax: pricingForSubmit.prixMax,
-          // Step 4 / business: économie générée = 10% du prix moyen de la formule choisie
-          estimatedSavingsEur: Math.round(
-            0.1 *
-              Math.round((pricingForSubmit.prixMin + pricingForSubmit.prixMax) / 2)
-          ),
           tunnelOptions,
         };
 
@@ -2184,9 +2179,8 @@ function DevisGratuitsV3Content() {
           }
         }
 
-        // Email de confirmation:
-        // Désactivé ici. On n'envoie l'email de confirmation que lorsque des photos arrivent
-        // côté Back Office (Option A).
+        // Email de confirmation :
+        // demandé sur l'écran de confirmation (Step 4) — plus de dépendance aux photos.
       }
 
       trackStepChange(3, 4, "RECAP", "THANK_YOU", "confirmation_v3", "forward");
@@ -2341,6 +2335,16 @@ function DevisGratuitsV3Content() {
                 estimateMinEur={activePricing?.prixMin ?? null}
                 estimateMaxEur={activePricing?.prixMax ?? null}
                 estimateIsIndicative={estimateIsIndicative}
+                email={state.email}
+                recap={{
+                  originCity: state.originCity,
+                  originPostalCode: state.originPostalCode,
+                  destinationCity: state.destinationCity,
+                  destinationPostalCode: state.destinationPostalCode,
+                  movingDate: state.movingDate,
+                  formule: state.formule,
+                  surfaceM2: state.surfaceM2,
+                }}
               />
             </div>
           )}
@@ -2487,6 +2491,15 @@ function DevisGratuitsV3Content() {
               estimateMinEur={estimateRange?.minEur ?? null}
               estimateMaxEur={estimateRange?.maxEur ?? null}
               estimateIsIndicative={estimateIsIndicative}
+              recap={{
+                originCity: state.originCity,
+                originPostalCode: state.originPostalCode,
+                destinationCity: state.destinationCity,
+                destinationPostalCode: state.destinationPostalCode,
+                movingDate: state.movingDate,
+                formule: state.formule,
+                surfaceM2: state.surfaceM2,
+              }}
             />
           )}
         </div>
