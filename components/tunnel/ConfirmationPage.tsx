@@ -142,10 +142,10 @@ export default function ConfirmationPage({
             {!isEditingEmail ? (
               <>
                 <p className="text-sm font-semibold text-[#0F172A]">
-                  Confirme ton email pour recevoir tes devis
+                  Confirmez votre email pour recevoir vos devis
                 </p>
                 <p className="mt-1 text-sm text-[#1E293B]/70">
-                  Clique sur le lien envoyé à <span className="font-mono">{normalizedEmail || "—"}</span>.
+                  Cliquez sur le lien envoyé à <span className="font-mono">{normalizedEmail || "—"}</span>.
                 </p>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -173,7 +173,7 @@ export default function ConfirmationPage({
               </>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-[#0F172A]">Modifier ton email</p>
+                <p className="text-sm font-semibold text-[#0F172A]">Modifier votre email</p>
                 <input
                   value={emailDraft}
                   onChange={(e) => setEmailDraft(e.target.value)}
@@ -212,7 +212,7 @@ export default function ConfirmationPage({
             )}
             {confirmationState.status === "error" && (
               <p className="mt-3 text-xs text-amber-700">
-                {confirmationState.message} (pense à vérifier tes spams)
+                {confirmationState.message} (pensez à vérifier vos spams)
               </p>
             )}
           </div>
@@ -228,19 +228,19 @@ export default function ConfirmationPage({
             <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700 text-xs font-bold">
               1
             </span>
-            <p>Confirme ton email pour valider ta demande.</p>
+            <p>Confirmez votre email pour valider votre demande.</p>
           </div>
           <div className="flex items-start gap-2">
             <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
               2
             </span>
-            <p>On prépare ton dossier et on le transmet aux déménageurs.</p>
+            <p>Nous préparons votre dossier et le transmettons aux déménageurs.</p>
           </div>
           <div className="flex items-start gap-2">
             <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
               3
             </span>
-            <p>Tu reçois 3 à 5 devis par email sous 48–72h.</p>
+            <p>Vous recevez 3 à 5 devis par email sous 5 à 7 jours.</p>
           </div>
         </div>
 
