@@ -37,7 +37,7 @@ const STEPS = [
   { id: 1, label: "Contact" },
   { id: 2, label: "Projet" },
   { id: 3, label: "Formules" },
-  { id: 4, label: "Photos" },
+  { id: 4, label: "Confirmation" },
 ] as const;
 
 function DevisGratuitsV3Content() {
@@ -1224,11 +1224,6 @@ function DevisGratuitsV3Content() {
           estimatedPriceMin: pricingForSubmit.prixMin,
           estimatedPriceAvg: Math.round((pricingForSubmit.prixMin + pricingForSubmit.prixMax) / 2),
           estimatedPriceMax: pricingForSubmit.prixMax,
-          // Step 4 / business: économie générée = 10% du prix moyen de la formule choisie
-          estimatedSavingsEur: Math.round(
-            0.1 *
-              Math.round((pricingForSubmit.prixMin + pricingForSubmit.prixMax) / 2)
-          ),
           tunnelOptions,
         };
 
@@ -1249,9 +1244,8 @@ function DevisGratuitsV3Content() {
           }
         }
 
-        // Email de confirmation:
-        // Désactivé ici. On n'envoie l'email de confirmation que lorsque des photos arrivent
-        // côté Back Office (Option A).
+        // Email de confirmation :
+        // envoyé sur l'écran final (Step 4), plus de dépendance aux photos.
       }
 
       trackStepChange(3, 4, "RECAP", "THANK_YOU", "confirmation_v3", "forward");
@@ -1401,6 +1395,15 @@ function DevisGratuitsV3Content() {
               estimateMinEur={estimateRange?.minEur ?? null}
               estimateMaxEur={estimateRange?.maxEur ?? null}
               estimateIsIndicative={estimateIsIndicative}
+              recap={{
+                originCity: state.originCity,
+                originPostalCode: state.originPostalCode,
+                destinationCity: state.destinationCity,
+                destinationPostalCode: state.destinationPostalCode,
+                movingDate: state.movingDate,
+                formule: state.formule,
+                surfaceM2: state.surfaceM2,
+              }}
             />
           )}
         </div>
