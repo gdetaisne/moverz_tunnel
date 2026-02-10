@@ -4,6 +4,8 @@ import {
   FORMULE_MULTIPLIERS,
   SERVICES_PRIX,
   COEF_VOLUME,
+  COEF_DISTANCE,
+  DECOTE,
   PRIX_MIN_SOCLE,
   getDistanceBand,
   LA_POSTE_RATES_EUR_PER_M3,
@@ -31,6 +33,15 @@ export interface PricingInput {
   destinationElevator: "yes" | "no" | "partial";
   formule: FormuleType;
   services: PricingServicesInput;
+  // Ajustements d'accès (majorations sur le total hors services)
+  // - portage > 10m => +5%
+  // - petit ascenseur / passages étroits => +5%
+  // - stationnement compliqué => +3%
+  longCarry?: boolean;
+  tightAccess?: boolean;
+  difficultParking?: boolean;
+  // Ajustement volume (ex: cuisine complète, électroménager)
+  extraVolumeM3?: number;
 }
 
 export interface PricingOutput {
@@ -78,30 +89,56 @@ export function getEtageCoefficient(
   elevator: "yes" | "no" | "partial"
 ): number {
   if (elevator === "yes") return 1.0;
-  if (floor === 0) return 1.0;
-  if (floor <= 2) return 1.05;
-  if (floor <= 5) return 1.1;
+  if (floor <= 0) return 1.0;
+
+  // Règles "sans ascenseur" (si pas déjà inclus)
+  // - 1er: +5%
+  // - 2e: +10%
+  // - 3e: +15%
+  // - ≥4: flag monte-meuble (coef capé à +15%, service géré séparément)
+  if (elevator === "no") {
+    if (floor === 1) return 1.05;
+    if (floor === 2) return 1.1;
+    return 1.15; // floor >= 3
+  }
+
+  // "partial" : comportement conservateur (proche "sans ascenseur", mais capé)
+  if (floor === 1) return 1.05;
+  if (floor === 2) return 1.1;
   return 1.15;
+}
+
+export function requiresMonteMeuble(
+  floor: number,
+  elevator: "yes" | "no" | "partial"
+): boolean {
+  // Règle métier: à partir du 4e sans ascenseur => monte-meuble requis.
+  return elevator === "no" && floor >= 4;
 }
 
 export function calculatePricing(input: PricingInput): PricingOutput {
   // 1. Volume avec densité
-  const volumeM3 = calculateVolume(
+  const baseVolumeM3 = calculateVolume(
     input.surfaceM2,
     input.housingType,
     input.density
   );
+  const extra = typeof input.extraVolumeM3 === "number" && Number.isFinite(input.extraVolumeM3)
+    ? Math.max(0, input.extraVolumeM3)
+    : 0;
+  const volumeM3 = Math.round((baseVolumeM3 + extra) * 10) / 10;
 
   // 2. Prix base (La Poste): tarif €/m³ dépendant de la tranche distance + formule.
   // On conserve l'esprit V2 "max(..., socle)" mais la composante distance est en €/m³,
   // donc elle dépend nécessairement du volume.
   const band = getDistanceBand(input.distanceKm);
-  const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][input.formule];
+  const DECOTE_FACTOR = 1 + DECOTE; // ex: -20% => 0.8
+  const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][input.formule] * DECOTE_FACTOR;
   const volumeScale = getVolumeEconomyScale(volumeM3);
-  const baseNoSeason = Math.max(
-    volumeM3 * rateEurPerM3 * volumeScale,
-    PRIX_MIN_SOCLE
-  );
+  const volumeCost = volumeM3 * rateEurPerM3 * volumeScale;
+  // Composante distance continue (le buffer +15 km a toujours un effet)
+  const distanceCost = Math.max(0, input.distanceKm) * COEF_DISTANCE * DECOTE_FACTOR;
+  const baseNoSeason = Math.max(volumeCost, PRIX_MIN_SOCLE) + distanceCost;
   const baseSeasoned = baseNoSeason * input.seasonFactor;
 
   // 3. Coefficient étages (pire des deux accès)
@@ -115,18 +152,34 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   );
   const coeffEtage = Math.max(coeffOrigin, coeffDest);
 
+  // 3b. Majorations accès (sur le total hors services)
+  const hasTightAccess =
+    Boolean(input.tightAccess) ||
+    input.originElevator === "partial" ||
+    input.destinationElevator === "partial";
+  const coeffAccess =
+    (input.longCarry ? 1.05 : 1) *
+    (hasTightAccess ? 1.05 : 1) *
+    (input.difficultParking ? 1.03 : 1);
+
   // 4. Multiplicateur formule
   // La formule est déjà intégrée dans le tarif La Poste (rateEurPerM3),
   // donc on neutralise le multiplicateur pour éviter le double comptage.
   const formuleMultiplier = 1;
 
   // 5. Prix centres sans / avec saison (hors services)
-  const centreNoSeasonSansServices = baseNoSeason * formuleMultiplier * coeffEtage;
-  const centreSeasonedSansServices = baseSeasoned * formuleMultiplier * coeffEtage;
+  const centreNoSeasonSansServices =
+    baseNoSeason * formuleMultiplier * coeffEtage * coeffAccess;
+  const centreSeasonedSansServices =
+    baseSeasoned * formuleMultiplier * coeffEtage * coeffAccess;
 
   // 6. Services additionnels
   let servicesTotal = 0;
-  if (input.services.monteMeuble) servicesTotal += SERVICES_PRIX.monteMeuble;
+  const needsMonteMeuble =
+    requiresMonteMeuble(input.originFloor, input.originElevator) ||
+    requiresMonteMeuble(input.destinationFloor, input.destinationElevator);
+  // "si pas déjà inclus": si l'accès l'impose, on l'ajoute même si l'utilisateur ne l'a pas coché.
+  if (input.services.monteMeuble || needsMonteMeuble) servicesTotal += SERVICES_PRIX.monteMeuble;
   if (input.services.piano === "droit") servicesTotal += SERVICES_PRIX.pianoDroit;
   if (input.services.piano === "quart") servicesTotal += SERVICES_PRIX.pianoQuart;
   if (input.services.debarras) servicesTotal += SERVICES_PRIX.debarras;

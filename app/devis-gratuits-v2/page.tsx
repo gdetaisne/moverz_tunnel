@@ -3924,7 +3924,7 @@ function DevisGratuitsPageInner() {
                 <div className="grid gap-3 sm:grid-cols-[minmax(0,1.3fr),minmax(0,1fr)]">
                   <div className="space-y-1">
                     <label className="block text-xs font-medium text-slate-200">
-                      Surface approximative (m²)
+                      Surface approximative (m²) - garages et dépendances inclus
                     </label>
                     <div className="relative mt-1">
                       <input
@@ -4595,7 +4595,7 @@ function DevisGratuitsPageInner() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <p className="block text-xs font-medium text-slate-200">
-                          Surface approximative (m²)
+                          Surface approximative (m²) - garages et dépendances inclus
                         </p>
                         <p className="mt-1 inline-flex min-h-[32px] items-center rounded-xl bg-slate-900/80 px-3 py-1 text-xs font-semibold text-slate-50">
                           {form.surfaceM2 || "—"}

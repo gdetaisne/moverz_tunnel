@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { Mail, User, ArrowRight, Check, X } from "lucide-react";
+import { Mail, User, ArrowRight, Check, X, Phone } from "lucide-react";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 interface Step1ContactProps {
   firstName: string;
   email: string;
+  phone: string;
   onFirstNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
+  onPhoneChange: (value: string) => void;
   onSubmit: (e: FormEvent) => Promise<void>;
   isSubmitting: boolean;
   error: string | null;
@@ -18,8 +20,10 @@ interface Step1ContactProps {
 export default function Step1Contact({
   firstName,
   email,
+  phone,
   onFirstNameChange,
   onEmailChange,
+  onPhoneChange,
   onSubmit,
   isSubmitting,
   error,
@@ -27,18 +31,23 @@ export default function Step1Contact({
 }: Step1ContactProps) {
   const [firstNameTouched, setFirstNameTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const { isMobile } = useDeviceDetection();
 
   const isFirstNameValid = firstName.trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isFormValid = isFirstNameValid && isEmailValid;
+  // Téléphone optionnel : si vide c'est OK, si rempli doit avoir au moins 10 chiffres
+  const isPhoneValid = !phone || !phone.trim() || phone.replace(/\D/g, '').length >= 10;
+  const isFormValid = isFirstNameValid && isEmailValid && isPhoneValid;
 
   const missingFields: Array<{ id: string; label: string }> = [];
   if (!isFirstNameValid) missingFields.push({ id: "contact-firstName", label: "Prénom" });
   if (!isEmailValid) missingFields.push({ id: "contact-email", label: "Email" });
+  if (!isPhoneValid && phone && phone.trim()) missingFields.push({ id: "contact-phone", label: "Téléphone" });
 
   const showFirstNameError = (showValidation || firstNameTouched) && !isFirstNameValid;
   const showEmailError = (showValidation || emailTouched) && !isEmailValid;
+  const showPhoneError = (showValidation || phoneTouched) && !isPhoneValid && phone && phone.trim();
 
   const focusField = (id: string) => {
     const el = document.getElementById(id);
@@ -52,18 +61,25 @@ export default function Step1Contact({
       {/* Left: Form */}
       <div className="order-1">
         <div className="mb-4 md:mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
+          {/* Micro-bar de réassurance, sans compteur d'étapes explicite */}
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#0F172A] px-4 py-1.5 text-xs md:text-sm font-semibold text-white mb-4 md:mb-6">
             <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
-            Étape 1/4
+            <span className="flex items-center gap-2">
+              <span>🔒 Données protégées</span>
+              <span className="opacity-60">•</span>
+              <span>Gratuit</span>
+              <span className="opacity-60 hidden sm:inline">•</span>
+              <span className="hidden sm:inline">~2 min restantes</span>
+            </span>
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-black text-[#0F172A] mb-3 md:mb-4 leading-tight">
-            Vos infos de contact
+          <h2 className="text-3xl md:text-5xl font-black text-[#0F172A] mb-2 md:mb-4 leading-tight">
+            Où souhaitez-vous recevoir vos devis&nbsp;?
           </h2>
           
-          <p className="hidden md:block text-lg text-[#1E293B]/70 leading-relaxed">
-            Pour vous envoyer vos devis et suivre votre dossier.{" "}
-            <span className="text-[#1E293B] font-medium">Jamais partagé ni revendu.</span>
+          <p className="text-sm md:text-lg text-[#1E293B]/70 leading-relaxed">
+            Première étape: un moyen de contact fiable pour vous envoyer les propositions.{" "}
+            <span className="text-[#1E293B] font-medium">Vos coordonnées ne sont jamais revendues.</span>
           </p>
         </div>
 
@@ -112,7 +128,7 @@ export default function Step1Contact({
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
               <Mail className="w-4 h-4 text-[#6BCFCF]" />
-              Email de contact
+              Email de contact (obligatoire)
             </label>
             <div className="relative">
               <input
@@ -144,6 +160,46 @@ export default function Step1Contact({
             {showEmailError && (
               <p className="text-sm text-red-600">
                 Merci de saisir un email valide
+              </p>
+            )}
+          </div>
+
+          {/* Téléphone (optionnel) */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
+              <Phone className="w-4 h-4 text-[#6BCFCF]" />
+              Téléphone (optionnel)
+            </label>
+            <div className="relative">
+              <input
+                id="contact-phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => {
+                  setPhoneTouched(true);
+                  onPhoneChange(e.target.value);
+                }}
+                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 pr-12 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                placeholder="06 12 34 56 78"
+                autoComplete="tel"
+              />
+              {(phoneTouched || showValidation) && phone.trim() && (
+                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
+                  {isPhoneValid ? (
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100">
+                      <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+                    </span>
+                  ) : (
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100">
+                      <X className="w-4 h-4 text-red-600" strokeWidth={3} />
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
+            {showPhoneError && (
+              <p className="text-sm text-red-600">
+                Téléphone invalide (minimum 10 chiffres)
               </p>
             )}
           </div>
@@ -186,7 +242,7 @@ export default function Step1Contact({
               !isFormValid && !isSubmitting ? "opacity-50 cursor-not-allowed" : ""
             } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <span>{isSubmitting ? "Création en cours..." : "Commencer ma demande"}</span>
+            <span>{isSubmitting ? "Création en cours..." : "Voir les options disponibles"}</span>
             {!isSubmitting && (
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             )}

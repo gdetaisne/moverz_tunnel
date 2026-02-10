@@ -370,6 +370,7 @@ export interface UpdateBackofficeLeadPayload {
   originAddress?: string;
   originCity?: string;
   originPostalCode?: string;
+  originCountryCode?: string;
   destAddress?: string;
   destCity?: string;
   destPostalCode?: string;

@@ -95,7 +95,7 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
     }).catch(console.error);
   }, [source, leadId]);
 
-  const trackCompletion = useCallback((opts?: { leadId?: string | null }) => {
+  const trackCompletion = useCallback((opts?: { leadId?: string | null; screenId?: string }) => {
     const effectiveLeadId = opts?.leadId ?? leadId ?? null;
     ga4Event("lead_submit", {
       source,
@@ -113,7 +113,7 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
       backofficeLeadId: effectiveLeadId || undefined,
       source,
       logicalStep: "THANK_YOU",
-      screenId: "confirmation_v3",
+      screenId: opts?.screenId ?? "confirmation_v3",
       extra: {
         sessionId: sessionIdRef.current,
         totalDurationMs,

@@ -3,12 +3,14 @@
 import { useEffect, useState, FormEvent } from "react";
 import { MapPin, Home, Calendar, Building2, Layers, ArrowRight, Check, AlertCircle } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
+import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 
 interface Step2ProjectCompleteProps {
   // Départ
   originPostalCode: string;
   originCity: string;
   originAddress: string;
+  originCountryCode: string;
   originLat: number | null;
   originLon: number | null;
   originHousingType: string;
@@ -24,6 +26,7 @@ interface Step2ProjectCompleteProps {
   destinationPostalCode: string;
   destinationCity: string;
   destinationAddress: string;
+  destinationCountryCode: string;
   destinationLat: number | null;
   destinationLon: number | null;
   destinationHousingType: string;
@@ -95,192 +98,213 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.destinationAccess, props.destinationFurnitureLift]);
 
-  const renderConstrainedOptions = (which: "origin" | "destination") => {
-    const prefix = which === "origin" ? "origin" : "destination";
-    const access = which === "origin" ? props.originAccess : props.destinationAccess;
-    const furnitureLift =
-      which === "origin" ? props.originFurnitureLift : props.destinationFurnitureLift;
-    const carryDistance =
-      which === "origin" ? props.originCarryDistance : props.destinationCarryDistance;
-    const parkingAuth =
-      which === "origin" ? props.originParkingAuth : props.destinationParkingAuth;
-    const tightAccess =
-      which === "origin" ? props.originTightAccess : props.destinationTightAccess;
-    const housingType =
-      which === "origin" ? props.originHousingType : props.destinationHousingType;
-    const isHouse = housingType === "house";
-    const floor = which === "origin" ? props.originFloor : props.destinationFloor;
-    const elevator = which === "origin" ? props.originElevator : props.destinationElevator;
+  const renderConstrainedOptionsTable = () => {
+    const show = props.originAccess === "constrained" || props.destinationAccess === "constrained";
+    if (!show) return null;
 
-    if (access !== "constrained") return null;
-
-    const portageEnabled = carryDistance !== "";
-    const monteMeubleEnabled = furnitureLift === "yes";
-
-    const YesNo = (props2: {
-      value: boolean;
-      onChange: (v: boolean) => void;
-      yesLabel?: string;
-      noLabel?: string;
+    const ToggleYes = (p: {
+      active: boolean;
+      disabled?: boolean;
+      onToggle: () => void;
+      ariaLabel: string;
     }) => (
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => props2.onChange(false)}
-          className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-            props2.value === false
-              ? "bg-[#0F172A] text-white"
-              : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-          }`}
-        >
-          {props2.noLabel ?? "Non"}
-        </button>
-        <button
-          type="button"
-          onClick={() => props2.onChange(true)}
-          className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-            props2.value === true
-              ? "bg-[#6BCFCF] text-white"
-              : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-          }`}
-        >
-          {props2.yesLabel ?? "Oui"}
-        </button>
-      </div>
+      <button
+        type="button"
+        disabled={!!p.disabled}
+        aria-label={p.ariaLabel}
+        onClick={() => {
+          if (p.disabled) return;
+          p.onToggle();
+        }}
+        className={[
+          "inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-all",
+          p.disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
+          p.active
+            ? "bg-[#6BCFCF] text-white"
+            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
+        ].join(" ")}
+      >
+        <span>Oui</span>
+        {p.active && <Check className="w-4 h-4" />}
+      </button>
     );
 
+    const originIsHouse = props.originHousingType === "house";
+    const destinationIsHouse = props.destinationHousingType === "house";
+
+    const originTightAccess = Boolean(props.originTightAccess);
+    const destinationTightAccess = Boolean(props.destinationTightAccess);
+
+    const originMonteMeuble = props.originFurnitureLift === "yes";
+    const destinationMonteMeuble = props.destinationFurnitureLift === "yes";
+
+    const originPortage = (props.originCarryDistance || "").trim() !== "";
+    const destinationPortage = (props.destinationCarryDistance || "").trim() !== "";
+
+    const originParking = Boolean(props.originParkingAuth);
+    const destinationParking = Boolean(props.destinationParkingAuth);
+
+    const ensureConstrained = (which: "origin" | "destination") => {
+      if (which === "origin" && props.originAccess !== "constrained") {
+        props.onFieldChange("originAccess", "constrained");
+      }
+      if (which === "destination" && props.destinationAccess !== "constrained") {
+        props.onFieldChange("destinationAccess", "constrained");
+      }
+    };
+
+    const toggleTightAccess = (which: "origin" | "destination") => {
+      ensureConstrained(which);
+      if (which === "origin") props.onFieldChange("originTightAccess", !originTightAccess);
+      else props.onFieldChange("destinationTightAccess", !destinationTightAccess);
+    };
+
+    const toggleMonteMeuble = (which: "origin" | "destination") => {
+      ensureConstrained(which);
+      if (which === "origin") {
+        const shouldEnable = !originMonteMeuble;
+        if (!originIsHouse && shouldEnable && !originTightAccess) {
+          props.onFieldChange("originTightAccess", true);
+        }
+        props.onFieldChange("originFurnitureLift", shouldEnable ? "yes" : "no");
+      } else {
+        const shouldEnable = !destinationMonteMeuble;
+        if (!destinationIsHouse && shouldEnable && !destinationTightAccess) {
+          props.onFieldChange("destinationTightAccess", true);
+        }
+        props.onFieldChange("destinationFurnitureLift", shouldEnable ? "yes" : "no");
+      }
+    };
+
+    const togglePortage = (which: "origin" | "destination") => {
+      ensureConstrained(which);
+      if (which === "origin") {
+        props.onFieldChange("originCarryDistance", originPortage ? "" : CARRY_DISTANCE_ON_VALUE);
+      } else {
+        props.onFieldChange(
+          "destinationCarryDistance",
+          destinationPortage ? "" : CARRY_DISTANCE_ON_VALUE
+        );
+      }
+    };
+
+    const toggleParking = (which: "origin" | "destination") => {
+      ensureConstrained(which);
+      if (which === "origin") props.onFieldChange("originParkingAuth", !originParking);
+      else props.onFieldChange("destinationParkingAuth", !destinationParking);
+    };
+
+    const originIsConstrained = props.originAccess === "constrained";
+    const destinationIsConstrained = props.destinationAccess === "constrained";
+
+    // Monte-meuble autorisé si maison, sinon si tight access (on auto-active au clic)
+    const originMonteDisabled = false;
+    const destMonteDisabled = props.destinationUnknown;
+
     return (
-      <div className="mt-4 space-y-4 rounded-xl border border-[#E3E5E8] bg-white p-4">
-        <div>
-          <p className="text-sm font-semibold text-[#0F172A]">Détails d’accès</p>
-          <p className="text-xs text-[#1E293B]/60">
-            Uniquement si l’accès est difficile (pour affiner le devis).
-          </p>
+      <div className="mt-6 rounded-xl border border-[#E3E5E8] bg-white p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-[#0F172A]">Détails d’accès</p>
+            <p className="text-xs text-[#1E293B]/60">
+              Active uniquement si besoin (pour affiner le devis).
+            </p>
+          </div>
         </div>
 
-        {/* 1 option par ligne */}
-        <div className="space-y-3">
-          {/* Appartement: ordre demandé */}
-          {!isHouse && (
-            <>
-              {/* Petit ascenseur / passages serrés */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">
-                    Petit ascenseur / passages serrés
-                  </p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={Boolean(tightAccess)}
-                    onChange={(v) => props.onFieldChange(`${prefix}TightAccess`, v)}
-                  />
-                </div>
-              </div>
+        <div className="mt-4 overflow-hidden rounded-xl border border-[#E3E5E8]">
+          <div className="grid grid-cols-[1fr,140px,140px] bg-[#F8F9FA]">
+            <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70">Contraintes</div>
+            <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70 text-center">
+              Départ {!originIsConstrained && <span className="font-medium text-[#1E293B]/50"> (facile)</span>}
+            </div>
+            <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70 text-center">
+              Arrivée {!destinationIsConstrained && <span className="font-medium text-[#1E293B]/50"> (facile)</span>}
+            </div>
+          </div>
 
-              {/* Monte-meuble (ouvre seulement si passages serrés = Oui) */}
-              {tightAccess && (
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#0F172A]">Besoin d’un monte‑meuble</p>
-                  </div>
-                  <div className="w-44">
-                    <YesNo
-                      value={monteMeubleEnabled}
-                      onChange={(v) =>
-                        props.onFieldChange(`${prefix}FurnitureLift`, v ? "yes" : "no")
-                      }
-                    />
-                  </div>
-                </div>
-              )}
+          <div className="grid grid-cols-[1fr,140px,140px] items-center border-t border-[#E3E5E8]">
+            <div className="px-3 py-3 text-sm font-medium text-[#0F172A]">
+              Petit ascenseur / passages étroits
+            </div>
+            <div className="px-3 py-2 flex justify-center">
+              <ToggleYes
+                active={originTightAccess}
+                onToggle={() => toggleTightAccess("origin")}
+                ariaLabel="Départ: petit ascenseur / passages étroits"
+              />
+            </div>
+            <div className="px-3 py-2 flex justify-center">
+              <ToggleYes
+                active={destinationTightAccess}
+                disabled={props.destinationUnknown}
+                onToggle={() => toggleTightAccess("destination")}
+                ariaLabel="Arrivée: petit ascenseur / passages étroits"
+              />
+            </div>
+          </div>
 
-              {/* Portage > 10m */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Portage &gt; 10 m</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={portageEnabled}
-                    onChange={(v) =>
-                      props.onFieldChange(`${prefix}CarryDistance`, v ? CARRY_DISTANCE_ON_VALUE : "")
-                    }
-                  />
-                </div>
-              </div>
+          <div className="grid grid-cols-[1fr,140px,140px] items-center border-t border-[#E3E5E8]">
+            <div className="px-3 py-3 text-sm font-medium text-[#0F172A]">
+              Besoin d’un monte‑meuble
+            </div>
+            <div className="px-3 py-2 flex justify-center">
+              <ToggleYes
+                active={originMonteMeuble}
+                disabled={originMonteDisabled}
+                onToggle={() => toggleMonteMeuble("origin")}
+                ariaLabel="Départ: besoin d’un monte-meuble"
+              />
+            </div>
+            <div className="px-3 py-2 flex justify-center">
+              <ToggleYes
+                active={destinationMonteMeuble}
+                disabled={destMonteDisabled}
+                onToggle={() => toggleMonteMeuble("destination")}
+                ariaLabel="Arrivée: besoin d’un monte-meuble"
+              />
+            </div>
+          </div>
 
-              {/* Stationnement compliqué */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Stationnement compliqué</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={Boolean(parkingAuth)}
-                    onChange={(v) => props.onFieldChange(`${prefix}ParkingAuth`, v)}
-                  />
-                </div>
-              </div>
-            </>
-          )}
+          <div className="grid grid-cols-[1fr,140px,140px] items-center border-t border-[#E3E5E8]">
+            <div className="px-3 py-3 text-sm font-medium text-[#0F172A]">Portage &gt; 10 m</div>
+            <div className="px-3 py-2 flex justify-center">
+              <ToggleYes
+                active={originPortage}
+                onToggle={() => togglePortage("origin")}
+                ariaLabel="Départ: portage > 10 m"
+              />
+            </div>
+            <div className="px-3 py-2 flex justify-center">
+              <ToggleYes
+                active={destinationPortage}
+                disabled={props.destinationUnknown}
+                onToggle={() => togglePortage("destination")}
+                ariaLabel="Arrivée: portage > 10 m"
+              />
+            </div>
+          </div>
 
-          {/* Maison: ordre demandé */}
-          {isHouse && (
-            <>
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Portage &gt; 10 m</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={portageEnabled}
-                    onChange={(v) =>
-                      props.onFieldChange(`${prefix}CarryDistance`, v ? CARRY_DISTANCE_ON_VALUE : "")
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Stationnement compliqué</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={Boolean(parkingAuth)}
-                    onChange={(v) => props.onFieldChange(`${prefix}ParkingAuth`, v)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Passages serrés</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={Boolean(tightAccess)}
-                    onChange={(v) => props.onFieldChange(`${prefix}TightAccess`, v)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Besoin d’un monte‑meuble</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={monteMeubleEnabled}
-                    onChange={(v) =>
-                      props.onFieldChange(`${prefix}FurnitureLift`, v ? "yes" : "no")
-                    }
-                  />
-                </div>
-              </div>
-            </>
-          )}
+          <div className="grid grid-cols-[1fr,140px,140px] items-center border-t border-[#E3E5E8]">
+            <div className="px-3 py-3 text-sm font-medium text-[#0F172A]">
+              Stationnement compliqué
+            </div>
+            <div className="px-3 py-2 flex justify-center">
+              <ToggleYes
+                active={originParking}
+                onToggle={() => toggleParking("origin")}
+                ariaLabel="Départ: stationnement compliqué"
+              />
+            </div>
+            <div className="px-3 py-2 flex justify-center">
+              <ToggleYes
+                active={destinationParking}
+                disabled={props.destinationUnknown}
+                onToggle={() => toggleParking("destination")}
+                ariaLabel="Arrivée: stationnement compliqué"
+              />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -403,12 +427,20 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               props.originAddress ||
               [props.originPostalCode, props.originCity].filter(Boolean).join(" ")
             }
+            contextPostalCode={props.originPostalCode || undefined}
+            contextCity={props.originCity || undefined}
+            contextCountryCode={
+              /^\d{5}$/.test((props.originPostalCode || "").trim())
+                ? "fr"
+                : props.originCountryCode || undefined
+            }
             onInputChange={(raw) => {
               // V2-ish: dès qu'on retape une adresse, on reflète le texte dans le state
               // et on invalide les infos dérivées (CP/ville/coords) pour éviter du “stale”.
               props.onFieldChange("originAddress", raw);
               if (props.originPostalCode) props.onFieldChange("originPostalCode", "");
               if (props.originCity) props.onFieldChange("originCity", "");
+              if (props.originCountryCode) props.onFieldChange("originCountryCode", "");
               if (props.originLat != null) props.onFieldChange("originLat", null);
               if (props.originLon != null) props.onFieldChange("originLon", null);
             }}
@@ -417,6 +449,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               props.onFieldChange("originAddress", s.addressLine ?? s.label);
               props.onFieldChange("originPostalCode", s.postalCode ?? "");
               props.onFieldChange("originCity", s.city ?? "");
+              props.onFieldChange("originCountryCode", (s.countryCode ?? "fr").toLowerCase());
               props.onFieldChange("originLat", s.lat ?? null);
               props.onFieldChange("originLon", s.lon ?? null);
             }}
@@ -562,7 +595,6 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               </button>
             </div>
 
-            {renderConstrainedOptions("origin")}
           </div>
         </div>
 
@@ -576,7 +608,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           <>
               <AddressAutocomplete
                 label="Adresse d'arrivée *"
-                placeholder="20 place Bellecour, 69002 Lyon"
+                placeholder={props.destinationCity ? `Ex: 20 avenue de la Gare` : "Ex: 20 avenue de la Gare, Lyon"}
                 inputId="destination-address"
                 initialValue={
                   props.destinationAddress ||
@@ -584,10 +616,19 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     .filter(Boolean)
                     .join(" ")
                 }
+                contextPostalCode={props.destinationPostalCode || undefined}
+                contextCity={props.destinationCity || undefined}
+                contextCountryCode={
+                  /^\d{5}$/.test((props.destinationPostalCode || "").trim())
+                    ? "fr"
+                    : props.destinationCountryCode || undefined
+                }
                 onInputChange={(raw) => {
                   props.onFieldChange("destinationAddress", raw);
                   if (props.destinationPostalCode) props.onFieldChange("destinationPostalCode", "");
                   if (props.destinationCity) props.onFieldChange("destinationCity", "");
+                  if (props.destinationCountryCode)
+                    props.onFieldChange("destinationCountryCode", "");
                   if (props.destinationLat != null) props.onFieldChange("destinationLat", null);
                   if (props.destinationLon != null) props.onFieldChange("destinationLon", null);
                 }}
@@ -596,6 +637,10 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   props.onFieldChange("destinationAddress", s.addressLine ?? s.label);
                   props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
                   props.onFieldChange("destinationCity", s.city ?? "");
+                  props.onFieldChange(
+                    "destinationCountryCode",
+                    (s.countryCode ?? "fr").toLowerCase()
+                  );
                   props.onFieldChange("destinationLat", s.lat ?? null);
                   props.onFieldChange("destinationLon", s.lon ?? null);
                 }}
@@ -741,10 +786,11 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   </button>
                 </div>
 
-                {renderConstrainedOptions("destination")}
               </div>
           </>
         </div>
+
+        {renderConstrainedOptionsTable()}
 
         {/* === DATE === */}
         <div className="pt-6 border-t border-[#E3E5E8] space-y-4 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
@@ -755,16 +801,15 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
           <div>
             <label className="block text-sm font-medium text-[#0F172A] mb-2">Date de déménagement *</label>
-            <input
+            <DatePickerFr
               id="movingDate"
-              type="date"
               value={props.movingDate}
-              onChange={(e) => {
+              onChange={(v) => {
                 markTouched("movingDate");
-                props.onFieldChange("movingDate", e.target.value);
+                props.onFieldChange("movingDate", v);
               }}
               min={minMovingDate}
-              className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+              error={(showErrors || touchedFields.has("movingDate")) && !isDateValid}
             />
           </div>
 

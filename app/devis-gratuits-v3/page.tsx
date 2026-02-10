@@ -13,11 +13,14 @@ import {
   calculatePricing,
   type FormuleType as PricingFormuleType,
   type HousingType,
+  calculateVolume,
   getEtageCoefficient,
   getVolumeEconomyScale,
 } from "@/lib/pricing/calculate";
 import {
+  COEF_DISTANCE,
   DENSITY_COEFFICIENTS,
+  DECOTE,
   FORMULE_MULTIPLIERS,
   PRIX_MIN_SOCLE,
   TYPE_COEFFICIENTS,
@@ -33,11 +36,18 @@ import Step3VolumeServices from "@/components/tunnel/Step3VolumeServices";
 import ConfirmationPage from "@/components/tunnel/ConfirmationPage";
 import TrustSignals from "@/components/tunnel/TrustSignals";
 
+// V2 (feature flag) components
+import { StepQualificationV2 } from "@/components/tunnel/v2/StepQualificationV2";
+import { StepEstimationV2 } from "@/components/tunnel/v2/StepEstimationV2";
+import { StepAccessLogisticsV2 } from "@/components/tunnel/v2/StepAccessLogisticsV2";
+import { StepContactPhotosV2 } from "@/components/tunnel/v2/StepContactPhotosV2";
+import { V2ProgressBar } from "@/components/tunnel/v2/V2ProgressBar";
+
 const STEPS = [
   { id: 1, label: "Contact" },
   { id: 2, label: "Projet" },
   { id: 3, label: "Formules" },
-  { id: 4, label: "Confirmation" },
+  { id: 4, label: "Photos" },
 ] as const;
 
 function DevisGratuitsV3Content() {
@@ -49,11 +59,14 @@ function DevisGratuitsV3Content() {
   const from = searchParams.get("from") || "/devis-gratuits-v3";
   const urlLeadId = (searchParams.get("leadId") || "").trim();
   const hydratedLeadRef = useRef<string | null>(null);
+  const isFunnelV2 = useMemo(() => process.env.NEXT_PUBLIC_FUNNEL_V2 === "true", []);
+  const debugMode = (searchParams.get("debug") || "").trim() === "1" || (searchParams.get("debug") || "").trim() === "true";
 
   const [confirmationRequested, setConfirmationRequested] = useState(false);
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep2, setShowValidationStep2] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
+  const [step3Error, setStep3Error] = useState<string | null>(null);
 
   const toInputDate = (raw: string | null | undefined): string | undefined => {
     if (!raw) return undefined;
@@ -382,8 +395,21 @@ function DevisGratuitsV3Content() {
     }
   }, [source, from]);
 
-  // Track step views
+  // Track step views (V1/V2)
   useEffect(() => {
+    if (isFunnelV2) {
+      const stepMap = {
+        1: { logical: "PROJECT" as const, screen: "qualification_v2" },
+        2: { logical: "RECAP" as const, screen: "estimation_v2" },
+        3: { logical: "PROJECT" as const, screen: "acces_v2" },
+        4: { logical: "THANK_YOU" as const, screen: "confirmation_v2" },
+      };
+      const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
+      if (current) {
+        trackStep(state.currentStep, current.logical, current.screen);
+      }
+      return;
+    }
     const stepMap = {
       1: { logical: "CONTACT" as const, screen: "contact_v3" },
       2: { logical: "PROJECT" as const, screen: "project_v3" },
@@ -391,14 +417,17 @@ function DevisGratuitsV3Content() {
       4: { logical: "THANK_YOU" as const, screen: "confirmation_v3" },
     };
     
-    const current = stepMap[state.currentStep];
+    const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
     if (current) {
       trackStep(state.currentStep, current.logical, current.screen);
     }
-  }, [state.currentStep]);
+  }, [state.currentStep, isFunnelV2]);
 
-  const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" =>
-    d === "light" ? "LIGHT" : d === "dense" ? "HEAVY" : "MEDIUM";
+  const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" => {
+    // "" (non choisi) => hypothèse par défaut "très meublé"
+    if (!d) return "HEAVY";
+    return d === "light" ? "LIGHT" : d === "dense" ? "HEAVY" : "MEDIUM";
+  };
 
   const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" => {
     // UI values: "", "none", "no", "yes" (et potentiellement "small" / "partial")
@@ -487,6 +516,85 @@ function DevisGratuitsV3Content() {
     return Math.min(1000, 40 + diff * 40);
   };
 
+  // Baseline "villes": doit être stable et ne pas bouger quand on sélectionne une adresse.
+  // On mémorise donc les coords "ville" (Step 1/2) et on les utilise pour la baseline,
+  // sans dépendre des coords d'adresse (Step 3).
+  const v2CityCoordsRef = useRef<{
+    originLat: number;
+    originLon: number;
+    destinationLat: number;
+    destinationLon: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!isFunnelV2) return;
+    // On ne fige/rafraîchit que tant qu'on est avant Step 3 (donc avant la sélection d'adresses).
+    if (state.currentStep >= 3) return;
+    if (state.destinationUnknown) return;
+    if (
+      state.originLat == null ||
+      state.originLon == null ||
+      state.destinationLat == null ||
+      state.destinationLon == null
+    ) {
+      return;
+    }
+    v2CityCoordsRef.current = {
+      originLat: state.originLat,
+      originLon: state.originLon,
+      destinationLat: state.destinationLat,
+      destinationLon: state.destinationLon,
+    };
+  }, [
+    isFunnelV2,
+    state.currentStep,
+    state.destinationUnknown,
+    state.originLat,
+    state.originLon,
+    state.destinationLat,
+    state.destinationLon,
+  ]);
+
+  const estimateCityDistanceKm = (originPostalCode: string, destinationPostalCode: string) => {
+    let c = v2CityCoordsRef.current;
+
+    // Fallback anti "delta énorme": si on n'a pas réussi à capturer des coords ville en Step 1/2
+    // (ex: l'utilisateur a tapé sans sélectionner), on fige une baseline à partir des coords
+    // disponibles au moment où les adresses sont renseignées (Step 3). Ça évite une heuristique CP
+    // trop grossière qui peut surestimer massivement la distance et créer un -1000€ en delta.
+    if (
+      !c &&
+      isFunnelV2 &&
+      state.currentStep >= 3 &&
+      !state.destinationUnknown &&
+      state.originLat != null &&
+      state.originLon != null &&
+      state.destinationLat != null &&
+      state.destinationLon != null
+    ) {
+      c = {
+        originLat: state.originLat,
+        originLon: state.originLon,
+        destinationLat: state.destinationLat,
+        destinationLon: state.destinationLon,
+      };
+      v2CityCoordsRef.current = c;
+    }
+
+    if (c) {
+      return estimateDistanceKm(
+        originPostalCode,
+        destinationPostalCode,
+        c.originLat,
+        c.originLon,
+        c.destinationLat,
+        c.destinationLon
+      );
+    }
+    // Fallback (refresh direct en Step 3, coords ville absentes): heuristique CP.
+    return estimateDistanceKm(originPostalCode, destinationPostalCode, null, null, null, null);
+  };
+
   // Distance “trajet” (route) via OSRM / OpenStreetMap
   const distanceCacheRef = useRef<Map<string, number>>(new Map());
   const [routeDistanceKm, setRouteDistanceKm] = useState<number | null>(null);
@@ -571,7 +679,7 @@ function DevisGratuitsV3Content() {
     // Petite temporisation: évite de spammer OSRM quand on tape/blur rapidement.
     const t = window.setTimeout(() => {
       void run();
-    }, 250);
+    }, 300);
 
     return () => {
       window.clearTimeout(t);
@@ -604,7 +712,8 @@ function DevisGratuitsV3Content() {
     const diffMs = d.getTime() - now.getTime();
     const diffDays = diffMs / (1000 * 60 * 60 * 24);
     if (diffDays <= 0 || diffDays > 365) return 1;
-    if (diffDays <= 30) return 1.15;
+    // Step 3 impose déjà un min J+15, donc on ne considère "urgent" que <= 15 jours.
+    if (diffDays <= 15) return 1.15;
     return 1;
   };
 
@@ -640,21 +749,18 @@ function DevisGratuitsV3Content() {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const housingType = coerceHousingType(state.originHousingType || state.destinationHousingType);
-    const density = state.density;
+    // V2: la surface (m²) est saisie en Step 1; le choix "Maison/Appartement" en Step 3
+    // ne doit pas modifier le volume (sinon les prix bougent alors que la surface est déjà connue).
+    const housingType = isFunnelV2
+      ? ("t2" as const)
+      : coerceHousingType(state.originHousingType || state.destinationHousingType);
+    // UI: pas de pré-sélection en Step 3. Calcul: hypothèse par défaut "très meublé".
+    const density = (state.density || "dense") as "light" | "normal" | "dense";
 
-    const distanceKm =
-      state.destinationUnknown
-        ? 50
-        : routeDistanceKm ??
-          estimateDistanceKm(
-            state.originPostalCode,
-            state.destinationPostalCode,
-            state.originLat,
-            state.originLon,
-            state.destinationLat,
-            state.destinationLon
-          );
+    // Exiger une distance route (OSRM). Pas de fallback heuristique.
+    if (state.destinationUnknown) return null;
+    if (routeDistanceKm == null) return null;
+    const distanceKm = routeDistanceKm;
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
 
     const originIsHouse = isHouseType(state.originHousingType);
@@ -672,8 +778,9 @@ function DevisGratuitsV3Content() {
       ? "yes"
       : toPricingElevator(state.destinationElevator);
 
-    const monteMeuble =
-      state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
+    const monteMeuble = isFunnelV2
+      ? !!state.lift_required
+      : state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
 
     const piano =
       state.servicePiano === "droit"
@@ -681,6 +788,34 @@ function DevisGratuitsV3Content() {
         : state.servicePiano === "quart"
         ? ("quart" as const)
         : null;
+
+    const kitchenExtraVolumeM3 = (() => {
+      // UI: pas de pré-sélection en Step 3. Calcul: hypothèse par défaut = 3 équipements.
+      const effectiveMode = state.kitchenIncluded || "appliances";
+      const effectiveCount =
+        state.kitchenIncluded === ""
+          ? 3
+          : Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+
+      if (effectiveMode === "full") return 6;
+      if (effectiveMode === "appliances") return Math.max(0, effectiveCount) * 0.6;
+      return 0;
+    })();
+
+    const longCarry = isFunnelV2
+      ? !!state.long_carry
+      : (state.originCarryDistance || "").trim().length > 0 ||
+        (state.destinationCarryDistance || "").trim().length > 0;
+    const difficultParking = isFunnelV2
+      ? !!state.difficult_parking
+      : !!state.originParkingAuth ||
+        (!!state.destinationParkingAuth && !state.destinationUnknown) ||
+        !!state.accessTruckDifficult;
+    const tightAccess = isFunnelV2
+      ? !!state.narrow_access
+      : !!state.originTightAccess ||
+        (!!state.destinationTightAccess && !state.destinationUnknown) ||
+        !!state.accessSmallElevator;
 
     const baseInput = {
       surfaceM2: surface,
@@ -697,6 +832,10 @@ function DevisGratuitsV3Content() {
         piano,
         debarras: state.serviceDebarras,
       },
+      longCarry,
+      difficultParking,
+      tightAccess,
+      extraVolumeM3: kitchenExtraVolumeM3,
     };
 
     const formules: PricingFormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
@@ -712,6 +851,8 @@ function DevisGratuitsV3Content() {
     state.originHousingType,
     state.destinationHousingType,
     state.density,
+    state.kitchenIncluded,
+    state.kitchenApplianceCount,
     state.originPostalCode,
     state.destinationPostalCode,
     state.destinationUnknown,
@@ -732,9 +873,459 @@ function DevisGratuitsV3Content() {
     return pricingByFormule[state.formule as PricingFormuleType] ?? null;
   }, [pricingByFormule, state.formule]);
 
+  // Step 2 (V2) : estimation basée sur hypothèses fixes (reward) tant qu'on n'a pas les adresses exactes.
+  // Hypothèses (alignées sur "Première estimation" du panier Step 3):
+  // - distance villes +5km
+  // - densité très meublé
+  // - cuisine = 3 équipements (0,6m³/équipement)
+  // - pas de saison
+  // - accès RAS
+  const v2PricingByFormuleStep2 = useMemo(() => {
+    if (!isFunnelV2) return null;
+    if (state.currentStep !== 2) return null;
+
+    const surface = parseInt(state.surfaceM2) || 60;
+    if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
+
+    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
+    const distanceKm = Math.max(0, cityDistanceKm + 5);
+
+    const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
+      surfaceM2: surface,
+      housingType: "t2" as const,
+      density: "dense" as const,
+      distanceKm,
+      seasonFactor: 1,
+      originFloor: 0,
+      originElevator: "yes" as const,
+      destinationFloor: 0,
+      destinationElevator: "yes" as const,
+      services: { monteMeuble: false, piano: null, debarras: false },
+      extraVolumeM3: 3 * 0.6,
+    };
+
+    const formules: PricingFormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
+    return formules.reduce<Record<PricingFormuleType, ReturnType<typeof calculatePricing>>>(
+      (acc, formule) => {
+        acc[formule] = calculatePricing({ ...baseInput, formule });
+        return acc;
+      },
+      {} as any
+    );
+  }, [
+    isFunnelV2,
+    state.currentStep,
+    state.surfaceM2,
+    state.originPostalCode,
+    state.destinationPostalCode,
+  ]);
+
+  const activePricingStep2 = useMemo(() => {
+    if (!v2PricingByFormuleStep2) return null;
+    return v2PricingByFormuleStep2[state.formule as PricingFormuleType] ?? null;
+  }, [v2PricingByFormuleStep2, state.formule]);
+
+  const v2FirstEstimateDistanceKm = useMemo(() => {
+    if (!isFunnelV2) return null;
+    if (state.destinationUnknown) return null;
+    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
+    if (!Number.isFinite(cityDistanceKm) || cityDistanceKm <= 0) return null;
+    return Math.round(cityDistanceKm + 5);
+  }, [
+    isFunnelV2,
+    state.destinationUnknown,
+    state.originPostalCode,
+    state.destinationPostalCode,
+  ]);
+
+  const v2DebugRowsStep2 = useMemo(() => {
+    if (!debugMode) return null;
+    if (!isFunnelV2) return null;
+    if (state.currentStep !== 2) return null;
+
+    const surface = parseInt(state.surfaceM2) || 60;
+    const formule = state.formule as PricingFormuleType;
+    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
+    const distanceKm = Math.max(0, cityDistanceKm + 5);
+    const extraVolumeM3 = 3 * 0.6; // debug Step 2: cuisine=3 équipements
+    const baseVolumeM3 = calculateVolume(surface, "t2", "dense");
+    const volumeM3 = Math.round((baseVolumeM3 + extraVolumeM3) * 10) / 10;
+
+    const band = getDistanceBand(distanceKm);
+    const decoteFactor = 1 + DECOTE;
+    const rateRaw = LA_POSTE_RATES_EUR_PER_M3[band][formule];
+    const rateApplied = rateRaw * decoteFactor;
+    const volumeScale = getVolumeEconomyScale(volumeM3);
+    const volumeCost = volumeM3 * rateApplied * volumeScale;
+    const distanceCost = Math.max(0, distanceKm) * COEF_DISTANCE * decoteFactor;
+    const socleApplied = volumeCost < PRIX_MIN_SOCLE;
+    const baseNoSeason = Math.max(volumeCost, PRIX_MIN_SOCLE) + distanceCost;
+
+    // Baseline Step 2: accès RAS
+    const coeffEtage = getEtageCoefficient(0, "yes");
+    const coeffAccess = 1;
+    const centreNoSeasonSansServices = baseNoSeason * coeffEtage * coeffAccess;
+
+    const pricing = calculatePricing({
+      surfaceM2: surface,
+      housingType: "t2",
+      density: "dense",
+      distanceKm,
+      seasonFactor: 1,
+      originFloor: 0,
+      originElevator: "yes",
+      destinationFloor: 0,
+      destinationElevator: "yes",
+      formule,
+      services: { monteMeuble: false, piano: null, debarras: false },
+      extraVolumeM3,
+    });
+
+    const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(n);
+    const fmtEur = (n: number) =>
+      new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+
+    return [
+      { label: "distance baseline (villes +5)", value: `${Math.round(distanceKm)} km` },
+      { label: "band distance", value: band },
+      { label: "rate €/m³ (raw)", value: fmt(rateRaw) },
+      { label: `DECOTE`, value: `${Math.round(DECOTE * 100)}% (×${fmt(decoteFactor)})` },
+      { label: "rate €/m³ (appliquée)", value: fmt(rateApplied) },
+      { label: "volume base (t2×dense)", value: `${fmt(baseVolumeM3)} m³` },
+      { label: "extra volume cuisine", value: `${fmt(extraVolumeM3)} m³` },
+      { label: "volume total", value: `${fmt(volumeM3)} m³` },
+      { label: "volumeScale", value: fmt(volumeScale) },
+      { label: "volumeCost", value: fmtEur(volumeCost) },
+      { label: "distanceCost", value: fmtEur(distanceCost) },
+      { label: "socle appliqué ?", value: socleApplied ? `oui (${fmtEur(PRIX_MIN_SOCLE)})` : "non" },
+      { label: "baseNoSeason", value: fmtEur(baseNoSeason) },
+      { label: "coeffEtage", value: fmt(coeffEtage) },
+      { label: "coeffAccess", value: fmt(coeffAccess) },
+      { label: "centreNoSeason (hors services)", value: fmtEur(centreNoSeasonSansServices) },
+      { label: "prixMin / prixMax", value: `${fmtEur(pricing.prixMin)} — ${fmtEur(pricing.prixMax)}` },
+    ];
+  }, [
+    debugMode,
+    isFunnelV2,
+    state.currentStep,
+    state.surfaceM2,
+    state.formule,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    estimateCityDistanceKm,
+  ]);
+
+  // Reward baseline (figé) : en cas de refresh direct en Step 3, on hydrate une fois le baseline
+  // (mêmes hypothèses que la Step 2) pour éviter l'affichage vide.
+  useEffect(() => {
+    if (!isFunnelV2) return;
+    if (state.currentStep < 3) return;
+    if (state.rewardBaselineMinEur != null && state.rewardBaselineMaxEur != null) return;
+
+    const surface = parseInt(state.surfaceM2) || 60;
+    if (!Number.isFinite(surface) || surface < 10 || surface > 500) return;
+
+    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
+    const distanceKm = Math.max(0, cityDistanceKm + 5);
+
+    const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
+      surfaceM2: surface,
+      housingType: "t2" as const,
+      density: "dense" as const,
+      distanceKm,
+      seasonFactor: 1,
+      originFloor: 0,
+      originElevator: "yes" as const,
+      destinationFloor: 0,
+      destinationElevator: "yes" as const,
+      services: { monteMeuble: false, piano: null, debarras: false },
+      extraVolumeM3: 3 * 0.6,
+    };
+
+    const baseline = calculatePricing({ ...baseInput, formule: state.formule as PricingFormuleType });
+    updateFields({
+      rewardBaselineMinEur: baseline.prixMin ?? null,
+      rewardBaselineMaxEur: baseline.prixMax ?? null,
+      rewardBaselineDistanceKm: distanceKm,
+      rewardBaselineFormule: state.formule,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isFunnelV2,
+    state.currentStep,
+    state.rewardBaselineMinEur,
+    state.rewardBaselineMaxEur,
+    state.surfaceM2,
+    state.formule,
+    state.originPostalCode,
+    state.destinationPostalCode,
+  ]);
+
+  // Panier (V2 Step 3): Première estimation (hypothèses fixes) → deltas → Budget affiné
+  const v2PricingCart = useMemo(() => {
+    if (!isFunnelV2) return null;
+
+    const CENTER_BIAS = 0.6;
+    const centerEur = (minEur: number, maxEur: number): number =>
+      Math.round(minEur + (maxEur - minEur) * CENTER_BIAS);
+    const formatDelta = (delta: number) => Math.round(delta);
+
+    const surface = parseInt(state.surfaceM2) || 60;
+    if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
+
+    const formule = state.formule as PricingFormuleType;
+
+    // Première estimation: distance "villes" +20km, densité=Très meublé, cuisine=3 équipements,
+    // date sans saison, accès RAS.
+    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
+    const baseDistanceKm = Math.max(0, cityDistanceKm + 5);
+
+    const baselineInput: Parameters<typeof calculatePricing>[0] = {
+      surfaceM2: surface,
+      housingType: "t2" as const,
+      density: "dense" as const,
+      distanceKm: baseDistanceKm,
+      seasonFactor: 1,
+      originFloor: 0,
+      originElevator: "yes" as const,
+      destinationFloor: 0,
+      destinationElevator: "yes" as const,
+      services: { monteMeuble: false, piano: null as null, debarras: false },
+      formule,
+      extraVolumeM3: 3 * 0.6, // cuisine = 3 équipements
+    };
+
+    const s0 = calculatePricing(baselineInput);
+    const firstEstimateCenterEur = centerEur(s0.prixMin, s0.prixMax);
+
+    const minMovingDate = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 15);
+      return d.toISOString().split("T")[0]!;
+    })();
+    const isMovingDateValid = !!state.movingDate && state.movingDate >= minMovingDate;
+
+    const isRouteDistanceValid =
+      routeDistanceKm != null &&
+      Number.isFinite(routeDistanceKm) &&
+      routeDistanceKm > 0 &&
+      routeDistanceProvider === "osrm";
+    const addressesFilled =
+      !state.destinationUnknown &&
+      (state.originAddress || "").trim().length >= 5 &&
+      (state.destinationAddress || "").trim().length >= 5;
+    const canUseOsrmDistance = addressesFilled && isRouteDistanceValid;
+    const refinedDistanceKm = canUseOsrmDistance ? routeDistanceKm! : baseDistanceKm;
+
+    // 1) Distance (recalcule prix de base, delta vs baseDistanceKm)
+    const inputDistance = { ...baselineInput, distanceKm: refinedDistanceKm };
+    const sDist = calculatePricing(inputDistance);
+    const deltaDistanceEur = canUseOsrmDistance ? formatDelta(sDist.prixBase - s0.prixBase) : 0;
+
+    // 2) Densité (delta vs "Très meublé")
+    const densityTouched = state.density !== "";
+    const effectiveDensity = (state.density || "dense") as "light" | "normal" | "dense";
+    const inputDensity: Parameters<typeof calculatePricing>[0] = {
+      ...inputDistance,
+      density: effectiveDensity,
+    };
+    const sDensity = calculatePricing(inputDensity);
+    const deltaDensityEur = densityTouched ? formatDelta(sDensity.prixBase - sDist.prixBase) : 0;
+
+    // 3) Cuisine (delta vs "3 équipements")
+    const kitchenApplianceCount =
+      Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+    const kitchenTouched =
+      state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
+    const baselineKitchenExtraVolumeM3 = 3 * 0.6;
+    const kitchenExtraVolumeM3 = (() => {
+      // UI: pas de pré-sélection. Calcul: hypothèse par défaut = 3 équipements.
+      if (!kitchenTouched) return baselineKitchenExtraVolumeM3;
+
+      if (state.kitchenIncluded === "full") return 6;
+      if (state.kitchenIncluded === "appliances") return Math.max(0, kitchenApplianceCount) * 0.6;
+      // "none" ou invalide => 0
+      return 0;
+    })();
+    const inputKitchen = { ...inputDensity, extraVolumeM3: kitchenExtraVolumeM3 };
+    const sKitchen = calculatePricing(inputKitchen);
+    const deltaKitchenEur = kitchenTouched ? formatDelta(sKitchen.prixBase - sDensity.prixBase) : 0;
+
+    // 4) Date (saison/urgence) — appliqué uniquement sur la valeur de base (avant accès)
+    const seasonFactor = isMovingDateValid
+      ? getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate)
+      : 1;
+    const inputDate = { ...inputKitchen, seasonFactor };
+    const sDate = calculatePricing(inputDate);
+    const deltaDateEur = formatDelta(sDate.prixFinal - sKitchen.prixFinal);
+
+    // 5) Accès (logement/étage/ascenseur)
+    const originIsHouse = isHouseType(state.originHousingType);
+    const destIsHouse = isHouseType(state.destinationHousingType);
+    const accessExtrasConfirmed =
+      !!state.narrow_access || !!state.long_carry || !!state.difficult_parking || !!state.lift_required;
+    const accessConfirmed =
+      accessExtrasConfirmed ||
+      !!state.originHousingTypeTouched ||
+      !!state.destinationHousingTypeTouched ||
+      !!state.originFloorTouched ||
+      !!state.destinationFloorTouched ||
+      !!state.originElevatorTouched ||
+      !!state.destinationElevatorTouched;
+
+    const accessMeta = (() => {
+      if (!accessConfirmed) return null;
+      const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
+      const destinationFloor = state.destinationUnknown
+        ? 0
+        : destIsHouse
+        ? 0
+        : parseInt(state.destinationFloor || "0", 10) || 0;
+      const originElevator = toPricingElevator(state.originElevator);
+      const destinationElevator = toPricingElevator(state.destinationElevator);
+      const needsMonteMeuble =
+        !!state.lift_required ||
+        (originElevator === "no" && originFloor >= 4) ||
+        (destinationElevator === "no" && destinationFloor >= 4);
+      return {
+        originFloor,
+        destinationFloor,
+        originElevator,
+        destinationElevator,
+        needsMonteMeuble,
+      };
+    })();
+
+    const inputAccess = (() => {
+      // Tant que l'accès n'est pas "touché", on reste sur l'hypothèse baseline (RAS).
+      if (!accessConfirmed) return inputDate;
+
+      return {
+        ...inputDate,
+        originFloor: accessMeta!.originFloor,
+        originElevator: accessMeta!.originElevator,
+        destinationFloor: accessMeta!.destinationFloor,
+        destinationElevator: accessMeta!.destinationElevator,
+        // Accès difficiles (V2)
+        longCarry: !!state.long_carry,
+        tightAccess: !!state.narrow_access,
+        difficultParking: !!state.difficult_parking,
+        services: {
+          ...inputDate.services,
+          monteMeuble: !!state.lift_required,
+        },
+      };
+    })();
+    const sAccess = calculatePricing(inputAccess);
+    const deltaAccessEur = accessConfirmed ? formatDelta(sAccess.prixFinal - sDate.prixFinal) : 0;
+
+    const refinedCenterEur = centerEur(sAccess.prixMin, sAccess.prixMax);
+
+    const densityLabel =
+      !densityTouched
+        ? "par défaut (très meublé)"
+        : effectiveDensity === "light"
+        ? "peu meublé"
+        : effectiveDensity === "dense"
+        ? "très meublé"
+        : "normal";
+    const kitchenLabel =
+      !kitchenTouched
+        ? "par défaut (3 équipements)"
+        : state.kitchenIncluded === "full"
+        ? "cuisine complète"
+        : state.kitchenIncluded === "appliances"
+        ? `${Math.max(0, kitchenApplianceCount)} équipement(s)`
+        : "rien";
+    const accessLabel = !accessConfirmed
+      ? "RAS"
+      : accessMeta?.needsMonteMeuble
+      ? "≥4 sans ascenseur (monte-meuble)"
+      : "confirmé";
+
+    const lines: Array<{
+      key: "distance" | "density" | "kitchen" | "date" | "access";
+      label: string;
+      status: string;
+      amountEur: number;
+      confirmed: boolean;
+    }> = [
+      {
+        key: "distance",
+        label: "Distance",
+        status: canUseOsrmDistance ? "adresses (OSRM)" : "villes +5 km",
+        amountEur: deltaDistanceEur,
+        confirmed: canUseOsrmDistance,
+      },
+      {
+        key: "density",
+        label: "Densité",
+        status: densityLabel,
+        amountEur: deltaDensityEur,
+        confirmed: densityTouched,
+      },
+      {
+        key: "kitchen",
+        label: "Cuisine",
+        status: kitchenLabel,
+        amountEur: deltaKitchenEur,
+        confirmed: kitchenTouched,
+      },
+      {
+        key: "date",
+        label: "Date",
+        status: isMovingDateValid ? "confirmée" : "pas de coef saison",
+        amountEur: deltaDateEur,
+        confirmed: isMovingDateValid,
+      },
+      {
+        key: "access",
+        label: "Accès",
+        status: accessLabel,
+        amountEur: deltaAccessEur,
+        confirmed: accessConfirmed,
+      },
+    ];
+
+    return {
+      firstEstimateMinEur: s0.prixMin,
+      firstEstimateMaxEur: s0.prixMax,
+      firstEstimateCenterEur,
+      refinedMinEur: sAccess.prixMin,
+      refinedMaxEur: sAccess.prixMax,
+      refinedCenterEur,
+      lines,
+    };
+  }, [
+    isFunnelV2,
+    routeDistanceKm,
+    routeDistanceProvider,
+    state.surfaceM2,
+    state.formule,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    state.density,
+    state.kitchenIncluded,
+    state.kitchenApplianceCount,
+    state.movingDate,
+    state.originHousingType,
+    state.destinationHousingType,
+    state.originFloor,
+    state.destinationFloor,
+    state.originElevator,
+    state.destinationElevator,
+    state.originHousingTypeTouched,
+    state.destinationHousingTypeTouched,
+    state.originFloorTouched,
+    state.destinationFloorTouched,
+    state.originElevatorTouched,
+    state.destinationElevatorTouched,
+    state.destinationUnknown,
+  ]);
+
   const estimateRange = useMemo(() => {
     if (!pricingByFormule) return null;
-    const values = Object.values(pricingByFormule);
+    const values = Object.values(pricingByFormule) as Array<ReturnType<typeof calculatePricing>>;
     const min = Math.min(...values.map((v) => v.prixMin));
     const max = Math.max(...values.map((v) => v.prixMax));
     if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
@@ -762,24 +1353,17 @@ function DevisGratuitsV3Content() {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const housingType = coerceHousingType(state.originHousingType || state.destinationHousingType);
+    const housingType = isFunnelV2
+      ? ("t2" as const)
+      : coerceHousingType(state.originHousingType || state.destinationHousingType);
     const typeCoefficient = TYPE_COEFFICIENTS[housingType];
-    const densityCoefficient = DENSITY_COEFFICIENTS[state.density];
+    const effectiveDensity = (state.density || "dense") as "light" | "normal" | "dense";
+    const densityCoefficient = DENSITY_COEFFICIENTS[effectiveDensity];
 
-    const distanceKm =
-      state.destinationUnknown
-        ? 50
-        : routeDistanceKm ??
-          estimateDistanceKm(
-            state.originPostalCode,
-            state.destinationPostalCode,
-            state.originLat,
-            state.originLon,
-            state.destinationLat,
-            state.destinationLon
-          );
-    const distanceSource: "osrm" | "fallback" | null =
-      state.destinationUnknown ? null : routeDistanceKm != null ? "osrm" : "fallback";
+    if (state.destinationUnknown) return null;
+    if (routeDistanceKm == null) return null;
+    const distanceKm = routeDistanceKm;
+    const distanceSource: "osrm" | "fallback" | null = "osrm";
 
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
 
@@ -798,8 +1382,9 @@ function DevisGratuitsV3Content() {
       ? "yes"
       : toPricingElevator(state.destinationElevator);
 
-    const monteMeuble =
-      state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
+    const monteMeuble = isFunnelV2
+      ? !!state.lift_required
+      : state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
 
     const piano =
       state.servicePiano === "droit"
@@ -817,12 +1402,13 @@ function DevisGratuitsV3Content() {
     const volumeM3 = Math.round(adjustedVolume * 10) / 10;
 
     const band = getDistanceBand(distanceKm);
-    const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][formule];
+    // Décote globale (Option A): appliquée à rate €/m³ + coef distance uniquement (pas au socle, ni aux services)
+    const DECOTE_FACTOR = 1 + DECOTE;
+    const rateEurPerM3 = LA_POSTE_RATES_EUR_PER_M3[band][formule] * DECOTE_FACTOR;
     const volumeScale = getVolumeEconomyScale(volumeM3);
-    const baseNoSeasonEur = Math.max(
-      volumeM3 * rateEurPerM3 * volumeScale,
-      PRIX_MIN_SOCLE
-    );
+    const volumeCost = volumeM3 * rateEurPerM3 * volumeScale;
+    const distanceCost = Math.max(0, distanceKm) * COEF_DISTANCE * DECOTE_FACTOR;
+    const baseNoSeasonEur = Math.max(volumeCost, PRIX_MIN_SOCLE) + distanceCost;
 
     const coeffOrigin = getEtageCoefficient(originFloor, originElevator);
     const coeffDest = getEtageCoefficient(destinationFloor, destinationElevator);
@@ -835,14 +1421,34 @@ function DevisGratuitsV3Content() {
 
     // On ne ré-expose pas le détail des services depuis constants ici,
     // mais on a déjà servicesTotal dans activePricing (issu de calculatePricing).
+    const longCarry = isFunnelV2
+      ? !!state.long_carry
+      : (state.originCarryDistance || "").trim().length > 0 ||
+        (state.destinationCarryDistance || "").trim().length > 0;
+    const difficultParking = isFunnelV2
+      ? !!state.difficult_parking
+      : !!state.originParkingAuth ||
+        (!!state.destinationParkingAuth && !state.destinationUnknown) ||
+        !!state.accessTruckDifficult;
+    const tightAccess = isFunnelV2
+      ? !!state.narrow_access
+      : !!state.originTightAccess ||
+        (!!state.destinationTightAccess && !state.destinationUnknown) ||
+        !!state.accessSmallElevator;
+    const hasTightAccess = tightAccess || originElevator === "partial" || destinationElevator === "partial";
+    const coeffAccess =
+      (longCarry ? 1.05 : 1) *
+      (hasTightAccess ? 1.05 : 1) *
+      (difficultParking ? 1.03 : 1);
+
     const servicesTotalEur = activePricing.servicesTotal;
-    const centreNoSeasonEur = centreNoSeasonSansServices + servicesTotalEur;
-    const centreSeasonedEur = centreSeasonedSansServices + servicesTotalEur;
+    const centreNoSeasonEur = centreNoSeasonSansServices * coeffAccess + servicesTotalEur;
+    const centreSeasonedEur = centreSeasonedSansServices * coeffAccess + servicesTotalEur;
 
     return {
       surfaceM2: surface,
       housingType,
-      density: state.density,
+      density: effectiveDensity,
       distanceKm,
       distanceSource,
       seasonFactor,
@@ -956,15 +1562,323 @@ function DevisGratuitsV3Content() {
     }
   }
 
+  // V2 handlers
+  const handleSubmitQualificationV2 = (e: FormEvent) => {
+    e.preventDefault();
+    const isOriginValid =
+      state.originCity.trim().length >= 2 &&
+      state.originLat != null &&
+      state.originLon != null;
+    const isDestinationValid =
+      state.destinationCity.trim().length >= 2 &&
+      state.destinationLat != null &&
+      state.destinationLon != null;
+    const isSurfaceValid = (() => {
+      const n = Number.parseInt(String(state.surfaceM2 || "").trim(), 10);
+      return Number.isFinite(n) && n >= 10 && n <= 500;
+    })();
+
+    if (!isOriginValid || !isDestinationValid || !isSurfaceValid) {
+      setShowValidationStep1(true);
+      requestAnimationFrame(() => {
+        const focusId = !isOriginValid
+          ? "v2-origin-city"
+          : !isDestinationValid
+          ? "v2-destination-city"
+          : "v2-surface-m2";
+        document
+          .getElementById(focusId)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById(focusId) as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Missing required fields", 1, "PROJECT", "qualification_v2");
+      return;
+    }
+
+    setShowValidationStep1(false);
+    trackStepChange(1, 2, "PROJECT", "RECAP", "estimation_v2", "forward");
+    goToStep(2);
+  };
+
+  const handleSubmitEstimationV2 = (e: FormEvent) => {
+    e.preventDefault();
+    // Reward: figer la valeur Step 2 (avec buffers) au passage vers Step 3
+    if (v2PricingByFormuleStep2 && activePricingStep2) {
+      const cityDistanceKm = estimateCityDistanceKm(
+        state.originPostalCode,
+        state.destinationPostalCode
+      );
+      const baselineDistanceKm = Number.isFinite(cityDistanceKm) ? cityDistanceKm + 5 : null;
+      updateFields({
+        rewardBaselineMinEur: activePricingStep2.prixMin ?? null,
+        rewardBaselineMaxEur: activePricingStep2.prixMax ?? null,
+        rewardBaselineDistanceKm: baselineDistanceKm,
+        rewardBaselineFormule: state.formule,
+      });
+    }
+    trackStepChange(2, 3, "RECAP", "PROJECT", "acces_v2", "forward");
+    goToStep(3);
+  };
+
+  const handleSubmitAccessV2 = async () => {
+    // Validation adresses (requis) + complétude ville/CP/pays
+    const isOriginAddrValid = state.originAddress.trim().length >= 5;
+    const isDestinationAddrValid = state.destinationAddress.trim().length >= 5;
+    const isOriginMetaValid =
+      state.originCity.trim().length >= 2 &&
+      state.originPostalCode.trim().length >= 2 &&
+      state.originCountryCode.trim().length >= 2;
+    const isDestMetaValid =
+      state.destinationCity.trim().length >= 2 &&
+      state.destinationPostalCode.trim().length >= 2 &&
+      state.destinationCountryCode.trim().length >= 2;
+
+    const isRouteDistanceValid = routeDistanceKm != null && routeDistanceProvider === "osrm";
+
+    if (!isOriginAddrValid || !isDestinationAddrValid || !isOriginMetaValid || !isDestMetaValid || !isRouteDistanceValid) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        const focusId = !isOriginAddrValid ? "v2-origin-address" : "v2-destination-address";
+        document.getElementById(focusId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById(focusId) as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Missing required address", 3, "PROJECT", "acces_v2");
+      return;
+    }
+
+    // Validation date: bloquer historique + 15 prochains jours
+    const minMovingDateV2 = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 15);
+      return d.toISOString().split("T")[0]!;
+    })();
+    const isMovingDateValid =
+      typeof state.movingDate === "string" &&
+      state.movingDate.length > 0 &&
+      state.movingDate >= minMovingDateV2;
+    if (!isMovingDateValid) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        document.getElementById("v2-moving-date")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        (document.getElementById("v2-moving-date") as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Invalid moving date", 3, "PROJECT", "acces_v2");
+      return;
+    }
+
+    // Validation contact (prénom + email obligatoires) — déplacé en fin de Step 3
+    const isFirstNameValid = state.firstName.trim().length >= 2;
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim());
+    if (!isFirstNameValid || !isEmailValid) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        const focusId = !isFirstNameValid ? "v2-contact-firstName" : "v2-contact-email";
+        document.getElementById(focusId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        (document.getElementById(focusId) as any)?.focus?.();
+      });
+      trackError(
+        "VALIDATION_ERROR",
+        !isFirstNameValid ? "Missing first name" : "Invalid email",
+        3,
+        "PROJECT",
+        "acces_v2"
+      );
+      return;
+    }
+
+    // Validation cuisine (si électroménager uniquement)
+    const kitchenAppliancesCount =
+      Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+    const isKitchenValid =
+      state.kitchenIncluded !== "appliances" || kitchenAppliancesCount >= 1;
+    if (!isKitchenValid) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        const focusId = "v2-kitchen-appliance-count";
+        document.getElementById(focusId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById(focusId) as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Invalid kitchen appliances count", 3, "PROJECT", "acces_v2");
+      return;
+    }
+
+    // Normalise accès simple
+    if (state.access_type === "simple") {
+      updateFields({
+        narrow_access: false,
+        long_carry: false,
+        difficult_parking: false,
+        lift_required: false,
+        access_details: "",
+      });
+    }
+
+    // Création / MAJ lead Back Office à la fin de Step 3 (avant les photos)
+    try {
+      const kitchenExtraVolumeM3 = (() => {
+        // UI: pas de pré-sélection. Calcul: hypothèse par défaut = 3 équipements.
+        const kitchenTouched =
+          state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
+        if (!kitchenTouched) return 3 * 0.6;
+
+        if (state.kitchenIncluded === "full") return 6;
+        if (state.kitchenIncluded === "appliances") return Math.max(0, kitchenAppliancesCount) * 0.6;
+        return 0;
+      })();
+      const kitchenIncludedForBo = state.kitchenIncluded || "appliances";
+      const kitchenApplianceCountForBo =
+        state.kitchenIncluded === ""
+          ? 3
+          : kitchenIncludedForBo === "appliances"
+          ? kitchenAppliancesCount
+          : undefined;
+      const payload = {
+        firstName: state.firstName.trim(), // obligatoire côté contrat BO (string, possiblement vide)
+        email: state.email.trim().toLowerCase(),
+        phone: state.phone.trim() || undefined,
+        source,
+        estimationMethod: "FORM" as const,
+        originAddress: state.originAddress || undefined,
+        originCity: state.originCity || undefined,
+        originPostalCode: state.originPostalCode || undefined,
+        originCountryCode: state.originCountryCode || undefined,
+        destAddress: state.destinationAddress || undefined,
+        destCity: state.destinationCity || undefined,
+        destPostalCode: state.destinationPostalCode || undefined,
+        destCountryCode: state.destinationCountryCode || undefined,
+        tunnelOptions: {
+          pricing: {
+            distanceKm: routeDistanceKm ?? undefined,
+            distanceProvider: routeDistanceProvider ?? undefined,
+          },
+          accessV2: {
+            access_type: state.access_type ?? "simple",
+            narrow_access: !!state.narrow_access,
+            long_carry: !!state.long_carry,
+            difficult_parking: !!state.difficult_parking,
+            lift_required: !!state.lift_required,
+            access_details: state.access_details || undefined,
+          },
+          volumeAdjustments: {
+            kitchenIncluded: kitchenIncludedForBo,
+            kitchenApplianceCount: kitchenApplianceCountForBo,
+            extraVolumeM3: kitchenExtraVolumeM3,
+          },
+        },
+        // Logement (Back Office)
+        originHousingType: state.originHousingType || undefined,
+        originFloor:
+          (state.originHousingType || "").trim() === "house"
+            ? undefined
+            : Math.max(0, parseInt(state.originFloor || "0", 10) || 0),
+        destHousingType: state.destinationHousingType || undefined,
+        destFloor:
+          (state.destinationHousingType || "").trim() === "house"
+            ? undefined
+            : Math.max(0, parseInt(state.destinationFloor || "0", 10) || 0),
+        // Dates
+        movingDate: toIsoDate(state.movingDate),
+        dateFlexible: state.dateFlexible,
+      };
+
+      if (state.leadId) {
+        try {
+          await updateBackofficeLead(state.leadId, payload);
+        } catch (err: any) {
+          if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
+            const { id: backofficeLeadId } = await createBackofficeLead(payload);
+            updateFields({ leadId: backofficeLeadId, linkingCode: null });
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        const { id: backofficeLeadId } = await createBackofficeLead(payload);
+        updateFields({ leadId: backofficeLeadId, linkingCode: null });
+      }
+
+      setShowValidationStep3(false);
+      // Step 4 : confirmation (plus de photos)
+      trackStepChange(3, 4, "PROJECT", "THANK_YOU", "confirmation_v2", "forward");
+      trackCompletion({ leadId: state.leadId, screenId: "confirmation_v2" });
+      goToStep(4);
+    } catch (err: any) {
+      console.error("Error creating/updating lead (V2 Step 3):", err);
+      trackError("API_ERROR", err.message || "Failed to create/update lead", 3, "PROJECT", "acces_v2");
+    }
+  };
+
+  async function handleSubmitContactV2(e: FormEvent) {
+    e.preventDefault();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) {
+      setShowValidationStep1(true);
+      requestAnimationFrame(() => {
+        document.getElementById("contact-email")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById("contact-email") as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Invalid email", 4, "THANK_YOU", "contact_v2");
+      return;
+    }
+
+    try {
+      const payload = {
+        // `firstName` optionnel côté UX mais le contrat BO attend une string.
+        // On envoie une chaîne vide si l'utilisateur ne renseigne rien.
+        firstName: state.firstName.trim(),
+        email: state.email.trim().toLowerCase(),
+        phone: state.phone.trim() || undefined,
+        source,
+        estimationMethod: "FORM" as const,
+        tunnelOptions: {
+          accessV2: {
+            access_type: state.access_type ?? "simple",
+            narrow_access: !!state.narrow_access,
+            long_carry: !!state.long_carry,
+            difficult_parking: !!state.difficult_parking,
+            lift_required: !!state.lift_required,
+            access_details: state.access_details || undefined,
+          },
+        },
+      };
+
+      if (state.leadId) {
+        await updateBackofficeLead(state.leadId, payload);
+      } else {
+        const { id: backofficeLeadId } = await createBackofficeLead(payload);
+        updateFields({ leadId: backofficeLeadId, linkingCode: null });
+      }
+
+      trackStepChange(4, 4, "THANK_YOU", "THANK_YOU", "contact_v2", "forward");
+      trackCompletion({ leadId: state.leadId, screenId: "confirmation_v2" });
+    } catch (err: any) {
+      console.error("Error creating/updating lead:", err);
+      trackError("API_ERROR", err.message || "Failed to finalize lead", 4, "THANK_YOU", "contact_v2");
+    }
+  }
+
   async function handleSubmitStep2(e: FormEvent) {
     e.preventDefault();
 
     const isOriginValid =
-      state.originAddress.trim().length >= 5 && state.originHousingType.trim().length > 0;
+      state.originAddress.trim().length >= 5 &&
+      state.originHousingType.trim().length > 0 &&
+      state.originCity.trim().length >= 2 &&
+      state.originPostalCode.trim().length >= 2 &&
+      state.originCountryCode.trim().length >= 2;
     const isDestinationValid =
-      state.destinationUnknown ||
-      (state.destinationAddress.trim().length >= 5 &&
-        state.destinationHousingType.trim().length > 0);
+      !state.destinationUnknown &&
+      state.destinationAddress.trim().length >= 5 &&
+      state.destinationHousingType.trim().length > 0 &&
+      state.destinationCity.trim().length >= 2 &&
+      state.destinationPostalCode.trim().length >= 2 &&
+      state.destinationCountryCode.trim().length >= 2;
     const MIN_DAYS_AHEAD = 14;
     const minMovingDate = (() => {
       const d = new Date();
@@ -1040,10 +1954,12 @@ function DevisGratuitsV3Content() {
           originAddress: state.originAddress || undefined,
           originCity: state.originCity || undefined,
           originPostalCode: state.originPostalCode || undefined,
+          originCountryCode: state.originCountryCode || undefined,
           destAddress: state.destinationUnknown ? undefined : state.destinationAddress || undefined,
           destCity: state.destinationUnknown ? undefined : state.destinationCity || undefined,
           destPostalCode:
             state.destinationUnknown ? undefined : state.destinationPostalCode || undefined,
+          destCountryCode: state.destinationUnknown ? undefined : state.destinationCountryCode || undefined,
 
           // Date
           movingDate: toIsoDate(state.movingDate),
@@ -1123,6 +2039,7 @@ function DevisGratuitsV3Content() {
 
   async function handleSubmitStep3(e: FormEvent) {
     e.preventDefault();
+    setStep3Error(null);
 
     const surface = parseInt(state.surfaceM2) || 60;
     if (surface < 10 || surface > 500) {
@@ -1143,6 +2060,12 @@ function DevisGratuitsV3Content() {
         updateFields({ leadId: effectiveLeadId });
       }
       if (effectiveLeadId) {
+        if (state.destinationUnknown) {
+          throw new Error("DESTINATION_REQUIRED");
+        }
+        if (routeDistanceKm == null || routeDistanceProvider !== "osrm") {
+          throw new Error("DISTANCE_NOT_READY");
+        }
         // Important: on reprend la pricing courante au moment du submit
         // (évite tout risque de valeur stale si l'utilisateur change vite de formule).
         const pricingForSubmit =
@@ -1157,19 +2080,31 @@ function DevisGratuitsV3Content() {
         const tunnelOptions = {
           pricing: {
             // Stockage indicatif pour debug/analytics (Neon via JSON).
-            distanceKm:
-              state.destinationUnknown
-                ? 50
-                : routeDistanceKm ??
-                  estimateDistanceKm(
-                    state.originPostalCode,
-                    state.destinationPostalCode,
-                    state.originLat,
-                    state.originLon,
-                    state.destinationLat,
-                    state.destinationLon
-                  ),
+            distanceKm: routeDistanceKm,
             distanceProvider: routeDistanceProvider ?? undefined,
+          },
+          volumeAdjustments: {
+            kitchenIncluded: state.kitchenIncluded || "appliances",
+            kitchenApplianceCount:
+              state.kitchenIncluded === ""
+                ? 3
+                : (state.kitchenIncluded || "appliances") === "appliances"
+                ? Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0
+                : undefined,
+            extraVolumeM3: (() => {
+              const kitchenTouched =
+                state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
+              if (!kitchenTouched) return 3 * 0.6;
+
+              if (state.kitchenIncluded === "full") return 6;
+              if (state.kitchenIncluded === "appliances") {
+                return (
+                  Math.max(0, Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0) *
+                  0.6
+                );
+              }
+              return 0;
+            })(),
           },
           // Important: conserver la structure envoyée en Step 2 (sinon Step 3 écrase et on perd l'accès)
           access: {
@@ -1219,7 +2154,7 @@ function DevisGratuitsV3Content() {
         const payload = {
           surfaceM2: surface,
           estimatedVolume: pricingForSubmit.volumeM3,
-          density: mapDensity(state.density),
+          density: mapDensity(state.density || "dense"),
           formule: state.formule,
           estimatedPriceMin: pricingForSubmit.prixMin,
           estimatedPriceAvg: Math.round((pricingForSubmit.prixMin + pricingForSubmit.prixMax) / 2),
@@ -1245,7 +2180,7 @@ function DevisGratuitsV3Content() {
         }
 
         // Email de confirmation :
-        // envoyé sur l'écran final (Step 4), plus de dépendance aux photos.
+        // demandé sur l'écran de confirmation (Step 4) — plus de dépendance aux photos.
       }
 
       trackStepChange(3, 4, "RECAP", "THANK_YOU", "confirmation_v3", "forward");
@@ -1254,11 +2189,168 @@ function DevisGratuitsV3Content() {
       goToStep(4);
     } catch (err: any) {
       console.error("Error finalizing lead:", err);
+      if (err instanceof Error && err.message === "DISTANCE_NOT_READY") {
+        setStep3Error("Distance route en cours de calcul. Merci de patienter quelques secondes puis de réessayer.");
+      } else if (err instanceof Error && err.message === "DESTINATION_REQUIRED") {
+        setStep3Error("Adresse d’arrivée requise.");
+      } else {
+        setStep3Error(err?.message || "Erreur lors de la finalisation.");
+      }
       trackError("API_ERROR", err.message || "Failed to finalize lead", 3, "RECAP", "formules_v3");
     }
   }
 
   return (
+    isFunnelV2 ? (
+      <main className="min-h-screen bg-[#F8F9FA] text-[#0F172A]">
+        <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+          {/* Top back/edit */}
+          {state.currentStep > 1 && (
+            <button
+              onClick={() => goToStep((state.currentStep - 1) as 1 | 2 | 3 | 4)}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#0F172A]"
+            >
+              ← Modifier
+            </button>
+          )}
+
+          <V2ProgressBar step={state.currentStep} />
+
+          {state.currentStep === 1 && (
+            <div className="rounded-3xl bg-white p-5 shadow-sm">
+              <StepQualificationV2
+                originCity={state.originCity}
+                originPostalCode={state.originPostalCode}
+                originLat={state.originLat}
+                originLon={state.originLon}
+                destinationCity={state.destinationCity}
+                destinationPostalCode={state.destinationPostalCode}
+                destinationLat={state.destinationLat}
+                destinationLon={state.destinationLon}
+                surfaceM2={state.surfaceM2}
+                onFieldChange={(field, value) => updateField(field as any, value)}
+                onSubmit={handleSubmitQualificationV2}
+                isSubmitting={false}
+                showValidation={showValidationStep1}
+              />
+            </div>
+          )}
+
+          {state.currentStep === 2 && (
+            <div className="rounded-3xl bg-white p-5 shadow-sm relative">
+              <StepEstimationV2
+                volume={activePricingStep2?.volumeM3 ?? activePricing?.volumeM3 ?? null}
+                routeDistanceKm={v2FirstEstimateDistanceKm}
+                displayDistanceKm={v2FirstEstimateDistanceKm}
+                priceMin={activePricingStep2?.prixMin ?? activePricing?.prixMin ?? null}
+                priceMax={activePricingStep2?.prixMax ?? activePricing?.prixMax ?? null}
+                onSubmit={handleSubmitEstimationV2}
+                isSubmitting={false}
+                  pricingByFormule={
+                    (v2PricingByFormuleStep2 ?? pricingByFormule)
+                      ? {
+                          ECONOMIQUE: {
+                            priceMin: (v2PricingByFormuleStep2 ?? pricingByFormule)!.ECONOMIQUE.prixMin,
+                            priceMax: (v2PricingByFormuleStep2 ?? pricingByFormule)!.ECONOMIQUE.prixMax,
+                          },
+                          STANDARD: {
+                            priceMin: (v2PricingByFormuleStep2 ?? pricingByFormule)!.STANDARD.prixMin,
+                            priceMax: (v2PricingByFormuleStep2 ?? pricingByFormule)!.STANDARD.prixMax,
+                          },
+                          PREMIUM: {
+                            priceMin: (v2PricingByFormuleStep2 ?? pricingByFormule)!.PREMIUM.prixMin,
+                            priceMax: (v2PricingByFormuleStep2 ?? pricingByFormule)!.PREMIUM.prixMax,
+                          },
+                        }
+                      : null
+                  }
+                  selectedFormule={state.formule}
+                  onFormuleChange={(v) => updateField("formule", v)}
+                  debug={debugMode}
+                  debugRows={v2DebugRowsStep2 ?? undefined}
+              />
+            </div>
+          )}
+
+          {state.currentStep === 3 && (
+            <div className="rounded-3xl bg-white p-5 shadow-sm relative">
+              <StepAccessLogisticsV2
+                originAddress={state.originAddress}
+                originCity={state.originCity}
+                originPostalCode={state.originPostalCode}
+                originCountryCode={state.originCountryCode}
+                originLat={state.originLat}
+                originLon={state.originLon}
+                destinationAddress={state.destinationAddress}
+                destinationCity={state.destinationCity}
+                destinationPostalCode={state.destinationPostalCode}
+                destinationCountryCode={state.destinationCountryCode}
+                destinationLat={state.destinationLat}
+                destinationLon={state.destinationLon}
+                destinationUnknown={state.destinationUnknown}
+                originHousingType={state.originHousingType}
+                originFloor={state.originFloor}
+                destinationHousingType={state.destinationHousingType}
+                destinationFloor={state.destinationFloor}
+                density={state.density}
+                kitchenIncluded={state.kitchenIncluded}
+                kitchenApplianceCount={state.kitchenApplianceCount}
+                movingDate={state.movingDate}
+                dateFlexible={state.dateFlexible}
+                onFieldChange={(field, value) => updateField(field as any, value)}
+                onSubmit={handleSubmitAccessV2}
+                isSubmitting={false}
+                showValidation={showValidationStep3}
+                routeDistanceKm={routeDistanceKm}
+                routeDistanceProvider={routeDistanceProvider}
+                pricingCart={v2PricingCart ?? undefined}
+                access_type={state.access_type ?? "simple"}
+                narrow_access={!!state.narrow_access}
+                long_carry={!!state.long_carry}
+                difficult_parking={!!state.difficult_parking}
+                lift_required={!!state.lift_required}
+                access_details={state.access_details ?? ""}
+                firstName={state.firstName}
+                email={state.email}
+                phone={state.phone}
+                serviceFurnitureStorage={state.serviceFurnitureStorage}
+                serviceCleaning={state.serviceCleaning}
+                serviceFullPacking={state.serviceFullPacking}
+                serviceFurnitureAssembly={state.serviceFurnitureAssembly}
+                serviceInsurance={state.serviceInsurance}
+                serviceWasteRemoval={state.serviceWasteRemoval}
+                serviceHelpWithoutTruck={state.serviceHelpWithoutTruck}
+                serviceSpecificSchedule={state.serviceSpecificSchedule}
+                specificNotes={state.specificNotes}
+              />
+            </div>
+          )}
+
+          {state.currentStep === 4 && (
+            <div className="rounded-3xl bg-white p-5 shadow-sm relative">
+              <StepContactPhotosV2
+                leadId={state.leadId}
+                linkingCode={state.linkingCode}
+                // Économies basées sur la formule sélectionnée (pas la fourchette globale)
+                estimateMinEur={activePricing?.prixMin ?? null}
+                estimateMaxEur={activePricing?.prixMax ?? null}
+                estimateIsIndicative={estimateIsIndicative}
+                email={state.email}
+                recap={{
+                  originCity: state.originCity,
+                  originPostalCode: state.originPostalCode,
+                  destinationCity: state.destinationCity,
+                  destinationPostalCode: state.destinationPostalCode,
+                  movingDate: state.movingDate,
+                  formule: state.formule,
+                  surfaceM2: state.surfaceM2,
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </main>
+    ) : (
     <main className="min-h-screen bg-gradient-to-b from-[#F8F9FA] to-white">
       {/* Hero with progress */}
       <TunnelHero currentStep={state.currentStep} totalSteps={STEPS.length} />
@@ -1278,8 +2370,10 @@ function DevisGratuitsV3Content() {
             <Step1Contact
               firstName={state.firstName}
               email={state.email}
+              phone={state.phone}
               onFirstNameChange={(value) => updateField("firstName", value)}
               onEmailChange={(value) => updateField("email", value)}
+              onPhoneChange={(value) => updateField("phone", value)}
               onSubmit={handleSubmitStep1}
               isSubmitting={false}
               error={null}
@@ -1292,6 +2386,7 @@ function DevisGratuitsV3Content() {
               originPostalCode={state.originPostalCode}
               originCity={state.originCity}
               originAddress={state.originAddress}
+              originCountryCode={state.originCountryCode}
               originLat={state.originLat}
               originLon={state.originLon}
               originHousingType={state.originHousingType}
@@ -1305,6 +2400,7 @@ function DevisGratuitsV3Content() {
               destinationPostalCode={state.destinationPostalCode}
               destinationCity={state.destinationCity}
               destinationAddress={state.destinationAddress}
+              destinationCountryCode={state.destinationCountryCode}
               destinationLat={state.destinationLat}
               destinationLon={state.destinationLon}
               destinationHousingType={state.destinationHousingType}
@@ -1380,7 +2476,7 @@ function DevisGratuitsV3Content() {
               }}
               onSubmit={handleSubmitStep3}
               isSubmitting={false}
-              error={null}
+              error={step3Error}
               showValidation={showValidationStep3}
             />
           )}
@@ -1395,29 +2491,14 @@ function DevisGratuitsV3Content() {
               estimateMinEur={estimateRange?.minEur ?? null}
               estimateMaxEur={estimateRange?.maxEur ?? null}
               estimateIsIndicative={estimateIsIndicative}
-              onEmailChange={(v) => updateField("email", v)}
-              onGoToStep={(target) => {
-                const stepMap = {
-                  1: "CONTACT",
-                  2: "PROJECT",
-                  3: "RECAP",
-                  4: "THANK_YOU",
-                } as const;
-                const screenMap = {
-                  1: "contact_v3",
-                  2: "project_v3",
-                  3: "formules_v3",
-                  4: "confirmation_v3",
-                } as const;
-                trackStepChange(
-                  state.currentStep,
-                  target,
-                  stepMap[state.currentStep as 1 | 2 | 3 | 4],
-                  stepMap[target],
-                  screenMap[target],
-                  "back"
-                );
-                goToStep(target);
+              recap={{
+                originCity: state.originCity,
+                originPostalCode: state.originPostalCode,
+                destinationCity: state.destinationCity,
+                destinationPostalCode: state.destinationPostalCode,
+                movingDate: state.movingDate,
+                formule: state.formule,
+                surfaceM2: state.surfaceM2,
               }}
             />
           )}
@@ -1485,6 +2566,7 @@ function DevisGratuitsV3Content() {
         )}
       </div>
     </main>
+    )
   );
 }
 

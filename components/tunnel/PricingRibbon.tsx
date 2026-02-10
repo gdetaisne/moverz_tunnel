@@ -1,12 +1,5 @@
 import type { ReactNode } from "react";
-
-function euro(n: number): string {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(Math.round(n));
-}
+import { PriceRangeInline } from "@/components/tunnel/PriceRangeInline";
 
 export default function PricingRibbon({
   minEur,
@@ -34,15 +27,13 @@ export default function PricingRibbon({
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
               Estimation {isIndicative ? "indicative" : "live"}
             </p>
-            <p className="truncate text-sm font-semibold text-[#0F172A]">
+            <div className="truncate text-sm font-semibold text-[#0F172A]">
               {hasRange ? (
-                <>
-                  {euro(minEur)} – {euro(maxEur)}
-                </>
+                <PriceRangeInline minEur={minEur} maxEur={maxEur} variant="compact" />
               ) : (
                 <>Complétez pour voir une fourchette</>
               )}
-            </p>
+            </div>
           </div>
 
           {leftSlot ? (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Smartphone, QrCode, Copy, Check, X } from "lucide-react";
+import { Smartphone, QrCode, Copy, Check, X, Mail, ExternalLink } from "lucide-react";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import QRCode from "qrcode";
 
@@ -10,13 +10,17 @@ interface WhatsAppCTAProps {
   linkingCode?: string;
   leadId?: string;
   variant?: "primary" | "secondary";
+  label?: string;
+  sublabel?: string;
 }
 
 export default function WhatsAppCTA({ 
   source = "tunnel", 
   linkingCode,
   leadId,
-  variant = "primary" 
+  variant = "primary",
+  label,
+  sublabel,
 }: WhatsAppCTAProps) {
   const { isMobile } = useDeviceDetection();
   const [showQRModal, setShowQRModal] = useState(false);
@@ -82,6 +86,10 @@ export default function WhatsAppCTA({
   }
 
   const isPrimary = variant === "primary";
+  const defaultLabel = `${isMobile ? "Envoyer mes photos" : "Continuer"} sur WhatsApp`;
+  const defaultSublabel = isPrimary ? (isMobile ? "Photos de toutes les pièces" : "Scanner le QR code") : undefined;
+  const finalLabel = label ?? defaultLabel;
+  const finalSublabel = sublabel ?? defaultSublabel;
 
   return (
     <>
@@ -96,10 +104,10 @@ export default function WhatsAppCTA({
       >
         <Smartphone className="w-5 h-5" />
         <div className="flex flex-col items-start">
-          <span>{isMobile ? "Envoyer mes photos" : "Continuer"} sur WhatsApp</span>
-          {isPrimary && (
+          <span>{finalLabel}</span>
+          {!!finalSublabel && (
             <span className="text-xs font-normal opacity-90">
-              {isMobile ? "Photos de toutes les pièces" : "Scanner le QR code"}
+              {finalSublabel}
             </span>
           )}
         </div>
@@ -180,23 +188,51 @@ export default function WhatsAppCTA({
                 <div className="flex-1 h-px bg-[#E3E5E8]" />
               </div>
 
-              {/* Copy link button */}
-              <button
-                onClick={handleCopyLink}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#E3E5E8] bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#F8F9FA] transition-colors"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4 text-green-600" />
-                    <span>Lien copié !</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    <span>Copier le lien WhatsApp</span>
-                  </>
-                )}
-              </button>
+              {/* Options alternatives */}
+              <div className="space-y-2">
+                {/* Ouvrir WhatsApp Web */}
+                <button
+                  onClick={() => {
+                    window.open(whatsappLink, "_blank");
+                    setShowQRModal(false);
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#E3E5E8] bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#F8F9FA] transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Ouvrir WhatsApp sur cet ordinateur</span>
+                </button>
+
+                {/* M'envoyer le lien par email */}
+                <button
+                  onClick={() => {
+                    const subject = "Lien WhatsApp Moverz";
+                    const body = `Voici le lien WhatsApp pour envoyer vos photos :\n\n${whatsappLink}`;
+                    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#E3E5E8] bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#F8F9FA] transition-colors"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>M'envoyer le lien par email</span>
+                </button>
+
+                {/* Copy link button */}
+                <button
+                  onClick={handleCopyLink}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#E3E5E8] bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#F8F9FA] transition-colors"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 text-green-600" />
+                      <span>Lien copié !</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copier le lien WhatsApp</span>
+                    </>
+                  )}
+                </button>
+              </div>
 
               <p className="text-xs text-[#1E293B]/60 mt-4">
                 1 message/jour max • Stop quand vous voulez • 0 spam

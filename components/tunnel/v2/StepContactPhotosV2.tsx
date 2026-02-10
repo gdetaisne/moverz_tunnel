@@ -4,16 +4,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, FileText, Mail } from "lucide-react";
 import { requestBackofficeConfirmation } from "@/lib/api/client";
 
-interface ConfirmationPageProps {
-  firstName: string;
-  email: string;
-  linkingCode?: string;
+interface StepContactPhotosV2Props {
+  leadId?: string | null;
   // Conservé pour compat (ancien écran) — plus utilisé
-  confirmationRequested?: boolean;
-  leadId?: string;
+  linkingCode?: string | null;
   estimateMinEur?: number | null;
   estimateMaxEur?: number | null;
   estimateIsIndicative?: boolean;
+  email?: string | null;
   recap?: {
     originCity?: string | null;
     originPostalCode?: string | null;
@@ -25,16 +23,14 @@ interface ConfirmationPageProps {
   };
 }
 
-export default function ConfirmationPage({
-  firstName,
-  email,
-  linkingCode,
+export function StepContactPhotosV2({
   leadId,
   estimateMinEur = null,
   estimateMaxEur = null,
   estimateIsIndicative = false,
+  email = null,
   recap,
-}: ConfirmationPageProps) {
+}: StepContactPhotosV2Props) {
   const [mounted, setMounted] = useState(false);
   const requestOnceRef = useRef(false);
   const [confirmationState, setConfirmationState] = useState<
@@ -46,6 +42,7 @@ export default function ConfirmationPage({
     setMounted(true);
   }, []);
 
+  // Demande d'email de confirmation (1 fois par lead, avec garde localStorage)
   useEffect(() => {
     if (!mounted) return;
     if (!leadId) return;
@@ -95,8 +92,6 @@ export default function ConfirmationPage({
   const recapRows = useMemo(() => {
     const rows: { label: string; value: string }[] = [];
 
-    if (firstName?.trim()) rows.push({ label: "Prénom", value: firstName.trim() });
-
     const origin = [recap?.originCity, recap?.originPostalCode]
       .filter(Boolean)
       .join(" ")
@@ -117,11 +112,9 @@ export default function ConfirmationPage({
         value: `${euro(estimateMinEur!)} – ${euro(estimateMaxEur!)}`,
       });
     }
-    if (linkingCode) rows.push({ label: "Code dossier", value: linkingCode });
 
     return rows;
   }, [
-    firstName,
     recap?.originCity,
     recap?.originPostalCode,
     recap?.destinationCity,
@@ -132,20 +125,19 @@ export default function ConfirmationPage({
     hasEstimate,
     estimateMinEur,
     estimateMaxEur,
-    linkingCode,
   ]);
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="text-center space-y-4 mb-10">
-        <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+    <div className="max-w-2xl mx-auto space-y-8">
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
           <Check className="w-3.5 h-3.5" strokeWidth={3} />
           Dossier créé
         </div>
 
-        <h2 className="text-3xl md:text-5xl font-black text-[#0F172A] leading-[1.1]">
+        <h1 className="text-4xl md:text-5xl font-black text-[#0F172A] leading-tight">
           Bravo
-        </h2>
+        </h1>
       </div>
 
       <div className="rounded-2xl border border-[#E3E5E8] bg-white p-5 md:p-6">
@@ -155,15 +147,22 @@ export default function ConfirmationPage({
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-[#0F172A]">
-              Merci de confirmer votre adresse email{" "}
-              <span className="font-mono">{normalizedEmail}</span>
+              Merci de confirmer votre adresse email
+              {normalizedEmail ? (
+                <>
+                  {" "}
+                  : <span className="font-mono">{normalizedEmail}</span>
+                </>
+              ) : null}
             </p>
             <p className="mt-1 text-sm text-[#1E293B]/70">
-              Vous avez reçu un mail de confirmation sur {normalizedEmail}.
+              Vous avez reçu un mail de confirmation{normalizedEmail ? ` sur ${normalizedEmail}` : ""}.
             </p>
 
             {confirmationState.status === "sending" && (
-              <p className="mt-3 text-xs text-[#1E293B]/60">Envoi de l'email de confirmation…</p>
+              <p className="mt-3 text-xs text-[#1E293B]/60">
+                Envoi de l'email de confirmation…
+              </p>
             )}
             {confirmationState.status === "sent" && (
               <p className="mt-3 text-xs text-green-700">
@@ -179,7 +178,7 @@ export default function ConfirmationPage({
         </div>
       </div>
 
-      <div className="mt-8 rounded-2xl bg-[#F8F9FA] p-5 md:p-6">
+      <div className="rounded-2xl bg-[#F8F9FA] p-5 md:p-6">
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-[#0F172A]" />
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">

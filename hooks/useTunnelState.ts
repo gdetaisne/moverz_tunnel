@@ -13,6 +13,7 @@ export interface TunnelFormState {
   originPostalCode: string;
   originCity: string;
   originAddress: string;
+  originCountryCode: string; // ISO2, ex: "fr"
   originLat: number | null;
   originLon: number | null;
   originHousingType: string;
@@ -27,6 +28,7 @@ export interface TunnelFormState {
   destinationPostalCode: string;
   destinationCity: string;
   destinationAddress: string;
+  destinationCountryCode: string; // ISO2, ex: "fr"
   destinationLat: number | null;
   destinationLon: number | null;
   destinationHousingType: string;
@@ -41,8 +43,10 @@ export interface TunnelFormState {
 
   // Meta: permet de distinguer "valeur par défaut UI" vs "choix explicite utilisateur"
   // (sans changer l'UI). Utilisé pour éviter d'envoyer des valeurs inventées au Back Office.
+  originHousingTypeTouched: boolean;
   originFloorTouched: boolean;
   originElevatorTouched: boolean;
+  destinationHousingTypeTouched: boolean;
   destinationFloorTouched: boolean;
   destinationElevatorTouched: boolean;
   
@@ -53,8 +57,14 @@ export interface TunnelFormState {
   // Volume & Services (Step 3)
   surfaceM2: string; // vide par défaut, puis auto-estimé selon logement (logique V2)
   surfaceTouched: boolean; // V2 behavior: ne pas écraser la surface si l'utilisateur l'a modifiée
-  density: "light" | "normal" | "dense";
+  // "" = non choisi (UI), mais le calcul peut appliquer une hypothèse par défaut
+  density: "" | "light" | "normal" | "dense";
   formule: "ECONOMIQUE" | "STANDARD" | "PREMIUM";
+
+  // Cuisine (NOUVEAU) — utilisé pour ajuster le volume/prix + archivé dans tunnelOptions (BO)
+  // "" = non choisi (UI), mais le calcul peut appliquer une hypothèse par défaut
+  kitchenIncluded: "" | "none" | "appliances" | "full";
+  kitchenApplianceCount: string; // input UI (si appliances)
   
   // Services en plus
   serviceFurnitureStorage: boolean;
@@ -84,6 +94,14 @@ export interface TunnelFormState {
   furnitureAquarium: boolean;
   furnitureOver25kg: boolean;
   hasSpecificFurniture: boolean; // Backward compat
+
+  // Accès V2 (simple/contraint + sous-questions)
+  access_type?: "simple" | "constrained";
+  narrow_access?: boolean;
+  long_carry?: boolean;
+  difficult_parking?: boolean;
+  lift_required?: boolean;
+  access_details?: string;
   
   // Autres besoins
   hasFragileItems: boolean;
@@ -93,6 +111,12 @@ export interface TunnelFormState {
   leadId: string | null;
   currentStep: 1 | 2 | 3 | 4;
   linkingCode: string | null;
+
+  // Reward: baseline figé capturé en Step 2 (V2) et affiché en Step 3
+  rewardBaselineMinEur: number | null;
+  rewardBaselineMaxEur: number | null;
+  rewardBaselineDistanceKm: number | null;
+  rewardBaselineFormule: "ECONOMIQUE" | "STANDARD" | "PREMIUM" | null;
 }
 
 const INITIAL_STATE: TunnelFormState = {
@@ -104,6 +128,7 @@ const INITIAL_STATE: TunnelFormState = {
   originPostalCode: "",
   originCity: "",
   originAddress: "",
+  originCountryCode: "fr",
   originLat: null,
   originLon: null,
   originHousingType: "",
@@ -119,6 +144,7 @@ const INITIAL_STATE: TunnelFormState = {
   destinationPostalCode: "",
   destinationCity: "",
   destinationAddress: "",
+  destinationCountryCode: "fr",
   destinationLat: null,
   destinationLon: null,
   destinationHousingType: "",
@@ -132,8 +158,10 @@ const INITIAL_STATE: TunnelFormState = {
   destinationAccess: "easy",
   destinationUnknown: false,
 
+  originHousingTypeTouched: false,
   originFloorTouched: false,
   originElevatorTouched: false,
+  destinationHousingTypeTouched: false,
   destinationFloorTouched: false,
   destinationElevatorTouched: false,
   
@@ -145,8 +173,11 @@ const INITIAL_STATE: TunnelFormState = {
   // (l’UI fait déjà un fallback à 60 si vide pour ne pas casser l’affichage).
   surfaceM2: "",
   surfaceTouched: false,
-  density: "normal",
+  density: "",
   formule: "STANDARD",
+
+  kitchenIncluded: "",
+  kitchenApplianceCount: "",
   
   serviceFurnitureStorage: false,
   serviceCleaning: false,
@@ -172,6 +203,13 @@ const INITIAL_STATE: TunnelFormState = {
   furnitureAquarium: false,
   furnitureOver25kg: false,
   hasSpecificFurniture: false,
+
+  access_type: "simple",
+  narrow_access: false,
+  long_carry: false,
+  difficult_parking: false,
+  lift_required: false,
+  access_details: "",
   
   hasFragileItems: false,
   specificNotes: "",
@@ -179,6 +217,11 @@ const INITIAL_STATE: TunnelFormState = {
   leadId: null,
   currentStep: 1,
   linkingCode: null,
+
+  rewardBaselineMinEur: null,
+  rewardBaselineMaxEur: null,
+  rewardBaselineDistanceKm: null,
+  rewardBaselineFormule: null,
 };
 
 export function useTunnelState() {
@@ -193,6 +236,10 @@ export function useTunnelState() {
 
           // Backward compat: si les flags n'existaient pas, on les déduit
           // quand la valeur diffère de la valeur par défaut.
+          merged.originHousingTypeTouched =
+            typeof parsed.originHousingTypeTouched === "boolean"
+              ? parsed.originHousingTypeTouched
+              : merged.originHousingType !== INITIAL_STATE.originHousingType;
           merged.originFloorTouched =
             typeof parsed.originFloorTouched === "boolean"
               ? parsed.originFloorTouched
@@ -201,6 +248,10 @@ export function useTunnelState() {
             typeof parsed.originElevatorTouched === "boolean"
               ? parsed.originElevatorTouched
               : merged.originElevator !== INITIAL_STATE.originElevator;
+          merged.destinationHousingTypeTouched =
+            typeof parsed.destinationHousingTypeTouched === "boolean"
+              ? parsed.destinationHousingTypeTouched
+              : merged.destinationHousingType !== INITIAL_STATE.destinationHousingType;
           merged.destinationFloorTouched =
             typeof parsed.destinationFloorTouched === "boolean"
               ? parsed.destinationFloorTouched
@@ -209,6 +260,10 @@ export function useTunnelState() {
             typeof parsed.destinationElevatorTouched === "boolean"
               ? parsed.destinationElevatorTouched
               : merged.destinationElevator !== INITIAL_STATE.destinationElevator;
+
+          // Force "easy" si les champs d'accès sont vides (rétrocompatibilité + UX par défaut)
+          if (!merged.originAccess) merged.originAccess = "easy";
+          if (!merged.destinationAccess) merged.destinationAccess = "easy";
 
           return merged;
         } catch (e) {
@@ -228,8 +283,18 @@ export function useTunnelState() {
 
       // Marquer certains champs "touched" dès qu'ils sont modifiés via updateField
       // (appelé depuis l'UI via onChange).
+      // Important: ne pas marquer "touched" lors de l'initialisation par défaut ("" -> "house")
+      // faite par l'UI en Step 3, sinon on considère à tort que l'utilisateur a "confirmé".
+      if (field === "originHousingType") {
+        const isDefaultInit = !prev.originHousingType && value === ("house" as any);
+        if (!isDefaultInit) next.originHousingTypeTouched = true;
+      }
       if (field === "originFloor") next.originFloorTouched = true;
       if (field === "originElevator") next.originElevatorTouched = true;
+      if (field === "destinationHousingType") {
+        const isDefaultInit = !prev.destinationHousingType && value === ("house" as any);
+        if (!isDefaultInit) next.destinationHousingTypeTouched = true;
+      }
       if (field === "destinationFloor") next.destinationFloorTouched = true;
       if (field === "destinationElevator") next.destinationElevatorTouched = true;
       

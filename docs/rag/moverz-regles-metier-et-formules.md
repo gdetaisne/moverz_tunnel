@@ -357,20 +357,32 @@ Tarifs (LA_POSTE_RATES_EUR_PER_M3) — grille actuelle:
 `getEtageCoefficient(floor, elevator)`:
 
 - ascenseur `"yes"` → 1.0
-- floor = 0 → 1.0
-- floor ≤ 2 → 1.05
-- floor ≤ 5 → 1.1
-- sinon → 1.15
+- floor ≤ 0 → 1.0
+- ascenseur `"no"` (sans ascenseur):
+  - RDC → 1.0
+  - 1er → 1.05 (+5%)
+  - 2e → 1.10 (+10%)
+  - 3e → 1.15 (+15%)
+  - ≥4 → 1.15 (+15%) **+ monte-meuble requis** (voir `requiresMonteMeuble`)
+- ascenseur `"partial"`: comportement conservateur (proche sans ascenseur, capé à 1.15)
 
 On prend le pire des deux accès:
 
 - \(coeffEtage = \max(coeffOrigin, coeffDest)\)
 
+### 6.4 bis Majorations “accès difficile” (sur le total hors services)
+
+Appliquées en plus de `coeffEtage`, multiplicatives:
+
+- **Portage > 10 m** → +5% (× 1.05)
+- **Petit ascenseur / passages étroits** → +5% (× 1.05)
+- **Stationnement compliqué** → +3% (× 1.03)
+
 ### 6.5 Services additionnels (forfaits)
 
 `SERVICES_PRIX`:
 
-- monteMeuble: 150
+- monteMeuble: 200
 - pianoDroit: 200
 - pianoQuart: 250
 - debarras: 100
