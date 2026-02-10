@@ -1,4 +1,23 @@
-# Migration V4 (staging) — journal de refonte UX/UI
+# Migration V4 — journal de refonte UX/UI
+
+## 2026-02-11 — Grand nettoyage du repo
+
+**Contexte** : staging promu en main, le tunnel V2 (feature flag `NEXT_PUBLIC_FUNNEL_V2`) est devenu la seule version live. Nettoyage du code zombie.
+
+### Supprimé
+- **Feature flag `NEXT_PUBLIC_FUNNEL_V2`** : supprimé du code, du Dockerfile, et de `next.config.ts`. Le parcours V2 est désormais le seul chemin.
+- **Pages mortes** : `devis-gratuits-v2/`, `devis-gratuits-experiments/`, `widget-test/`, `upload-photos/`, `CameraCapture.tsx`
+- **Composants morts** : `Step1Contact`, `Step2Project`, `Step2ProjectComplete`, `Step3VolumeServices`, `ConfirmationPage`, `TunnelHero`, `TrustSignals`, `PricingRibbon`, `WhatsAppCTA`
+- **Code conditionnel** dans `devis-gratuits-v3/page.tsx` : tous les `if (isFunnelV2)` / ternaires simplifiés → uniquement le chemin V2.
+- **Ancien flow handlers** : `handleSubmitStep1`, `handleSubmitStep2`, `handleSubmitStep3` (remplacés par `handleSubmitQualificationV2`, `handleSubmitEstimationV2`, `handleSubmitAccessV2`, `handleSubmitContactV2`).
+
+### Impact
+- **~11 000 lignes supprimées** au total.
+- Composants vivants : `PremiumShell`, `DatePickerFr`, `PriceRangeInline`, `AddressAutocomplete`, `v2/StepQualificationV2`, `v2/StepEstimationV2`, `v2/StepAccessLogisticsV2`, `v2/StepContactPhotosV2`, `v2/V2ProgressBar`.
+
+---
+
+*(journal historique ci-dessous)*
 
 > **Règle**: ce fichier doit être mis à jour **à chaque modification de code** liée au tunnel (UI, tracking, mapping payload, copy, étapes) et **à chaque décision** (même petite).
 >

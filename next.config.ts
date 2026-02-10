@@ -58,15 +58,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/devis-gratuits-v2",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=0, s-maxage=0, must-revalidate",
-          },
-        ],
-      },
-      {
         source: "/devis-gratuits",
         headers: [
           {
