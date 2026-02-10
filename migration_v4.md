@@ -17,6 +17,38 @@
 
 ---
 
+## Flux données Tunnel → Back Office (synthèse)
+
+Fichier source : `lib/api/client.ts` — contient toutes les interfaces TypeScript et fonctions d'appel.
+
+| Étape | Endpoint BO (public) | Méthode | Données clés |
+|-------|----------------------|---------|--------------|
+| Création lead | `/public/leads` | POST | `firstName` (requis), `email` (requis), `lastName`, `phone`, `source` |
+| MAJ progressive (chaque step) | `/public/leads/:id` | PATCH (via proxy `/api/backoffice/leads/:id`) | Adresses (origin/dest), date, volume, surface, formule, prix min/avg/max, accès (étage, ascenseur, portage…), `tunnelOptions` (JSON structuré) |
+| Inventaire AI (photos) | `/public/leads/:id/inventory` | POST | `items[]`, `excludedInventoryIds[]`, `photosByRoom[]` |
+| Upload photos | `/public/leads/:id/photos` | POST (multipart) | Fichiers photos |
+| Confirmation email | `/public/leads/:id/request-confirmation` | POST | — (retry auto si DOCS_NOT_READY) |
+| Relance photos | `/public/leads/:id/send-photo-reminder` | POST | — |
+| Tracking analytics | `/public/tunnel-events` | POST | `sessionId`, `leadTunnelId`, `leadId`, `eventType`, `logicalStep`, `screenId`, `email`, `extra` |
+
+### Champs envoyés au PATCH (`UpdateBackofficeLeadPayload`)
+
+- **Contact** : `firstName`, `lastName`, `email`, `phone`
+- **Adresses** : `originAddress/City/PostalCode/CountryCode`, `destAddress/City/PostalCode/CountryCode`
+- **Dates** : `movingDate` (ISO), `dateFlexible`
+- **Volume** : `surfaceM2`, `estimatedVolume`, `density` (LIGHT/MEDIUM/HEAVY)
+- **Formule & Prix** : `formule` (ECONOMIQUE/STANDARD/PREMIUM), `estimatedPriceMin/Avg/Max`, `estimatedSavingsEur`
+- **Logement origine** : `originHousingType`, `originFloor`, `originElevator`, `originFurnitureLift`, `originCarryDistance`, `originParkingAuth`
+- **Logement destination** : `destHousingType`, `destFloor`, `destElevator`, `destFurnitureLift`, `destCarryDistance`, `destParkingAuth`
+- **Photos / AI** : `photosUrls`, `aiEstimationConfidence`
+- **Options tunnel** : `tunnelOptions` (JSON libre — pricing, access, services, notes…)
+
+### Variables d'environnement côté tunnel
+
+- `NEXT_PUBLIC_API_URL` — URL de base du Back Office (ex: `https://moverz-backoffice.gslv.cloud`). Normalisée automatiquement (retrait `/api` ou `/public` si présent).
+
+---
+
 *(journal historique ci-dessous)*
 
 > **Règle**: ce fichier doit être mis à jour **à chaque modification de code** liée au tunnel (UI, tracking, mapping payload, copy, étapes) et **à chaque décision** (même petite).
