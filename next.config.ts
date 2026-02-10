@@ -37,13 +37,41 @@ if (process.env.NODE_ENV !== "production") {
 const nextConfig: NextConfig = {
   async headers() {
     return [
-      // Ensure widget updates propagate quickly (avoid “stuck in cache” on moverz.fr).
+      // Ensure widget updates propagate quickly (avoid "stuck in cache" on moverz.fr).
       {
         source: "/moverz-widget.js",
         headers: [
           {
             key: "Cache-Control",
             value: "public, max-age=0, must-revalidate",
+          },
+        ],
+      },
+      // Tunnel pages: no proxy/CDN caching to ensure fresh deploys are visible immediately.
+      {
+        source: "/devis-gratuits-v3",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, s-maxage=0, must-revalidate",
+          },
+        ],
+      },
+      {
+        source: "/devis-gratuits-v2",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, s-maxage=0, must-revalidate",
+          },
+        ],
+      },
+      {
+        source: "/devis-gratuits",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, s-maxage=0, must-revalidate",
           },
         ],
       },
