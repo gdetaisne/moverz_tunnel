@@ -29,26 +29,11 @@ import {
 } from "@/lib/pricing/constants";
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
-import TunnelHero from "@/components/tunnel/TunnelHero";
-import Step1Contact from "@/components/tunnel/Step1Contact";
-import Step2ProjectComplete from "@/components/tunnel/Step2ProjectComplete";
-import Step3VolumeServices from "@/components/tunnel/Step3VolumeServices";
-import ConfirmationPage from "@/components/tunnel/ConfirmationPage";
-import TrustSignals from "@/components/tunnel/TrustSignals";
-
-// V2 (feature flag) components
 import { StepQualificationV2 } from "@/components/tunnel/v2/StepQualificationV2";
 import { StepEstimationV2 } from "@/components/tunnel/v2/StepEstimationV2";
 import { StepAccessLogisticsV2 } from "@/components/tunnel/v2/StepAccessLogisticsV2";
 import { StepContactPhotosV2 } from "@/components/tunnel/v2/StepContactPhotosV2";
 import { V2ProgressBar } from "@/components/tunnel/v2/V2ProgressBar";
-
-const STEPS = [
-  { id: 1, label: "Contact" },
-  { id: 2, label: "Projet" },
-  { id: 3, label: "Formules" },
-  { id: 4, label: "Photos" },
-] as const;
 
 function DevisGratuitsV3Content() {
   const router = useRouter();
@@ -59,14 +44,10 @@ function DevisGratuitsV3Content() {
   const from = searchParams.get("from") || "/devis-gratuits-v3";
   const urlLeadId = (searchParams.get("leadId") || "").trim();
   const hydratedLeadRef = useRef<string | null>(null);
-  const isFunnelV2 = useMemo(() => process.env.NEXT_PUBLIC_FUNNEL_V2 === "true", []);
   const debugMode = (searchParams.get("debug") || "").trim() === "1" || (searchParams.get("debug") || "").trim() === "true";
 
-  const [confirmationRequested, setConfirmationRequested] = useState(false);
   const [showValidationStep1, setShowValidationStep1] = useState(false);
-  const [showValidationStep2, setShowValidationStep2] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
-  const [step3Error, setStep3Error] = useState<string | null>(null);
 
   const toInputDate = (raw: string | null | undefined): string | undefined => {
     if (!raw) return undefined;
@@ -395,81 +376,25 @@ function DevisGratuitsV3Content() {
     }
   }, [source, from]);
 
-  // Track step views (V1/V2)
+  // Track step views
   useEffect(() => {
-    if (isFunnelV2) {
-      const stepMap = {
-        1: { logical: "PROJECT" as const, screen: "qualification_v2" },
-        2: { logical: "RECAP" as const, screen: "estimation_v2" },
-        3: { logical: "PROJECT" as const, screen: "acces_v2" },
-        4: { logical: "THANK_YOU" as const, screen: "confirmation_v2" },
-      };
-      const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
-      if (current) {
-        trackStep(state.currentStep, current.logical, current.screen);
-      }
-      return;
-    }
     const stepMap = {
-      1: { logical: "CONTACT" as const, screen: "contact_v3" },
-      2: { logical: "PROJECT" as const, screen: "project_v3" },
-      3: { logical: "RECAP" as const, screen: "formules_v3" },
-      4: { logical: "THANK_YOU" as const, screen: "confirmation_v3" },
+      1: { logical: "PROJECT" as const, screen: "qualification_v2" },
+      2: { logical: "RECAP" as const, screen: "estimation_v2" },
+      3: { logical: "PROJECT" as const, screen: "acces_v2" },
+      4: { logical: "THANK_YOU" as const, screen: "confirmation_v2" },
     };
-    
     const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
     if (current) {
       trackStep(state.currentStep, current.logical, current.screen);
     }
-  }, [state.currentStep, isFunnelV2]);
-
-  const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" => {
-    // "" (non choisi) => hypothèse par défaut "très meublé"
-    if (!d) return "HEAVY";
-    return d === "light" ? "LIGHT" : d === "dense" ? "HEAVY" : "MEDIUM";
-  };
-
-  const mapElevator = (e: string): "OUI" | "NON" | "PARTIEL" => {
-    // UI values: "", "none", "no", "yes" (et potentiellement "small" / "partial")
-    if (!e || e === "none" || e === "no") return "NON";
-    if (e === "small" || e === "partial") return "PARTIEL";
-    return "OUI";
-  };
+  }, [state.currentStep]);
 
   const toIsoDate = (raw: string | null | undefined): string | undefined => {
     if (!raw) return undefined;
     const d = new Date(raw);
     if (!Number.isFinite(d.getTime())) return undefined;
     return d.toISOString();
-  };
-
-  // S'assure qu'un lead existe bien dans le Back Office et retourne son id.
-  // Utile quand l'utilisateur reprend une session locale avec un lead supprimé/expiré (404).
-  const ensureBackofficeLeadId = async (options?: { forceNew?: boolean }) => {
-    if (state.leadId && !options?.forceNew) return state.leadId;
-
-    const trimmedFirstName = state.firstName.trim();
-    const trimmedEmail = state.email.trim().toLowerCase();
-    if (!trimmedFirstName || !trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
-      return null;
-    }
-
-    try {
-      const payload = {
-        firstName: trimmedFirstName,
-        email: trimmedEmail,
-        lastName: state.lastName.trim() || undefined,
-        phone: state.phone.trim() || undefined,
-        source,
-        estimationMethod: "FORM" as const,
-      };
-      const { id } = await createBackofficeLead(payload);
-      updateFields({ leadId: id });
-      return id;
-    } catch (err) {
-      console.warn("⚠️ ensureBackofficeLeadId failed:", err);
-      return null;
-    }
   };
 
   // --- helpers pricing (copiés de la V2, puis ajustés pour la V3) ---
@@ -527,7 +452,6 @@ function DevisGratuitsV3Content() {
   } | null>(null);
 
   useEffect(() => {
-    if (!isFunnelV2) return;
     // On ne fige/rafraîchit que tant qu'on est avant Step 3 (donc avant la sélection d'adresses).
     if (state.currentStep >= 3) return;
     if (state.destinationUnknown) return;
@@ -546,7 +470,6 @@ function DevisGratuitsV3Content() {
       destinationLon: state.destinationLon,
     };
   }, [
-    isFunnelV2,
     state.currentStep,
     state.destinationUnknown,
     state.originLat,
@@ -564,7 +487,6 @@ function DevisGratuitsV3Content() {
     // trop grossière qui peut surestimer massivement la distance et créer un -1000€ en delta.
     if (
       !c &&
-      isFunnelV2 &&
       state.currentStep >= 3 &&
       !state.destinationUnknown &&
       state.originLat != null &&
@@ -726,34 +648,13 @@ function DevisGratuitsV3Content() {
     return "yes";
   };
 
-  const coerceHousingType = (t: string | null | undefined): HousingType => {
-    const v = (t || "").trim();
-    if (
-      v === "studio" ||
-      v === "t1" ||
-      v === "t2" ||
-      v === "t3" ||
-      v === "t4" ||
-      v === "t5" ||
-      v === "house" ||
-      v === "house_1floor" ||
-      v === "house_2floors" ||
-      v === "house_3floors"
-    ) {
-      return v;
-    }
-    return "t2";
-  };
-
   const pricingByFormule = useMemo(() => {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    // V2: la surface (m²) est saisie en Step 1; le choix "Maison/Appartement" en Step 3
+    // La surface (m²) est saisie en Step 1; le choix "Maison/Appartement" en Step 3
     // ne doit pas modifier le volume (sinon les prix bougent alors que la surface est déjà connue).
-    const housingType = isFunnelV2
-      ? ("t2" as const)
-      : coerceHousingType(state.originHousingType || state.destinationHousingType);
+    const housingType = "t2" as const;
     // UI: pas de pré-sélection en Step 3. Calcul: hypothèse par défaut "très meublé".
     const density = (state.density || "dense") as "light" | "normal" | "dense";
 
@@ -778,9 +679,7 @@ function DevisGratuitsV3Content() {
       ? "yes"
       : toPricingElevator(state.destinationElevator);
 
-    const monteMeuble = isFunnelV2
-      ? !!state.lift_required
-      : state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
+    const monteMeuble = !!state.lift_required;
 
     const piano =
       state.servicePiano === "droit"
@@ -802,20 +701,9 @@ function DevisGratuitsV3Content() {
       return 0;
     })();
 
-    const longCarry = isFunnelV2
-      ? !!state.long_carry
-      : (state.originCarryDistance || "").trim().length > 0 ||
-        (state.destinationCarryDistance || "").trim().length > 0;
-    const difficultParking = isFunnelV2
-      ? !!state.difficult_parking
-      : !!state.originParkingAuth ||
-        (!!state.destinationParkingAuth && !state.destinationUnknown) ||
-        !!state.accessTruckDifficult;
-    const tightAccess = isFunnelV2
-      ? !!state.narrow_access
-      : !!state.originTightAccess ||
-        (!!state.destinationTightAccess && !state.destinationUnknown) ||
-        !!state.accessSmallElevator;
+    const longCarry = !!state.long_carry;
+    const difficultParking = !!state.difficult_parking;
+    const tightAccess = !!state.narrow_access;
 
     const baseInput = {
       surfaceM2: surface,
@@ -881,7 +769,6 @@ function DevisGratuitsV3Content() {
   // - pas de saison
   // - accès RAS
   const v2PricingByFormuleStep2 = useMemo(() => {
-    if (!isFunnelV2) return null;
     if (state.currentStep !== 2) return null;
 
     const surface = parseInt(state.surfaceM2) || 60;
@@ -913,7 +800,6 @@ function DevisGratuitsV3Content() {
       {} as any
     );
   }, [
-    isFunnelV2,
     state.currentStep,
     state.surfaceM2,
     state.originPostalCode,
@@ -926,13 +812,11 @@ function DevisGratuitsV3Content() {
   }, [v2PricingByFormuleStep2, state.formule]);
 
   const v2FirstEstimateDistanceKm = useMemo(() => {
-    if (!isFunnelV2) return null;
     if (state.destinationUnknown) return null;
     const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
     if (!Number.isFinite(cityDistanceKm) || cityDistanceKm <= 0) return null;
     return Math.round(cityDistanceKm + 5);
   }, [
-    isFunnelV2,
     state.destinationUnknown,
     state.originPostalCode,
     state.destinationPostalCode,
@@ -940,7 +824,6 @@ function DevisGratuitsV3Content() {
 
   const v2DebugRowsStep2 = useMemo(() => {
     if (!debugMode) return null;
-    if (!isFunnelV2) return null;
     if (state.currentStep !== 2) return null;
 
     const surface = parseInt(state.surfaceM2) || 60;
@@ -1006,7 +889,6 @@ function DevisGratuitsV3Content() {
     ];
   }, [
     debugMode,
-    isFunnelV2,
     state.currentStep,
     state.surfaceM2,
     state.formule,
@@ -1018,7 +900,6 @@ function DevisGratuitsV3Content() {
   // Reward baseline (figé) : en cas de refresh direct en Step 3, on hydrate une fois le baseline
   // (mêmes hypothèses que la Step 2) pour éviter l'affichage vide.
   useEffect(() => {
-    if (!isFunnelV2) return;
     if (state.currentStep < 3) return;
     if (state.rewardBaselineMinEur != null && state.rewardBaselineMaxEur != null) return;
 
@@ -1051,7 +932,6 @@ function DevisGratuitsV3Content() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    isFunnelV2,
     state.currentStep,
     state.rewardBaselineMinEur,
     state.rewardBaselineMaxEur,
@@ -1061,9 +941,8 @@ function DevisGratuitsV3Content() {
     state.destinationPostalCode,
   ]);
 
-  // Panier (V2 Step 3): Première estimation (hypothèses fixes) → deltas → Budget affiné
+  // Panier (Step 3): Première estimation (hypothèses fixes) → deltas → Budget affiné
   const v2PricingCart = useMemo(() => {
-    if (!isFunnelV2) return null;
 
     const CENTER_BIAS = 0.6;
     const centerEur = (minEur: number, maxEur: number): number =>
@@ -1297,7 +1176,6 @@ function DevisGratuitsV3Content() {
       lines,
     };
   }, [
-    isFunnelV2,
     routeDistanceKm,
     routeDistanceProvider,
     state.surfaceM2,
@@ -1353,9 +1231,7 @@ function DevisGratuitsV3Content() {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const housingType = isFunnelV2
-      ? ("t2" as const)
-      : coerceHousingType(state.originHousingType || state.destinationHousingType);
+    const housingType = "t2" as const;
     const typeCoefficient = TYPE_COEFFICIENTS[housingType];
     const effectiveDensity = (state.density || "dense") as "light" | "normal" | "dense";
     const densityCoefficient = DENSITY_COEFFICIENTS[effectiveDensity];
@@ -1382,9 +1258,7 @@ function DevisGratuitsV3Content() {
       ? "yes"
       : toPricingElevator(state.destinationElevator);
 
-    const monteMeuble = isFunnelV2
-      ? !!state.lift_required
-      : state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
+    const monteMeuble = !!state.lift_required;
 
     const piano =
       state.servicePiano === "droit"
@@ -1419,22 +1293,9 @@ function DevisGratuitsV3Content() {
     const centreSeasonedSansServices =
       baseNoSeasonEur * seasonFactor * formuleMultiplier * coeffEtage;
 
-    // On ne ré-expose pas le détail des services depuis constants ici,
-    // mais on a déjà servicesTotal dans activePricing (issu de calculatePricing).
-    const longCarry = isFunnelV2
-      ? !!state.long_carry
-      : (state.originCarryDistance || "").trim().length > 0 ||
-        (state.destinationCarryDistance || "").trim().length > 0;
-    const difficultParking = isFunnelV2
-      ? !!state.difficult_parking
-      : !!state.originParkingAuth ||
-        (!!state.destinationParkingAuth && !state.destinationUnknown) ||
-        !!state.accessTruckDifficult;
-    const tightAccess = isFunnelV2
-      ? !!state.narrow_access
-      : !!state.originTightAccess ||
-        (!!state.destinationTightAccess && !state.destinationUnknown) ||
-        !!state.accessSmallElevator;
+    const longCarry = !!state.long_carry;
+    const difficultParking = !!state.difficult_parking;
+    const tightAccess = !!state.narrow_access;
     const hasTightAccess = tightAccess || originElevator === "partial" || destinationElevator === "partial";
     const coeffAccess =
       (longCarry ? 1.05 : 1) *
@@ -1500,69 +1361,6 @@ function DevisGratuitsV3Content() {
     state.serviceDebarras,
   ]);
 
-  async function handleSubmitStep1(e: FormEvent) {
-    e.preventDefault();
-
-    if (!state.firstName.trim() || state.firstName.trim().length < 2) {
-      setShowValidationStep1(true);
-      requestAnimationFrame(() => {
-        document.getElementById("contact-firstName")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        (document.getElementById("contact-firstName") as any)?.focus?.();
-      });
-      trackError("VALIDATION_ERROR", "Invalid firstName", 1, "CONTACT", "contact_v3");
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) {
-      setShowValidationStep1(true);
-      requestAnimationFrame(() => {
-        document.getElementById("contact-email")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        (document.getElementById("contact-email") as any)?.focus?.();
-      });
-      trackError("VALIDATION_ERROR", "Invalid email", 1, "CONTACT", "contact_v3");
-      return;
-    }
-
-    try {
-      const payload = {
-        firstName: state.firstName.trim(),
-        email: state.email.trim().toLowerCase(),
-        lastName: state.lastName.trim() || undefined,
-        phone: state.phone.trim() || undefined,
-        source,
-        estimationMethod: "FORM" as const,
-      };
-
-      if (state.leadId) {
-        try {
-          await updateBackofficeLead(state.leadId, payload);
-        } catch (err: any) {
-          if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
-            const { id: backofficeLeadId } = await createBackofficeLead(payload);
-            updateFields({ leadId: backofficeLeadId, linkingCode: null });
-          } else {
-            throw err;
-          }
-        }
-      } else {
-        const { id: backofficeLeadId } = await createBackofficeLead(payload);
-        // V3: on utilise maintenant l'id Back Office (Neon) comme `leadId` dans le state.
-        // `linkingCode` (anciennement via SQLite /api/leads) n'est pas requis pour créer le lead BO;
-        // WhatsApp CTA a un fallback sans code.
-        updateFields({ leadId: backofficeLeadId, linkingCode: null });
-      }
-
-      setConfirmationRequested(false);
-      setShowValidationStep1(false);
-      trackStepChange(1, 2, "CONTACT", "PROJECT", "project_v3", "forward");
-      goToStep(2);
-    } catch (err: any) {
-      console.error("Error creating/updating lead:", err);
-      trackError("API_ERROR", err.message || "Failed to create/update lead", 1, "CONTACT", "contact_v3");
-    }
-  }
-
-  // V2 handlers
   const handleSubmitQualificationV2 = (e: FormEvent) => {
     e.preventDefault();
     const isOriginValid =
@@ -1863,345 +1661,7 @@ function DevisGratuitsV3Content() {
     }
   }
 
-  async function handleSubmitStep2(e: FormEvent) {
-    e.preventDefault();
-
-    const isOriginValid =
-      state.originAddress.trim().length >= 5 &&
-      state.originHousingType.trim().length > 0 &&
-      state.originCity.trim().length >= 2 &&
-      state.originPostalCode.trim().length >= 2 &&
-      state.originCountryCode.trim().length >= 2;
-    const isDestinationValid =
-      !state.destinationUnknown &&
-      state.destinationAddress.trim().length >= 5 &&
-      state.destinationHousingType.trim().length > 0 &&
-      state.destinationCity.trim().length >= 2 &&
-      state.destinationPostalCode.trim().length >= 2 &&
-      state.destinationCountryCode.trim().length >= 2;
-    const MIN_DAYS_AHEAD = 14;
-    const minMovingDate = (() => {
-      const d = new Date();
-      d.setDate(d.getDate() + MIN_DAYS_AHEAD);
-      return d.toISOString().split("T")[0]!;
-    })();
-    const isMovingDateTooSoon =
-      Boolean(state.movingDate) && state.movingDate < minMovingDate;
-    const isDateValid = state.movingDate.length > 0 && !isMovingDateTooSoon;
-
-    if (!isOriginValid || !isDestinationValid || !isDateValid) {
-      setShowValidationStep2(true);
-      requestAnimationFrame(() => {
-        const ids = [
-          state.originAddress.trim().length >= 5 ? null : "origin-address",
-          state.originHousingType.trim().length > 0 ? null : "origin-housingType",
-          state.destinationUnknown
-            ? null
-            : state.destinationAddress.trim().length >= 5
-            ? null
-            : "destination-address",
-          state.destinationUnknown
-            ? null
-            : state.destinationHousingType.trim().length > 0
-            ? null
-            : "destination-housingType",
-          state.movingDate.length > 0 && !isMovingDateTooSoon ? null : "movingDate",
-        ].filter(Boolean) as string[];
-        const firstId = ids[0];
-        if (!firstId) return;
-        const el = document.getElementById(firstId);
-        if (!el) return;
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        const focusable =
-          (el as any).focus
-            ? el
-            : (el.querySelector?.(
-                "input,textarea,select,button,[tabindex]:not([tabindex='-1'])"
-              ) as HTMLElement | null);
-        focusable?.focus?.();
-      });
-      trackError("VALIDATION_ERROR", "Invalid project fields", 2, "PROJECT", "project_v3");
-      return;
-    }
-
-    try {
-      const effectiveLeadId = await ensureBackofficeLeadId();
-      if (effectiveLeadId) {
-        const originIsHouse = isHouseType(state.originHousingType);
-        const destIsHouse = isHouseType(state.destinationHousingType);
-
-        const tunnelOptions = {
-          access: {
-            origin: {
-              accessKind: state.originAccess || undefined,
-              furnitureLift: state.originFurnitureLift || undefined,
-              carryDistance: state.originCarryDistance || undefined,
-              tightAccess: state.originTightAccess || undefined,
-            },
-            destination: state.destinationUnknown
-              ? undefined
-              : {
-                  accessKind: state.destinationAccess || undefined,
-                  furnitureLift: state.destinationFurnitureLift || undefined,
-                  carryDistance: state.destinationCarryDistance || undefined,
-                  tightAccess: state.destinationTightAccess || undefined,
-                },
-          },
-        };
-
-        const payload = {
-          // Adresses (schéma BO)
-          originAddress: state.originAddress || undefined,
-          originCity: state.originCity || undefined,
-          originPostalCode: state.originPostalCode || undefined,
-          originCountryCode: state.originCountryCode || undefined,
-          destAddress: state.destinationUnknown ? undefined : state.destinationAddress || undefined,
-          destCity: state.destinationUnknown ? undefined : state.destinationCity || undefined,
-          destPostalCode:
-            state.destinationUnknown ? undefined : state.destinationPostalCode || undefined,
-          destCountryCode: state.destinationUnknown ? undefined : state.destinationCountryCode || undefined,
-
-          // Date
-          movingDate: toIsoDate(state.movingDate),
-          dateFlexible: state.dateFlexible,
-
-          // Logement / accès
-          originHousingType: state.originHousingType || undefined,
-          originFloor: originIsHouse
-            ? undefined
-            : state.originFloorTouched
-            ? Math.max(0, parseInt(state.originFloor, 10))
-            : undefined,
-          originElevator: originIsHouse
-            ? undefined
-            : state.originElevatorTouched && state.originElevator && state.originElevator !== "none"
-            ? mapElevator(state.originElevator)
-            : undefined,
-          originFurnitureLift: state.originFurnitureLift || undefined,
-          originCarryDistance: state.originCarryDistance || undefined,
-          originParkingAuth: state.originParkingAuth,
-
-          destHousingType: state.destinationUnknown
-            ? undefined
-            : state.destinationHousingType || undefined,
-          destFloor: state.destinationUnknown
-            ? undefined
-            : destIsHouse
-            ? undefined
-            : state.destinationFloorTouched
-            ? Math.max(0, parseInt(state.destinationFloor, 10))
-            : undefined,
-          destElevator: state.destinationUnknown
-            ? undefined
-            : destIsHouse
-            ? undefined
-            : state.destinationElevatorTouched &&
-              state.destinationElevator &&
-              state.destinationElevator !== "none"
-            ? mapElevator(state.destinationElevator)
-            : undefined,
-          destFurnitureLift: state.destinationUnknown
-            ? undefined
-            : state.destinationFurnitureLift || undefined,
-          destCarryDistance: state.destinationUnknown
-            ? undefined
-            : state.destinationCarryDistance || undefined,
-          destParkingAuth: state.destinationUnknown ? undefined : state.destinationParkingAuth,
-
-          // Archivage (options non strictement mappées)
-          tunnelOptions,
-        };
-
-        try {
-          await updateBackofficeLead(effectiveLeadId, payload);
-        } catch (err: any) {
-          if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
-            const newId = await ensureBackofficeLeadId({ forceNew: true });
-            if (newId) {
-              await updateBackofficeLead(newId, payload);
-            } else {
-              throw err;
-            }
-          } else {
-            throw err;
-          }
-        }
-      }
-
-      trackStepChange(2, 3, "PROJECT", "RECAP", "formules_v3", "forward");
-      setShowValidationStep2(false);
-      goToStep(3);
-    } catch (err: any) {
-      console.error("Error updating lead:", err);
-      trackError("API_ERROR", err.message || "Failed to update lead", 2, "PROJECT", "project_v3");
-    }
-  }
-
-  async function handleSubmitStep3(e: FormEvent) {
-    e.preventDefault();
-    setStep3Error(null);
-
-    const surface = parseInt(state.surfaceM2) || 60;
-    if (surface < 10 || surface > 500) {
-      setShowValidationStep3(true);
-      requestAnimationFrame(() => {
-        document.getElementById("surfaceM2")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        (document.getElementById("surfaceM2") as any)?.focus?.();
-      });
-      trackError("VALIDATION_ERROR", "Invalid surface", 3, "RECAP", "formules_v3");
-      return;
-    }
-
-    try {
-      const effectiveLeadId = await ensureBackofficeLeadId();
-      // Safety: si on vient de créer le lead, on s'assure que l'état reflète bien l'id
-      // avant de tracker la complétion (sinon TUNNEL_COMPLETED part avec leadId=null).
-      if (effectiveLeadId && state.leadId !== effectiveLeadId) {
-        updateFields({ leadId: effectiveLeadId });
-      }
-      if (effectiveLeadId) {
-        if (state.destinationUnknown) {
-          throw new Error("DESTINATION_REQUIRED");
-        }
-        if (routeDistanceKm == null || routeDistanceProvider !== "osrm") {
-          throw new Error("DISTANCE_NOT_READY");
-        }
-        // Important: on reprend la pricing courante au moment du submit
-        // (évite tout risque de valeur stale si l'utilisateur change vite de formule).
-        const pricingForSubmit =
-          (pricingByFormule
-            ? pricingByFormule[state.formule as PricingFormuleType]
-            : null) ?? activePricing;
-
-        if (!pricingForSubmit) {
-          throw new Error("PRICING_NOT_READY");
-        }
-
-        const tunnelOptions = {
-          pricing: {
-            // Stockage indicatif pour debug/analytics (Neon via JSON).
-            distanceKm: routeDistanceKm,
-            distanceProvider: routeDistanceProvider ?? undefined,
-          },
-          volumeAdjustments: {
-            kitchenIncluded: state.kitchenIncluded || "appliances",
-            kitchenApplianceCount:
-              state.kitchenIncluded === ""
-                ? 3
-                : (state.kitchenIncluded || "appliances") === "appliances"
-                ? Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0
-                : undefined,
-            extraVolumeM3: (() => {
-              const kitchenTouched =
-                state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
-              if (!kitchenTouched) return 3 * 0.6;
-
-              if (state.kitchenIncluded === "full") return 6;
-              if (state.kitchenIncluded === "appliances") {
-                return (
-                  Math.max(0, Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0) *
-                  0.6
-                );
-              }
-              return 0;
-            })(),
-          },
-          // Important: conserver la structure envoyée en Step 2 (sinon Step 3 écrase et on perd l'accès)
-          access: {
-            origin: {
-              accessKind: state.originAccess || undefined,
-              furnitureLift: state.originFurnitureLift || undefined,
-              carryDistance: state.originCarryDistance || undefined,
-              tightAccess: state.originTightAccess || undefined,
-            },
-            destination: state.destinationUnknown
-              ? undefined
-              : {
-                  accessKind: state.destinationAccess || undefined,
-                  furnitureLift: state.destinationFurnitureLift || undefined,
-                  carryDistance: state.destinationCarryDistance || undefined,
-                  tightAccess: state.destinationTightAccess || undefined,
-                },
-          },
-          services: {
-            furnitureStorage: state.serviceFurnitureStorage || undefined,
-            cleaning: state.serviceCleaning || undefined,
-            fullPacking: state.serviceFullPacking || undefined,
-            furnitureAssembly: state.serviceFurnitureAssembly || undefined,
-            insurance: state.serviceInsurance || undefined,
-            wasteRemoval: state.serviceWasteRemoval || undefined,
-            helpWithoutTruck: state.serviceHelpWithoutTruck || undefined,
-            specificSchedule: state.serviceSpecificSchedule || undefined,
-            debarras: state.serviceDebarras || undefined,
-            dismantling: state.serviceDismantling || undefined,
-            piano: state.servicePiano || undefined,
-          },
-          accessDetails: {
-            noElevator: state.accessNoElevator || undefined,
-            smallElevator: state.accessSmallElevator || undefined,
-            truckDifficult: state.accessTruckDifficult || undefined,
-          },
-          heavyFurniture: {
-            americanFridge: state.furnitureAmericanFridge || undefined,
-            safe: state.furnitureSafe || undefined,
-            billiard: state.furnitureBilliard || undefined,
-            aquarium: state.furnitureAquarium || undefined,
-            over25kg: state.furnitureOver25kg || undefined,
-          },
-          notes: state.specificNotes || undefined,
-        };
-
-        const payload = {
-          surfaceM2: surface,
-          estimatedVolume: pricingForSubmit.volumeM3,
-          density: mapDensity(state.density || "dense"),
-          formule: state.formule,
-          estimatedPriceMin: pricingForSubmit.prixMin,
-          estimatedPriceAvg: Math.round((pricingForSubmit.prixMin + pricingForSubmit.prixMax) / 2),
-          estimatedPriceMax: pricingForSubmit.prixMax,
-          tunnelOptions,
-        };
-
-        try {
-          await updateBackofficeLead(effectiveLeadId, payload);
-        } catch (err: any) {
-          if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
-            const newId = await ensureBackofficeLeadId({ forceNew: true });
-            if (newId) {
-              await updateBackofficeLead(newId, payload);
-              // On bascule l'id utilisé pour la confirmation ci-dessous.
-              updateFields({ leadId: newId });
-            } else {
-              throw err;
-            }
-          } else {
-            throw err;
-          }
-        }
-
-        // Email de confirmation :
-        // demandé sur l'écran de confirmation (Step 4) — plus de dépendance aux photos.
-      }
-
-      trackStepChange(3, 4, "RECAP", "THANK_YOU", "confirmation_v3", "forward");
-      trackCompletion({ leadId: effectiveLeadId ?? null });
-      setShowValidationStep3(false);
-      goToStep(4);
-    } catch (err: any) {
-      console.error("Error finalizing lead:", err);
-      if (err instanceof Error && err.message === "DISTANCE_NOT_READY") {
-        setStep3Error("Distance route en cours de calcul. Merci de patienter quelques secondes puis de réessayer.");
-      } else if (err instanceof Error && err.message === "DESTINATION_REQUIRED") {
-        setStep3Error("Adresse d’arrivée requise.");
-      } else {
-        setStep3Error(err?.message || "Erreur lors de la finalisation.");
-      }
-      trackError("API_ERROR", err.message || "Failed to finalize lead", 3, "RECAP", "formules_v3");
-    }
-  }
-
   return (
-    isFunnelV2 ? (
       <main className="min-h-screen bg-[#F8F9FA] text-[#0F172A]">
         <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
           {/* Top back/edit */}
@@ -2350,223 +1810,6 @@ function DevisGratuitsV3Content() {
           )}
         </div>
       </main>
-    ) : (
-    <main className="min-h-screen bg-gradient-to-b from-[#F8F9FA] to-white">
-      {/* Hero with progress */}
-      <TunnelHero currentStep={state.currentStep} totalSteps={STEPS.length} />
-
-      {/* Main content */}
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Trust signals */}
-        {state.currentStep < 4 && (
-          <div className="mb-12 hidden md:block">
-            <TrustSignals />
-          </div>
-        )}
-
-        {/* Step content */}
-        <div className="bg-white rounded-2xl md:rounded-3xl shadow-md md:shadow-lg p-4 sm:p-6 md:p-12">
-          {state.currentStep === 1 && (
-            <Step1Contact
-              firstName={state.firstName}
-              email={state.email}
-              phone={state.phone}
-              onFirstNameChange={(value) => updateField("firstName", value)}
-              onEmailChange={(value) => updateField("email", value)}
-              onPhoneChange={(value) => updateField("phone", value)}
-              onSubmit={handleSubmitStep1}
-              isSubmitting={false}
-              error={null}
-              showValidation={showValidationStep1}
-            />
-          )}
-
-          {state.currentStep === 2 && (
-            <Step2ProjectComplete
-              originPostalCode={state.originPostalCode}
-              originCity={state.originCity}
-              originAddress={state.originAddress}
-              originCountryCode={state.originCountryCode}
-              originLat={state.originLat}
-              originLon={state.originLon}
-              originHousingType={state.originHousingType}
-              originFloor={state.originFloor}
-              originElevator={state.originElevator}
-              originAccess={state.originAccess}
-              originFurnitureLift={state.originFurnitureLift}
-              originCarryDistance={state.originCarryDistance}
-              originParkingAuth={state.originParkingAuth}
-              originTightAccess={state.originTightAccess}
-              destinationPostalCode={state.destinationPostalCode}
-              destinationCity={state.destinationCity}
-              destinationAddress={state.destinationAddress}
-              destinationCountryCode={state.destinationCountryCode}
-              destinationLat={state.destinationLat}
-              destinationLon={state.destinationLon}
-              destinationHousingType={state.destinationHousingType}
-              destinationFloor={state.destinationFloor}
-              destinationElevator={state.destinationElevator}
-              destinationAccess={state.destinationAccess}
-              destinationFurnitureLift={state.destinationFurnitureLift}
-              destinationCarryDistance={state.destinationCarryDistance}
-              destinationParkingAuth={state.destinationParkingAuth}
-              destinationTightAccess={state.destinationTightAccess}
-              destinationUnknown={state.destinationUnknown}
-              movingDate={state.movingDate}
-              dateFlexible={state.dateFlexible}
-              onFieldChange={(field, value) => updateField(field as any, value)}
-              onSubmit={handleSubmitStep2}
-              isSubmitting={false}
-              error={null}
-              showValidation={showValidationStep2}
-            />
-          )}
-
-          {state.currentStep === 3 && (
-            <Step3VolumeServices
-              surfaceM2={state.surfaceM2}
-              formule={state.formule}
-              pricing={
-                activePricing
-                  ? {
-                      volumeM3: activePricing.volumeM3,
-                      priceMin: activePricing.prixMin,
-                      priceMax: activePricing.prixMax,
-                    }
-                  : null
-              }
-              pricingByFormule={
-                pricingByFormule
-                  ? {
-                      ECONOMIQUE: {
-                        priceMin: pricingByFormule.ECONOMIQUE.prixMin,
-                        priceMax: pricingByFormule.ECONOMIQUE.prixMax,
-                      },
-                      STANDARD: {
-                        priceMin: pricingByFormule.STANDARD.prixMin,
-                        priceMax: pricingByFormule.STANDARD.prixMax,
-                      },
-                      PREMIUM: {
-                        priceMin: pricingByFormule.PREMIUM.prixMin,
-                        priceMax: pricingByFormule.PREMIUM.prixMax,
-                      },
-                    }
-                  : null
-              }
-              pricingDetails={activePricingDetails}
-              serviceFurnitureStorage={state.serviceFurnitureStorage}
-              serviceCleaning={state.serviceCleaning}
-              serviceFullPacking={state.serviceFullPacking}
-              serviceFurnitureAssembly={state.serviceFurnitureAssembly}
-              serviceInsurance={state.serviceInsurance}
-              serviceWasteRemoval={state.serviceWasteRemoval}
-              serviceHelpWithoutTruck={state.serviceHelpWithoutTruck}
-              serviceSpecificSchedule={state.serviceSpecificSchedule}
-              hasPiano={state.hasPiano}
-              hasFragileItems={state.hasFragileItems}
-              hasSpecificFurniture={state.hasSpecificFurniture}
-              specificNotes={state.specificNotes}
-              onFieldChange={(field, value) => {
-                // V2 behavior: si l'utilisateur modifie la surface, on marque surfaceTouched=true
-                if (field === "surfaceM2") {
-                  updateFields({ surfaceM2: String(value), surfaceTouched: true });
-                  return;
-                }
-                updateField(field as any, value);
-              }}
-              onSubmit={handleSubmitStep3}
-              isSubmitting={false}
-              error={step3Error}
-              showValidation={showValidationStep3}
-            />
-          )}
-
-          {state.currentStep === 4 && (
-            <ConfirmationPage
-              firstName={state.firstName}
-              email={state.email}
-              linkingCode={state.linkingCode || undefined}
-              confirmationRequested={confirmationRequested}
-              leadId={state.leadId || undefined}
-              estimateMinEur={estimateRange?.minEur ?? null}
-              estimateMaxEur={estimateRange?.maxEur ?? null}
-              estimateIsIndicative={estimateIsIndicative}
-              recap={{
-                originCity: state.originCity,
-                originPostalCode: state.originPostalCode,
-                destinationCity: state.destinationCity,
-                destinationPostalCode: state.destinationPostalCode,
-                movingDate: state.movingDate,
-                formule: state.formule,
-                surfaceM2: state.surfaceM2,
-              }}
-            />
-          )}
-        </div>
-
-        {/* Navigation helpers */}
-        {state.currentStep > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-4">
-            <button
-              onClick={() => {
-                const prevStep = (state.currentStep - 1) as 1 | 2 | 3 | 4;
-                const stepMap = {
-                  1: "CONTACT",
-                  2: "PROJECT",
-                  3: "RECAP",
-                  4: "THANK_YOU",
-                } as const;
-                const screenMap = {
-                  1: "contact_v3",
-                  2: "project_v3",
-                  3: "formules_v3",
-                  4: "confirmation_v3",
-                } as const;
-                trackStepChange(
-                  state.currentStep,
-                  prevStep,
-                  stepMap[state.currentStep as 1 | 2 | 3 | 4],
-                  stepMap[prevStep],
-                  screenMap[prevStep],
-                  "back"
-                );
-                goToStep(prevStep);
-              }}
-              className="inline-flex items-center gap-2 rounded-xl border-2 border-[#E3E5E8] bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] hover:border-[#6BCFCF] hover:bg-[#F8F9FA] transition-all"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span>Retour</span>
-            </button>
-
-            {/* Step indicator */}
-            <div className="flex items-center gap-2">
-              {[1, 2, 3].map((step) => (
-                <button
-                  key={step}
-                  onClick={() => {
-                    if (step < state.currentStep) {
-                      goToStep(step as 1 | 2 | 3 | 4);
-                    }
-                  }}
-                  disabled={step >= state.currentStep && state.currentStep < 4}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    step === state.currentStep
-                      ? "bg-[#6BCFCF] w-8"
-                      : step < state.currentStep || state.currentStep === 4
-                      ? "bg-[#6BCFCF]/50 cursor-pointer hover:bg-[#6BCFCF]/70"
-                      : "bg-[#E3E5E8]"
-                  }`}
-                  aria-label={`Étape ${step}`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </main>
-    )
   );
 }
 
