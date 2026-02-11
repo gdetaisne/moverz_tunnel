@@ -1,5 +1,111 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 (8ème itération) — Panier premium : Tooltips + Touches violet signature 💎
+
+**Problème** : Le panier Step 3 manquait de tooltips explicatifs sur les ajustements et n'exploitait pas assez le violet accent (couleur "Innovation & Premium").
+
+**Améliorations** :
+- ✅ **Tooltips explicatifs** sur chaque ligne d'ajustement (Distance, Densité, Cuisine, Accès, Date) avec icône `HelpCircle`
+- ✅ **Badge "Live" violet** avec dot animé violet et gradient turquoise→violet
+- ✅ **Titre "BUDGET AFFINÉ"** avec gradient text turquoise→violet (`bg-clip-text`)
+- ✅ **Border glow hero** avec gradient turquoise→violet au top
+- ✅ **Séparateurs "AJUSTEMENTS"** avec gradient violet aux extrémités
+- ✅ **Hover violet** sur pills ajustements (`border-[#A78BFA]/30`, `shadow violet`)
+
+### 1️⃣ Badge "Live" avec violet premium
+
+**Avant** : Simple dot blanc animé  
+**Après** :
+```tsx
+<span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#6BCFCF]/20 to-[#A78BFA]/20 border border-[#A78BFA]/30 backdrop-blur-sm">
+  <span className="relative inline-flex h-2 w-2">
+    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A78BFA] opacity-75" />
+    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#A78BFA] shadow-[0_0_12px_rgba(167,139,250,0.8)]" />
+  </span>
+  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">Live</span>
+</span>
+```
+
+### 2️⃣ Titre "BUDGET AFFINÉ" avec gradient premium
+
+**Avant** : `text-[#6BCFCF]` uni  
+**Après** :
+```tsx
+<p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] bg-gradient-to-r from-[#6BCFCF] to-[#A78BFA] bg-clip-text text-transparent">
+  Budget affiné
+</p>
+```
+
+### 3️⃣ Border glow avec gradient turquoise→violet
+
+**Avant** : `via-[#6BCFCF]/30` uniquement  
+**Après** :
+```tsx
+<div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#6BCFCF]/30 via-[#A78BFA]/20 to-transparent" />
+```
+
+### 4️⃣ Séparateurs "AJUSTEMENTS" avec violet
+
+**Avant** : `to-white/40` uniquement  
+**Après** :
+```tsx
+<div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/40 to-[#A78BFA]/30" />
+```
+
+### 5️⃣ Tooltips explicatifs avec `HelpCircle`
+
+**Nouveauté** : Import `HelpCircle` de `lucide-react` + tooltips pour chaque type d'ajustement :
+
+```tsx
+const tooltips: Record<string, string> = {
+  distance: "La distance est recalculée à partir des adresses exactes quand elles sont renseignées",
+  density: "Le niveau de mobilier impacte le volume et donc le tarif final",
+  kitchen: "Chaque équipement de cuisine compte (four, frigo, lave-vaisselle...)",
+  access: "Les étages sans ascenseur et les accès contraints augmentent le temps de manutention",
+  date: "Les périodes de forte demande (été, fin de mois) impactent les tarifs",
+};
+
+// Dans le label
+{tooltips[l.key] && (
+  <span
+    className="inline-flex items-center opacity-60 hover:opacity-100 transition-opacity cursor-help"
+    title={tooltips[l.key]}
+  >
+    <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
+  </span>
+)}
+```
+
+### 6️⃣ Hover violet sur pills ajustements
+
+**Avant** : `hover:border-white/60`, `shadow-[0_4px_16px_rgba(255,255,255,0.3)]`  
+**Après** :
+```tsx
+hover:border-[#A78BFA]/30 
+sm:hover:shadow-[0_4px_16px_rgba(167,139,250,0.25)]
+```
+
+### 🎨 Ratio couleurs Moverz 2.0 respecté
+
+| Zone panier | Couleur | Usage |
+|-------------|---------|-------|
+| **Background gradient** | Turquoise `#6BCFCF` → `#5AB8B8` → `#4AA8A5` | 80% (primaire) |
+| **Budget affiné titre** | Gradient Turquoise→Violet | Accent premium |
+| **Badge "Live"** | Dot violet `#A78BFA` + gradient turquoise→violet | Innovation |
+| **Séparateurs** | Gradient white→violet | Accent subtil |
+| **Hover pills** | Border + shadow violet | Interactivité premium |
+| **Tooltips icon** | Blanc (contraste sur fond turquoise) | Accessibilité |
+
+### 📊 Impact
+
+- **UX** : Tooltips explicatifs réduisent les questions utilisateurs ✅
+- **Premium** : Violet apporte sophistication et innovation ✅
+- **Cohérence** : Ratio 80/20 turquoise/violet respecté ✅
+- **Accessibilité** : `cursor-help` + `title` natif pour tooltips ✅
+- **Mobile/Desktop** : Icon `w-3 h-3 sm:w-3.5 sm:h-3.5` responsive ✅
+
+---
+
 ## 2026-02-11 (7ème itération) — Mobile-First : Design sobre et clean
 
 **Problème** : Le design premium 2026 était trop chargé sur mobile (glassmorphism, shadows complexes, effets shine, padding généreux, pills massives). Principe **Mobile-First** non respecté.

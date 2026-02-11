@@ -2,6 +2,7 @@
 
 import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { HelpCircle } from "lucide-react";
 import { ga4Event } from "@/lib/analytics/ga4";
 import {
   createBackofficeLead,
@@ -1849,21 +1850,24 @@ function DevisGratuitsV3Content() {
                 <div className="rounded-xl sm:rounded-3xl bg-gradient-to-br from-[#6BCFCF] via-[#5AB8B8] to-[#4AA8A5] p-5 sm:p-10 shadow-md sm:shadow-2xl shadow-[#6BCFCF]/20 space-y-5 sm:space-y-8">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg sm:text-xl font-bold text-white">Votre estimation</h3>
-                    <span className="relative inline-flex h-2.5 w-2.5 sm:h-3 sm:w-3">
-                      {/* Ping animation outer */}
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                      {/* Static inner dot avec glow */}
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-white shadow-[0_0_12px_rgba(255,255,255,0.8)]" />
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#6BCFCF]/20 to-[#A78BFA]/20 border border-[#A78BFA]/30 backdrop-blur-sm">
+                      <span className="relative inline-flex h-2 w-2">
+                        {/* Ping animation outer violet */}
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A78BFA] opacity-75" />
+                        {/* Static inner dot violet avec glow */}
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#A78BFA] shadow-[0_0_12px_rgba(167,139,250,0.8)]" />
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">Live</span>
                     </span>
                   </div>
 
                   {/* Budget affiné (hero moderne massif) */}
                   {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
                     <div className="rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-sm p-5 sm:p-8 shadow-sm sm:shadow-lg relative overflow-hidden">
-                      {/* Subtle glow top */}
-                      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#6BCFCF]/30 to-transparent" />
+                      {/* Subtle glow top turquoise→violet */}
+                      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#6BCFCF]/30 via-[#A78BFA]/20 to-transparent" />
                       
-                      <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-[#6BCFCF] mb-4 sm:mb-6 relative">
+                      <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] bg-gradient-to-r from-[#6BCFCF] to-[#A78BFA] bg-clip-text text-transparent mb-4 sm:mb-6 relative">
                         Budget affiné
                       </p>
                       
@@ -1894,39 +1898,65 @@ function DevisGratuitsV3Content() {
                   {v2PricingCart && v2PricingCart.lines && (
                     <div className="space-y-2 sm:space-y-3">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/40" />
+                        <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/40 to-[#A78BFA]/30" />
                         <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/90">
                           Ajustements
                         </p>
-                        <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/40" />
+                        <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-white/40 to-[#A78BFA]/30" />
                       </div>
                       
-                      {v2PricingCart.lines.map((l) => (
-                        <div 
-                          key={l.key} 
-                          className="flex items-center justify-between gap-3 sm:gap-4 px-4 py-3 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-sm border border-white/40 hover:bg-white hover:border-white/60 sm:hover:shadow-[0_4px_16px_rgba(255,255,255,0.3)] transition-all duration-200"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${
+                      {v2PricingCart.lines.map((l) => {
+                        const isAccess = l.key === "access";
+                        const isDate = l.key === "date";
+                        const isDistance = l.key === "distance";
+                        const isDensity = l.key === "density";
+                        const isKitchen = l.key === "kitchen";
+                        
+                        const tooltips: Record<string, string> = {
+                          distance: "La distance est recalculée à partir des adresses exactes quand elles sont renseignées",
+                          density: "Le niveau de mobilier impacte le volume et donc le tarif final",
+                          kitchen: "Chaque équipement de cuisine compte (four, frigo, lave-vaisselle...)",
+                          access: "Les étages sans ascenseur et les accès contraints augmentent le temps de manutention",
+                          date: "Les périodes de forte demande (été, fin de mois) impactent les tarifs",
+                        };
+                        
+                        return (
+                          <div 
+                            key={l.key} 
+                            className="group flex items-center justify-between gap-3 sm:gap-4 px-4 py-3 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-sm border border-white/40 hover:bg-white hover:border-[#A78BFA]/30 sm:hover:shadow-[0_4px_16px_rgba(167,139,250,0.25)] transition-all duration-200"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${
+                                l.amountEur > 0 
+                                  ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.6)]' 
+                                  : l.amountEur < 0 
+                                  ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' 
+                                  : 'bg-gray-400'
+                              }`} />
+                              <p className="text-xs sm:text-sm font-semibold text-[#0F172A] flex items-center gap-1.5">
+                                <span>{l.label}</span>
+                                {tooltips[l.key] && (
+                                  <span
+                                    className="inline-flex items-center opacity-60 hover:opacity-100 transition-opacity cursor-help"
+                                    title={tooltips[l.key]}
+                                  >
+                                    <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                            <p className={`text-base sm:text-lg font-black tabular-nums ${
                               l.amountEur > 0 
-                                ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.6)]' 
+                                ? 'text-rose-400' 
                                 : l.amountEur < 0 
-                                ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' 
-                                : 'bg-gray-400'
-                            }`} />
-                            <p className="text-xs sm:text-sm font-semibold text-[#0F172A]">{l.label}</p>
+                                ? 'text-emerald-400' 
+                                : 'text-[#64748B]'
+                            }`}>
+                              {l.amountEur > 0 ? '+' : ''}{l.amountEur} €
+                            </p>
                           </div>
-                          <p className={`text-base sm:text-lg font-black tabular-nums ${
-                            l.amountEur > 0 
-                              ? 'text-rose-400' 
-                              : l.amountEur < 0 
-                              ? 'text-emerald-400' 
-                              : 'text-[#64748B]'
-                          }`}>
-                            {l.amountEur > 0 ? '+' : ''}{l.amountEur} €
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
