@@ -1859,8 +1859,11 @@ function DevisGratuitsV3Content() {
 
                   {/* Budget affiné (hero moderne massif) */}
                   {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
-                    <div className="rounded-2xl bg-white/95 backdrop-blur-sm p-8 shadow-lg">
-                      <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#6BCFCF] mb-6">
+                    <div className="rounded-2xl bg-white/95 backdrop-blur-sm p-8 shadow-lg relative overflow-hidden">
+                      {/* Subtle glow top */}
+                      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#6BCFCF]/30 to-transparent" />
+                      
+                      <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#6BCFCF] mb-6 relative">
                         Budget affiné
                       </p>
                       
@@ -1870,16 +1873,16 @@ function DevisGratuitsV3Content() {
                         </p>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4 pt-6 border-t border-gray-100">
+                      <div className="grid grid-cols-2 gap-4 pt-6 border-t border-gray-100 relative">
                         <div className="text-center">
                           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#64748B] mb-2">Minimum</p>
-                          <p className="text-2xl font-black text-emerald-600">
+                          <p className="text-2xl font-black text-emerald-400">
                             {typeof v2PricingCart.refinedMinEur === "number" ? fmtEur(v2PricingCart.refinedMinEur) : "—"}
                           </p>
                         </div>
                         <div className="text-center">
                           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#64748B] mb-2">Maximum</p>
-                          <p className="text-2xl font-black text-rose-600">
+                          <p className="text-2xl font-black text-rose-400">
                             {typeof v2PricingCart.refinedMaxEur === "number" ? fmtEur(v2PricingCart.refinedMaxEur) : "—"}
                           </p>
                         </div>
@@ -1890,20 +1893,36 @@ function DevisGratuitsV3Content() {
                   {/* Ajustements (meilleur contraste) */}
                   {v2PricingCart && v2PricingCart.lines && (
                     <div className="space-y-3">
-                      <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/90 mb-4">
-                        Ajustements
-                      </p>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/40" />
+                        <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/90">
+                          Ajustements
+                        </p>
+                        <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/40" />
+                      </div>
                       
                       {v2PricingCart.lines.map((l) => (
                         <div 
                           key={l.key} 
-                          className="flex items-center justify-between gap-4 px-5 py-4 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-sm"
+                          className="flex items-center justify-between gap-4 px-5 py-4 rounded-xl bg-white/95 backdrop-blur-sm border border-white/40 hover:bg-white hover:border-white/60 hover:shadow-[0_4px_16px_rgba(255,255,255,0.3)] transition-all duration-200"
                         >
                           <div className="flex items-center gap-3">
-                            <span className={`w-2 h-2 rounded-full ${l.amountEur > 0 ? 'bg-rose-500' : l.amountEur < 0 ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                            <span className={`w-2.5 h-2.5 rounded-full ${
+                              l.amountEur > 0 
+                                ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.6)]' 
+                                : l.amountEur < 0 
+                                ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' 
+                                : 'bg-gray-400'
+                            }`} />
                             <p className="text-sm font-semibold text-[#0F172A]">{l.label}</p>
                           </div>
-                          <p className={`text-base font-black tabular-nums ${l.amountEur > 0 ? 'text-rose-600' : l.amountEur < 0 ? 'text-emerald-600' : 'text-[#64748B]'}`}>
+                          <p className={`text-lg font-black tabular-nums ${
+                            l.amountEur > 0 
+                              ? 'text-rose-400' 
+                              : l.amountEur < 0 
+                              ? 'text-emerald-400' 
+                              : 'text-[#64748B]'
+                          }`}>
                             {l.amountEur > 0 ? '+' : ''}{l.amountEur} €
                           </p>
                         </div>
@@ -1914,7 +1933,7 @@ function DevisGratuitsV3Content() {
                   {/* Première estimation (collapsible moderne) */}
                   {v2PricingCart && typeof v2PricingCart.firstEstimateCenterEur === "number" && (
                     <details className="group">
-                      <summary className="cursor-pointer list-none rounded-xl bg-white/10 hover:bg-white/20 p-4 transition-all duration-200">
+                      <summary className="cursor-pointer list-none rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/15 hover:border-white/30 p-4 transition-all duration-200 shadow-sm">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-xs font-semibold text-white/80 mb-1">Première estimation</p>
@@ -1928,15 +1947,15 @@ function DevisGratuitsV3Content() {
                         </div>
                       </summary>
                       <div className="mt-3 grid grid-cols-2 gap-3 px-4 pb-4">
-                        <div className="rounded-xl bg-white/90 backdrop-blur-sm p-3 text-center shadow-sm">
+                        <div className="rounded-xl bg-white/95 backdrop-blur-sm p-3 text-center shadow-sm border border-white/40">
                           <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Min</p>
-                          <p className="text-base font-black text-emerald-600">
+                          <p className="text-base font-black text-emerald-400">
                             {typeof v2PricingCart.firstEstimateMinEur === "number" ? fmtEur(v2PricingCart.firstEstimateMinEur) : "—"}
                           </p>
                         </div>
-                        <div className="rounded-xl bg-white/90 backdrop-blur-sm p-3 text-center shadow-sm">
+                        <div className="rounded-xl bg-white/95 backdrop-blur-sm p-3 text-center shadow-sm border border-white/40">
                           <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Max</p>
-                          <p className="text-base font-black text-rose-600">
+                          <p className="text-base font-black text-rose-400">
                             {typeof v2PricingCart.firstEstimateMaxEur === "number" ? fmtEur(v2PricingCart.firstEstimateMaxEur) : "—"}
                           </p>
                         </div>
