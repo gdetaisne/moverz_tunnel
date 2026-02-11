@@ -1,5 +1,220 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 (11ème itération) — Panier mobile premium 2026 : Glassmorphism + Micro-animations
+
+**Problème** : Le panier mobile était trop plat et basique, manquait de sophistication 2026 (shadows faibles, corners basiques, badge Live petit).
+
+**Solution** : Glassmorphism renforcé, shadows colorées XL, corners plus arrondis, badge Live premium, micro-animations tactiles.
+
+### 📱 Container panier mobile amélioré
+
+**Avant** :
+```tsx
+rounded-xl shadow-md p-5 space-y-5
+```
+
+**Après** :
+```tsx
+rounded-2xl shadow-xl shadow-[#A78BFA]/30 p-6 space-y-6 border border-white/20
+```
+
+**Changements** :
+- `rounded-xl` → `rounded-2xl` (corners plus modernes)
+- `shadow-md` → `shadow-xl` (shadow plus prononcée)
+- `shadow-[#A78BFA]/25` → `shadow-[#A78BFA]/30` (violet plus visible)
+- `p-5` → `p-6` (padding plus généreux)
+- `space-y-5` → `space-y-6` (plus d'air entre sections)
+- **Nouveauté** : `border border-white/20` pour définition des bords
+
+### 💎 Badge "Live" ultra-premium mobile
+
+**Avant** :
+```tsx
+<span className="... gap-2 px-3 py-1.5">
+  <span className="h-2 w-2 bg-[#A78BFA]" />
+  <span className="text-[10px]">Live</span>
+</span>
+```
+
+**Après** :
+```tsx
+<span className="... gap-2 px-3 py-1.5 sm:py-2 
+  bg-gradient-to-r from-white/15 via-[#A78BFA]/25 to-[#A78BFA]/35 
+  border-white/40 
+  shadow-lg shadow-[#A78BFA]/40">
+  <span className="h-2.5 w-2.5">
+    <span className="animate-ping ... bg-white" />
+    <span className="... bg-white shadow-[0_0_16px_rgba(255,255,255,0.9)]" />
+  </span>
+  <span className="text-xs font-black drop-shadow-sm">Live</span>
+</span>
+```
+
+**Changements** :
+- Dot : `h-2 w-2` → `h-2.5 w-2.5` (plus visible)
+- Dot couleur : violet → **blanc** (contraste maximal)
+- Dot glow : `shadow-[0_0_12px_rgba(167,139,250,0.8)]` → `shadow-[0_0_16px_rgba(255,255,255,0.9)]` (blanc éclatant)
+- Ping : violet → **blanc** (`bg-white opacity-60`)
+- Background : gradient plus opaque (`from-white/15 via-[#A78BFA]/25 to-[#A78BFA]/35`)
+- Shadow badge : `shadow-[0_4px_16px_rgba(167,139,250,0.3)]` → `shadow-lg shadow-[#A78BFA]/40`
+- Texte : `text-[10px]` → `text-xs font-black drop-shadow-sm` (plus gros et gras)
+
+### 🏷️ Titre "Votre estimation" amélioré
+
+**Avant** : `text-lg font-bold`  
+**Après** : `text-xl font-black drop-shadow-sm`
+
+- Plus gros, plus gras, avec drop-shadow pour contraste sur gradient
+
+### 🪟 Card budget principale mobile
+
+**Avant** :
+```tsx
+rounded-xl p-5 shadow-lg border-white/40
+```
+
+**Après** :
+```tsx
+rounded-2xl p-6 shadow-xl shadow-white/30 border-white/50
+```
+
+**Changements** :
+- `rounded-xl` → `rounded-2xl` (plus moderne)
+- `p-5` → `p-6` (plus généreux)
+- `shadow-lg` → `shadow-xl` (plus prononcée)
+- `shadow-white/20` → `shadow-white/30` (plus visible)
+- `border-white/40` → `border-white/50` (border plus définie)
+
+### ✨ Séparateurs "AJUSTEMENTS" plus visibles
+
+**Avant** :
+```tsx
+<div className="gap-3 mb-4">
+  <div className="h-[1px] bg-gradient-to-r from-transparent via-white/40 to-[#A78BFA]/30" />
+  <p className="text-xs font-bold text-white/90">Ajustements</p>
+</div>
+```
+
+**Après** :
+```tsx
+<div className="gap-3 mb-5">
+  <div className="h-[1px] bg-gradient-to-r from-transparent via-white/50 to-[#A78BFA]/40" />
+  <p className="text-xs sm:text-sm font-black drop-shadow-sm">Ajustements</p>
+</div>
+```
+
+**Changements** :
+- Séparateurs : `via-white/40 to-[#A78BFA]/30` → `via-white/50 to-[#A78BFA]/40` (plus opaques)
+- Texte : `font-bold text-white/90` → `font-black drop-shadow-sm` (plus gras + shadow)
+- Margin : `mb-4` → `mb-5` (plus d'air)
+
+### 💊 Pills ajustements mobile interactives
+
+**Avant** :
+```tsx
+px-4 py-3 rounded-xl border-white/50 
+hover:shadow-[0_4px_16px_rgba(167,139,250,0.35)]
+```
+
+**Après** :
+```tsx
+px-4 py-3.5 rounded-xl border-white/60 shadow-sm
+hover:shadow-lg hover:shadow-[#A78BFA]/25 
+active:scale-[0.98]
+```
+
+**Changements** :
+- `py-3` → `py-3.5` (plus de hauteur)
+- `border-white/50` → `border-white/60` (border plus visible)
+- **Nouveauté** : `shadow-sm` de base (depth même sans hover)
+- Hover shadow : plus prononcée (`shadow-lg`) et colorée
+- **Nouveauté** : `active:scale-[0.98]` (feedback tactile mobile)
+- Transition : `duration-200` → `duration-300` (plus smooth)
+
+### 📂 Collapsible "Première estimation" mobile
+
+**Avant** :
+```tsx
+rounded-xl bg-white/15 border-white/30 p-3
+hover:shadow-[0_4px_16px_rgba(255,255,255,0.2)]
+```
+
+**Après** :
+```tsx
+rounded-xl bg-white/20 border-white/40 p-3.5
+hover:shadow-lg hover:shadow-white/20
+active:scale-[0.98]
+```
+
+**Changements** :
+- Background : `bg-white/15` → `bg-white/20` (plus opaque)
+- Border : `border-white/30` → `border-white/40` (plus visible)
+- Padding : `p-3` → `p-3.5` (plus généreux)
+- Hover shadow : nommée (`shadow-lg`) au lieu de custom
+- **Nouveauté** : `active:scale-[0.98]` (feedback tactile)
+
+### 🎯 Sub-cards min/max dans collapsible
+
+**Avant** :
+```tsx
+rounded-lg sm:rounded-xl p-2 sm:p-3 border-white/50
+```
+
+**Après** :
+```tsx
+rounded-xl p-2.5 sm:p-3 border-white/60 shadow-sm
+```
+
+**Changements** :
+- `rounded-lg` → `rounded-xl` même en mobile
+- `p-2` → `p-2.5` (padding mobile plus généreux)
+- `border-white/50` → `border-white/60` (border plus définie)
+- **Nouveauté** : `shadow-sm` pour depth
+
+### 📊 Résumé des améliorations mobile
+
+| Élément | Avant | Après | Gain |
+|---------|-------|-------|------|
+| **Container** | rounded-xl shadow-md | rounded-2xl shadow-xl + border | +modernité +depth |
+| **Badge Live dot** | h-2 w-2 violet | h-2.5 w-2.5 blanc glow | +visible +premium |
+| **Badge Live texte** | text-[10px] | text-xs font-black | +lisible |
+| **Card budget** | rounded-xl p-5 shadow-lg | rounded-2xl p-6 shadow-xl | +moderne +généreux |
+| **Pills** | py-3 border-white/50 | py-3.5 border-white/60 shadow-sm | +tactile +visible |
+| **Collapsible** | bg-white/15 p-3 | bg-white/20 p-3.5 active:scale | +opaque +feedback |
+| **Titre** | text-lg font-bold | text-xl font-black | +impact |
+
+### 🎨 Philosophie 2026 mobile
+
+**Glassmorphism renforcé** :
+- Borders plus opaques (`white/50` → `white/60`)
+- Backgrounds plus opaques (`white/15` → `white/20`)
+- Shadows de base ajoutées partout (`shadow-sm`)
+
+**Micro-animations tactiles** :
+- `active:scale-[0.98]` sur pills et collapsible
+- `duration-300` au lieu de `200` (plus smooth)
+- Feedback visuel instantané au touch
+
+**Shadows colorées** :
+- Container : `shadow-xl shadow-[#A78BFA]/30` (violet)
+- Badge : `shadow-lg shadow-[#A78BFA]/40` (violet éclatant)
+- Pills hover : `shadow-lg shadow-[#A78BFA]/25` (violet subtil)
+
+**Spacing généreux** :
+- Padding global : `p-5` → `p-6`
+- Spacing sections : `space-y-5` → `space-y-6`
+- Padding pills : `py-3` → `py-3.5`
+
+### ✅ Résultat
+
+- **Premium assumé** : glassmorphism + shadows XL même en mobile ✅
+- **Visibilité** : badge Live blanc éclatant, borders renforcés ✅
+- **Tactile** : feedback `active:scale` sur tous les éléments interactifs ✅
+- **Modernité 2026** : rounded-2xl, shadows colorées, spacing généreux ✅
+- **Cohérence** : desktop/mobile harmonieux ✅
+
+---
+
 ## 2026-02-11 (10ème itération) — Cards formules mobile : Design premium moderne
 
 **Problème** : Les cards de sélection formule (Éco, Standard, Premium) étaient moches en mobile : trop petites, badges illisibles, textes minuscules, ombres plates.

@@ -1847,26 +1847,26 @@ function DevisGratuitsV3Content() {
 
               {/* Sidebar panier mobile (en bas, ordre inversé) + desktop (droite sticky) — GAME CHANGER */}
               <aside className="lg:sticky lg:top-20 order-last lg:order-none">
-                <div className="rounded-xl sm:rounded-3xl bg-gradient-to-br from-[#6BCFCF] via-[#7BC4CC] to-[#A78BFA] p-5 sm:p-10 shadow-md sm:shadow-2xl shadow-[#A78BFA]/25 space-y-5 sm:space-y-8 relative overflow-hidden">
+                <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#6BCFCF] via-[#7BC4CC] to-[#A78BFA] p-6 sm:p-10 shadow-xl sm:shadow-2xl shadow-[#A78BFA]/30 space-y-6 sm:space-y-8 relative overflow-hidden border border-white/20">
                   {/* Overlay glow moderne 2026 */}
                   <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-[#A78BFA]/10 pointer-events-none" />
                   
                   <div className="relative z-10 flex items-center justify-between">
-                    <h3 className="text-lg sm:text-xl font-bold text-white">Votre estimation</h3>
-                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-white/10 via-[#A78BFA]/20 to-[#A78BFA]/30 border border-white/30 backdrop-blur-md shadow-[0_4px_16px_rgba(167,139,250,0.3)]">
-                      <span className="relative inline-flex h-2 w-2">
+                    <h3 className="text-xl sm:text-xl font-black text-white drop-shadow-sm">Votre estimation</h3>
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-white/15 via-[#A78BFA]/25 to-[#A78BFA]/35 border border-white/40 backdrop-blur-md shadow-lg shadow-[#A78BFA]/40">
+                      <span className="relative inline-flex h-2.5 w-2.5">
                         {/* Ping animation outer violet */}
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A78BFA] opacity-75" />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60" />
                         {/* Static inner dot violet avec glow */}
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#A78BFA] shadow-[0_0_12px_rgba(167,139,250,0.8)]" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white shadow-[0_0_16px_rgba(255,255,255,0.9)]" />
                       </span>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">Live</span>
+                      <span className="text-xs font-black uppercase tracking-[0.15em] text-white drop-shadow-sm">Live</span>
                     </span>
                   </div>
 
                   {/* Budget affiné (hero moderne massif) */}
                   {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
-                    <div className="relative z-10 rounded-xl sm:rounded-2xl bg-white/98 backdrop-blur-xl p-5 sm:p-8 shadow-lg sm:shadow-2xl shadow-white/20 overflow-hidden border border-white/40">
+                    <div className="relative z-10 rounded-2xl bg-white/98 backdrop-blur-xl p-6 sm:p-8 shadow-xl sm:shadow-2xl shadow-white/30 overflow-hidden border border-white/50">
                       {/* Subtle glow top turquoise→violet */}
                       <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#6BCFCF]/30 via-[#A78BFA]/20 to-transparent" />
                       
@@ -1900,12 +1900,12 @@ function DevisGratuitsV3Content() {
                   {/* Ajustements (meilleur contraste) */}
                   {v2PricingCart && v2PricingCart.lines && (
                     <div className="relative z-10 space-y-2 sm:space-y-3">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/40 to-[#A78BFA]/30" />
-                        <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/90">
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/50 to-[#A78BFA]/40" />
+                        <p className="text-xs sm:text-sm font-black uppercase tracking-[0.25em] text-white drop-shadow-sm">
                           Ajustements
                         </p>
-                        <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-white/40 to-[#A78BFA]/30" />
+                        <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-white/50 to-[#A78BFA]/40" />
                       </div>
                       
                       {v2PricingCart.lines.map((l) => {
@@ -1926,7 +1926,7 @@ function DevisGratuitsV3Content() {
                         return (
                           <div 
                             key={l.key} 
-                            className="group flex items-center justify-between gap-3 sm:gap-4 px-4 py-3 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl bg-white/98 backdrop-blur-md border border-white/50 hover:bg-white hover:border-[#A78BFA]/40 hover:shadow-[0_4px_16px_rgba(167,139,250,0.35)] transition-all duration-200"
+                            className="group flex items-center justify-between gap-3 sm:gap-4 px-4 py-3.5 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl bg-white/98 backdrop-blur-md border border-white/60 shadow-sm hover:bg-white hover:border-[#A78BFA]/50 hover:shadow-lg hover:shadow-[#A78BFA]/25 transition-all duration-300 active:scale-[0.98]"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <span className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${
@@ -1966,7 +1966,7 @@ function DevisGratuitsV3Content() {
                   {/* Première estimation (collapsible moderne) */}
                   {v2PricingCart && typeof v2PricingCart.firstEstimateCenterEur === "number" && (
                     <details className="relative z-10 group">
-                      <summary className="cursor-pointer list-none rounded-xl bg-white/15 backdrop-blur-md border border-white/30 hover:bg-white/20 hover:border-white/40 hover:shadow-[0_4px_16px_rgba(255,255,255,0.2)] p-3 sm:p-4 transition-all duration-200">
+                      <summary className="cursor-pointer list-none rounded-xl bg-white/20 backdrop-blur-md border border-white/40 hover:bg-white/25 hover:border-white/50 hover:shadow-lg hover:shadow-white/20 p-3.5 sm:p-4 transition-all duration-300 active:scale-[0.98]">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-[10px] sm:text-xs font-semibold text-white/80 mb-1">Première estimation</p>
@@ -1980,13 +1980,13 @@ function DevisGratuitsV3Content() {
                         </div>
                       </summary>
                       <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-2 sm:gap-3 px-3 pb-3 sm:px-4 sm:pb-4">
-                        <div className="rounded-lg sm:rounded-xl bg-white/98 backdrop-blur-md p-2 sm:p-3 text-center border border-white/50">
+                        <div className="rounded-xl bg-white/98 backdrop-blur-md p-2.5 sm:p-3 text-center border border-white/60 shadow-sm">
                           <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Min</p>
                           <p className="text-sm sm:text-base font-black text-emerald-400">
                             {typeof v2PricingCart.firstEstimateMinEur === "number" ? fmtEur(v2PricingCart.firstEstimateMinEur) : "—"}
                           </p>
                         </div>
-                        <div className="rounded-lg sm:rounded-xl bg-white/98 backdrop-blur-md p-2 sm:p-3 text-center border border-white/50">
+                        <div className="rounded-xl bg-white/98 backdrop-blur-md p-2.5 sm:p-3 text-center border border-white/60 shadow-sm">
                           <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Max</p>
                           <p className="text-sm sm:text-base font-black text-rose-400">
                             {typeof v2PricingCart.firstEstimateMaxEur === "number" ? fmtEur(v2PricingCart.firstEstimateMaxEur) : "—"}
