@@ -38,7 +38,8 @@
 
 ## Flux données Tunnel → Back Office (synthèse)
 
-Fichier source : `lib/api/client.ts` — contient toutes les interfaces TypeScript et fonctions d'appel.
+> Le tunnel live est **`app/devis-gratuits-v3/page.tsx`** (seul tunnel dans le repo).
+> Les appels HTTP vers le Back Office sont centralisés dans **`lib/api/client.ts`**.
 
 | Étape | Endpoint BO (public) | Méthode | Données clés |
 |-------|----------------------|---------|--------------|
@@ -83,8 +84,16 @@ Fichier source : `lib/api/client.ts` — contient toutes les interfaces TypeScri
 
 ## 0) Contexte
 
-- **Branche**: `staging`
-- **Déploiement**: staging (CapRover) — tests uniquement en conditions réelles
+> **⚠️ Clarification nommage** : le tunnel live est dans **`app/devis-gratuits-v3/page.tsx`**.
+> Il n'existe **aucun** dossier `devis-gratuits-v4`. Le nom "V4" dans ce fichier (`migration_v4.md`)
+> désigne la **4e itération UX/UI** du tunnel, implémentée directement dans le code "v3".
+> C'est le seul tunnel actif dans le repo. Toutes les anciennes versions (v2, experiments, etc.)
+> ont été supprimées le 2026-02-11.
+
+- **Route live** : `/devis-gratuits-v3` → `app/devis-gratuits-v3/page.tsx`
+- **Redirect** : `/devis-gratuits` redirige vers `/devis-gratuits-v3`
+- **Branche**: `staging` (promu en `main`)
+- **Déploiement**: CapRover — tests uniquement en conditions réelles
 - **Objectif**: refonte UX/UI **sans** changer les champs / formules (sauf prototype explicitement non connecté)
 
 ---
