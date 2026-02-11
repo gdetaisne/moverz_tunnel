@@ -1,5 +1,44 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 — Responsive "best-in-class" (mobile / desktop)
+
+**Objectif** : rendre le code responsive clair, cohérent et facilement modifiable.
+
+### Breakpoints harmonisés
+Avant : mélange de `sm`, `md`, `xl` sans logique. Maintenant **2 breakpoints seulement** :
+| Breakpoint | Tailwind | Usage |
+|---|---|---|
+| `sm:` | ≥ 640px | Grilles 2-3 colonnes (densité, cuisine, formules, adresses) |
+| `lg:` | ≥ 1024px | Sidebar panier visible, CTA statique, container décalé |
+
+**Règle** : ne jamais utiliser `md:` ni `xl:` dans les composants tunnel.
+
+### Tableau contraintes d'accès responsive
+- **Desktop (≥ sm)** : tableau classique `grid-cols-[1fr,120px,120px]`
+- **Mobile (< sm)** : cards verticales par contrainte, layout `flex` avec séparateur → **plus d'overflow horizontal**
+
+### Sidebar panier abaissée (xl → lg)
+- Sidebar visible à `lg:` (1024px) au lieu de `xl:` (1280px) → plus de "trou" entre md et xl.
+- Container page.tsx : `lg:mr-[320px]` pour éviter le chevauchement contenu/sidebar.
+- Budget bar sticky : masquée à `lg:` (quand sidebar visible).
+
+### CTA sticky + safe-area
+- `pb-[env(safe-area-inset-bottom,8rem)]` remplace le hack `pb-32` → fonctionne sur iPhone avec barre Home.
+- `pb-[max(1rem,env(safe-area-inset-bottom))]` sur le CTA lui-même.
+
+### Design tokens tunnel
+Ajout dans `tailwind.config.ts` sous `colors.tunnel` :
+```
+tunnel-navy, tunnel-slate, tunnel-teal, tunnel-teal-dk,
+tunnel-teal-bg, tunnel-teal-bg2, tunnel-border, tunnel-bg,
+tunnel-error, tunnel-price-lo, tunnel-price-hi
+```
+Migration progressive : les hex inline seront remplacés par ces tokens au fil des itérations.
+
+**Fichiers modifiés** : `StepAccessLogisticsV2.tsx`, `StepContactPhotosV2.tsx`, `page.tsx`, `tailwind.config.ts`.
+
+---
+
 ## 2026-02-11 — Formule unifiée Step 2 / Step 3 / API
 
 **Problème** : le prix affiché en Step 2 (toujours STANDARD) ne correspondait pas au prix en Step 3 quand l'utilisateur avait choisi une autre formule.

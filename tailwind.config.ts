@@ -27,6 +27,20 @@ const config: Config = {
           2: "rgb(var(--text-2) / <alpha-value>)",
           3: "rgb(var(--text-3) / <alpha-value>)",
         },
+        /* ─── Tunnel design tokens (2025) ─── */
+        tunnel: {
+          navy:      "#0F172A",  /* texte principal */
+          slate:     "#1E293B",  /* texte secondaire */
+          teal:      "#6BCFCF",  /* accent principal */
+          "teal-dk": "#2B7A78",  /* accent sombre */
+          "teal-bg": "#F0FAFA",  /* fond accent léger */
+          "teal-bg2":"#E7FAFA",  /* fond accent très léger */
+          border:    "#E3E5E8",  /* bordures */
+          bg:        "#F8F9FA",  /* fond de page */
+          error:     "#EF4444",  /* erreur */
+          "price-lo":"#14532D",  /* prix bas (vert) */
+          "price-hi":"#7F1D1D",  /* prix haut (rouge) */
+        },
       },
       boxShadow: {
         brand: "0 14px 30px rgba(var(--brand-deep-teal) / 0.18)",

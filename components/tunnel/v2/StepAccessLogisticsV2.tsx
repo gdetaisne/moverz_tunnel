@@ -749,25 +749,22 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
         {props.access_type === "constrained" && (
           <div className="space-y-3">
-            {/* Contraintes en tableau départ / arrivée, "Oui" uniquement (toggle) */}
-            <div className="overflow-hidden rounded-2xl border border-[#E3E5E8] bg-white">
-              <div className="grid grid-cols-[1fr,140px,140px] bg-[#F8F9FA]">
-                <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70">Contraintes</div>
-                <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70 text-center">
-                  Départ
-                </div>
-                <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70 text-center">
-                  Arrivée
-                </div>
-              </div>
+            {/* Contraintes départ / arrivée — tableau desktop, cards mobile */}
 
+            {/* ── Desktop : tableau classique (≥ sm) ── */}
+            <div className="hidden sm:block overflow-hidden rounded-2xl border border-[#E3E5E8] bg-white">
+              <div className="grid grid-cols-[1fr,120px,120px] bg-[#F8F9FA]">
+                <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70">Contraintes</div>
+                <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70 text-center">Départ</div>
+                <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70 text-center">Arrivée</div>
+              </div>
               {questions.map((q) => {
                 const sides = parseAccessSides()[q.key];
                 const destDisabled = destinationUnknown;
                 return (
                   <div
                     key={q.key}
-                    className="grid grid-cols-[1fr,140px,140px] items-center border-t border-[#E3E5E8]"
+                    className="grid grid-cols-[1fr,120px,120px] items-center border-t border-[#E3E5E8]"
                   >
                     <div className="px-3 py-3 text-sm font-medium text-[#0F172A]">{q.label}</div>
                     <div className="px-3 py-2 flex justify-center">
@@ -784,6 +781,39 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                         onToggle={() => toggleSide(q.key, "destination")}
                         ariaLabel={`Arrivée: ${q.label}`}
                       />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Mobile : layout vertical par contrainte (< sm) ── */}
+            <div className="sm:hidden space-y-2">
+              {questions.map((q) => {
+                const sides = parseAccessSides()[q.key];
+                const destDisabled = destinationUnknown;
+                return (
+                  <div key={q.key} className="rounded-xl border border-[#E3E5E8] bg-white p-3 space-y-2">
+                    <p className="text-sm font-medium text-[#0F172A]">{q.label}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 flex items-center justify-between">
+                        <span className="text-xs font-semibold text-[#1E293B]/60">Départ</span>
+                        <ToggleYes
+                          active={Boolean(sides?.origin)}
+                          onToggle={() => toggleSide(q.key, "origin")}
+                          ariaLabel={`Départ: ${q.label}`}
+                        />
+                      </div>
+                      <div className="w-px h-8 bg-[#E3E5E8]" />
+                      <div className="flex-1 flex items-center justify-between">
+                        <span className="text-xs font-semibold text-[#1E293B]/60">Arrivée</span>
+                        <ToggleYes
+                          active={Boolean(sides?.destination)}
+                          disabled={destDisabled}
+                          onToggle={() => toggleSide(q.key, "destination")}
+                          ariaLabel={`Arrivée: ${q.label}`}
+                        />
+                      </div>
                     </div>
                   </div>
                 );
@@ -850,7 +880,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       {props.pricingByFormule && (
         <div className="space-y-3">
           <p className="text-sm font-semibold text-[#0F172A]">Votre formule</p>
-          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:snap-none">
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 sm:snap-none">
             {([
               {
                 id: "ECONOMIQUE" as const,
@@ -878,7 +908,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   key={f.id}
                   type="button"
                   onClick={() => props.onFormuleChange(f.id)}
-                  className={`w-[240px] flex-shrink-0 snap-start rounded-2xl border p-4 text-left transition-all duration-200 md:w-full md:flex-shrink md:snap-none ${
+                  className={`w-[240px] flex-shrink-0 snap-start rounded-2xl border p-4 text-left transition-all duration-200 sm:w-full sm:flex-shrink sm:snap-none ${
                     selected
                       ? "border-[#6BCFCF] bg-[#F0FAFA] shadow-sm"
                       : "border-[#E3E5E8] bg-white"
@@ -985,10 +1015,11 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         </div>
       </div>
 
-      <div className="pb-32 md:pb-0" />
+      {/* Spacer mobile pour compenser le CTA sticky — masqué en desktop */}
+      <div className="pb-[env(safe-area-inset-bottom,8rem)] lg:pb-0" />
 
-      {/* Mobile only: sticky budget bar */}
-      <div className="xl:hidden fixed left-0 right-0 bottom-20 bg-gradient-to-b from-transparent to-white/95 backdrop-blur pt-3 pb-1 px-4 z-20">
+      {/* Mobile only: sticky budget bar (masqué quand sidebar desktop visible) */}
+      <div className="lg:hidden fixed left-0 right-0 bottom-20 bg-gradient-to-b from-transparent to-white/95 backdrop-blur pt-3 pb-1 px-4 z-20">
         <div className="rounded-xl border border-[#E3E5E8] bg-white/90 backdrop-blur px-3 py-2.5 flex items-center justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
@@ -1001,7 +1032,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         </div>
       </div>
 
-      <div className="md:static fixed left-0 right-0 bottom-0 bg-white/95 backdrop-blur px-4 py-4 md:px-0 md:py-0 z-30">
+      {/* CTA sticky mobile / static desktop */}
+      <div className="lg:static fixed left-0 right-0 bottom-0 bg-white/95 backdrop-blur px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:px-0 lg:py-0 lg:pb-0 lg:bg-transparent lg:backdrop-blur-none z-30">
         <button
           type="button"
           disabled={props.isSubmitting}
@@ -1014,9 +1046,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       </div>
       </div>
 
-      {/* Desktop only: panneau Budget & hypothèses */}
-      {/* On l'active à partir de XL pour garantir assez d'espace sans recouvrement */}
-      <aside className="hidden xl:block xl:fixed xl:top-24 xl:right-0 xl:w-[320px] xl:z-30">
+      {/* Desktop only: panneau Budget & hypothèses (≥ lg / 1024px) */}
+      <aside className="hidden lg:block lg:fixed lg:top-24 lg:right-0 lg:w-[300px] lg:z-30">
         <div className="rounded-2xl border border-[#E3E5E8] bg-white/90 backdrop-blur p-3 space-y-3">
           <p className="text-sm font-semibold text-[#0F172A]">Votre panier</p>
 

@@ -1790,7 +1790,8 @@ function DevisGratuitsV3Content() {
 
   return (
       <main className="min-h-screen bg-[#F8F9FA] text-[#0F172A]">
-        <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+        {/* Container adaptatif : décalé à gauche quand sidebar panier visible (≥ lg) */}
+        <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 lg:mr-[320px] lg:ml-auto">
           {/* Top back/edit */}
           {state.currentStep > 1 && (
             <button
