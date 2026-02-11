@@ -1846,8 +1846,8 @@ function DevisGratuitsV3Content() {
               </div>
 
               {/* Sidebar panier mobile (en bas, ordre inversé) + desktop (droite sticky) — GAME CHANGER */}
-              <aside className="lg:sticky lg:top-20 order-last lg:order-none">
-                <div className="rounded-2xl sm:rounded-3xl bg-[#0F172A] p-6 sm:p-10 shadow-2xl shadow-black/20 space-y-6 sm:space-y-8 relative overflow-hidden border border-white/10">
+              <aside className="lg:sticky lg:top-28 order-last lg:order-none">
+                <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#0F172A] p-6 sm:p-10 shadow-2xl shadow-black/20 space-y-6 sm:space-y-8 relative overflow-hidden border border-white/10">
                   {/* Subtle accent gradient overlay */}
                   <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#6BCFCF]/10 to-[#A78BFA]/10 blur-3xl pointer-events-none" />
                   

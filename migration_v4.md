@@ -11,21 +11,29 @@
 **Fini** : Gradients forts, couleurs vives, effets chargés  
 **Nouveau** : Dark mode élégant, accents subtils, typographie raffinée
 
-### 🌑 Background container : Noir profond avec accent subtil
+### 🌑 Background container : Noir profond avec gradient léger
 
 **Avant** :
 ```tsx
 bg-gradient-to-br from-[#6BCFCF] via-[#7BC4CC] to-[#A78BFA]
 shadow-xl shadow-[#A78BFA]/30
 border border-white/20
+lg:top-20  // Trop proche de la progress bar
 ```
 
 **Après** :
 ```tsx
-bg-[#0F172A]  // Noir profond slate
+bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#0F172A]  // Gradient léger pour éclaircir
 shadow-2xl shadow-black/20  // Shadow noire élégante
 border border-white/10  // Border ultra-subtile
+lg:top-28  // Plus d'espace avec la progress bar
 ```
+
+**Gradient léger** :
+- `from-[#1E293B]` (slate-800, plus clair en haut-gauche)
+- `via-[#0F172A]` (slate-900, milieu)
+- `to-[#0F172A]` (slate-900, bas-droite)
+- Direction `to-br` (bottom-right) pour effet naturel
 
 **Accent overlay** :
 ```tsx
