@@ -141,7 +141,7 @@ Toutes les sections ont `relative z-10` pour être au-dessus de l'overlay :
 <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/40 to-[#A78BFA]/30" />
 ```
 
-### 5️⃣ Tooltips explicatifs avec `HelpCircle`
+### 5️⃣ Tooltips explicatifs avec `HelpCircle` en cercle gradient
 
 **Nouveauté** : Import `HelpCircle` de `lucide-react` + tooltips pour chaque type d'ajustement :
 
@@ -154,16 +154,23 @@ const tooltips: Record<string, string> = {
   date: "Les périodes de forte demande (été, fin de mois) impactent les tarifs",
 };
 
-// Dans le label
+// Dans le label avec cercle gradient premium
 {tooltips[l.key] && (
   <span
-    className="inline-flex items-center opacity-60 hover:opacity-100 transition-opacity cursor-help"
+    className="inline-flex items-center justify-center w-4 h-4 sm:w-[18px] sm:h-[18px] rounded-full bg-gradient-to-br from-[#6BCFCF] to-[#A78BFA] hover:from-[#A78BFA] hover:to-[#6BCFCF] transition-all duration-300 cursor-help"
     title={tooltips[l.key]}
   >
-    <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
+    <HelpCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" strokeWidth={2.5} />
   </span>
 )}
 ```
+
+**Style** :
+- **Cercle gradient** turquoise→violet (`from-[#6BCFCF] to-[#A78BFA]`)
+- **Hover inversé** : gradient s'inverse pour effet interactif
+- **Icône blanche** : `text-white` + `strokeWidth={2.5}` pour épaisseur visible
+- **Taille responsive** : `w-4 h-4` mobile, `w-[18px] h-[18px]` desktop
+- **Icône interne** : `w-2.5 h-2.5` mobile, `w-3 h-3` desktop
 
 ### 6️⃣ Hover violet sur pills ajustements
 

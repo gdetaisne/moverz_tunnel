@@ -1940,10 +1940,10 @@ function DevisGratuitsV3Content() {
                                 <span>{l.label}</span>
                                 {tooltips[l.key] && (
                                   <span
-                                    className="inline-flex items-center opacity-60 hover:opacity-100 transition-opacity cursor-help"
+                                    className="inline-flex items-center justify-center w-4 h-4 sm:w-[18px] sm:h-[18px] rounded-full bg-gradient-to-br from-[#6BCFCF] to-[#A78BFA] hover:from-[#A78BFA] hover:to-[#6BCFCF] transition-all duration-300 cursor-help group/tooltip"
                                     title={tooltips[l.key]}
                                   >
-                                    <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
+                                    <HelpCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" strokeWidth={2.5} />
                                   </span>
                                 )}
                               </p>
