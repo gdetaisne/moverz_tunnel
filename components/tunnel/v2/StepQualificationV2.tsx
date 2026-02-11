@@ -55,7 +55,7 @@ export function StepQualificationV2({
     : destinationPostalCode;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-8">
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-xl bg-[#6BCFCF]/10 flex items-center justify-center">
@@ -169,9 +169,15 @@ export function StepQualificationV2({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-[#6BCFCF] hover:bg-[#5AB8B8] py-4 text-base font-bold text-white shadow-[0_2px_8px_rgba(107,207,207,0.3)] hover:shadow-[0_4px_12px_rgba(107,207,207,0.4)] transition-all duration-200 disabled:opacity-40"
+          className="group relative w-full rounded-xl bg-gradient-to-r from-[#A8E6D8] via-[#6BCFCF] to-[#5AB8B8] border border-white/20 py-5 text-lg font-bold text-white shadow-[0_8px_30px_rgba(107,207,207,0.4)] hover:shadow-[0_12px_50px_rgba(107,207,207,0.6)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 overflow-hidden"
         >
-          {isSubmitting ? "Chargement..." : "Voir les options disponibles"}
+          <span className="relative z-10">{isSubmitting ? "Chargement..." : "Voir les options disponibles"}</span>
+          
+          {/* Gradient hover overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#A8E6D8] to-[#6BCFCF] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Shine effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
         </button>
         <p className="text-center text-sm text-[#1E293B]/70">
           Gratuit • Sans engagement • 2 minutes

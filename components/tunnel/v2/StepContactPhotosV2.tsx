@@ -106,22 +106,23 @@ export function StepContactPhotosV2({
   ]);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="max-w-3xl mx-auto space-y-10">
       <div className="text-center space-y-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 text-xs font-bold text-emerald-700">
-          <Check className="w-3.5 h-3.5" strokeWidth={3} />
+        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 border border-emerald-300 px-4 py-2 text-sm font-bold text-emerald-700">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <Check className="w-4 h-4" strokeWidth={3} />
           Dossier créé
         </div>
 
-        <h1 className="text-4xl sm:text-5xl font-black text-[#0F172A] leading-tight">
+        <h1 className="text-5xl sm:text-6xl font-black text-[#0F172A] leading-tight">
           Bravo
         </h1>
       </div>
 
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#6BCFCF]/10">
-            <Mail className="h-5 w-5 text-[#6BCFCF]" strokeWidth={2} />
+      <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+        <div className="flex items-start gap-4">
+          <div className="mt-0.5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6BCFCF]/10">
+            <Mail className="h-6 w-6 text-[#6BCFCF]" strokeWidth={2} />
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-[#0F172A]">
@@ -156,22 +157,22 @@ export function StepContactPhotosV2({
         </div>
       </div>
 
-      <div className="rounded-xl bg-[#F8FAFB] p-6 border border-gray-100">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#6BCFCF]/10 flex items-center justify-center">
-            <FileText className="h-4 w-4 text-[#6BCFCF]" strokeWidth={2} />
+      <div className="rounded-2xl bg-[#F8FAFB] p-8 border border-gray-100">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#6BCFCF]/10 flex items-center justify-center">
+            <FileText className="h-5 w-5 text-[#6BCFCF]" strokeWidth={2} />
           </div>
-          <p className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#64748B]">
             Récapitulatif de votre dossier
           </p>
         </div>
 
         {recapRows.length > 0 ? (
-          <div className="mt-4 grid gap-2">
+          <div className="mt-6 grid gap-3">
             {recapRows.map((r) => (
               <div
                 key={r.label}
-                className="flex items-start justify-between gap-4 rounded-lg bg-white px-4 py-3 border border-gray-100"
+                className="flex items-start justify-between gap-4 rounded-xl bg-white px-5 py-4 border border-gray-100 shadow-sm"
               >
                 <p className="text-sm font-medium text-[#1E293B]/70">{r.label}</p>
                 <p className="text-sm font-semibold text-[#0F172A] text-right">{r.value}</p>

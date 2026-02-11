@@ -1,5 +1,424 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 (5ème itération) — Design System Premium 2026 Moverz : glassmorphism + effets ultra-modernes
+
+**Problème** : La 4ème itération respectait la charte couleurs mais manquait tous les effets visuels premium 2026 (glassmorphism, shadows colorées, gradients sophistiqués, micro-animations, shine effects).
+
+**Objectif** : Appliquer **TOUT le Design System Premium 2026 Moverz** :
+- ✅ Glassmorphism nouvelle génération sur toutes les cards
+- ✅ Shadows colorées turquoise avec glow premium
+- ✅ CTA gradient turquoise + shine effect + overlay au hover
+- ✅ Dots animés double glow + ping animation
+- ✅ Badge "Recommandé" gradient turquoise→violet premium
+- ✅ Focus states ring-4 premium avec shadow colorée
+- ✅ Pills hover glow turquoise + scale premium
+
+### 1️⃣ Glassmorphism Nouvelle Génération (Cards)
+
+**Toutes les cards principales** :
+```tsx
+// Cards Steps 1/2/3/4
+rounded-2xl
+bg-white/80              // transparence 80%
+backdrop-blur-xl         // blur effet verre
+border border-white/20   // border subtile
+shadow-[0_8px_32px_rgba(107,207,207,0.12)]
+hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)]
+transition-all duration-500
+```
+
+**Sous-cards Step 3** :
+```tsx
+// Densité, cuisine, etc.
+rounded-2xl
+bg-white/70              // plus transparent
+backdrop-blur-xl
+border border-white/30
+shadow-[0_8px_32px_rgba(0,0,0,0.08)]
+hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)]
+```
+
+### 2️⃣ CTA Ultra-Premium (Gradient + Shine + Overlay)
+
+**Boutons principaux avec effets multiples** :
+```tsx
+// Container
+group relative w-full
+rounded-xl
+bg-gradient-to-r from-[#A8E6D8] via-[#6BCFCF] to-[#5AB8B8]
+border border-white/20
+py-5 text-lg font-bold text-white
+shadow-[0_8px_30px_rgba(107,207,207,0.4)]
+hover:shadow-[0_12px_50px_rgba(107,207,207,0.6)]
+hover:scale-[1.02] active:scale-[0.98]
+overflow-hidden
+
+// Texte avec z-index
+<span className="relative z-10">Texte</span>
+
+// Gradient hover overlay
+<div className="
+  absolute inset-0 
+  bg-gradient-to-r from-[#A8E6D8] to-[#6BCFCF] 
+  opacity-0 group-hover:opacity-100 
+  transition-opacity duration-300
+" />
+
+// Shine effect
+<div className="
+  absolute inset-0 
+  bg-gradient-to-r from-transparent via-white/30 to-transparent 
+  translate-x-[-100%] group-hover:translate-x-[100%] 
+  transition-transform duration-700
+" />
+```
+
+### 3️⃣ Dots Animés Double Glow
+
+**Sidebar header** :
+```tsx
+<span className="relative inline-flex h-3 w-3">
+  {/* Ping animation outer */}
+  <span className="
+    animate-ping absolute inline-flex h-full w-full 
+    rounded-full bg-white opacity-75
+  " />
+  
+  {/* Static inner dot avec glow */}
+  <span className="
+    relative inline-flex rounded-full h-3 w-3 
+    bg-white 
+    shadow-[0_0_12px_rgba(255,255,255,0.8)]
+  " />
+</span>
+```
+
+### 4️⃣ Badge "Recommandé" Gradient Premium
+
+**Badge turquoise→violet avec texte gradient** :
+```tsx
+<span className="
+  inline-flex items-center gap-1.5 
+  rounded-full 
+  bg-gradient-to-r from-[#6BCFCF]/20 to-[#A78BFA]/20 
+  border border-[#A78BFA]/50 
+  px-3 py-1 
+  shadow-[0_4px_16px_rgba(167,139,250,0.25)]
+">
+  <span className="
+    bg-gradient-to-r from-[#6BCFCF] to-[#A78BFA] 
+    bg-clip-text text-transparent 
+    text-[10px] font-bold tracking-wider
+  ">
+    ✨ Recommandé
+  </span>
+</span>
+```
+
+### 5️⃣ Focus States Premium (Ring-4)
+
+**Inputs avec ring-4 + shadow colorée** :
+```tsx
+border-gray-200 
+bg-white/90
+py-4 text-base
+focus:border-[#6BCFCF] 
+focus:outline-none 
+focus:ring-4 focus:ring-[#6BCFCF]/20 
+focus:bg-white 
+focus:shadow-[0_0_0_4px_rgba(107,207,207,0.1)]
+```
+
+### 6️⃣ Pills Premium (Glow Turquoise)
+
+**Pills sélectionnées** :
+```tsx
+// Sélectionnée
+border-[#6BCFCF] 
+bg-[#6BCFCF]/10 
+shadow-[0_8px_30px_rgba(107,207,207,0.3)]  // shadow colorée turquoise
+ring-2 ring-[#6BCFCF]/30
+
+// Hover
+hover:border-[#6BCFCF] 
+hover:shadow-[0_8px_24px_rgba(107,207,207,0.25)]  // glow turquoise
+hover:scale-[1.02]
+```
+
+### 🎨 Palette Premium 2026 Complète
+
+| Effet | Valeur | Usage |
+|-------|--------|-------|
+| Glassmorphism cards | `bg-white/80 backdrop-blur-xl` | Toutes cards principales |
+| Glassmorphism sous-cards | `bg-white/70 backdrop-blur-xl` | Densité, cuisine, etc. |
+| Shadow card turquoise | `shadow-[0_8px_32px_rgba(107,207,207,0.12)]` | Cards au repos |
+| Shadow card hover | `shadow-[0_12px_48px_rgba(107,207,207,0.15)]` | Cards hover |
+| Gradient CTA | `from-[#A8E6D8] via-[#6BCFCF] to-[#5AB8B8]` | Boutons principaux |
+| Shadow CTA | `shadow-[0_8px_30px_rgba(107,207,207,0.4)]` | CTA repos |
+| Shadow CTA hover | `shadow-[0_12px_50px_rgba(107,207,207,0.6)]` | CTA hover avec glow |
+| Shadow pills | `shadow-[0_8px_30px_rgba(107,207,207,0.3)]` | Pills sélectionnées |
+| Shadow pills hover | `shadow-[0_8px_24px_rgba(107,207,207,0.25)]` | Pills hover glow |
+| Badge gradient bg | `from-[#6BCFCF]/20 to-[#A78BFA]/20` | Badge "Recommandé" |
+| Badge gradient text | `from-[#6BCFCF] to-[#A78BFA]` | Texte badge gradient |
+| Shadow badge | `shadow-[0_4px_16px_rgba(167,139,250,0.25)]` | Badge violet glow |
+| Dot glow | `shadow-[0_0_12px_rgba(255,255,255,0.8)]` | Sidebar dot |
+| Focus ring | `ring-4 ring-[#6BCFCF]/20` | Inputs focus |
+| Focus shadow | `shadow-[0_0_0_4px_rgba(107,207,207,0.1)]` | Inputs focus glow |
+
+### 📦 Fichiers modifiés
+- `app/devis-gratuits-v3/page.tsx` : glassmorphism cards + dot animé sidebar
+- `components/tunnel/v2/StepQualificationV2.tsx` : CTA gradient + shine effect
+- `components/tunnel/v2/StepEstimationV2.tsx` : CTA gradient + shine effect
+- `components/tunnel/v2/StepAccessLogisticsV2.tsx` : CTA gradient + badge premium + pills glow + focus ring-4 + sous-cards glassmorphism
+
+### ⚠️ Aucun changement fonctionnel
+- Tracking inchangé
+- Champs inchangés
+- Payload inchangé
+- Textes et liens inchangés
+
+---
+
+## 2026-02-11 (4ème itération) — Correction charte couleurs Moverz 2.0 : turquoise primaire + violet accent
+
+**Problème** : La 3ème itération utilisait `#7DD3C0` (cyan trop clair) et gradient cyan→violet sur les CTA. Cela ne respectait pas la charte couleurs Moverz 2.0.
+
+**Charte Moverz 2.0 (respect strict)** :
+- **🏡 Turquoise #6BCFCF (80% - PRIMAIRE)** : tous les CTA, navigation, liens, points animés, icônes principales. Message : "Confiance, déménagement rassurant"
+- **💎 Violet #A78BFA (20% - ACCENT)** : badges "Nouveau"/"Premium"/"Recommandé", highlights, icônes secondaires, éléments décoratifs. Message : "Innovation, valeur ajoutée"
+
+**Corrections appliquées** :
+- ✅ CTA principaux : `bg-[#6BCFCF]` (turquoise pur, plus de gradient violet)
+- ✅ Sidebar gradient : `from-[#6BCFCF] via-[#5AB8B8] to-[#4AA8A5]` (turquoise uniquement)
+- ✅ Pills sélectionnées : `border-[#6BCFCF] bg-[#6BCFCF]/10` (turquoise)
+- ✅ Focus states : `ring-[#6BCFCF]/30` (turquoise)
+- ✅ Icônes principales : `text-[#6BCFCF]` (turquoise)
+- ✅ Dots animés : `bg-white` (sur fond turquoise)
+- ✅ Badge "Recommandé" : `bg-[#A78BFA]/20 border-[#A78BFA] text-[#A78BFA]` (violet accent - premium)
+
+### Palette finale respectant Moverz 2.0
+
+| Élément | Couleur | Rôle |
+|---------|---------|------|
+| CTA principaux | `#6BCFCF` | Turquoise primaire (80%) |
+| Sidebar gradient | `from-[#6BCFCF] via-[#5AB8B8] to-[#4AA8A5]` | Turquoise uniquement |
+| Pills sélectionnées | `#6BCFCF` | Turquoise primaire |
+| Focus states | `#6BCFCF` | Turquoise primaire |
+| Icônes principales | `#6BCFCF` | Turquoise primaire |
+| Badge "Recommandé" | `#A78BFA` | Violet accent (20% - premium) |
+| Hover CTA | `#5AB8B8` | Turquoise medium |
+| Shadows CTA | `shadow-[#6BCFCF]/30` | Turquoise primaire |
+
+### ⚠️ Aucun changement fonctionnel
+- Tracking inchangé
+- Champs inchangés
+- Payload inchangé
+- Textes et liens inchangés
+
+---
+
+## 2026-02-11 (3ème itération) — Refonte moderne tech 2026 : gradient, typographie massive, espacement généreux
+
+**Problème** : La 2ème itération était trop sobre/minimale. Manquait de profondeur, d'impact visuel, et d'espacement. Sidebar cyan solid trop plate, typographie trop petite, pills trop serrées, boutons sans gradient, pas assez moderne 2026.
+
+**Objectif** : Refonte moderne tech 2026 inspirée de la home moverz.fr (gradient subtil, typographie massive, espacement généreux, profondeur visuelle) :
+- ✅ Sidebar gradient : `from-[#7DD3C0] via-[#6BCFCF] to-[#5AB8B8]` + shadow colorée
+- ✅ Budget hero massif : `text-7xl` (au lieu de 5xl)
+- ✅ Boutons gradient cyan→violet : `from-[#7DD3C0] to-[#A78BFA]`
+- ✅ Pills spacieuses : `px-8 py-5` + `rounded-2xl` + hover scale
+- ✅ Cards aérées : `p-10` (au lieu de p-8) + `shadow-lg`
+- ✅ Inputs hauts : `py-4` + `text-base`
+- ✅ Espacement généreux : `space-y-8` partout
+- ✅ Badges avec dots animés : `animate-pulse`
+- ✅ Palette cyan plus doux : `#7DD3C0` (au lieu de `#6BCFCF`)
+
+### 1️⃣ Sidebar gradient moderne (GAME CHANGER business)
+
+**Design avec profondeur** :
+```tsx
+// Container gradient 3 stops
+rounded-3xl
+bg-gradient-to-br from-[#7DD3C0] via-[#6BCFCF] to-[#5AB8B8]
+p-10 (au lieu de p-8)
+shadow-2xl shadow-[#6BCFCF]/20
+
+// Dot animé header
+w-2 h-2 rounded-full bg-white animate-pulse
+
+// Budget hero MASSIF
+bg-white/95 backdrop-blur-sm
+rounded-2xl p-8 shadow-lg
+
+text-7xl font-black  // au lieu de text-5xl
+tracking-[0.3em]     // espacement lettres augmenté
+
+// Min/Max plus gros
+text-2xl font-black  // au lieu de text-lg
+
+// Ajustements avec meilleur contraste
+bg-white/90 backdrop-blur-sm
+hover:bg-white
+px-5 py-4
+shadow-sm
+
+// Dots colorés plus visibles
+w-2 h-2 (au lieu de w-1.5 h-1.5)
+bg-rose-500 / bg-emerald-500 (au lieu de 300)
+```
+
+### 2️⃣ Boutons gradient cyan→violet
+
+**Moderne avec shadow colorée** :
+```tsx
+w-full
+rounded-xl
+bg-gradient-to-r from-[#7DD3C0] to-[#A78BFA]
+hover:from-[#6BCFCF] hover:to-[#9F7AEA]
+py-5 (au lieu de py-4)
+text-lg font-bold (au lieu de text-base)
+shadow-lg shadow-[#7DD3C0]/30
+hover:shadow-xl hover:shadow-[#7DD3C0]/40
+transition-all duration-300
+```
+
+### 3️⃣ Pills spacieuses avec hover scale
+
+**Plus gros et plus d'impact** :
+```tsx
+// Container
+rounded-2xl (au lieu de rounded-xl)
+border-2
+px-8 py-5 (au lieu de px-5 py-4)
+transition-all duration-300
+
+// Sélectionné
+border-[#7DD3C0]
+bg-gradient-to-br from-[#7DD3C0]/10 to-[#6BCFCF]/5
+shadow-lg
+ring-2 ring-[#7DD3C0]/30
+
+// Normal
+hover:border-[#7DD3C0]
+hover:shadow-md
+hover:scale-[1.02]
+
+// Texte plus gros
+text-base font-bold (au lieu de text-sm)
+text-sm (descriptions, au lieu de text-xs)
+```
+
+### 4️⃣ Cards aérées avec shadows
+
+**Plus de padding et profondeur** :
+```tsx
+// Cards principales (Steps 1/2/3/4)
+rounded-2xl
+bg-white
+border border-gray-100
+p-10 (au lieu de p-8)
+shadow-lg (au lieu de shadow-sm)
+
+// Sous-cards (Step 3)
+rounded-2xl
+p-8 (au lieu de p-6)
+shadow-lg
+
+// Espacement global
+space-y-8 (au lieu de space-y-6)
+```
+
+### 5️⃣ Inputs plus hauts et modernes
+
+**Meilleur confort** :
+```tsx
+py-4 (au lieu de py-3)
+text-base (explicite)
+focus:border-[#7DD3C0]
+focus:ring-2 focus:ring-[#7DD3C0]/30
+focus:ring-offset-2
+```
+
+### 6️⃣ Badges avec dots animés
+
+**Micro-animations modernes** :
+```tsx
+// Badge "Dossier créé"
+inline-flex items-center gap-2
+rounded-full
+bg-emerald-100
+border border-emerald-300
+px-4 py-2 (au lieu de px-3 py-1)
+text-sm font-bold (au lieu de text-xs)
+
+// Dot animé
+w-2 h-2 rounded-full bg-emerald-500 animate-pulse
+```
+
+### 7️⃣ Typographie augmentée
+
+**Plus d'impact visuel** :
+```tsx
+// Budget hero sidebar
+text-7xl font-black (au lieu de text-5xl)
+
+// Titre "Bravo" Step 4
+text-5xl sm:text-6xl (au lieu de text-4xl sm:text-5xl)
+
+// Boutons CTA
+text-lg font-bold (au lieu de text-base)
+
+// Pills labels
+text-base font-bold (au lieu de text-sm)
+
+// Step 2 "Budget estimé"
+text-xl font-bold (au lieu de text-lg)
+```
+
+### 8️⃣ Espacement généreux
+
+**Respire mieux** :
+```tsx
+// Forms
+space-y-8 (au lieu de space-y-6)
+
+// Sidebar
+space-y-8 p-10
+
+// Page remerciement
+space-y-10 (au lieu de space-y-8)
+max-w-3xl (au lieu de max-w-2xl)
+
+// Cards recap
+mt-6 gap-3 (au lieu de mt-4 gap-2)
+```
+
+### 🎨 Palette moderne tech 2026
+
+| Élément | Valeur |
+|---------|--------|
+| Cyan principal | `#7DD3C0` (plus doux) |
+| Cyan hover | `#6BCFCF` |
+| Gradient sidebar | `from-[#7DD3C0] via-[#6BCFCF] to-[#5AB8B8]` |
+| Gradient boutons | `from-[#7DD3C0] to-[#A78BFA]` (cyan→violet) |
+| Pills sélectionnées | `from-[#7DD3C0]/10 to-[#6BCFCF]/5` |
+| Shadows colorées | `shadow-[#7DD3C0]/30` |
+| Focus states | `ring-[#7DD3C0]/30` |
+
+### 📦 Fichiers modifiés
+- `app/devis-gratuits-v3/page.tsx` : cards p-10 + sidebar gradient
+- `components/tunnel/v2/StepQualificationV2.tsx` : bouton gradient + espacement
+- `components/tunnel/v2/StepEstimationV2.tsx` : typo + cards + bouton gradient
+- `components/tunnel/v2/StepAccessLogisticsV2.tsx` : pills spacieuses + inputs hauts + bouton gradient
+- `components/tunnel/v2/StepContactPhotosV2.tsx` : badge dots + cards aérées
+
+### ⚠️ Aucun changement fonctionnel
+- Tracking inchangé
+- Champs inchangés
+- Payload Back Office identique
+- **Textes et liens : 0 modification**
+
+---
+
 ## 2026-02-11 (2ème itération) — Refonte sobre style moverz.fr : blanc pur + cyan accent uniquement
 
 **Problème** : La première refonte "Vercel 2026" était trop flashy/agressive (gradients cyan→blue partout, glassmorphism excessif, shadows cyan trop fortes). Pas alignée avec la home moverz.fr (sobre, élégante, blanc/cyan accent).
