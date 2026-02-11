@@ -65,12 +65,13 @@ function DevisGratuitsV3Content() {
   const [showValidationStep3, setShowValidationStep3] = useState(false);
 
   const containerClassName = useMemo(() => {
-    return [
-      "max-w-3xl px-4 py-8 space-y-6",
-      // Step 3: sidebar desktop (fixed right-8, w-[360px])
-      // → formulaire décalé à gauche (ml-auto + mr) pour équilibre visuel
-      state.currentStep === 3 ? "xl:mr-[420px] xl:ml-auto" : "mx-auto",
-    ].join(" ");
+    if (state.currentStep === 3) {
+      // Step 3: sidebar desktop (fixed right-8, w-[360px], visible à lg:1024px)
+      // → formulaire max-w adaptatif pour éviter débordement
+      return "w-full max-w-3xl px-4 py-8 space-y-6 mx-auto lg:max-w-none lg:mr-[420px] lg:ml-8";
+    }
+    // Steps 1/2/4: centré classique
+    return "max-w-3xl px-4 py-8 space-y-6 mx-auto";
   }, [state.currentStep]);
 
   const toInputDate = (raw: string | null | undefined): string | undefined => {

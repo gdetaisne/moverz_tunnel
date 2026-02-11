@@ -1,12 +1,19 @@
 # Migration V4 — journal de refonte UX/UI
 
-## 2026-02-11 — Centrage desktop corrigé + layout Step 3 "premium 2026"
+## 2026-02-11 — Centrage desktop corrigé + layout Step 3 "premium 2026" (v2)
 
-**Problème** : Le conteneur principal du tunnel avait des marges desktop qui décalaient tout vers la droite, même sans sidebar. En Step 3, l'approche "réserver l'espace" créait un trou moche au milieu (formulaire centré + sidebar collée au bord droit).
+**Problème** : Le conteneur principal du tunnel avait des marges desktop qui décalaient tout vers la droite, même sans sidebar. En Step 3 :
+1. L'approche "réserver l'espace" créait un trou moche au milieu (formulaire centré + sidebar collée au bord droit).
+2. **Breakpoints désalignés** : sidebar visible à `lg:` (1024px) mais formulaire décalé à `xl:` (1280px) → **superposition** entre 1024-1280px.
+3. `max-w-3xl` (768px) + marge 420px sur écran 1024px → formulaire coupé (604px disponibles seulement).
 
-**Solution** : layout conditionnel selon l'étape.
+**Solution** : layout conditionnel selon l'étape + breakpoints alignés.
 - **Steps 1/2/4** : conteneur **centré classique** (`max-w-3xl mx-auto`).
-- **Step 3 desktop (≥ xl / 1280px)** : formulaire **décalé à gauche** (`xl:mr-[420px] xl:ml-auto`), sidebar **collée au bord droit** (fixed) → équilibre visuel propre, pas de trou, layout "premium 2026".
+- **Step 3 desktop (≥ lg / 1024px)** : 
+  - `max-w-none` (plus de contrainte max-width)
+  - `ml-8 mr-[420px]` (formulaire occupe l'espace disponible entre marges)
+  - Sidebar `fixed right-8 w-[360px]` (visible à `lg:` aussi)
+  - → équilibre visuel propre, pas de superposition, layout "premium 2026"
 
 **Fichiers modifiés** : `app/devis-gratuits-v3/page.tsx`
 
