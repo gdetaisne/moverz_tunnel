@@ -48,6 +48,15 @@ const nextConfig: NextConfig = {
         ],
       },
       // Tunnel pages: no proxy/CDN caching to ensure fresh deploys are visible immediately.
+      // CORS pour /api/estimate (appelé depuis moverz.fr)
+      {
+        source: "/api/estimate",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "https://moverz.fr" },
+          { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type" },
+        ],
+      },
       {
         source: "/devis-gratuits-v3",
         headers: [
