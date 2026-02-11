@@ -1,5 +1,24 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 — Choix formule déplacé de Step 2 vers Step 3
+
+- **Décision** : déplacer le sélecteur de formule (Éco/Standard/Premium) de l'écran estimation (Step 2) vers l'écran accès/logistique (Step 3), entre "Options supplémentaires" et "Où recevoir vos devis".
+- **Step 2** : affiche désormais uniquement le prix basé sur la formule **Standard** (par défaut), avec mention "Estimation basée sur la formule Standard — vous pourrez changer à l'étape suivante."
+- **Step 3** : le bloc formule est affiché avec les 3 cartes (Éco / Standard recommandé / Premium) et leurs fourchettes de prix respectives.
+- **Panier (desktop + mobile)** : la première estimation est calculée sur STANDARD. Une nouvelle ligne **"Formule"** affiche le delta quand l'utilisateur change de formule. La ligne est toujours "confirmée" (STANDARD par défaut = delta 0).
+- **Changements UI** :
+  - `StepEstimationV2` : bloc sélection formule supprimé, props `pricingByFormule`/`selectedFormule`/`onFormuleChange` retirées.
+  - `StepAccessLogisticsV2` : nouvelles props `selectedFormule`, `onFormuleChange`, `pricingByFormule` + bloc formule inséré + ligne panier "Formule" avec tooltip.
+- **Tracking** : aucun changement.
+- **Champs / Inputs** : aucun champ supprimé, aucun champ ajouté.
+- **Back Office payload** : aucun changement (la formule est toujours envoyée).
+- **Fichiers modifiés** :
+  - `components/tunnel/v2/StepEstimationV2.tsx`
+  - `components/tunnel/v2/StepAccessLogisticsV2.tsx`
+  - `app/devis-gratuits-v3/page.tsx`
+
+---
+
 ## 2026-02-11 — Grand nettoyage du repo
 
 **Contexte** : staging promu en main, le tunnel V2 (feature flag `NEXT_PUBLIC_FUNNEL_V2`) est devenu la seule version live. Nettoyage du code zombie.

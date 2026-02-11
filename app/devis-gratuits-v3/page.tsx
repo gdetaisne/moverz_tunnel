@@ -806,10 +806,11 @@ function DevisGratuitsV3Content() {
     state.destinationPostalCode,
   ]);
 
+  // Step 2 affiche toujours le prix STANDARD (le choix de formule est en Step 3)
   const activePricingStep2 = useMemo(() => {
     if (!v2PricingByFormuleStep2) return null;
-    return v2PricingByFormuleStep2[state.formule as PricingFormuleType] ?? null;
-  }, [v2PricingByFormuleStep2, state.formule]);
+    return v2PricingByFormuleStep2.STANDARD ?? null;
+  }, [v2PricingByFormuleStep2]);
 
   const v2FirstEstimateDistanceKm = useMemo(() => {
     if (state.destinationUnknown) return null;
@@ -954,11 +955,12 @@ function DevisGratuitsV3Content() {
 
     const formule = state.formule as PricingFormuleType;
 
-    // Première estimation: distance "villes" +20km, densité=Très meublé, cuisine=3 équipements,
-    // date sans saison, accès RAS.
+    // Première estimation: distance "villes" +5km, densité=Très meublé, cuisine=3 équipements,
+    // date sans saison, accès RAS, formule STANDARD (baseline).
     const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
     const baseDistanceKm = Math.max(0, cityDistanceKm + 5);
 
+    // Baseline toujours STANDARD (le delta formule est une ligne séparée dans le panier)
     const baselineInput: Parameters<typeof calculatePricing>[0] = {
       surfaceM2: surface,
       housingType: "t2" as const,
@@ -970,7 +972,7 @@ function DevisGratuitsV3Content() {
       destinationFloor: 0,
       destinationElevator: "yes" as const,
       services: { monteMeuble: false, piano: null as null, debarras: false },
-      formule,
+      formule: "STANDARD" as PricingFormuleType,
       extraVolumeM3: 3 * 0.6, // cuisine = 3 équipements
     };
 
@@ -1098,7 +1100,13 @@ function DevisGratuitsV3Content() {
     const sAccess = calculatePricing(inputAccess);
     const deltaAccessEur = accessConfirmed ? formatDelta(sAccess.prixFinal - sDate.prixFinal) : 0;
 
-    const refinedCenterEur = centerEur(sAccess.prixMin, sAccess.prixMax);
+    // 6) Formule (delta vs STANDARD)
+    const formuleTouched = formule !== "STANDARD";
+    const inputFormule = { ...inputAccess, formule };
+    const sFormule = calculatePricing(inputFormule);
+    const deltaFormuleEur = formuleTouched ? formatDelta(sFormule.prixFinal - sAccess.prixFinal) : 0;
+
+    const refinedCenterEur = centerEur(sFormule.prixMin, sFormule.prixMax);
 
     const densityLabel =
       !densityTouched
@@ -1122,8 +1130,11 @@ function DevisGratuitsV3Content() {
       ? "≥4 sans ascenseur (monte-meuble)"
       : "confirmé";
 
+    const formuleLabel =
+      formule === "ECONOMIQUE" ? "Éco" : formule === "PREMIUM" ? "Premium" : "Standard";
+
     const lines: Array<{
-      key: "distance" | "density" | "kitchen" | "date" | "access";
+      key: "distance" | "density" | "kitchen" | "date" | "access" | "formule";
       label: string;
       status: string;
       amountEur: number;
@@ -1164,14 +1175,21 @@ function DevisGratuitsV3Content() {
         amountEur: deltaAccessEur,
         confirmed: accessConfirmed,
       },
+      {
+        key: "formule",
+        label: "Formule",
+        status: formuleTouched ? formuleLabel : "Standard (par défaut)",
+        amountEur: deltaFormuleEur,
+        confirmed: true, // toujours confirmé (STANDARD par défaut)
+      },
     ];
 
     return {
       firstEstimateMinEur: s0.prixMin,
       firstEstimateMaxEur: s0.prixMax,
       firstEstimateCenterEur,
-      refinedMinEur: sAccess.prixMin,
-      refinedMaxEur: sAccess.prixMax,
+      refinedMinEur: sFormule.prixMin,
+      refinedMaxEur: sFormule.prixMax,
       refinedCenterEur,
       lines,
     };
@@ -1706,28 +1724,8 @@ function DevisGratuitsV3Content() {
                 priceMax={activePricingStep2?.prixMax ?? activePricing?.prixMax ?? null}
                 onSubmit={handleSubmitEstimationV2}
                 isSubmitting={false}
-                  pricingByFormule={
-                    (v2PricingByFormuleStep2 ?? pricingByFormule)
-                      ? {
-                          ECONOMIQUE: {
-                            priceMin: (v2PricingByFormuleStep2 ?? pricingByFormule)!.ECONOMIQUE.prixMin,
-                            priceMax: (v2PricingByFormuleStep2 ?? pricingByFormule)!.ECONOMIQUE.prixMax,
-                          },
-                          STANDARD: {
-                            priceMin: (v2PricingByFormuleStep2 ?? pricingByFormule)!.STANDARD.prixMin,
-                            priceMax: (v2PricingByFormuleStep2 ?? pricingByFormule)!.STANDARD.prixMax,
-                          },
-                          PREMIUM: {
-                            priceMin: (v2PricingByFormuleStep2 ?? pricingByFormule)!.PREMIUM.prixMin,
-                            priceMax: (v2PricingByFormuleStep2 ?? pricingByFormule)!.PREMIUM.prixMax,
-                          },
-                        }
-                      : null
-                  }
-                  selectedFormule={state.formule}
-                  onFormuleChange={(v) => updateField("formule", v)}
-                  debug={debugMode}
-                  debugRows={v2DebugRowsStep2 ?? undefined}
+                debug={debugMode}
+                debugRows={v2DebugRowsStep2 ?? undefined}
               />
             </div>
           )}
@@ -1770,6 +1768,26 @@ function DevisGratuitsV3Content() {
                 difficult_parking={!!state.difficult_parking}
                 lift_required={!!state.lift_required}
                 access_details={state.access_details ?? ""}
+                selectedFormule={state.formule as "ECONOMIQUE" | "STANDARD" | "PREMIUM"}
+                onFormuleChange={(v) => updateField("formule", v)}
+                pricingByFormule={
+                  pricingByFormule
+                    ? {
+                        ECONOMIQUE: {
+                          priceMin: pricingByFormule.ECONOMIQUE.prixMin,
+                          priceMax: pricingByFormule.ECONOMIQUE.prixMax,
+                        },
+                        STANDARD: {
+                          priceMin: pricingByFormule.STANDARD.prixMin,
+                          priceMax: pricingByFormule.STANDARD.prixMax,
+                        },
+                        PREMIUM: {
+                          priceMin: pricingByFormule.PREMIUM.prixMin,
+                          priceMax: pricingByFormule.PREMIUM.prixMax,
+                        },
+                      }
+                    : null
+                }
                 firstName={state.firstName}
                 email={state.email}
                 phone={state.phone}

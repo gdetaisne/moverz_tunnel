@@ -43,7 +43,7 @@ interface StepAccessLogisticsV2Props {
     refinedMaxEur: number | null;
     refinedCenterEur: number | null;
     lines: Array<{
-      key: "distance" | "density" | "kitchen" | "date" | "access";
+      key: "distance" | "density" | "kitchen" | "date" | "access" | "formule";
       label: string;
       status: string;
       amountEur: number;
@@ -64,6 +64,14 @@ interface StepAccessLogisticsV2Props {
   firstName: string;
   email: string;
   phone: string;
+  // Formule (déplacée depuis Step 2)
+  selectedFormule: "ECONOMIQUE" | "STANDARD" | "PREMIUM";
+  onFormuleChange: (v: "ECONOMIQUE" | "STANDARD" | "PREMIUM") => void;
+  pricingByFormule?: {
+    ECONOMIQUE: { priceMin: number; priceMax: number };
+    STANDARD: { priceMin: number; priceMax: number };
+    PREMIUM: { priceMin: number; priceMax: number };
+  } | null;
   // Services en plus (mappés sur les mêmes champs que V1)
   serviceFurnitureStorage: boolean;
   serviceCleaning: boolean;
@@ -837,6 +845,71 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         )}
       </div>
 
+      {/* Choix formule (déplacé depuis Step 2) */}
+      {props.pricingByFormule && (
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-[#0F172A]">Votre formule</p>
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:snap-none">
+            {([
+              {
+                id: "ECONOMIQUE" as const,
+                label: "Éco",
+                recommended: false,
+                bullets: ["Transport uniquement", "Vous emballez", "Idéal budget serré"],
+              },
+              {
+                id: "STANDARD" as const,
+                label: "Standard",
+                recommended: true,
+                bullets: ["Transport + aide", "Emballage basique", "Le plus populaire"],
+              },
+              {
+                id: "PREMIUM" as const,
+                label: "Premium",
+                recommended: false,
+                bullets: ["Tout inclus", "Emballage complet", "Clé en main"],
+              },
+            ] as const).map((f) => {
+              const price = props.pricingByFormule![f.id];
+              const selected = props.selectedFormule === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => props.onFormuleChange(f.id)}
+                  className={`w-[240px] flex-shrink-0 snap-start rounded-2xl border p-4 text-left transition-all duration-200 md:w-full md:flex-shrink md:snap-none ${
+                    selected
+                      ? "border-[#6BCFCF] bg-[#F0FAFA] shadow-sm"
+                      : "border-[#E3E5E8] bg-white"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-base font-semibold text-[#0F172A]">{f.label}</p>
+                    {f.recommended && (
+                      <span className="rounded-full bg-[#E7FAFA] px-2 py-0.5 text-[10px] font-semibold text-[#2B7A78]">
+                        Recommandé
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1">
+                    <PriceRangeInline
+                      minEur={price?.priceMin ?? null}
+                      maxEur={price?.priceMax ?? null}
+                      variant="compact"
+                    />
+                  </div>
+                  <ul className="mt-2 space-y-1 text-xs text-[#1E293B]/70">
+                    {f.bullets.map((b) => (
+                      <li key={b}>• {b}</li>
+                    ))}
+                  </ul>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Contact (email obligatoire) */}
       <div className="space-y-3">
         <div className="rounded-2xl border border-[#E3E5E8] bg-white p-4 space-y-3">
@@ -977,7 +1050,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               <div className="text-sm text-[#1E293B]/60">—</div>
             )}
             <p className="text-[10px] text-[#1E293B]/60">
-              villes +5 km • densité très meublé • cuisine 3 équipements • pas de saison • accès RAS
+              formule Standard • villes +5 km • densité très meublé • cuisine 3 équipements • pas de saison • accès RAS
             </p>
           </div>
 
@@ -992,11 +1065,13 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 const isAccess = l.key === "access";
                 const isDate = l.key === "date";
                 const isDistance = l.key === "distance";
+                const isFormule = l.key === "formule";
                 
                 const tooltips: Record<string, string> = {
                   distance: "La distance est recalculée à partir des adresses quand elles sont renseignées",
                   access: "Les étages et l'absence d'ascenseur augmentent le temps de manutention",
                   date: "Les périodes de forte demande (été, fin de mois) impactent les tarifs",
+                  formule: "Éco = transport seul, Standard = transport + aide, Premium = tout inclus",
                 };
                 
                 return (
@@ -1004,7 +1079,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-[#0F172A] truncate flex items-center gap-1.5">
                         <span className="truncate">{l.label}</span>
-                        {(isDistance || isAccess || isDate) && (
+                        {(isDistance || isAccess || isDate || isFormule) && (
                           <span
                             className="inline-flex items-center"
                             title={tooltips[l.key]}
