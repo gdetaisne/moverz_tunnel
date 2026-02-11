@@ -38,7 +38,7 @@ function DevisGratuitsV3Content() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const { state, updateField, updateFields, goToStep } = useTunnelState();
+  const { state, updateField, updateFields, goToStep, reset } = useTunnelState();
   const source = searchParams.get("source") || searchParams.get("src") || "direct";
   const from = searchParams.get("from") || "/devis-gratuits-v3";
   const urlLeadId = (searchParams.get("leadId") || "").trim();
@@ -1812,7 +1812,7 @@ function DevisGratuitsV3Content() {
             </button>
           )}
 
-          <V2ProgressBar step={state.currentStep} />
+          <V2ProgressBar step={state.currentStep} onReset={reset} />
 
           {state.currentStep === 1 && (
             <div className="rounded-3xl bg-white p-5 shadow-sm">
