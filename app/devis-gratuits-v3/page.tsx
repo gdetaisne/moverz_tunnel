@@ -1847,49 +1847,47 @@ function DevisGratuitsV3Content() {
 
               {/* Sidebar panier mobile (en bas, ordre inversé) + desktop (droite sticky) — GAME CHANGER */}
               <aside className="lg:sticky lg:top-20 order-last lg:order-none">
-                <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#6BCFCF] via-[#7BC4CC] to-[#A78BFA] p-6 sm:p-10 shadow-xl sm:shadow-2xl shadow-[#A78BFA]/30 space-y-6 sm:space-y-8 relative overflow-hidden border border-white/20">
-                  {/* Overlay glow moderne 2026 */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-[#A78BFA]/10 pointer-events-none" />
+                <div className="rounded-2xl sm:rounded-3xl bg-[#0F172A] p-6 sm:p-10 shadow-2xl shadow-black/20 space-y-6 sm:space-y-8 relative overflow-hidden border border-white/10">
+                  {/* Subtle accent gradient overlay */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#6BCFCF]/10 to-[#A78BFA]/10 blur-3xl pointer-events-none" />
                   
                   <div className="relative z-10 flex items-center justify-between">
-                    <h3 className="text-xl sm:text-xl font-black text-white drop-shadow-sm">Votre estimation</h3>
-                    <span className="inline-flex items-center gap-2 px-3 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-white/15 via-[#A78BFA]/25 to-[#A78BFA]/35 border border-white/40 backdrop-blur-md shadow-lg shadow-[#A78BFA]/40">
-                      <span className="relative inline-flex h-2.5 w-2.5">
-                        {/* Ping animation outer violet */}
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60" />
-                        {/* Static inner dot violet avec glow */}
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white shadow-[0_0_16px_rgba(255,255,255,0.9)]" />
+                    <h3 className="text-xl sm:text-2xl font-bold text-white/90">Votre estimation</h3>
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/20">
+                      <span className="relative inline-flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
                       </span>
-                      <span className="text-xs font-black uppercase tracking-[0.15em] text-white drop-shadow-sm">Live</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70">Live</span>
                     </span>
                   </div>
 
                   {/* Budget affiné (hero moderne massif) */}
                   {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
-                    <div className="relative z-10 rounded-2xl bg-white/98 backdrop-blur-xl p-6 sm:p-8 shadow-xl sm:shadow-2xl shadow-white/30 overflow-hidden border border-white/50">
-                      {/* Subtle glow top turquoise→violet */}
-                      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#6BCFCF]/30 via-[#A78BFA]/20 to-transparent" />
+                    <div className="relative z-10 rounded-2xl bg-white/5 backdrop-blur-xl p-6 sm:p-8 overflow-hidden border border-white/10 hover:border-white/20 transition-colors duration-300">
+                      {/* Accent line top */}
+                      <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#6BCFCF] to-transparent opacity-50" />
                       
-                      <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] bg-gradient-to-r from-[#6BCFCF] to-[#A78BFA] bg-clip-text text-transparent mb-4 sm:mb-6 relative">
+                      <p className="text-[10px] sm:text-xs font-medium uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4">
                         Budget affiné
                       </p>
                       
-                      <div className="text-center mb-6 sm:mb-8">
-                        <p className="text-5xl sm:text-7xl font-black text-[#0F172A] leading-none tracking-tight">
+                      <div className="text-center mb-5 sm:mb-6">
+                        <p className="text-5xl sm:text-7xl font-bold text-white leading-none tracking-tight tabular-nums">
                           {fmtEur(v2PricingCart.refinedCenterEur)}
                         </p>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-100 relative">
-                        <div className="text-center">
-                          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#64748B] mb-1 sm:mb-2">Minimum</p>
-                          <p className="text-lg sm:text-2xl font-black text-emerald-400">
+                      <div className="grid grid-cols-2 gap-4 pt-5 border-t border-white/10">
+                        <div className="text-left">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1.5">Minimum</p>
+                          <p className="text-base sm:text-lg font-semibold text-white/70 tabular-nums">
                             {typeof v2PricingCart.refinedMinEur === "number" ? fmtEur(v2PricingCart.refinedMinEur) : "—"}
                           </p>
                         </div>
-                        <div className="text-center">
-                          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#64748B] mb-1 sm:mb-2">Maximum</p>
-                          <p className="text-lg sm:text-2xl font-black text-rose-400">
+                        <div className="text-right">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1.5">Maximum</p>
+                          <p className="text-base sm:text-lg font-semibold text-white/70 tabular-nums">
                             {typeof v2PricingCart.refinedMaxEur === "number" ? fmtEur(v2PricingCart.refinedMaxEur) : "—"}
                           </p>
                         </div>
@@ -1900,12 +1898,10 @@ function DevisGratuitsV3Content() {
                   {/* Ajustements (meilleur contraste) */}
                   {v2PricingCart && v2PricingCart.lines && (
                     <div className="relative z-10 space-y-2 sm:space-y-3">
-                      <div className="flex items-center gap-3 mb-5">
-                        <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/50 to-[#A78BFA]/40" />
-                        <p className="text-xs sm:text-sm font-black uppercase tracking-[0.25em] text-white drop-shadow-sm">
+                      <div className="mb-4">
+                        <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-white/40">
                           Ajustements
                         </p>
-                        <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-white/50 to-[#A78BFA]/40" />
                       </div>
                       
                       {v2PricingCart.lines.map((l) => {
@@ -1926,34 +1922,34 @@ function DevisGratuitsV3Content() {
                         return (
                           <div 
                             key={l.key} 
-                            className="group flex items-center justify-between gap-3 sm:gap-4 px-4 py-3.5 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl bg-white/98 backdrop-blur-md border border-white/60 shadow-sm hover:bg-white hover:border-[#A78BFA]/50 hover:shadow-lg hover:shadow-[#A78BFA]/25 transition-all duration-300 active:scale-[0.98]"
+                            className="group flex items-center justify-between gap-3 sm:gap-4 px-4 py-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
                           >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <span className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className={`w-1.5 h-1.5 rounded-full ${
                                 l.amountEur > 0 
-                                  ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.6)]' 
+                                  ? 'bg-red-400' 
                                   : l.amountEur < 0 
-                                  ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' 
-                                  : 'bg-gray-400'
+                                  ? 'bg-emerald-400' 
+                                  : 'bg-white/30'
                               }`} />
-                              <p className="text-xs sm:text-sm font-semibold text-[#0F172A] flex items-center gap-1.5">
+                              <p className="text-sm font-medium text-white/90 flex items-center gap-2">
                                 <span>{l.label}</span>
                                 {tooltips[l.key] && (
                                   <span
-                                    className="inline-flex items-center justify-center w-4 h-4 sm:w-[18px] sm:h-[18px] rounded-full bg-gradient-to-br from-[#6BCFCF] to-[#A78BFA] hover:from-[#A78BFA] hover:to-[#6BCFCF] transition-all duration-300 cursor-help group/tooltip"
+                                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-help"
                                     title={tooltips[l.key]}
                                   >
-                                    <HelpCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" strokeWidth={2.5} />
+                                    <HelpCircle className="w-3 h-3 text-white/50" strokeWidth={2} />
                                   </span>
                                 )}
                               </p>
                             </div>
-                            <p className={`text-base sm:text-lg font-black tabular-nums ${
+                            <p className={`text-sm font-semibold tabular-nums ${
                               l.amountEur > 0 
-                                ? 'text-rose-400' 
+                                ? 'text-red-400' 
                                 : l.amountEur < 0 
                                 ? 'text-emerald-400' 
-                                : 'text-[#64748B]'
+                                : 'text-white/40'
                             }`}>
                               {l.amountEur > 0 ? '+' : ''}{l.amountEur} €
                             </p>
@@ -1966,29 +1962,29 @@ function DevisGratuitsV3Content() {
                   {/* Première estimation (collapsible moderne) */}
                   {v2PricingCart && typeof v2PricingCart.firstEstimateCenterEur === "number" && (
                     <details className="relative z-10 group">
-                      <summary className="cursor-pointer list-none rounded-xl bg-white/20 backdrop-blur-md border border-white/40 hover:bg-white/25 hover:border-white/50 hover:shadow-lg hover:shadow-white/20 p-3.5 sm:p-4 transition-all duration-300 active:scale-[0.98]">
+                      <summary className="cursor-pointer list-none rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 p-3.5 sm:p-4 transition-colors duration-200">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-[10px] sm:text-xs font-semibold text-white/80 mb-1">Première estimation</p>
-                            <p className="text-lg sm:text-xl font-black text-white">
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Première estimation</p>
+                            <p className="text-base sm:text-lg font-semibold text-white/70 tabular-nums">
                               {fmtEur(v2PricingCart.firstEstimateCenterEur)}
                             </p>
                           </div>
-                          <svg className="w-5 h-5 text-white/80 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-4 h-4 text-white/40 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </div>
                       </summary>
-                      <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-2 sm:gap-3 px-3 pb-3 sm:px-4 sm:pb-4">
-                        <div className="rounded-xl bg-white/98 backdrop-blur-md p-2.5 sm:p-3 text-center border border-white/60 shadow-sm">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Min</p>
-                          <p className="text-sm sm:text-base font-black text-emerald-400">
+                      <div className="mt-3 grid grid-cols-2 gap-3 px-4 pb-4">
+                        <div className="text-left">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Min</p>
+                          <p className="text-sm font-semibold text-white/70 tabular-nums">
                             {typeof v2PricingCart.firstEstimateMinEur === "number" ? fmtEur(v2PricingCart.firstEstimateMinEur) : "—"}
                           </p>
                         </div>
-                        <div className="rounded-xl bg-white/98 backdrop-blur-md p-2.5 sm:p-3 text-center border border-white/60 shadow-sm">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Max</p>
-                          <p className="text-sm sm:text-base font-black text-rose-400">
+                        <div className="text-right">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Max</p>
+                          <p className="text-sm font-semibold text-white/70 tabular-nums">
                             {typeof v2PricingCart.firstEstimateMaxEur === "number" ? fmtEur(v2PricingCart.firstEstimateMaxEur) : "—"}
                           </p>
                         </div>

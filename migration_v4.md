@@ -1,5 +1,304 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 (12ème itération) — Panier dark mode pro : Stripe/Linear style 2026
+
+**Problème** : Le gradient turquoise→violet était trop chargé, pas assez pro/sleek/tech. Trop "jouet", manquait de sophistication.
+
+**Solution** : Redesign complet en **dark mode ultra-clean** style Stripe/Linear/Vercel — minimal, élégant, accents subtils.
+
+### 🎨 Philosophie design 2026
+
+**Fini** : Gradients forts, couleurs vives, effets chargés  
+**Nouveau** : Dark mode élégant, accents subtils, typographie raffinée
+
+### 🌑 Background container : Noir profond avec accent subtil
+
+**Avant** :
+```tsx
+bg-gradient-to-br from-[#6BCFCF] via-[#7BC4CC] to-[#A78BFA]
+shadow-xl shadow-[#A78BFA]/30
+border border-white/20
+```
+
+**Après** :
+```tsx
+bg-[#0F172A]  // Noir profond slate
+shadow-2xl shadow-black/20  // Shadow noire élégante
+border border-white/10  // Border ultra-subtile
+```
+
+**Accent overlay** :
+```tsx
+<div className="absolute top-0 right-0 w-64 h-64 
+  bg-gradient-to-br from-[#6BCFCF]/10 to-[#A78BFA]/10 
+  blur-3xl pointer-events-none" />
+```
+- Gradient turquoise→violet très dilué (opacity 10%)
+- Blur énorme (blur-3xl) pour effet ambient
+- Top-right corner pour subtilité
+
+### 💎 Badge "Live" : Minimal et discret
+
+**Avant** :
+```tsx
+bg-gradient-to-r from-white/15 via-[#A78BFA]/25 to-[#A78BFA]/35
+border border-white/40
+shadow-lg shadow-[#A78BFA]/40
+<span h-2.5 w-2.5 bg-white />
+<span text-xs font-black>Live</span>
+```
+
+**Après** :
+```tsx
+bg-white/10 backdrop-blur-xl border border-white/20
+<span h-2 w-2 bg-emerald-400 />  // Dot vert = status live
+<span text-[10px] font-semibold text-white/70>Live</span>
+```
+
+**Changements** :
+- Background simple white/10
+- Dot **vert emerald-400** (statut "live" standard)
+- Dot plus petit (h-2)
+- Texte plus discret (text-[10px], white/70)
+- Pas de shadow colorée
+
+### 🏷️ Titre "Votre estimation" : Sobre
+
+**Avant** : `text-xl font-black drop-shadow-sm`  
+**Après** : `text-xl sm:text-2xl font-bold text-white/90`
+
+- font-black → font-bold (moins agressif)
+- Pas de drop-shadow
+- white/90 pour subtilité
+
+### 🪟 Card budget : Dark glassmorphism subtil
+
+**Avant** :
+```tsx
+bg-white/98 backdrop-blur-xl
+border border-white/50
+shadow-xl shadow-white/30
+```
+
+**Après** :
+```tsx
+bg-white/5 backdrop-blur-xl
+border border-white/10
+hover:border-white/20
+```
+
+**Changements** :
+- Background très transparent (white/5 sur fond noir)
+- Border ultra-subtile (white/10)
+- Hover state pour interactivité
+- **Pas de shadow** (clean total)
+
+**Top accent line** :
+```tsx
+<div className="absolute top-0 inset-x-0 h-[2px] 
+  bg-gradient-to-r from-transparent via-[#6BCFCF] to-transparent 
+  opacity-50" />
+```
+- Ligne fine 2px au lieu de grosse barre
+- Gradient turquoise subtil (opacity 50%)
+
+### 💰 Prix : Typographie élégante monochrome
+
+**Avant** :
+```tsx
+// Prix center
+text-5xl sm:text-7xl font-black text-[#0F172A]
+
+// Min/Max
+text-lg sm:text-2xl font-black
+text-emerald-400 / text-rose-400  // Couleurs vives
+```
+
+**Après** :
+```tsx
+// Prix center
+text-5xl sm:text-7xl font-bold text-white tabular-nums
+
+// Min/Max
+text-base sm:text-lg font-semibold text-white/70 tabular-nums
+// Labels
+text-[10px] font-medium text-white/40
+```
+
+**Changements** :
+- Tout en blanc (white, white/70, white/40)
+- **Pas de couleurs vives** (plus de vert/rose)
+- `tabular-nums` pour alignement parfait
+- Alignement left/right au lieu de center (plus pro)
+- Border top : `border-white/10` (ultra-subtile)
+
+### 📝 Section "Ajustements" : Titre simple
+
+**Avant** :
+```tsx
+<div className="flex items-center gap-3">
+  <div className="h-[1px] bg-gradient-to-r from-transparent via-white/50 to-[#A78BFA]/40" />
+  <p className="text-xs font-black drop-shadow-sm">Ajustements</p>
+  <div className="h-[1px] bg-gradient-to-l..." />
+</div>
+```
+
+**Après** :
+```tsx
+<p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-white/40">
+  Ajustements
+</p>
+```
+
+- **Suppression des séparateurs** (trop chargé)
+- Titre simple et discret
+- white/40 pour subtilité
+
+### 💊 Pills ajustements : Dark minimal
+
+**Avant** :
+```tsx
+px-4 py-3.5 rounded-xl
+bg-white/98 backdrop-blur-md border border-white/60
+shadow-sm
+hover:shadow-lg hover:shadow-[#A78BFA]/25
+active:scale-[0.98]
+
+// Dot
+w-2.5 h-2.5 bg-rose-400/emerald-400 shadow-[0_0_8px_...]
+
+// Texte
+text-sm font-semibold text-[#0F172A]
+
+// Montant
+text-lg font-black text-rose-400/emerald-400
+```
+
+**Après** :
+```tsx
+px-4 py-3 rounded-xl
+bg-white/5 backdrop-blur-xl border border-white/10
+hover:bg-white/10 hover:border-white/20
+
+// Dot
+w-1.5 h-1.5 bg-red-400/emerald-400  // Pas de glow
+
+// Texte
+text-sm font-medium text-white/90
+
+// Montant
+text-sm font-semibold text-red-400/emerald-400
+```
+
+**Changements** :
+- Background dark transparent (white/5)
+- Dot plus petit (w-1.5) sans glow
+- Textes plus petits et discrets
+- **Pas de scale**, **pas de shadow colorée**
+- Hover simple (white/10 → white/20)
+- Rouge au lieu de rose (red-400 plus neutre)
+
+### 🔍 Tooltip icon : Ultra-simple
+
+**Avant** :
+```tsx
+bg-gradient-to-br from-[#6BCFCF] to-[#A78BFA]
+hover:from-[#A78BFA] hover:to-[#6BCFCF]
+<HelpCircle className="w-3 h-3 text-white" strokeWidth={2.5} />
+```
+
+**Après** :
+```tsx
+bg-white/10 hover:bg-white/20
+<HelpCircle className="w-3 h-3 text-white/50" strokeWidth={2} />
+```
+
+- Background simple white/10
+- Pas de gradient
+- Icon plus transparent (white/50)
+- strokeWidth normal (2)
+
+### 📂 Collapsible "Première estimation" : Clean
+
+**Avant** :
+```tsx
+bg-white/20 border border-white/40
+hover:shadow-lg hover:shadow-white/20
+active:scale-[0.98]
+```
+
+**Après** :
+```tsx
+bg-white/5 border border-white/10
+hover:bg-white/10 hover:border-white/20
+```
+
+- Même style que pills (cohérence)
+- Pas de shadow
+- Pas de scale
+
+**Contenu** :
+```tsx
+// Labels
+text-[10px] font-medium text-white/40
+
+// Valeurs
+text-base sm:text-lg font-semibold text-white/70 tabular-nums
+
+// Sub-cards min/max : pas de cards, juste texte left/right
+text-left / text-right
+```
+
+### 📊 Palette couleurs dark mode
+
+| Élément | Couleur | Opacité | Usage |
+|---------|---------|---------|-------|
+| **Background** | `#0F172A` | 100% | Container principal |
+| **Accent ambient** | `#6BCFCF→#A78BFA` | 10% blur-3xl | Subtil top-right |
+| **Cards** | `white` | 5% | Glassmorphism |
+| **Borders** | `white` | 10% | Ultra-subtiles |
+| **Borders hover** | `white` | 20% | Interactivité |
+| **Labels** | `white` | 40% | Textes secondaires |
+| **Textes** | `white` | 70-90% | Textes principaux |
+| **Prix principal** | `white` | 100% | Maximum contrast |
+| **Status dot** | `emerald-400` | 100% | Live indicator |
+| **Positif** | `emerald-400` | 100% | Réductions |
+| **Négatif** | `red-400` | 100% | Suppléments |
+
+### ✅ Résultats vs design précédent
+
+| Aspect | Avant (gradient chargé) | Après (dark minimal) |
+|--------|-------------------------|----------------------|
+| **Background** | Gradient turquoise→violet éclatant | Noir #0F172A + accent subtil 10% |
+| **Lisibilité** | Couleurs vives difficiles à lire | Blanc sur noir = contraste max |
+| **Professionnalisme** | "Jouet", trop coloré | Stripe/Linear style |
+| **Sophistication** | Gradients partout = chargé | Accents subtils = élégant |
+| **Hiérarchie** | Couleurs concurrentes | Opacités claires (100% → 70% → 40%) |
+| **Modernité** | 2020s gradient trend | 2026 dark minimal trend |
+| **Shadows** | Colorées violettes partout | Noires élégantes ou absentes |
+| **Interactions** | Scale + shadows colorées | Opacité simple |
+
+### 🎯 Inspiration
+
+**Stripe Dashboard** : Dark mode élégant, borders subtiles, typographie raffinée  
+**Linear App** : Minimal, accents discrets, hiérarchie claire  
+**Vercel Dashboard** : Clean, monochrome avec touches de couleur
+
+### 💡 Règles dark mode 2026
+
+1. **Background noir profond** (#0F172A, pas gris)
+2. **Accents très dilués** (opacity 5-10%)
+3. **Borders ultra-subtiles** (white/10)
+4. **Typographie hiérarchisée** par opacité (100% → 70% → 40%)
+5. **Couleurs fonctionnelles uniquement** (vert = réduction, rouge = supplément)
+6. **Pas de gradients forts** (ambient blur-3xl OK)
+7. **Hover states simples** (pas de scale/shadow)
+8. **Tabular-nums** pour prix
+9. **Alignment pro** (left/right au lieu de center)
+10. **Moins c'est plus** (suppression séparateurs, simplification badges)
+
+---
+
 ## 2026-02-11 (11ème itération) — Panier mobile premium 2026 : Glassmorphism + Micro-animations
 
 **Problème** : Le panier mobile était trop plat et basique, manquait de sophistication 2026 (shadows faibles, corners basiques, badge Live petit).
