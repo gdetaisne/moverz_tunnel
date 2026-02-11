@@ -416,11 +416,13 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       {/* Addresses + date minimal */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-[#6BCFCF]" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6BCFCF]/10 to-[#A8E8E8]/10 shadow-sm flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
+          </div>
           <p className="text-sm font-semibold text-[#0F172A]">Votre trajet</p>
         </div>
         {/* Adresses regroupées (départ + arrivée) */}
-        <div className="rounded-2xl border border-[#E3E5E8] bg-white p-4">
+        <div className="rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
           <p className="text-sm font-semibold text-[#0F172A]">Adresses</p>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <AddressAutocomplete
@@ -515,7 +517,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         {/* Densité + Cuisine (rattachés au logement de départ) */}
         <div className="space-y-4">
           {/* Densité (volume) */}
-          <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white p-4">
+          <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-sm font-semibold text-[#0F172A]">Densité</p>
               {props.density === "" && (
@@ -529,10 +531,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 type="button"
                 onClick={() => props.onFieldChange("density", "light")}
                 className={[
-                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all",
+                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all duration-300",
                   props.density === "light"
-                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
-                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10 shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
+                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF] hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]",
                 ].join(" ")}
               >
                 <div className="text-sm font-semibold text-[#0F172A]">Peu meublé</div>
@@ -545,10 +547,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 type="button"
                 onClick={() => props.onFieldChange("density", "normal")}
                 className={[
-                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all",
+                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all duration-300",
                   props.density === "normal"
-                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
-                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10 shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
+                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF] hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]",
                 ].join(" ")}
               >
                 <div className="text-sm font-semibold text-[#0F172A]">Normal</div>
@@ -561,10 +563,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 type="button"
                 onClick={() => props.onFieldChange("density", "dense")}
                 className={[
-                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all",
+                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all duration-300",
                   props.density === "dense"
-                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
-                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10 shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
+                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF] hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]",
                 ].join(" ")}
               >
                 <div className="text-sm font-semibold text-[#0F172A]">Très meublé</div>
@@ -576,7 +578,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           </div>
 
           {/* Cuisine / équipements */}
-          <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white p-4">
+          <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-sm font-semibold text-[#0F172A]">Cuisine</p>
               {props.kitchenIncluded === "" && (
@@ -593,10 +595,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   props.onFieldChange("kitchenApplianceCount", "");
                 }}
                 className={[
-                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all",
+                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all duration-300",
                   props.kitchenIncluded === "none"
-                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
-                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10 shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
+                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF] hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]",
                 ].join(" ")}
               >
                 <div className="text-sm font-semibold text-[#0F172A]">Rien</div>
@@ -612,10 +614,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   }
                 }}
                 className={[
-                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all",
+                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all duration-300",
                   props.kitchenIncluded === "appliances"
-                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
-                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10 shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
+                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF] hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]",
                 ].join(" ")}
               >
                 <div className="text-sm font-semibold text-[#0F172A]">Électroménager</div>
@@ -629,10 +631,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   props.onFieldChange("kitchenApplianceCount", "");
                 }}
                 className={[
-                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all",
+                  "h-full rounded-xl border-2 px-4 py-3 text-left transition-all duration-300",
                   props.kitchenIncluded === "full"
-                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10"
-                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF]/10 shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
+                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF] hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]",
                 ].join(" ")}
               >
                 <div className="text-sm font-semibold text-[#0F172A]">Complète</div>
@@ -658,8 +660,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                     className={[
                       "w-full rounded-xl border-2 bg-white px-4 py-3 text-base text-[#0F172A] transition-all",
                       showValidation && !isKitchenValid
-                        ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
-                        : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+                        ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15 focus:ring-offset-2"
+                        : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/40 focus:ring-offset-2",
                     ].join(" ")}
                     placeholder="Ex: 3"
                   />
@@ -679,7 +681,9 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-[#6BCFCF]" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#8B5CF6]/10 to-[#A78BFA]/10 shadow-sm flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-[#8B5CF6]" strokeWidth={2} />
+          </div>
           <p className="text-sm font-semibold text-[#0F172A]">Date souhaitée</p>
         </div>
         <DatePickerFr
@@ -706,11 +710,13 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Home className="w-5 h-5 text-[#6BCFCF]" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10B981]/10 to-[#34D399]/10 shadow-sm flex items-center justify-center">
+            <Home className="w-5 h-5 text-[#10B981]" strokeWidth={2} />
+          </div>
           <p className="text-sm font-semibold text-[#0F172A]">Accès départ & arrivée</p>
         </div>
 
-        <div className="space-y-2 rounded-2xl border border-[#E3E5E8] p-4 bg-white">
+        <div className="space-y-2 rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
           <p className="text-base font-semibold text-[#0F172A]">
             Les accès départ & arrivée sont-ils simples ?
           </p>
@@ -752,7 +758,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             {/* Contraintes départ / arrivée — tableau desktop, cards mobile */}
 
             {/* ── Desktop : tableau classique (≥ sm) ── */}
-            <div className="hidden sm:block overflow-hidden rounded-2xl border border-[#E3E5E8] bg-white">
+            <div className="hidden sm:block overflow-hidden rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
               <div className="grid grid-cols-[1fr,120px,120px] bg-[#F8F9FA]">
                 <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70">Contraintes</div>
                 <div className="px-3 py-2 text-xs font-semibold text-[#0F172A]/70 text-center">Départ</div>
@@ -793,7 +799,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 const sides = parseAccessSides()[q.key];
                 const destDisabled = destinationUnknown;
                 return (
-                  <div key={q.key} className="rounded-xl border border-[#E3E5E8] bg-white p-3 space-y-2">
+                  <div key={q.key} className="rounded-xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm shadow-[0_4px_16px_rgba(0,0,0,0.04)] p-3 space-y-2">
                     <p className="text-sm font-medium text-[#0F172A]">{q.label}</p>
                     <div className="flex items-center gap-3">
                       <div className="flex-1 flex items-center justify-between">
@@ -847,7 +853,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         </button>
 
         {showOptions && (
-          <div className="space-y-4 rounded-2xl border border-[#E3E5E8] bg-white p-4">
+          <div className="space-y-4 rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
             <div className="space-y-3">
               {SERVICE_LABELS.map(({ key, label }) => {
                 const value = props[key] as boolean;
@@ -908,16 +914,16 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   key={f.id}
                   type="button"
                   onClick={() => props.onFormuleChange(f.id)}
-                  className={`w-[240px] flex-shrink-0 snap-start rounded-2xl border p-4 text-left transition-all duration-200 sm:w-full sm:flex-shrink sm:snap-none ${
+                  className={`w-[240px] flex-shrink-0 snap-start rounded-2xl border p-4 text-left transition-all duration-300 sm:w-full sm:flex-shrink sm:snap-none ${
                     selected
-                      ? "border-[#6BCFCF] bg-[#F0FAFA] shadow-sm"
-                      : "border-[#E3E5E8] bg-white"
+                      ? "border-[#6BCFCF] bg-[#F0FAFA] shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
+                      : "border-[#E3E5E8] bg-white hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-base font-semibold text-[#0F172A]">{f.label}</p>
                     {f.recommended && (
-                      <span className="rounded-full bg-[#E7FAFA] px-2 py-0.5 text-[10px] font-semibold text-[#2B7A78]">
+                      <span className="rounded-full bg-gradient-to-r from-[#6BCFCF]/10 to-[#A8E8E8]/10 border border-[#6BCFCF]/30 px-2 py-0.5 text-[10px] font-semibold text-[#2B7A78] shadow-sm">
                         Recommandé
                       </span>
                     )}
@@ -943,7 +949,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
       {/* Contact (email obligatoire) */}
       <div className="space-y-3">
-        <div className="rounded-2xl border border-[#E3E5E8] bg-white p-4 space-y-3">
+        <div className="rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)] space-y-3">
           <p className="text-sm font-semibold text-[#0F172A]">Où recevoir vos devis ?</p>
           <p className="text-sm text-[#1E293B]/70">
             Dernière étape ensuite : vous envoyez vos photos pour recevoir vos devis.
@@ -952,7 +958,9 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           <div className="space-y-3">
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
-                <User className="w-4 h-4 text-[#6BCFCF]" />
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6BCFCF]/10 to-[#A8E8E8]/10 shadow-sm flex items-center justify-center">
+                  <User className="w-4 h-4 text-[#6BCFCF]" strokeWidth={2} />
+                </div>
                 Prénom (obligatoire)
               </label>
               <input
@@ -963,8 +971,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 className={[
                   "w-full rounded-xl border-2 px-4 py-3 text-base transition-all",
                   showValidation && !isFirstNameValid
-                    ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
-                    : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+                    ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15 focus:ring-offset-2"
+                    : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/40 focus:ring-offset-2",
                 ].join(" ")}
                 placeholder="Votre prénom"
                 required
@@ -976,7 +984,9 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
-                <Mail className="w-4 h-4 text-[#6BCFCF]" />
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6BCFCF]/10 to-[#A8E8E8]/10 shadow-sm flex items-center justify-center">
+                  <Mail className="w-4 h-4 text-[#6BCFCF]" strokeWidth={2} />
+                </div>
                 Email (obligatoire)
               </label>
               <input
@@ -987,8 +997,8 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 className={[
                   "w-full rounded-xl border-2 px-4 py-3 text-base transition-all",
                   showValidation && !isEmailValid
-                    ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
-                    : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+                    ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15 focus:ring-offset-2"
+                    : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/40 focus:ring-offset-2",
                 ].join(" ")}
                 placeholder="vous@email.fr"
                 required
@@ -1000,7 +1010,9 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
-                <Phone className="w-4 h-4 text-[#6BCFCF]" />
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6BCFCF]/10 to-[#A8E8E8]/10 shadow-sm flex items-center justify-center">
+                  <Phone className="w-4 h-4 text-[#6BCFCF]" strokeWidth={2} />
+                </div>
                 Téléphone (optionnel)
               </label>
               <input
@@ -1038,7 +1050,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           type="button"
           disabled={props.isSubmitting}
           onClick={props.onSubmit}
-          className="w-full rounded-full bg-[#0F172A] text-white font-semibold py-4 text-base hover:bg-[#1E293B] transition-all"
+          className="w-full rounded-xl bg-gradient-to-r from-[#0F172A] to-[#1E293B] py-4 text-base font-semibold text-white shadow-[0_4px_16px_rgba(15,23,42,0.3)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.4)] hover:scale-[1.02] transition-all duration-200 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-[0_4px_16px_rgba(15,23,42,0.3)]"
         >
           {props.isSubmitting ? "Enregistrement..." : "Finaliser mon estimation"}
         </button>
@@ -1048,7 +1060,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
       {/* Desktop only: panneau Budget & hypothèses (≥ lg / 1024px) */}
       <aside className="hidden lg:block lg:fixed lg:top-24 lg:right-0 lg:w-[300px] lg:z-30">
-        <div className="rounded-2xl border border-[#E3E5E8] bg-white/90 backdrop-blur p-3 space-y-3">
+        <div className="rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)] space-y-3">
           <p className="text-sm font-semibold text-[#0F172A]">Votre panier</p>
 
           {/* Première estimation */}

@@ -111,6 +111,7 @@ export interface TunnelFormState {
   leadId: string | null;
   currentStep: 1 | 2 | 3 | 4;
   linkingCode: string | null;
+  enteredAtStep: number | null; // Marque l'étape d'entrée initiale (1, 2, 3 ou 4) pour gérer la navigation retour
 
   // Reward: baseline figé capturé en Step 2 (V2) et affiché en Step 3
   rewardBaselineMinEur: number | null;
@@ -217,6 +218,7 @@ const INITIAL_STATE: TunnelFormState = {
   leadId: null,
   currentStep: 1,
   linkingCode: null,
+  enteredAtStep: null,
 
   rewardBaselineMinEur: null,
   rewardBaselineMaxEur: null,

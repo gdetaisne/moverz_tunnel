@@ -1,5 +1,174 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 — Application Design System Moverz 2026 (cohérence visuelle complète)
+
+**Problème** : Le tunnel avait un style propre mais n'était pas aligné avec le guide de Design System du site principal Moverz. Il manquait de cohérence sur : glassmorphism, gradients, shadows, hover effects, spacing, etc.
+
+**Solution** : Application **complète** du guide de Design System Moverz 2026 sur tous les composants du tunnel pour une expérience visuelle cohérente et premium.
+
+### Changements (8 catégories)
+
+#### 1️⃣ **CTAs (Gradients + Shadows + Hover Effects)**
+- **Avant** : `bg-[#0F172A]`, `rounded-full`, `hover:bg-[#1E293B]`, `transition-all`
+- **Après** : 
+  ```tsx
+  bg-gradient-to-r from-[#0F172A] to-[#1E293B]
+  rounded-xl (au lieu de rounded-full)
+  shadow-[0_4px_16px_rgba(15,23,42,0.3)]
+  hover:shadow-[0_8px_24px_rgba(15,23,42,0.4)]
+  hover:scale-[1.02]
+  transition-all duration-200
+  disabled:opacity-40 disabled:hover:scale-100
+  ```
+- **Impact** : tous les boutons principaux (Step 1, 2, 3) ont maintenant un look premium avec micro-animations
+
+#### 2️⃣ **Cards Principales (Glassmorphism)**
+- **Avant** : `bg-white`, `rounded-3xl`, `p-5`, `shadow-sm`
+- **Après** :
+  ```tsx
+  bg-white/90 backdrop-blur-xl
+  shadow-[0_8px_32px_rgba(0,0,0,0.08)]
+  border border-white/40
+  p-8 (au lieu de p-5)
+  ```
+- **Impact** : effet verre givré moderne sur toutes les cards conteneurs principales (Steps 1-4)
+
+#### 3️⃣ **Cards Secondaires (Shadows + Backdrop-blur)**
+- **Avant** : `bg-white`, `border border-[#E3E5E8]`, `p-4`, sans shadow custom
+- **Après** :
+  ```tsx
+  bg-white/95 backdrop-blur-sm
+  shadow-[0_4px_16px_rgba(0,0,0,0.04)]
+  p-6 (au lieu de p-4)
+  ```
+- **Impact** : amélioration subtile des shadows et profondeur visuelle sur toutes les cards internes (adresses, densité, cuisine, formules, contact, sidebar desktop, récap Step 4)
+
+#### 4️⃣ **Inputs (Ring Offset + Opacity)**
+- **Avant** : `focus:ring-2 focus:ring-[#6BCFCF]/20`
+- **Après** :
+  ```tsx
+  focus:ring-2 focus:ring-[#6BCFCF]/40 focus:ring-offset-2
+  ```
+- **Impact** : ring focus plus visible et mieux séparé du champ (tous les inputs : surface, adresses, équipements, prénom, email)
+
+#### 5️⃣ **Badges (Gradients + Borders)**
+- **Avant** : `bg-green-50`, border simple
+- **Après** :
+  ```tsx
+  bg-gradient-to-r from-[#10B981]/10 to-[#34D399]/10
+  border border-[#10B981]/30
+  shadow-sm
+  ```
+- **Impact** : badges "Dossier créé" (Step 4) et "Recommandé" (formules) plus élégants
+
+#### 6️⃣ **Hover Effects sur Cards Cliquables**
+- **Avant** : `transition-all`, hover subtil
+- **Après** :
+  ```tsx
+  transition-all duration-300
+  hover:scale-[1.02]
+  hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]
+  ```
+- **Impact** : feedback tactile sur toutes les cards interactives (densité, cuisine, formules)
+
+#### 7️⃣ **Icons (Backgrounds en Gradient)**
+- **Avant** : icons seuls (MapPin, Calendar, Home, User, Mail, Phone, FileText)
+- **Après** : icons enveloppés dans des containers avec gradients
+  ```tsx
+  // Système 3 couleurs progressives
+  // Turquoise (Step 1 + contact)
+  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6BCFCF]/10 to-[#A8E8E8]/10 shadow-sm">
+    <Icon className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
+  </div>
+  // Violet (estimation Step 2)
+  from-[#8B5CF6]/10 to-[#A78BFA]/10, text-[#8B5CF6]
+  // Vert (accès Step 3)
+  from-[#10B981]/10 to-[#34D399]/10, text-[#10B981]
+  ```
+- **Impact** : hiérarchie visuelle colorée et cohérente à travers tout le tunnel
+
+#### 8️⃣ **Spacing & Transitions**
+- **Spacing** : padding des cards principales augmenté (`p-5` → `p-8`)
+- **Transitions** : ajout de `duration-200` ou `duration-300` partout où il manquait
+
+### Fichiers modifiés
+- `app/devis-gratuits-v3/page.tsx` (cards principales Steps 1-4)
+- `components/tunnel/v2/StepQualificationV2.tsx` (CTA + icon)
+- `components/tunnel/v2/StepEstimationV2.tsx` (CTA + cards)
+- `components/tunnel/v2/StepAccessLogisticsV2.tsx` (CTA + cards + inputs + badges + hover + icons)
+- `components/tunnel/v2/StepContactPhotosV2.tsx` (cards + badges + icons)
+- `components/tunnel/AddressAutocomplete.tsx` (input focus ring)
+
+### Palette couleurs utilisée
+```tsx
+// Primaires
+#0F172A (slate-900) - Texte principal, fonds dark
+#1E293B (slate-800) - Variation gradients
+#6BCFCF - Turquoise principal (brand)
+#A8E8E8 - Turquoise clair
+
+// Progressives (étapes/features)
+#6BCFCF - Turquoise (Step 1, contact)
+#8B5CF6 - Violet (Step 2, récap)
+#10B981 - Vert émeraude (Step 3, validation)
+#A78BFA - Violet clair (gradients)
+#34D399 - Vert clair (gradients)
+```
+
+### Breakpoints & responsive
+- Aucun changement responsive
+- Tous les changements sont mobile-first
+- Desktop/mobile cohérents
+
+### Tracking
+- **Aucun impact** : zéro changement sur les events GA4 / logicalStep / screenId
+
+### Champs / Inputs
+- **supprimés** : AUCUN
+- **ajoutés** : AUCUN
+- **modifiés** : apparence visuelle uniquement (Design System)
+
+### Back Office payload
+- **changements** : AUCUN
+
+---
+
+## 2026-02-11 — Navigation retour intelligente Step 3 (retour vers le site si entrée directe)
+
+**Problème** : les étapes 1 & 2 du tunnel sont maintenant intégrées sur `moverz.fr`. Quand un client arrive directement en Step 3 (via deep link depuis le site), le bouton "← Modifier" le renvoyait vers la Step 2 du tunnel (qui n'est plus pertinente), au lieu de le ramener sur le site pour modifier les données.
+
+**Solution** : tracker le point d'entrée dans le tunnel (`enteredAtStep`) pour gérer intelligemment la navigation retour.
+
+### Changements
+
+| Cas | Bouton "← Modifier" (Step 3) | Bouton "← Modifier" (Step 4) |
+|---|---|---|
+| Entrée normale (Step 1) | → Step 2 (tunnel) | → Step 3 (tunnel) |
+| **Entrée directe (Step 3)** | **→ Site (URL `from`)** | **→ Step 3 (tunnel)** |
+
+### Implémentation
+
+1. **Nouveau champ state** : `enteredAtStep: number | null` dans `TunnelFormState` (`hooks/useTunnelState.ts`)
+2. **Capture entrée directe** : lors de l'hydratation Step 3 (`?step=3`), on marque `enteredAtStep = 3`
+3. **Navigation retour conditionnelle** :
+   - Si `currentStep === 3 && enteredAtStep === 3` → redirect vers `from` (site)
+   - Si `currentStep === 4 && enteredAtStep === 3` → `goToStep(3)` (pas Step 2)
+   - Sinon → navigation tunnel normale (`goToStep(currentStep - 1)`)
+
+### URL from
+
+- **Param** : `from` est **sanitisé** (anti open-redirect)
+  - accepté si URL **relative** (commence par `/`)
+  - accepté si URL **absolue** sur `moverz.fr` / `www.moverz.fr`
+  - sinon fallback `"/devis-gratuits-v3"`
+- **Exemple** : `/devis-gratuits-v3?step=3&from=https://moverz.fr/devis&originPostalCode=75011&...`
+
+**Fichiers modifiés** :
+- `hooks/useTunnelState.ts` : ajout `enteredAtStep`
+- `app/devis-gratuits-v3/page.tsx` : capture entrée Step 3 + logique navigation retour
+
+---
+
 ## 2026-02-11 — Distance unifiée OSRM partout (API + Step 2 + Step 3)
 
 **Problème** : les montants "Première estimation" (Step 2, Step 3 sidebar, moverz.fr)

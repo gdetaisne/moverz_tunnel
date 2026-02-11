@@ -58,7 +58,9 @@ export function StepQualificationV2({
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-[#6BCFCF]" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6BCFCF]/10 to-[#A8E8E8]/10 shadow-sm flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
+          </div>
           <p className="text-sm font-semibold text-[#0F172A]">Trajet</p>
         </div>
 
@@ -148,8 +150,8 @@ export function StepQualificationV2({
               className={[
                 "w-full rounded-xl border-2 px-4 py-3 text-base text-[#0F172A] transition-all",
                 showValidation && !isSurfaceValid
-                  ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
-                  : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+                  ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15 focus:ring-offset-2"
+                  : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/40 focus:ring-offset-2",
               ].join(" ")}
               placeholder="60"
             />
@@ -167,7 +169,7 @@ export function StepQualificationV2({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-full bg-[#0F172A] text-white font-semibold py-4 text-base hover:bg-[#1E293B] transition-all"
+          className="w-full rounded-xl bg-gradient-to-r from-[#0F172A] to-[#1E293B] py-4 text-base font-semibold text-white shadow-[0_4px_16px_rgba(15,23,42,0.3)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.4)] hover:scale-[1.02] transition-all duration-200 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-[0_4px_16px_rgba(15,23,42,0.3)]"
         >
           {isSubmitting ? "Chargement..." : "Voir les options disponibles"}
         </button>

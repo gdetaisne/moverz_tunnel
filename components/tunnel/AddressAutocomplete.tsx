@@ -463,10 +463,10 @@ export function AddressAutocomplete({
           aria-invalid={!!errorMessage}
           aria-describedby={errorMessage ? `${inputId ?? "address"}-error` : undefined}
           className={[
-            "w-full rounded-xl border-2 bg-white px-4 py-3 pr-10 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:outline-none focus:ring-2 transition-all",
+            "w-full rounded-xl border-2 bg-white px-4 py-3 pr-10 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all",
             errorMessage
               ? "border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/15"
-              : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:ring-[#6BCFCF]/20",
+              : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:ring-[#6BCFCF]/40",
           ].join(" ")}
         />
 

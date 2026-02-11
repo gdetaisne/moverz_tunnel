@@ -40,7 +40,23 @@ function DevisGratuitsV3Content() {
   
   const { state, updateField, updateFields, goToStep, reset } = useTunnelState();
   const source = searchParams.get("source") || searchParams.get("src") || "direct";
-  const from = searchParams.get("from") || "/devis-gratuits-v3";
+  const from = (() => {
+    const raw = (searchParams.get("from") || "").trim();
+    if (!raw) return "/devis-gratuits-v3";
+
+    // Sécurité: on accepte uniquement une URL relative, ou une URL absolue vers moverz.fr (anti open-redirect)
+    if (raw.startsWith("/")) return raw;
+
+    try {
+      const url = new URL(raw);
+      const allowedHosts = new Set(["moverz.fr", "www.moverz.fr"]);
+      if (allowedHosts.has(url.hostname)) return url.toString();
+    } catch {
+      // ignore
+    }
+
+    return "/devis-gratuits-v3";
+  })();
   const urlLeadId = (searchParams.get("leadId") || "").trim();
   const hydratedLeadRef = useRef<string | null>(null);
   const debugMode = (searchParams.get("debug") || "").trim() === "1" || (searchParams.get("debug") || "").trim() === "true";
@@ -262,6 +278,7 @@ function DevisGratuitsV3Content() {
 
     if (Object.keys(next).length > 0) {
       next.currentStep = 3;
+      next.enteredAtStep = 3; // Marque l'entrée directe en Step 3 (depuis moverz.fr)
       updateFields(next);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1693,7 +1710,19 @@ function DevisGratuitsV3Content() {
           {/* Top back/edit */}
           {state.currentStep > 1 && (
             <button
-              onClick={() => goToStep((state.currentStep - 1) as 1 | 2 | 3 | 4)}
+              onClick={() => {
+                // Si on est en Step 3 et qu'on y est arrivé directement depuis le site
+                if (state.currentStep === 3 && state.enteredAtStep === 3) {
+                  // Retour vers le site (URL from)
+                  window.location.href = from;
+                } else if (state.currentStep === 4 && state.enteredAtStep === 3) {
+                  // En Step 4, si on a sauté Steps 1-2, retour Step 3 (pas Step 2)
+                  goToStep(3);
+                } else {
+                  // Navigation tunnel normale (Step N-1)
+                  goToStep((state.currentStep - 1) as 1 | 2 | 3 | 4);
+                }
+              }}
               className="inline-flex items-center gap-2 text-sm font-semibold text-[#0F172A]"
             >
               ← Modifier
@@ -1703,7 +1732,7 @@ function DevisGratuitsV3Content() {
           <V2ProgressBar step={state.currentStep} onReset={reset} />
 
           {state.currentStep === 1 && (
-            <div className="rounded-3xl bg-white p-5 shadow-sm">
+            <div className="rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-white/40 p-8">
               <StepQualificationV2
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
@@ -1723,7 +1752,7 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 2 && (
-            <div className="rounded-3xl bg-white p-5 shadow-sm relative">
+            <div className="rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-white/40 p-8 relative">
               <StepEstimationV2
                 volume={activePricingStep2?.volumeM3 ?? activePricing?.volumeM3 ?? null}
                 routeDistanceKm={v2FirstEstimateDistanceKm}
@@ -1740,7 +1769,7 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 3 && (
-            <div className="rounded-3xl bg-white p-5 shadow-sm relative">
+            <div className="rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-white/40 p-8 relative">
               <StepAccessLogisticsV2
                 originAddress={state.originAddress}
                 originCity={state.originCity}
@@ -1814,7 +1843,7 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 4 && (
-            <div className="rounded-3xl bg-white p-5 shadow-sm relative">
+            <div className="rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-white/40 p-8 relative">
               <StepContactPhotosV2
                 leadId={state.leadId}
                 linkingCode={state.linkingCode}
