@@ -58,10 +58,10 @@ export function StepQualificationV2({
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6BCFCF]/10 to-[#A8E8E8]/10 shadow-sm flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-[#6BCFCF]/10 flex items-center justify-center">
             <MapPin className="w-5 h-5 text-[#6BCFCF]" strokeWidth={2} />
           </div>
-          <p className="text-sm font-semibold text-[#0F172A]">Trajet</p>
+          <p className="text-sm font-bold text-[#0F172A]">Trajet</p>
         </div>
 
         <AddressAutocomplete
@@ -169,7 +169,7 @@ export function StepQualificationV2({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-gradient-to-r from-[#0F172A] to-[#1E293B] py-4 text-base font-semibold text-white shadow-[0_4px_16px_rgba(15,23,42,0.3)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.4)] hover:scale-[1.02] transition-all duration-200 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-[0_4px_16px_rgba(15,23,42,0.3)]"
+          className="w-full rounded-xl bg-[#6BCFCF] hover:bg-[#5AB8B8] py-4 text-base font-bold text-white shadow-[0_2px_8px_rgba(107,207,207,0.3)] hover:shadow-[0_4px_12px_rgba(107,207,207,0.4)] transition-all duration-200 disabled:opacity-40"
         >
           {isSubmitting ? "Chargement..." : "Voir les options disponibles"}
         </button>

@@ -41,7 +41,7 @@ export function StepEstimationV2({
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="space-y-3">
-        <div className="rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)] space-y-3">
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm space-y-3">
           <div>
             <p className="text-sm text-[#1E293B]/70">Basé sur des déménagements similaires</p>
           </div>
@@ -71,7 +71,7 @@ export function StepEstimationV2({
       </p>
 
       {debug && debugRows.length > 0 && (
-        <div className="rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
           <p className="text-sm font-semibold text-[#0F172A]">Debug — détail du calcul</p>
           <div className="mt-3 space-y-2 text-sm">
             {debugRows.map((r) => (
@@ -90,7 +90,7 @@ export function StepEstimationV2({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-gradient-to-r from-[#0F172A] to-[#1E293B] py-4 text-base font-semibold text-white shadow-[0_4px_16px_rgba(15,23,42,0.3)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.4)] hover:scale-[1.02] transition-all duration-200 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-[0_4px_16px_rgba(15,23,42,0.3)]"
+          className="w-full rounded-xl bg-[#6BCFCF] hover:bg-[#5AB8B8] py-4 text-base font-bold text-white shadow-[0_2px_8px_rgba(107,207,207,0.3)] hover:shadow-[0_4px_12px_rgba(107,207,207,0.4)] transition-all duration-200 disabled:opacity-40"
         >
           {isSubmitting ? "Chargement..." : "Affiner mon devis"}
         </button>

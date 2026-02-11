@@ -1718,54 +1718,12 @@ function DevisGratuitsV3Content() {
   }
 
   return (
-      <main className="min-h-screen bg-[#F8F9FA] text-[#0F172A]">
+      <main className="min-h-screen bg-[#F8FAFB] text-[#0F172A]">
         <div className={containerClassName}>
           {/* Top back/edit */}
           {state.currentStep > 1 && (
             <button
-              onClick={() => {
-                // Détecter si on vient du site (moverz.fr) : uniquement si `from` est une URL absolue vers moverz.fr
-                const comesFromSite = (() => {
-                  if (!from.startsWith("http://") && !from.startsWith("https://")) return false;
-                  try {
-                    const url = new URL(from);
-                    return url.hostname === "moverz.fr" || url.hostname === "www.moverz.fr";
-                  } catch {
-                    return false;
-                  }
-                })();
-                
-                // Si on est en Step 3 et qu'on vient du site externe
-                if (state.currentStep === 3 && (state.enteredAtStep === 3 || comesFromSite)) {
-                  // Si on vient bien du site, on enrichit l'URL pour restaurer le Step 2 côté moverz.fr.
-                  if (comesFromSite) {
-                    try {
-                      const returnUrl = new URL(from);
-                      returnUrl.searchParams.set("step", "2");
-
-                      if (state.originPostalCode) returnUrl.searchParams.set("originPostalCode", state.originPostalCode);
-                      if (state.originCity) returnUrl.searchParams.set("originCity", state.originCity);
-                      if (state.destinationPostalCode) returnUrl.searchParams.set("destinationPostalCode", state.destinationPostalCode);
-                      if (state.destinationCity) returnUrl.searchParams.set("destinationCity", state.destinationCity);
-                      if (state.surfaceM2) returnUrl.searchParams.set("surfaceM2", state.surfaceM2);
-
-                      window.location.href = returnUrl.toString();
-                      return;
-                    } catch {
-                      // fallback
-                    }
-                  }
-
-                  // Sinon: retour brut vers `from`
-                  window.location.href = from;
-                } else if (state.currentStep === 4 && (state.enteredAtStep === 3 || comesFromSite)) {
-                  // En Step 4, si on a sauté Steps 1-2, retour Step 3 (pas Step 2)
-                  goToStep(3);
-                } else {
-                  // Navigation tunnel normale (Step N-1)
-                  goToStep((state.currentStep - 1) as 1 | 2 | 3 | 4);
-                }
-              }}
+              onClick={() => goToStep((state.currentStep - 1) as 1 | 2 | 3 | 4)}
               className="inline-flex items-center gap-2 text-sm font-semibold text-[#0F172A]"
             >
               ← Modifier
@@ -1775,7 +1733,7 @@ function DevisGratuitsV3Content() {
           <V2ProgressBar step={state.currentStep} onReset={reset} />
 
           {state.currentStep === 1 && (
-            <div className="rounded-3xl bg-white/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(6,182,212,0.25)] border border-cyan-100/50 p-8 hover:shadow-[0_16px_56px_rgba(6,182,212,0.35)] transition-shadow duration-300">
+            <div className="rounded-2xl bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
               <StepQualificationV2
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
@@ -1795,7 +1753,7 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 2 && (
-            <div className="rounded-3xl bg-white/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(6,182,212,0.25)] border border-cyan-100/50 p-8 hover:shadow-[0_16px_56px_rgba(6,182,212,0.35)] transition-shadow duration-300 relative">
+            <div className="rounded-2xl bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8 relative">
               <StepEstimationV2
                 volume={activePricingStep2?.volumeM3 ?? activePricing?.volumeM3 ?? null}
                 routeDistanceKm={v2FirstEstimateDistanceKm}
@@ -1814,7 +1772,7 @@ function DevisGratuitsV3Content() {
           {state.currentStep === 3 && (
             <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[1fr_420px] lg:gap-8 lg:items-start">
               {/* Formulaire (colonne gauche) */}
-              <div className="rounded-3xl bg-white/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(6,182,212,0.25)] border border-cyan-100/50 p-8 hover:shadow-[0_16px_56px_rgba(6,182,212,0.35)] transition-shadow duration-300">
+              <div className="rounded-2xl bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8">
                 <StepAccessLogisticsV2
                 originAddress={state.originAddress}
                 originCity={state.originCity}
@@ -1886,45 +1844,39 @@ function DevisGratuitsV3Content() {
               />
               </div>
 
-              {/* Sidebar panier (colonne droite, sticky) */}
+              {/* Sidebar panier (colonne droite, sticky) — GAME CHANGER */}
               <aside className="hidden lg:block lg:sticky lg:top-8">
-                <div className="rounded-3xl bg-gradient-to-br from-cyan-600 via-cyan-700 to-blue-700 backdrop-blur-xl p-8 shadow-[0_20px_60px_rgba(6,182,212,0.5)] space-y-6">
+                <div className="rounded-2xl bg-[#6BCFCF] p-8 shadow-lg space-y-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-black text-white">Votre estimation</h3>
-                    <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    <h3 className="text-lg font-bold text-white">Votre estimation</h3>
+                    <div className="w-2 h-2 rounded-full bg-white/80" />
                   </div>
 
-                  {/* Budget affiné (hero avec glow) */}
+                  {/* Budget affiné (hero sobre) */}
                   {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
-                    <div className="relative overflow-hidden rounded-3xl bg-white/10 backdrop-blur-md border-2 border-white/30 p-8 shadow-[0_12px_48px_rgba(255,255,255,0.15)]">
-                      {/* Glow effect animé */}
-                      <div className="absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br from-cyan-300/30 to-blue-300/30 rounded-full blur-3xl animate-pulse" />
+                    <div className="rounded-2xl bg-white p-6 shadow-sm">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-[#6BCFCF] mb-3">
+                        Budget affiné
+                      </p>
                       
-                      <div className="relative">
-                        <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/90 mb-4 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                          Budget affiné
+                      <div className="text-center mb-5">
+                        <p className="text-5xl font-black text-[#0F172A] leading-none tracking-tight">
+                          {fmtEur(v2PricingCart.refinedCenterEur)}
                         </p>
-                        
-                        <div className="text-center mb-6">
-                          <p className="text-6xl font-black text-white leading-none tracking-tight drop-shadow-[0_4px_24px_rgba(255,255,255,0.4)] transition-all duration-500">
-                            {fmtEur(v2PricingCart.refinedCenterEur)}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
+                        <div className="text-center">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B] mb-1">Minimum</p>
+                          <p className="text-lg font-bold text-emerald-600">
+                            {typeof v2PricingCart.refinedMinEur === "number" ? fmtEur(v2PricingCart.refinedMinEur) : "—"}
                           </p>
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/20">
-                          <div className="text-center rounded-2xl bg-white/10 backdrop-blur-sm p-4">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 mb-2">Minimum</p>
-                            <p className="text-2xl font-black text-emerald-300">
-                              {typeof v2PricingCart.refinedMinEur === "number" ? fmtEur(v2PricingCart.refinedMinEur) : "—"}
-                            </p>
-                          </div>
-                          <div className="text-center rounded-2xl bg-white/10 backdrop-blur-sm p-4">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 mb-2">Maximum</p>
-                            <p className="text-2xl font-black text-rose-300">
-                              {typeof v2PricingCart.refinedMaxEur === "number" ? fmtEur(v2PricingCart.refinedMaxEur) : "—"}
-                            </p>
-                          </div>
+                        <div className="text-center">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B] mb-1">Maximum</p>
+                          <p className="text-lg font-bold text-rose-600">
+                            {typeof v2PricingCart.refinedMaxEur === "number" ? fmtEur(v2PricingCart.refinedMaxEur) : "—"}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1932,25 +1884,21 @@ function DevisGratuitsV3Content() {
 
                   {/* Ajustements */}
                   {v2PricingCart && v2PricingCart.lines && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">
-                          Ajustements
-                        </p>
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                      </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
+                        Ajustements
+                      </p>
                       
                       {v2PricingCart.lines.map((l) => (
                         <div 
                           key={l.key} 
-                          className="group flex items-center justify-between gap-4 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-[1.02] transition-all duration-200"
+                          className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200"
                         >
-                          <div className="flex items-center gap-3">
-                            <span className={`w-2 h-2 rounded-full ${l.amountEur > 0 ? 'bg-rose-300' : l.amountEur < 0 ? 'bg-emerald-300' : 'bg-gray-300'} animate-pulse`} />
-                            <p className="text-sm font-semibold text-white">{l.label}</p>
+                          <div className="flex items-center gap-2">
+                            <span className={`w-1.5 h-1.5 rounded-full ${l.amountEur > 0 ? 'bg-rose-300' : l.amountEur < 0 ? 'bg-emerald-300' : 'bg-gray-300'}`} />
+                            <p className="text-sm font-medium text-white">{l.label}</p>
                           </div>
-                          <p className={`text-base font-black tabular-nums ${l.amountEur > 0 ? 'text-rose-300' : l.amountEur < 0 ? 'text-emerald-300' : 'text-white/60'}`}>
+                          <p className={`text-sm font-bold tabular-nums ${l.amountEur > 0 ? 'text-rose-200' : l.amountEur < 0 ? 'text-emerald-200' : 'text-white/60'}`}>
                             {l.amountEur > 0 ? '+' : ''}{l.amountEur} €
                           </p>
                         </div>
@@ -1958,32 +1906,32 @@ function DevisGratuitsV3Content() {
                     </div>
                   )}
 
-                  {/* Première estimation (collapsible) */}
+                  {/* Première estimation (collapsible sobre) */}
                   {v2PricingCart && typeof v2PricingCart.firstEstimateCenterEur === "number" && (
                     <details className="group">
-                      <summary className="cursor-pointer list-none rounded-2xl bg-white/5 hover:bg-white/10 p-4 transition-all duration-200">
+                      <summary className="cursor-pointer list-none rounded-xl bg-white/5 hover:bg-white/10 p-3 transition-all duration-200">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-white/60 mb-1">Première estimation</p>
-                            <p className="text-2xl font-black text-white/60">
+                            <p className="text-xs font-medium text-white/70 mb-1">Première estimation</p>
+                            <p className="text-xl font-bold text-white/80">
                               {fmtEur(v2PricingCart.firstEstimateCenterEur)}
                             </p>
                           </div>
-                          <svg className="w-5 h-5 text-white/60 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-4 h-4 text-white/70 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </div>
                       </summary>
-                      <div className="mt-3 grid grid-cols-2 gap-3 px-4 pb-4">
-                        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-1">Min</p>
-                          <p className="text-sm font-black text-emerald-300">
+                      <div className="mt-2 grid grid-cols-2 gap-2 px-3 pb-3">
+                        <div className="rounded-lg bg-white/10 p-2.5 text-center">
+                          <p className="text-[9px] font-medium uppercase tracking-wider text-white/70 mb-0.5">Min</p>
+                          <p className="text-sm font-bold text-white/90">
                             {typeof v2PricingCart.firstEstimateMinEur === "number" ? fmtEur(v2PricingCart.firstEstimateMinEur) : "—"}
                           </p>
                         </div>
-                        <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-center">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-rose-300 mb-1">Max</p>
-                          <p className="text-sm font-black text-rose-300">
+                        <div className="rounded-lg bg-white/10 p-2.5 text-center">
+                          <p className="text-[9px] font-medium uppercase tracking-wider text-white/70 mb-0.5">Max</p>
+                          <p className="text-sm font-bold text-white/90">
                             {typeof v2PricingCart.firstEstimateMaxEur === "number" ? fmtEur(v2PricingCart.firstEstimateMaxEur) : "—"}
                           </p>
                         </div>
@@ -1996,7 +1944,7 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 4 && (
-            <div className="rounded-3xl bg-white/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(6,182,212,0.25)] border border-cyan-100/50 p-8 hover:shadow-[0_16px_56px_rgba(6,182,212,0.35)] transition-shadow duration-300 relative">
+            <div className="rounded-2xl bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-8 relative">
               <StepContactPhotosV2
                 leadId={state.leadId}
                 linkingCode={state.linkingCode}

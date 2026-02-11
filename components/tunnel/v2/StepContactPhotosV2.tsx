@@ -108,7 +108,7 @@ export function StepContactPhotosV2({
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <div className="text-center space-y-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#10B981]/10 to-[#34D399]/10 border border-[#10B981]/30 px-3 py-1 text-xs font-semibold text-green-700 shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 text-xs font-bold text-emerald-700">
           <Check className="w-3.5 h-3.5" strokeWidth={3} />
           Dossier créé
         </div>
@@ -118,9 +118,9 @@ export function StepContactPhotosV2({
         </h1>
       </div>
 
-      <div className="rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
+      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#6BCFCF]/10 to-[#A8E8E8]/10 shadow-sm">
+          <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#6BCFCF]/10">
             <Mail className="h-5 w-5 text-[#6BCFCF]" strokeWidth={2} />
           </div>
           <div className="flex-1">
@@ -156,22 +156,22 @@ export function StepContactPhotosV2({
         </div>
       </div>
 
-      <div className="rounded-2xl bg-[#F8F9FA] p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
+      <div className="rounded-xl bg-[#F8FAFB] p-6 border border-gray-100">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#8B5CF6]/10 to-[#A78BFA]/10 shadow-sm flex items-center justify-center">
-            <FileText className="h-4 w-4 text-[#8B5CF6]" strokeWidth={2} />
+          <div className="w-8 h-8 rounded-lg bg-[#6BCFCF]/10 flex items-center justify-center">
+            <FileText className="h-4 w-4 text-[#6BCFCF]" strokeWidth={2} />
           </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
             Récapitulatif de votre dossier
           </p>
         </div>
 
         {recapRows.length > 0 ? (
-          <div className="mt-4 grid gap-3">
+          <div className="mt-4 grid gap-2">
             {recapRows.map((r) => (
               <div
                 key={r.label}
-                className="flex items-start justify-between gap-4 rounded-xl bg-white/95 backdrop-blur-sm px-4 py-3 border border-[#E3E5E8] shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+                className="flex items-start justify-between gap-4 rounded-lg bg-white px-4 py-3 border border-gray-100"
               >
                 <p className="text-sm font-medium text-[#1E293B]/70">{r.label}</p>
                 <p className="text-sm font-semibold text-[#0F172A] text-right">{r.value}</p>

@@ -422,7 +422,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           <p className="text-sm font-semibold text-[#0F172A]">Votre trajet</p>
         </div>
         {/* Adresses regroupées (départ + arrivée) */}
-        <div className="rounded-3xl bg-white/80 backdrop-blur-xl border border-cyan-100/50 p-6 shadow-[0_8px_32px_rgba(6,182,212,0.2)] hover:shadow-[0_12px_48px_rgba(6,182,212,0.3)] transition-all duration-300">
+        <div className="rounded-xl bg-white border border-gray-100 p-6 shadow-sm">
           <p className="text-sm font-semibold text-[#0F172A]">Adresses</p>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <AddressAutocomplete
@@ -517,7 +517,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         {/* Densité + Cuisine (rattachés au logement de départ) */}
         <div className="space-y-4">
           {/* Densité (volume) */}
-          <div className="space-y-2 rounded-3xl bg-white/80 backdrop-blur-xl border border-cyan-100/50 p-6 shadow-[0_8px_32px_rgba(6,182,212,0.2)] hover:shadow-[0_12px_48px_rgba(6,182,212,0.3)] transition-all duration-300">
+          <div className="space-y-2 rounded-xl bg-white border border-gray-100 p-6 shadow-sm">
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-sm font-semibold text-[#0F172A]">Densité</p>
               {props.density === "" && (
@@ -531,14 +531,14 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 type="button"
                 onClick={() => props.onFieldChange("density", "light")}
                 className={[
-                  "h-full rounded-2xl border-2 px-5 py-4 text-left transition-all duration-300",
+                  "h-full rounded-xl border-2 px-5 py-4 text-left transition-all duration-200",
                   props.density === "light"
-                    ? "border-cyan-500 bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-[0_8px_32px_rgba(6,182,212,0.5)] ring-4 ring-cyan-500/20 scale-[1.03]"
-                    : "border-cyan-500/30 bg-gradient-to-br from-white/90 to-cyan-50/50 backdrop-blur-lg shadow-[0_4px_16px_rgba(6,182,212,0.15)] hover:border-cyan-500 hover:shadow-[0_8px_24px_rgba(6,182,212,0.3)] hover:scale-[1.03]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF] text-white shadow-sm"
+                    : "border-gray-200 bg-white hover:border-[#6BCFCF] hover:shadow-sm",
                 ].join(" ")}
               >
                 <div className={`text-sm font-bold ${props.density === "light" ? "text-white" : "text-[#0F172A]"}`}>Peu meublé</div>
-                <div className={`mt-0.5 text-xs ${props.density === "light" ? "text-white/80" : "text-[#1E293B]/70"}`}>
+                <div className={`mt-0.5 text-xs ${props.density === "light" ? "text-white/90" : "text-[#64748B]"}`}>
                   Peu de meubles, peu d'objets
                 </div>
               </button>
@@ -547,14 +547,14 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 type="button"
                 onClick={() => props.onFieldChange("density", "normal")}
                 className={[
-                  "h-full rounded-2xl border-2 px-5 py-4 text-left transition-all duration-300",
+                  "h-full rounded-xl border-2 px-5 py-4 text-left transition-all duration-200",
                   props.density === "normal"
-                    ? "border-cyan-500 bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-[0_8px_32px_rgba(6,182,212,0.5)] ring-4 ring-cyan-500/20 scale-[1.03]"
-                    : "border-cyan-500/30 bg-gradient-to-br from-white/90 to-cyan-50/50 backdrop-blur-lg shadow-[0_4px_16px_rgba(6,182,212,0.15)] hover:border-cyan-500 hover:shadow-[0_8px_24px_rgba(6,182,212,0.3)] hover:scale-[1.03]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF] text-white shadow-sm"
+                    : "border-gray-200 bg-white hover:border-[#6BCFCF] hover:shadow-sm",
                 ].join(" ")}
               >
                 <div className={`text-sm font-bold ${props.density === "normal" ? "text-white" : "text-[#0F172A]"}`}>Normal</div>
-                <div className={`mt-0.5 text-xs ${props.density === "normal" ? "text-white/80" : "text-[#1E293B]/70"}`}>
+                <div className={`mt-0.5 text-xs ${props.density === "normal" ? "text-white/90" : "text-[#64748B]"}`}>
                   Logement "classique"
                 </div>
               </button>
@@ -563,14 +563,14 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 type="button"
                 onClick={() => props.onFieldChange("density", "dense")}
                 className={[
-                  "h-full rounded-2xl border-2 px-5 py-4 text-left transition-all duration-300",
+                  "h-full rounded-xl border-2 px-5 py-4 text-left transition-all duration-200",
                   props.density === "dense"
-                    ? "border-cyan-500 bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-[0_8px_32px_rgba(6,182,212,0.5)] ring-4 ring-cyan-500/20 scale-[1.03]"
-                    : "border-cyan-500/30 bg-gradient-to-br from-white/90 to-cyan-50/50 backdrop-blur-lg shadow-[0_4px_16px_rgba(6,182,212,0.15)] hover:border-cyan-500 hover:shadow-[0_8px_24px_rgba(6,182,212,0.3)] hover:scale-[1.03]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF] text-white shadow-sm"
+                    : "border-gray-200 bg-white hover:border-[#6BCFCF] hover:shadow-sm",
                 ].join(" ")}
               >
                 <div className={`text-sm font-bold ${props.density === "dense" ? "text-white" : "text-[#0F172A]"}`}>Très meublé</div>
-                <div className={`mt-0.5 text-xs ${props.density === "dense" ? "text-white/80" : "text-[#1E293B]/70"}`}>
+                <div className={`mt-0.5 text-xs ${props.density === "dense" ? "text-white/90" : "text-[#64748B]"}`}>
                   Beaucoup d'affaires
                 </div>
               </button>
@@ -578,7 +578,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           </div>
 
           {/* Cuisine / équipements */}
-          <div className="space-y-2 rounded-3xl bg-white/80 backdrop-blur-xl border border-cyan-100/50 p-6 shadow-[0_8px_32px_rgba(6,182,212,0.2)] hover:shadow-[0_12px_48px_rgba(6,182,212,0.3)] transition-all duration-300">
+          <div className="space-y-2 rounded-xl bg-white border border-gray-100 p-6 shadow-sm">
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-sm font-semibold text-[#0F172A]">Cuisine</p>
               {props.kitchenIncluded === "" && (
@@ -595,14 +595,14 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   props.onFieldChange("kitchenApplianceCount", "");
                 }}
                 className={[
-                  "h-full rounded-2xl border-2 px-5 py-4 text-left transition-all duration-300",
+                  "h-full rounded-xl border-2 px-5 py-4 text-left transition-all duration-200",
                   props.kitchenIncluded === "none"
-                    ? "border-cyan-500 bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-[0_8px_32px_rgba(6,182,212,0.5)] ring-4 ring-cyan-500/20 scale-[1.03]"
-                    : "border-cyan-500/30 bg-gradient-to-br from-white/90 to-cyan-50/50 backdrop-blur-lg shadow-[0_4px_16px_rgba(6,182,212,0.15)] hover:border-cyan-500 hover:shadow-[0_8px_24px_rgba(6,182,212,0.3)] hover:scale-[1.03]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF] text-white shadow-sm"
+                    : "border-gray-200 bg-white hover:border-[#6BCFCF] hover:shadow-sm",
                 ].join(" ")}
               >
                 <div className={`text-sm font-bold ${props.kitchenIncluded === "none" ? "text-white" : "text-[#0F172A]"}`}>Rien</div>
-                <div className={`mt-0.5 text-xs ${props.kitchenIncluded === "none" ? "text-white/80" : "text-[#1E293B]/70"}`}>Aucun élément</div>
+                <div className={`mt-0.5 text-xs ${props.kitchenIncluded === "none" ? "text-white/90" : "text-[#64748B]"}`}>Aucun élément</div>
               </button>
 
               <button
@@ -614,14 +614,14 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   }
                 }}
                 className={[
-                  "h-full rounded-2xl border-2 px-5 py-4 text-left transition-all duration-300",
+                  "h-full rounded-xl border-2 px-5 py-4 text-left transition-all duration-200",
                   props.kitchenIncluded === "appliances"
-                    ? "border-cyan-500 bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-[0_8px_32px_rgba(6,182,212,0.5)] ring-4 ring-cyan-500/20 scale-[1.03]"
-                    : "border-cyan-500/30 bg-gradient-to-br from-white/90 to-cyan-50/50 backdrop-blur-lg shadow-[0_4px_16px_rgba(6,182,212,0.15)] hover:border-cyan-500 hover:shadow-[0_8px_24px_rgba(6,182,212,0.3)] hover:scale-[1.03]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF] text-white shadow-sm"
+                    : "border-gray-200 bg-white hover:border-[#6BCFCF] hover:shadow-sm",
                 ].join(" ")}
               >
                 <div className={`text-sm font-bold ${props.kitchenIncluded === "appliances" ? "text-white" : "text-[#0F172A]"}`}>Électroménager</div>
-                <div className={`mt-0.5 text-xs ${props.kitchenIncluded === "appliances" ? "text-white/80" : "text-[#1E293B]/70"}`}>0,6 m³ / équipement</div>
+                <div className={`mt-0.5 text-xs ${props.kitchenIncluded === "appliances" ? "text-white/90" : "text-[#64748B]"}`}>0,6 m³ / équipement</div>
               </button>
 
               <button
@@ -631,14 +631,14 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   props.onFieldChange("kitchenApplianceCount", "");
                 }}
                 className={[
-                  "h-full rounded-2xl border-2 px-5 py-4 text-left transition-all duration-300",
+                  "h-full rounded-xl border-2 px-5 py-4 text-left transition-all duration-200",
                   props.kitchenIncluded === "full"
-                    ? "border-cyan-500 bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-[0_8px_32px_rgba(6,182,212,0.5)] ring-4 ring-cyan-500/20 scale-[1.03]"
-                    : "border-cyan-500/30 bg-gradient-to-br from-white/90 to-cyan-50/50 backdrop-blur-lg shadow-[0_4px_16px_rgba(6,182,212,0.15)] hover:border-cyan-500 hover:shadow-[0_8px_24px_rgba(6,182,212,0.3)] hover:scale-[1.03]",
+                    ? "border-[#6BCFCF] bg-[#6BCFCF] text-white shadow-sm"
+                    : "border-gray-200 bg-white hover:border-[#6BCFCF] hover:shadow-sm",
                 ].join(" ")}
               >
                 <div className={`text-sm font-bold ${props.kitchenIncluded === "full" ? "text-white" : "text-[#0F172A]"}`}>Complète</div>
-                <div className={`mt-0.5 text-xs ${props.kitchenIncluded === "full" ? "text-white/80" : "text-[#1E293B]/70"}`}>+6 m³</div>
+                <div className={`mt-0.5 text-xs ${props.kitchenIncluded === "full" ? "text-white/90" : "text-[#64748B]"}`}>+6 m³</div>
               </button>
             </div>
 
@@ -661,7 +661,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                       "w-full rounded-xl border-2 bg-white px-4 py-3 text-base text-[#0F172A] transition-all",
                       showValidation && !isKitchenValid
                         ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15 focus:ring-offset-2"
-                        : "border-cyan-200 bg-white/90 backdrop-blur-sm focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-500/30 focus:ring-offset-2",
+                        : "border-gray-200 bg-white focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 focus:ring-offset-1",
                     ].join(" ")}
                     placeholder="Ex: 3"
                   />
@@ -716,7 +716,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           <p className="text-sm font-semibold text-[#0F172A]">Accès départ & arrivée</p>
         </div>
 
-        <div className="space-y-2 rounded-3xl bg-white/80 backdrop-blur-xl border border-cyan-100/50 p-6 shadow-[0_8px_32px_rgba(6,182,212,0.2)] hover:shadow-[0_12px_48px_rgba(6,182,212,0.3)] transition-all duration-300">
+        <div className="space-y-2 rounded-xl bg-white border border-gray-100 p-6 shadow-sm">
           <p className="text-base font-semibold text-[#0F172A]">
             Les accès départ & arrivée sont-ils simples ?
           </p>
@@ -724,10 +724,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             <button
               type="button"
               onClick={() => handleAccessType("simple")}
-              className={`px-6 py-4 rounded-full text-sm font-bold transition-all duration-300 ${
+              className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
                 props.access_type === "simple"
-                  ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-[0_8px_32px_rgba(6,182,212,0.5)] ring-4 ring-cyan-500/20 scale-[1.03]"
-                  : "border-2 border-cyan-500/30 bg-gradient-to-br from-white/90 to-cyan-50/50 backdrop-blur-lg text-[#0F172A] shadow-[0_4px_16px_rgba(6,182,212,0.15)] hover:border-cyan-500 hover:shadow-[0_8px_24px_rgba(6,182,212,0.3)] hover:scale-[1.03]"
+                  ? "bg-[#6BCFCF] text-white shadow-sm"
+                  : "border-2 border-gray-200 bg-white text-[#0F172A] hover:border-[#6BCFCF] hover:shadow-sm"
               }`}
             >
               Oui, accès simple
@@ -735,10 +735,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             <button
               type="button"
               onClick={() => handleAccessType("constrained")}
-              className={`px-6 py-4 rounded-full text-sm font-bold transition-all duration-300 ${
+              className={`px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
                 props.access_type === "constrained"
-                  ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-[0_8px_32px_rgba(6,182,212,0.5)] ring-4 ring-cyan-500/20 scale-[1.03]"
-                  : "border-2 border-cyan-500/30 bg-gradient-to-br from-white/90 to-cyan-50/50 backdrop-blur-lg text-[#0F172A] shadow-[0_4px_16px_rgba(6,182,212,0.15)] hover:border-cyan-500 hover:shadow-[0_8px_24px_rgba(6,182,212,0.3)] hover:scale-[1.03]"
+                  ? "bg-[#6BCFCF] text-white shadow-sm"
+                  : "border-2 border-gray-200 bg-white text-[#0F172A] hover:border-[#6BCFCF] hover:shadow-sm"
               }`}
             >
               Non, accès contraint
@@ -853,7 +853,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
         </button>
 
         {showOptions && (
-          <div className="space-y-4 rounded-3xl bg-white/80 backdrop-blur-xl border border-cyan-100/50 p-6 shadow-[0_8px_32px_rgba(6,182,212,0.2)] hover:shadow-[0_12px_48px_rgba(6,182,212,0.3)] transition-all duration-300">
+          <div className="space-y-4 rounded-xl bg-white border border-gray-100 p-6 shadow-sm">
             <div className="space-y-3">
               {SERVICE_LABELS.map(({ key, label }) => {
                 const value = props[key] as boolean;
@@ -914,16 +914,16 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   key={f.id}
                   type="button"
                   onClick={() => props.onFormuleChange(f.id)}
-                  className={`w-[240px] flex-shrink-0 snap-start rounded-2xl border p-4 text-left transition-all duration-300 sm:w-full sm:flex-shrink sm:snap-none ${
+                  className={`w-[240px] flex-shrink-0 snap-start rounded-xl border-2 p-5 text-left transition-all duration-200 sm:w-full sm:flex-shrink sm:snap-none ${
                     selected
-                      ? "border-[#6BCFCF] bg-[#F0FAFA] shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
-                      : "border-[#E3E5E8] bg-white hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]"
+                      ? "border-[#6BCFCF] bg-[#6BCFCF]/5 shadow-sm"
+                      : "border-gray-200 bg-white hover:border-[#6BCFCF] hover:shadow-sm"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <p className="text-base font-semibold text-[#0F172A]">{f.label}</p>
+                    <p className="text-base font-bold text-[#0F172A]">{f.label}</p>
                     {f.recommended && (
-                      <span className="rounded-full bg-gradient-to-r from-[#6BCFCF]/10 to-[#A8E8E8]/10 border border-[#6BCFCF]/30 px-2 py-0.5 text-[10px] font-semibold text-[#2B7A78] shadow-sm">
+                      <span className="rounded-full bg-[#6BCFCF]/10 border border-[#6BCFCF]/40 px-2.5 py-0.5 text-[10px] font-bold text-[#6BCFCF]">
                         Recommandé
                       </span>
                     )}
@@ -949,7 +949,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
       {/* Contact (email obligatoire) */}
       <div className="space-y-3">
-        <div className="rounded-3xl bg-white/80 backdrop-blur-xl border border-cyan-100/50 p-6 shadow-[0_8px_32px_rgba(6,182,212,0.2)] hover:shadow-[0_12px_48px_rgba(6,182,212,0.3)] transition-all duration-300 space-y-3">
+        <div className="rounded-xl bg-white border border-gray-100 p-6 shadow-sm space-y-3">
           <p className="text-sm font-semibold text-[#0F172A]">Où recevoir vos devis ?</p>
           <p className="text-sm text-[#1E293B]/70">
             Dernière étape ensuite : vous envoyez vos photos pour recevoir vos devis.
@@ -972,7 +972,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   "w-full rounded-xl border-2 px-4 py-3 text-base transition-all",
                   showValidation && !isFirstNameValid
                     ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15 focus:ring-offset-2"
-                    : "border-cyan-200 bg-white/90 backdrop-blur-sm focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-500/30 focus:ring-offset-2",
+                    : "border-gray-200 bg-white focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 focus:ring-offset-1",
                 ].join(" ")}
                 placeholder="Votre prénom"
                 required
@@ -998,7 +998,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   "w-full rounded-xl border-2 px-4 py-3 text-base transition-all",
                   showValidation && !isEmailValid
                     ? "border-[#EF4444] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15 focus:ring-offset-2"
-                    : "border-cyan-200 bg-white/90 backdrop-blur-sm focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-500/30 focus:ring-offset-2",
+                    : "border-gray-200 bg-white focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 focus:ring-offset-1",
                 ].join(" ")}
                 placeholder="vous@email.fr"
                 required
@@ -1050,7 +1050,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
           type="button"
           disabled={props.isSubmitting}
           onClick={props.onSubmit}
-          className="w-full rounded-full bg-gradient-to-r from-cyan-600 via-cyan-700 to-blue-700 py-5 text-base font-bold text-white shadow-[0_12px_40px_rgba(6,182,212,0.5)] hover:shadow-[0_16px_56px_rgba(6,182,212,0.65)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-40 disabled:hover:scale-100"
+          className="w-full rounded-xl bg-[#6BCFCF] hover:bg-[#5AB8B8] py-4 text-base font-bold text-white shadow-[0_2px_8px_rgba(107,207,207,0.3)] hover:shadow-[0_4px_12px_rgba(107,207,207,0.4)] transition-all duration-200 disabled:opacity-40"
         >
           {props.isSubmitting ? "Enregistrement..." : "Finaliser mon estimation"}
         </button>

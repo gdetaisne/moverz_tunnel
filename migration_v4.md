@@ -1,6 +1,198 @@
 # Migration V4 — journal de refonte UX/UI
 
-## 2026-02-11 — Refonte design complète "Vercel 2026" : glassmorphism + gradients cyan + layout grille
+## 2026-02-11 (2ème itération) — Refonte sobre style moverz.fr : blanc pur + cyan accent uniquement
+
+**Problème** : La première refonte "Vercel 2026" était trop flashy/agressive (gradients cyan→blue partout, glassmorphism excessif, shadows cyan trop fortes). Pas alignée avec la home moverz.fr (sobre, élégante, blanc/cyan accent).
+
+**Objectif** : Refonte sobre inspirée de la home moverz.fr (blanc pur + cyan #6BCFCF en accent uniquement) :
+- ✅ Fond page : `#F8FAFB` (cyan très pâle, presque blanc)
+- ✅ Cards principales : `bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.08)]`
+- ✅ Cyan accent uniquement : `#6BCFCF` (pas de gradient flashy)
+- ✅ Boutons CTA : `bg-[#6BCFCF] hover:bg-[#5AB8B8]` (cyan simple, pas gradient)
+- ✅ Pills : blanc avec border gray, sélectionné cyan solid
+- ✅ Inputs : `border-gray-200 focus:border-[#6BCFCF] focus:ring-2 focus:ring-[#6BCFCF]/20`
+- ✅ Shadows grises douces (pas cyan)
+- ✅ Typographie : noir `#0F172A` + gris `#64748B`
+
+### 1️⃣ Sidebar Step 3 (GAME CHANGER business)
+
+**Design sobre et premium** :
+```tsx
+// Container sidebar
+bg-[#6BCFCF]  // cyan solid (pas gradient)
+rounded-2xl
+shadow-lg
+p-8
+
+// Budget affiné hero
+bg-white
+rounded-2xl
+p-6
+shadow-sm
+
+// Montant principal
+text-5xl font-black text-[#0F172A]
+
+// Min/Max
+text-lg font-bold
+text-emerald-600 / text-rose-600
+border-t border-gray-100
+
+// Ajustements
+bg-white/10
+rounded-xl
+hover:bg-white/20
+transition-all duration-200
+
+// Dots colorés
+w-1.5 h-1.5 rounded-full
+bg-rose-300 (positif) / bg-emerald-300 (négatif)
+```
+
+### 2️⃣ Cards principales (Steps 1/2/3/4)
+
+**Design blanc pur sobre** :
+```tsx
+rounded-2xl
+bg-white
+border border-gray-100
+shadow-[0_2px_8px_rgba(0,0,0,0.08)]
+p-8
+```
+
+### 3️⃣ Sous-cards (Step 3 : densité, cuisine, etc.)
+
+**Design sobre** :
+```tsx
+rounded-xl
+bg-white
+border border-gray-100
+p-6
+shadow-sm
+```
+
+### 4️⃣ Boutons CTA
+
+**Cyan simple (pas gradient)** :
+```tsx
+w-full
+rounded-xl
+bg-[#6BCFCF]
+hover:bg-[#5AB8B8]
+py-4
+text-base font-bold text-white
+shadow-[0_2px_8px_rgba(107,207,207,0.3)]
+hover:shadow-[0_4px_12px_rgba(107,207,207,0.4)]
+transition-all duration-200
+disabled:opacity-40
+```
+
+### 5️⃣ Pills sélecteurs (densité, cuisine, formules, accès)
+
+**Blanc sobre, sélectionné cyan** :
+```tsx
+// Normal
+rounded-xl
+border-2 border-gray-200
+bg-white
+hover:border-[#6BCFCF]
+hover:shadow-sm
+
+// Sélectionné
+border-[#6BCFCF]
+bg-[#6BCFCF]
+text-white
+shadow-sm
+```
+
+### 6️⃣ Inputs focus states
+
+**Focus cyan subtil** :
+```tsx
+border-gray-200
+bg-white
+focus:border-[#6BCFCF]
+focus:outline-none
+focus:ring-2
+focus:ring-[#6BCFCF]/20
+focus:ring-offset-1
+```
+
+### 7️⃣ Cards formules (Éco/Standard/Premium)
+
+**Sobre avec badge recommandé** :
+```tsx
+// Container
+rounded-xl
+border-2 border-gray-200
+bg-white
+hover:border-[#6BCFCF]
+hover:shadow-sm
+
+// Sélectionné
+border-[#6BCFCF]
+bg-[#6BCFCF]/5
+shadow-sm
+
+// Badge "Recommandé"
+rounded-full
+bg-[#6BCFCF]/10
+border border-[#6BCFCF]/40
+text-[10px] font-bold text-[#6BCFCF]
+```
+
+### 8️⃣ Page remerciement (Step 4)
+
+**Sobre et cohérente** :
+```tsx
+// Badge "Dossier créé"
+bg-emerald-100
+border border-emerald-300
+text-emerald-700
+
+// Cards
+rounded-xl
+bg-white
+border border-gray-100
+shadow-sm
+
+// Icônes
+bg-[#6BCFCF]/10
+text-[#6BCFCF]
+
+// Recap card
+bg-[#F8FAFB]
+border border-gray-100
+```
+
+### 🎯 Palette complète
+
+| Élément | Valeur |
+|---------|--------|
+| Fond page | `#F8FAFB` |
+| Cards | `#FFFFFF` (blanc pur) |
+| Cyan accent | `#6BCFCF` |
+| Cyan hover | `#5AB8B8` |
+| Texte principal | `#0F172A` |
+| Texte secondaire | `#64748B` |
+| Borders | `#E2E8F0` (gray-200) |
+| Shadows | `rgba(0,0,0,0.08)` |
+
+### 📦 Fichiers modifiés
+- `app/devis-gratuits-v3/page.tsx` : fond page, cards principales, sidebar Step 3 sobre
+- `components/tunnel/v2/StepQualificationV2.tsx` : icône sobre, bouton cyan
+- `components/tunnel/v2/StepEstimationV2.tsx` : cards sobres, bouton cyan
+- `components/tunnel/v2/StepAccessLogisticsV2.tsx` : sous-cards, pills, boutons, inputs focus
+- `components/tunnel/v2/StepContactPhotosV2.tsx` : badge, cards, icônes sobres
+
+### ⚠️ Tracking inchangé
+- `logicalStep` : stable
+- `screenId` : inchangé
+- Payload Back Office : aucun changement
+
+---
+
+## 2026-02-11 (1ère itération) — Refonte design complète "Vercel 2026" : glassmorphism + gradients cyan + layout grille
 
 **Problème** : Le design était trop plat et daté. La sidebar Step 3 se superposait au formulaire (layout fixed bancal). Les couleurs turquoise/noir n'étaient pas assez premium. Pas de micro-animations, shadows ternes, buttons rectangulaires.
 
@@ -450,52 +642,22 @@ ring-cyan-500/30    // Focus states
 
 ---
 
-## 2026-02-11 — Navigation retour intelligente Step 3 (retour vers le site si entrée directe)
+## 2026-02-11 — Navigation retour simplifiée (rollback)
 
-**Problème** : les étapes 1 & 2 du tunnel sont maintenant intégrées sur `moverz.fr`. Quand un client arrive directement en Step 3 (via deep link depuis le site), le bouton "← Modifier" le renvoyait vers la Step 2 du tunnel (qui n'est plus pertinente), au lieu de le ramener sur le site pour modifier les données.
+**Décision** : retour au comportement simple et prévisible pour le bouton "← Modifier".
 
-**Solution** : tracker le point d'entrée dans le tunnel (`enteredAtStep`) pour gérer intelligemment la navigation retour.
+**Comportement actuel** :
+- Step 2 → Step 1
+- Step 3 → Step 2
+- Step 4 → Step 3
 
-### Changements
+**Code** : `onClick={() => goToStep((state.currentStep - 1) as 1 | 2 | 3 | 4)}`
 
-| Cas | Bouton "← Modifier" (Step 3) | Bouton "← Modifier" (Step 4) |
-|---|---|---|
-| Entrée normale (Step 1) | → Step 2 (tunnel) | → Step 3 (tunnel) |
-| **Entrée directe (Step 3)** | **→ Site (URL `from`)** | **→ Step 3 (tunnel)** |
-
-### Implémentation
-
-1. **Nouveau champ state** : `enteredAtStep: number | null` dans `TunnelFormState` (`hooks/useTunnelState.ts`)
-2. **Capture entrée directe** : lors de l'hydratation Step 3 (query params présents), on marque `enteredAtStep = 3`
-3. **Détection provenance site** : `comesFromSite` vaut `true` **uniquement** si `from` est une URL absolue vers `moverz.fr` / `www.moverz.fr` (anti faux positifs sur URLs relatives)
-4. **Navigation retour avec restauration état** :
-   - Si Step 3 ET (`enteredAtStep === 3` OU `comesFromSite`) → redirect vers site **avec query params pour restaurer Step 2** :
-     - `step=2` : indique au site d'afficher le Step 2 (estimation)
-     - `originPostalCode`, `originCity`, `destinationPostalCode`, `destinationCity`, `surfaceM2` : données pour recalculer le prix
-     - URL finale : `https://moverz.fr?step=2&originPostalCode=75001&destinationPostalCode=13001&surfaceM2=60`
-   - Si Step 4 ET (`enteredAtStep === 3` OU `comesFromSite`) → `goToStep(3)` (pas Step 2)
-   - Sinon → navigation tunnel normale (`goToStep(currentStep - 1)`)
-5. **Fallback safe** : si `from` n’est pas une URL absolue moverz.fr → retour brut vers `from` (pas d’enrichissement)
-
-### URL from
-
-- **Param** : `from` est **sanitisé** (anti open-redirect)
-  - accepté si URL **relative** (commence par `/`)
-  - accepté si URL **absolue** sur `moverz.fr` / `www.moverz.fr`
-  - sinon fallback `"/devis-gratuits-v3"`
-- **Exemple** : `/devis-gratuits-v3?step=3&from=https://moverz.fr/devis&originPostalCode=75011&...`
-
-**Côté site moverz.fr (requis)** :
-Le site doit détecter `?step=2` au chargement et :
-1. Lire les query params (`originPostalCode`, `originCity`, `destinationPostalCode`, `destinationCity`, `surfaceM2`)
-2. Appeler l'API `/api/estimate` avec ces params
-3. Afficher directement le Step 2 (estimation) avec le prix calculé
-4. Permettre à l'utilisateur de cliquer "Affiner mon budget →" pour retourner au tunnel
+**Note** : Le champ `enteredAtStep` a été ajouté dans `TunnelFormState` mais n'est pas utilisé actuellement (réservé pour usage futur si besoin).
 
 **Fichiers modifiés** :
-- `hooks/useTunnelState.ts` : ajout `enteredAtStep`
-- `app/devis-gratuits-v3/page.tsx` : capture entrée Step 3 + navigation retour avec query params
-- `migration_v4.md` : documentation complète
+- `app/devis-gratuits-v3/page.tsx` : bouton "← Modifier" simplifié
+- `migration_v4.md` : documentation mise à jour
 
 ---
 
