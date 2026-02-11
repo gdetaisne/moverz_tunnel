@@ -1720,12 +1720,39 @@ function DevisGratuitsV3Content() {
           {state.currentStep > 1 && (
             <button
               onClick={() => {
-                // Détecter si on vient du site : le param "from" est différent de la valeur par défaut
-                const comesFromSite = from !== "/devis-gratuits-v3";
+                // Détecter si on vient du site (moverz.fr) : uniquement si `from` est une URL absolue vers moverz.fr
+                const comesFromSite = (() => {
+                  if (!from.startsWith("http://") && !from.startsWith("https://")) return false;
+                  try {
+                    const url = new URL(from);
+                    return url.hostname === "moverz.fr" || url.hostname === "www.moverz.fr";
+                  } catch {
+                    return false;
+                  }
+                })();
                 
                 // Si on est en Step 3 et qu'on vient du site externe
                 if (state.currentStep === 3 && (state.enteredAtStep === 3 || comesFromSite)) {
-                  // Retour vers le site (URL from)
+                  // Si on vient bien du site, on enrichit l'URL pour restaurer le Step 2 côté moverz.fr.
+                  if (comesFromSite) {
+                    try {
+                      const returnUrl = new URL(from);
+                      returnUrl.searchParams.set("step", "2");
+
+                      if (state.originPostalCode) returnUrl.searchParams.set("originPostalCode", state.originPostalCode);
+                      if (state.originCity) returnUrl.searchParams.set("originCity", state.originCity);
+                      if (state.destinationPostalCode) returnUrl.searchParams.set("destinationPostalCode", state.destinationPostalCode);
+                      if (state.destinationCity) returnUrl.searchParams.set("destinationCity", state.destinationCity);
+                      if (state.surfaceM2) returnUrl.searchParams.set("surfaceM2", state.surfaceM2);
+
+                      window.location.href = returnUrl.toString();
+                      return;
+                    } catch {
+                      // fallback
+                    }
+                  }
+
+                  // Sinon: retour brut vers `from`
                   window.location.href = from;
                 } else if (state.currentStep === 4 && (state.enteredAtStep === 3 || comesFromSite)) {
                   // En Step 4, si on a sauté Steps 1-2, retour Step 3 (pas Step 2)

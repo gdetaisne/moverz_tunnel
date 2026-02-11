@@ -282,12 +282,15 @@
 
 1. **Nouveau champ state** : `enteredAtStep: number | null` dans `TunnelFormState` (`hooks/useTunnelState.ts`)
 2. **Capture entrée directe** : lors de l'hydratation Step 3 (query params présents), on marque `enteredAtStep = 3`
-3. **Détection provenance site** : `comesFromSite = (from !== "/devis-gratuits-v3")`
-   - Si `from` est différent de la valeur par défaut → on vient du site
-4. **Navigation retour conditionnelle** :
-   - Si Step 3 ET (`enteredAtStep === 3` OU `comesFromSite`) → redirect vers `from` (site)
+3. **Détection provenance site** : `comesFromSite` vaut `true` **uniquement** si `from` est une URL absolue vers `moverz.fr` / `www.moverz.fr` (anti faux positifs sur URLs relatives)
+4. **Navigation retour avec restauration état** :
+   - Si Step 3 ET (`enteredAtStep === 3` OU `comesFromSite`) → redirect vers site **avec query params pour restaurer Step 2** :
+     - `step=2` : indique au site d'afficher le Step 2 (estimation)
+     - `originPostalCode`, `originCity`, `destinationPostalCode`, `destinationCity`, `surfaceM2` : données pour recalculer le prix
+     - URL finale : `https://moverz.fr?step=2&originPostalCode=75001&destinationPostalCode=13001&surfaceM2=60`
    - Si Step 4 ET (`enteredAtStep === 3` OU `comesFromSite`) → `goToStep(3)` (pas Step 2)
    - Sinon → navigation tunnel normale (`goToStep(currentStep - 1)`)
+5. **Fallback safe** : si `from` n’est pas une URL absolue moverz.fr → retour brut vers `from` (pas d’enrichissement)
 
 ### URL from
 
@@ -297,9 +300,17 @@
   - sinon fallback `"/devis-gratuits-v3"`
 - **Exemple** : `/devis-gratuits-v3?step=3&from=https://moverz.fr/devis&originPostalCode=75011&...`
 
+**Côté site moverz.fr (requis)** :
+Le site doit détecter `?step=2` au chargement et :
+1. Lire les query params (`originPostalCode`, `originCity`, `destinationPostalCode`, `destinationCity`, `surfaceM2`)
+2. Appeler l'API `/api/estimate` avec ces params
+3. Afficher directement le Step 2 (estimation) avec le prix calculé
+4. Permettre à l'utilisateur de cliquer "Affiner mon budget →" pour retourner au tunnel
+
 **Fichiers modifiés** :
 - `hooks/useTunnelState.ts` : ajout `enteredAtStep`
-- `app/devis-gratuits-v3/page.tsx` : capture entrée Step 3 + logique navigation retour
+- `app/devis-gratuits-v3/page.tsx` : capture entrée Step 3 + navigation retour avec query params
+- `migration_v4.md` : documentation complète
 
 ---
 
