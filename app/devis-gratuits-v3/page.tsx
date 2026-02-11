@@ -1845,7 +1845,7 @@ function DevisGratuitsV3Content() {
               </div>
 
               {/* Sidebar panier (colonne droite, sticky) — GAME CHANGER */}
-              <aside className="hidden lg:block lg:sticky lg:top-8">
+              <aside className="hidden lg:block lg:sticky lg:top-20">
                 <div className="rounded-3xl bg-gradient-to-br from-[#6BCFCF] via-[#5AB8B8] to-[#4AA8A5] p-10 shadow-2xl shadow-[#6BCFCF]/20 space-y-8">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-bold text-white">Votre estimation</h3>
