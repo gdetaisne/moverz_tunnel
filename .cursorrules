@@ -1,28 +1,33 @@
-## Cursor rules — Tunnel V4 (staging)
+## Cursor rules — Tunnel Moverz (main)
 Répondre en français, concis.
 
+### Architecture du repo
+- **Tunnel live** : `app/devis-gratuits-v3/page.tsx` (seul tunnel actif, les anciennes versions ont été supprimées).
+- **Redirect** : `/devis-gratuits` redirige vers `/devis-gratuits-v3`.
+- **AI Lab** : `app/ai-lab/` (conservé, séparé du tunnel).
+- **Doc de référence** : `migration_v4.md` — journal de toutes les décisions UX/UI/data. "V4" = itération UX, le code reste dans `devis-gratuits-v3`.
+- **Client HTTP (tunnel → Back Office)** : `lib/api/client.ts` — toutes les interfaces et fonctions d'appel.
+
 ### Règles de sécurité (NON NÉGOCIABLE)
-- **Interdit de toucher à `main`** (aucun commit, aucune PR, aucune modif).
-- Travailler **uniquement** sur la branche `staging`.
-- **Interdit de tester en local**. Les tests se font **uniquement sur staging** (CapRover) après push.
-- **DB / Prisma**: interdit de modifier `prisma/schema.prisma`, `prisma/migrations/**` (aucune migration, aucun changement de schéma).
-- **Champs**: interdit de supprimer des champs / inputs existants du tunnel (ils doivent rester disponibles pour les clients).
-- **Nouveaux inputs**: en principe interdits. Si prototypage exceptionnel:
-  - ils doivent être **clairement marqués “non connecté”** dans l’UI,
+- Travailler sur la branche **`main`**.
+- **Interdit de tester en local**. Les tests se font **uniquement sur prod** (CapRover) après push.
+- **DB / Prisma** : interdit de modifier `prisma/schema.prisma`, `prisma/migrations/**` (aucune migration, aucun changement de schéma).
+- **Champs** : interdit de supprimer des champs / inputs existants du tunnel (ils doivent rester disponibles pour les clients).
+- **Nouveaux inputs** : en principe interdits. Si prototypage exceptionnel :
+  - ils doivent être **clairement marqués "non connecté"** dans l'UI,
   - ils ne doivent pas être envoyés au Back Office,
   - et ils doivent être documentés dans `migration_v4.md`.
 
 ### Tracking (GA4 / Back Office)
-- Le tracking doit rester **stable**: `logicalStep` est la source de vérité “métier”.
-- `screenId` doit être **explicite** et lié à l’écran UI (ex: `project_v4`), **jamais** dérivé d’un index d’étape.
-- Si l’ordre des steps change: on conserve le mapping `logicalStep` correct. Exemple: si l’ancienne “Step 2” devient la 3, alors l’event `PROJECT` doit rester `PROJECT` (et non “Step 3”).
+- Le tracking doit rester **stable** : `logicalStep` est la source de vérité "métier".
+- `screenId` doit être **explicite** et lié à l'écran UI (ex: `project_v4`), **jamais** dérivé d'un index d'étape.
+- Si l'ordre des steps change : on conserve le mapping `logicalStep` correct. Exemple : si l'ancienne "Step 2" devient la 3, alors l'event `PROJECT` doit rester `PROJECT` (et non "Step 3").
 
 ### Workflow obligatoire
 - Petits commits fréquents.
-- Après chaque modification de code ou décision: **mettre à jour `migration_v4.md`**.
-- Dans le message de fin (chat), écrire exactement: **Migration_v4 à jour**.
+- Après chaque modification de code ou décision : **mettre à jour `migration_v4.md`**.
+- Dans le message de fin (chat), écrire exactement : **Migration_v4 à jour**.
 
 ### Mobile-first
 - Penser **mobile first** (CTA visibles, typographie lisible, pas de layout desktop qui casse mobile).
 - Desktop ensuite, sans compromettre mobile.
-
