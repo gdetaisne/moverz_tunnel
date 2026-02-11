@@ -1,5 +1,23 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 — Centrage desktop corrigé + layout Step 3 "premium 2026"
+
+**Problème** : Le conteneur principal du tunnel avait des marges desktop qui décalaient tout vers la droite, même sans sidebar. En Step 3, l'approche "réserver l'espace" créait un trou moche au milieu (formulaire centré + sidebar collée au bord droit).
+
+**Solution** : layout conditionnel selon l'étape.
+- **Steps 1/2/4** : conteneur **centré classique** (`max-w-3xl mx-auto`).
+- **Step 3 desktop (≥ xl / 1280px)** : formulaire **décalé à gauche** (`xl:mr-[420px] xl:ml-auto`), sidebar **collée au bord droit** (fixed) → équilibre visuel propre, pas de trou, layout "premium 2026".
+
+**Fichiers modifiés** : `app/devis-gratuits-v3/page.tsx`
+
+**Tracking** : aucun changement.
+
+**Champs / Inputs** : aucun ajout/suppression.
+
+**Back Office payload** : aucun changement.
+
+---
+
 ## 2026-02-11 — Panier desktop premium "Vercel-level" (Step 3)
 
 **Problème** : Le panier desktop (sidebar Step 3) manquait d'impact visuel et de hiérarchie. L'affichage était plat, sans différenciation claire entre le budget affiné (le plus important) et les autres éléments.

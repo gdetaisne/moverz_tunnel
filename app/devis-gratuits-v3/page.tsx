@@ -66,9 +66,10 @@ function DevisGratuitsV3Content() {
 
   const containerClassName = useMemo(() => {
     return [
-      "max-w-3xl mx-auto px-4 py-8 space-y-6",
-      // Step 3: sidebar desktop (fixed, w-[360px], right-8) => on réserve 360 + 32 = 392px
-      state.currentStep === 3 ? "lg:max-w-[calc(48rem+392px)] lg:pr-[392px]" : "",
+      "max-w-3xl px-4 py-8 space-y-6",
+      // Step 3: sidebar desktop (fixed right-8, w-[360px])
+      // → formulaire décalé à gauche (ml-auto + mr) pour équilibre visuel
+      state.currentStep === 3 ? "xl:mr-[420px] xl:ml-auto" : "mx-auto",
     ].join(" ");
   }, [state.currentStep]);
 
