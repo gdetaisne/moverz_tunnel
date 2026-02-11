@@ -7,7 +7,12 @@ import { calculatePricing } from "@/lib/pricing/calculate";
  *
  * Retourne une estimation rapide (fourchette min/max)
  * avec des hypothèses conservatrices (mêmes que Step 2 du tunnel).
- * Le paramètre `formule` est optionnel (défaut: STANDARD).
+ *
+ * Distance : OSRM (route réelle) entre centres-villes + 5 km de buffer.
+ * Fallback : heuristique CP si BAN ou OSRM échouent.
+ *
+ * Accepte aussi originLat/originLon/destinationLat/destinationLon pour
+ * éviter le géocodage BAN si le client les connaît déjà.
  *
  * Utilisé par la home moverz.fr pour afficher un budget indicatif
  * avant de rediriger vers le tunnel complet (Step 3).
@@ -30,13 +35,78 @@ const EstimateQuerySchema = z.object({
     .min(10, "Surface min 10 m²")
     .max(500, "Surface max 500 m²"),
   formule: z.enum(FORMULES).optional().default("STANDARD"),
+  // Coordonnées optionnelles (skip le géocodage BAN si fournies)
+  originLat: z.coerce.number().finite().min(-90).max(90).optional(),
+  originLon: z.coerce.number().finite().min(-180).max(180).optional(),
+  destinationLat: z.coerce.number().finite().min(-90).max(90).optional(),
+  destinationLon: z.coerce.number().finite().min(-180).max(180).optional(),
 });
 
+const BUFFER_KM = 5;
+
+// ─── Helpers ────────────────────────────────────────────
+
 /**
- * Heuristique distance par codes postaux (même logique que le tunnel Step 2).
- * Pas de coordonnées GPS ici → fallback département.
+ * Géocode un code postal via BAN (api-adresse.data.gouv.fr).
+ * Retourne [lat, lon] ou null si échec.
  */
-function estimateDistanceFromPostalCodes(
+async function geocodePostalCode(
+  postalCode: string
+): Promise<[number, number] | null> {
+  try {
+    const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
+      postalCode
+    )}&type=municipality&limit=1`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      features?: { geometry?: { coordinates?: [number, number] } }[];
+    };
+    const coords = data.features?.[0]?.geometry?.coordinates;
+    if (!coords) return null;
+    const [lon, lat] = coords;
+    if (typeof lat === "number" && typeof lon === "number") {
+      return [lat, lon];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Calcule la distance route via OSRM public.
+ * Retourne la distance en km ou null si échec.
+ */
+async function osrmDistanceKm(
+  originLat: number,
+  originLon: number,
+  destLat: number,
+  destLon: number
+): Promise<number | null> {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${originLon},${originLat};${destLon},${destLat}?overview=false&alternatives=false&steps=false`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "moverz-tunnel (estimate)" },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      routes?: Array<{ distance?: number }>;
+    };
+    const distanceM = data?.routes?.[0]?.distance;
+    if (typeof distanceM !== "number" || distanceM <= 0) return null;
+    return Math.max(1, Math.round(distanceM / 1000));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fallback : heuristique par codes postaux (départements).
+ * Uniquement si BAN+OSRM échouent.
+ */
+function heuristicDistanceKm(
   originPostalCode: string,
   destinationPostalCode: string
 ): number {
@@ -48,6 +118,8 @@ function estimateDistanceFromPostalCodes(
   const diff = Math.abs(o - d);
   return Math.min(1000, 40 + diff * 40);
 }
+
+// ─── Route Handler ──────────────────────────────────────
 
 export async function GET(req: NextRequest) {
   try {
@@ -61,16 +133,61 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const { originPostalCode, destinationPostalCode, surface, formule } = parsed.data;
-
-    // Distance heuristique (+5 km buffer, comme Step 2 du tunnel)
-    const cityDistanceKm = estimateDistanceFromPostalCodes(
+    const {
       originPostalCode,
-      destinationPostalCode
-    );
-    const distanceKm = Math.max(0, cityDistanceKm + 5);
+      destinationPostalCode,
+      surface,
+      formule,
+      originLat: paramOriginLat,
+      originLon: paramOriginLon,
+      destinationLat: paramDestLat,
+      destinationLon: paramDestLon,
+    } = parsed.data;
 
-    // Hypothèses conservatrices (alignées sur Step 2 du tunnel)
+    // 1. Résoudre les coordonnées (params > BAN géocodage)
+    let oLat = paramOriginLat ?? null;
+    let oLon = paramOriginLon ?? null;
+    let dLat = paramDestLat ?? null;
+    let dLon = paramDestLon ?? null;
+
+    // Géocodage BAN en parallèle si besoin
+    const needGeoOrigin = oLat == null || oLon == null;
+    const needGeoDest = dLat == null || dLon == null;
+
+    if (needGeoOrigin || needGeoDest) {
+      const [geoOrigin, geoDest] = await Promise.all([
+        needGeoOrigin ? geocodePostalCode(originPostalCode) : null,
+        needGeoDest ? geocodePostalCode(destinationPostalCode) : null,
+      ]);
+      if (geoOrigin) {
+        oLat = geoOrigin[0];
+        oLon = geoOrigin[1];
+      }
+      if (geoDest) {
+        dLat = geoDest[0];
+        dLon = geoDest[1];
+      }
+    }
+
+    // 2. Distance OSRM si coordonnées disponibles, sinon fallback heuristique
+    let distanceKm: number;
+    let distanceProvider: "osrm" | "heuristic";
+
+    if (oLat != null && oLon != null && dLat != null && dLon != null) {
+      const osrmKm = await osrmDistanceKm(oLat, oLon, dLat, dLon);
+      if (osrmKm != null) {
+        distanceKm = osrmKm + BUFFER_KM;
+        distanceProvider = "osrm";
+      } else {
+        distanceKm = heuristicDistanceKm(originPostalCode, destinationPostalCode) + BUFFER_KM;
+        distanceProvider = "heuristic";
+      }
+    } else {
+      distanceKm = heuristicDistanceKm(originPostalCode, destinationPostalCode) + BUFFER_KM;
+      distanceProvider = "heuristic";
+    }
+
+    // 3. Calcul du prix (mêmes hypothèses conservatrices que Step 2)
     const result = calculatePricing({
       surfaceM2: surface,
       housingType: "t2",
@@ -92,8 +209,8 @@ export async function GET(req: NextRequest) {
       prixCentre: Math.round((result.prixMin + result.prixMax) / 2),
       volumeM3: result.volumeM3,
       distanceKm,
+      distanceProvider,
       formule,
-      // Métadonnées pour debug
       input: {
         originPostalCode,
         destinationPostalCode,

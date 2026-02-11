@@ -413,16 +413,16 @@ function DevisGratuitsV3Content() {
 
   // Track step views
   useEffect(() => {
-    const stepMap = {
-      1: { logical: "PROJECT" as const, screen: "qualification_v2" },
-      2: { logical: "RECAP" as const, screen: "estimation_v2" },
-      3: { logical: "PROJECT" as const, screen: "acces_v2" },
-      4: { logical: "THANK_YOU" as const, screen: "confirmation_v2" },
-    };
-    const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
-    if (current) {
-      trackStep(state.currentStep, current.logical, current.screen);
-    }
+      const stepMap = {
+        1: { logical: "PROJECT" as const, screen: "qualification_v2" },
+        2: { logical: "RECAP" as const, screen: "estimation_v2" },
+        3: { logical: "PROJECT" as const, screen: "acces_v2" },
+        4: { logical: "THANK_YOU" as const, screen: "confirmation_v2" },
+      };
+      const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
+      if (current) {
+        trackStep(state.currentStep, current.logical, current.screen);
+      }
   }, [state.currentStep]);
 
   const toIsoDate = (raw: string | null | undefined): string | undefined => {
@@ -432,127 +432,7 @@ function DevisGratuitsV3Content() {
     return d.toISOString();
   };
 
-  // --- helpers pricing (copiés de la V2, puis ajustés pour la V3) ---
-  const estimateDistanceKm = (
-    originPostalCode: string,
-    destinationPostalCode: string,
-    originLat: number | null,
-    originLon: number | null,
-    destinationLat: number | null,
-    destinationLon: number | null
-  ) => {
-    // Si on dispose de coordonnées précises (BAN), on calcule une distance Haversine.
-    if (
-      originLat != null &&
-      originLon != null &&
-      destinationLat != null &&
-      destinationLon != null
-    ) {
-      const R = 6371;
-      const toRad = (deg: number) => (deg * Math.PI) / 180;
-      const dLat = toRad(destinationLat - originLat);
-      const dLon = toRad(destinationLon - originLon);
-      const la1 = toRad(originLat);
-      const la2 = toRad(destinationLat);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(la1) *
-          Math.cos(la2) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const dist = R * c;
-      if (Number.isFinite(dist) && dist > 0) {
-        return Math.min(1200, Math.round(dist));
-      }
-    }
-
-    if (!originPostalCode || !destinationPostalCode) return 50;
-    if (originPostalCode === destinationPostalCode) return 10;
-    const o = parseInt(originPostalCode.slice(0, 2), 10);
-    const d = parseInt(destinationPostalCode.slice(0, 2), 10);
-    if (Number.isNaN(o) || Number.isNaN(d)) return 50;
-    const diff = Math.abs(o - d);
-    return Math.min(1000, 40 + diff * 40);
-  };
-
-  // Baseline "villes": doit être stable et ne pas bouger quand on sélectionne une adresse.
-  // On mémorise donc les coords "ville" (Step 1/2) et on les utilise pour la baseline,
-  // sans dépendre des coords d'adresse (Step 3).
-  const v2CityCoordsRef = useRef<{
-    originLat: number;
-    originLon: number;
-    destinationLat: number;
-    destinationLon: number;
-  } | null>(null);
-
-  useEffect(() => {
-    // On ne fige/rafraîchit que tant qu'on est avant Step 3 (donc avant la sélection d'adresses).
-    if (state.currentStep >= 3) return;
-    if (state.destinationUnknown) return;
-    if (
-      state.originLat == null ||
-      state.originLon == null ||
-      state.destinationLat == null ||
-      state.destinationLon == null
-    ) {
-      return;
-    }
-    v2CityCoordsRef.current = {
-      originLat: state.originLat,
-      originLon: state.originLon,
-      destinationLat: state.destinationLat,
-      destinationLon: state.destinationLon,
-    };
-  }, [
-    state.currentStep,
-    state.destinationUnknown,
-    state.originLat,
-    state.originLon,
-    state.destinationLat,
-    state.destinationLon,
-  ]);
-
-  const estimateCityDistanceKm = (originPostalCode: string, destinationPostalCode: string) => {
-    let c = v2CityCoordsRef.current;
-
-    // Fallback anti "delta énorme": si on n'a pas réussi à capturer des coords ville en Step 1/2
-    // (ex: l'utilisateur a tapé sans sélectionner), on fige une baseline à partir des coords
-    // disponibles au moment où les adresses sont renseignées (Step 3). Ça évite une heuristique CP
-    // trop grossière qui peut surestimer massivement la distance et créer un -1000€ en delta.
-    if (
-      !c &&
-      state.currentStep >= 3 &&
-      !state.destinationUnknown &&
-      state.originLat != null &&
-      state.originLon != null &&
-      state.destinationLat != null &&
-      state.destinationLon != null
-    ) {
-      c = {
-        originLat: state.originLat,
-        originLon: state.originLon,
-        destinationLat: state.destinationLat,
-        destinationLon: state.destinationLon,
-      };
-      v2CityCoordsRef.current = c;
-    }
-
-    if (c) {
-      return estimateDistanceKm(
-        originPostalCode,
-        destinationPostalCode,
-        c.originLat,
-        c.originLon,
-        c.destinationLat,
-        c.destinationLon
-      );
-    }
-    // Fallback (refresh direct en Step 3, coords ville absentes): heuristique CP.
-    return estimateDistanceKm(originPostalCode, destinationPostalCode, null, null, null, null);
-  };
-
-  // Distance “trajet” (route) via OSRM / OpenStreetMap
+  // Distance "trajet" (route) via OSRM / OpenStreetMap
   const distanceCacheRef = useRef<Map<string, number>>(new Map());
   const [routeDistanceKm, setRouteDistanceKm] = useState<number | null>(null);
   const [routeDistanceProvider, setRouteDistanceProvider] = useState<
@@ -649,6 +529,29 @@ function DevisGratuitsV3Content() {
     state.destinationLat,
     state.destinationLon,
   ]);
+
+  // ── Distance OSRM ville-à-ville (capturée avant Step 3) ──
+  // Sert de baseline pour Step 2, Step 3 "Première estimation" et reward.
+  // Une fois figée, elle ne bouge plus quand l'utilisateur saisit des adresses exactes.
+  const cityOsrmCapturedRef = useRef(false);
+  const [cityOsrmDistanceKm, setCityOsrmDistanceKm] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (routeDistanceKm == null || routeDistanceProvider !== "osrm") return;
+
+    if (state.currentStep < 3) {
+      // Avant Step 3 : toujours mettre à jour (coords = ville)
+      setCityOsrmDistanceKm(routeDistanceKm);
+      cityOsrmCapturedRef.current = true;
+      return;
+    }
+
+    // En Step 3+ : capturer UNE FOIS (ex: arrivée directe depuis moverz.fr)
+    if (!cityOsrmCapturedRef.current) {
+      setCityOsrmDistanceKm(routeDistanceKm);
+      cityOsrmCapturedRef.current = true;
+    }
+  }, [state.currentStep, routeDistanceKm, routeDistanceProvider]);
 
   const getSeasonFactor = (dateStr: string | null | undefined): number => {
     if (!dateStr) return 1;
@@ -798,19 +701,19 @@ function DevisGratuitsV3Content() {
 
   // Step 2 (V2) : estimation basée sur hypothèses fixes (reward) tant qu'on n'a pas les adresses exactes.
   // Hypothèses (alignées sur "Première estimation" du panier Step 3):
-  // - distance villes +5km
+  // - distance OSRM ville-à-ville + 5 km (buffer "bonne surprise")
   // - densité très meublé
   // - cuisine = 3 équipements (0,6m³/équipement)
   // - pas de saison
   // - accès RAS
   const v2PricingByFormuleStep2 = useMemo(() => {
     if (state.currentStep !== 2) return null;
+    if (cityOsrmDistanceKm == null) return null; // attend l'OSRM
 
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
-    const distanceKm = Math.max(0, cityDistanceKm + 5);
+    const distanceKm = cityOsrmDistanceKm + 5;
 
     const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
       surfaceM2: surface,
@@ -837,8 +740,7 @@ function DevisGratuitsV3Content() {
   }, [
     state.currentStep,
     state.surfaceM2,
-    state.originPostalCode,
-    state.destinationPostalCode,
+    cityOsrmDistanceKm,
   ]);
 
   // Step 2 affiche le prix de la formule sélectionnée (STANDARD par défaut)
@@ -849,23 +751,21 @@ function DevisGratuitsV3Content() {
 
   const v2FirstEstimateDistanceKm = useMemo(() => {
     if (state.destinationUnknown) return null;
-    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
-    if (!Number.isFinite(cityDistanceKm) || cityDistanceKm <= 0) return null;
-    return Math.round(cityDistanceKm + 5);
+    if (cityOsrmDistanceKm == null) return null;
+    return cityOsrmDistanceKm + 5;
   }, [
     state.destinationUnknown,
-    state.originPostalCode,
-    state.destinationPostalCode,
+    cityOsrmDistanceKm,
   ]);
 
   const v2DebugRowsStep2 = useMemo(() => {
     if (!debugMode) return null;
     if (state.currentStep !== 2) return null;
+    if (cityOsrmDistanceKm == null) return null;
 
     const surface = parseInt(state.surfaceM2) || 60;
     const formule = state.formule as PricingFormuleType;
-    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
-    const distanceKm = Math.max(0, cityDistanceKm + 5);
+    const distanceKm = cityOsrmDistanceKm + 5;
     const extraVolumeM3 = 3 * 0.6; // debug Step 2: cuisine=3 équipements
     const baseVolumeM3 = calculateVolume(surface, "t2", "dense");
     const volumeM3 = Math.round((baseVolumeM3 + extraVolumeM3) * 10) / 10;
@@ -905,7 +805,7 @@ function DevisGratuitsV3Content() {
       new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
     return [
-      { label: "distance baseline (villes +5)", value: `${Math.round(distanceKm)} km` },
+      { label: "distance baseline (OSRM villes +5)", value: `${Math.round(distanceKm)} km` },
       { label: "band distance", value: band },
       { label: "rate €/m³ (raw)", value: fmt(rateRaw) },
       { label: `DECOTE`, value: `${Math.round(DECOTE * 100)}% (×${fmt(decoteFactor)})` },
@@ -928,22 +828,21 @@ function DevisGratuitsV3Content() {
     state.currentStep,
     state.surfaceM2,
     state.formule,
-    state.originPostalCode,
-    state.destinationPostalCode,
-    estimateCityDistanceKm,
+    cityOsrmDistanceKm,
   ]);
 
   // Reward baseline (figé) : en cas de refresh direct en Step 3, on hydrate une fois le baseline
   // (mêmes hypothèses que la Step 2) pour éviter l'affichage vide.
+  // Utilise la distance OSRM ville-à-ville + 5 km.
   useEffect(() => {
     if (state.currentStep < 3) return;
     if (state.rewardBaselineMinEur != null && state.rewardBaselineMaxEur != null) return;
+    if (cityOsrmDistanceKm == null) return; // attend l'OSRM
 
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return;
 
-    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
-    const distanceKm = Math.max(0, cityDistanceKm + 5);
+    const distanceKm = cityOsrmDistanceKm + 5;
 
     const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
       surfaceM2: surface,
@@ -973,8 +872,7 @@ function DevisGratuitsV3Content() {
     state.rewardBaselineMaxEur,
     state.surfaceM2,
     state.formule,
-    state.originPostalCode,
-    state.destinationPostalCode,
+    cityOsrmDistanceKm,
   ]);
 
   // Panier (Step 3): Première estimation (hypothèses fixes) → deltas → Budget affiné
@@ -990,12 +888,13 @@ function DevisGratuitsV3Content() {
 
     const formule = state.formule as PricingFormuleType;
 
-    // Première estimation: distance "villes" +5km, densité=Très meublé, cuisine=3 équipements,
-    // date sans saison, accès RAS, formule = celle sélectionnée (STANDARD par défaut).
-    const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
-    const baseDistanceKm = Math.max(0, cityDistanceKm + 5);
+    // Première estimation: distance OSRM ville-à-ville + 5 km (buffer),
+    // densité=Très meublé, cuisine=3 équipements, date sans saison, accès RAS,
+    // formule = celle sélectionnée (STANDARD par défaut).
+    if (cityOsrmDistanceKm == null) return null; // attend l'OSRM
+    const baseDistanceKm = cityOsrmDistanceKm + 5;
 
-    // Baseline = formule sélectionnée (cohérent avec Step 2)
+    // Baseline = formule sélectionnée (cohérent avec Step 2 et API /api/estimate)
     const baselineInput: Parameters<typeof calculatePricing>[0] = {
       surfaceM2: surface,
       housingType: "t2" as const,
@@ -1218,12 +1117,11 @@ function DevisGratuitsV3Content() {
       formuleLabel,
     };
   }, [
+    cityOsrmDistanceKm,
     routeDistanceKm,
     routeDistanceProvider,
     state.surfaceM2,
     state.formule,
-    state.originPostalCode,
-    state.destinationPostalCode,
     state.density,
     state.kitchenIncluded,
     state.kitchenApplianceCount,
@@ -1444,11 +1342,7 @@ function DevisGratuitsV3Content() {
     e.preventDefault();
     // Reward: figer la valeur Step 2 (avec buffers) au passage vers Step 3
     if (v2PricingByFormuleStep2 && activePricingStep2) {
-      const cityDistanceKm = estimateCityDistanceKm(
-        state.originPostalCode,
-        state.destinationPostalCode
-      );
-      const baselineDistanceKm = Number.isFinite(cityDistanceKm) ? cityDistanceKm + 5 : null;
+      const baselineDistanceKm = cityOsrmDistanceKm != null ? cityOsrmDistanceKm + 5 : null;
       updateFields({
         rewardBaselineMinEur: activePricingStep2.prixMin ?? null,
         rewardBaselineMaxEur: activePricingStep2.prixMax ?? null,
@@ -1788,7 +1682,7 @@ function DevisGratuitsV3Content() {
     }
   }
 
-  return (
+                return (
       <main className="min-h-screen bg-[#F8F9FA] text-[#0F172A]">
         {/* Container adaptatif : décalé à gauche quand sidebar panier visible (≥ lg) */}
         <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 lg:mr-[320px] lg:ml-auto">
@@ -1835,8 +1729,8 @@ function DevisGratuitsV3Content() {
                 formuleLabel={state.formule === "ECONOMIQUE" ? "Éco" : state.formule === "PREMIUM" ? "Premium" : "Standard"}
                 onSubmit={handleSubmitEstimationV2}
                 isSubmitting={false}
-                debug={debugMode}
-                debugRows={v2DebugRowsStep2 ?? undefined}
+                  debug={debugMode}
+                  debugRows={v2DebugRowsStep2 ?? undefined}
               />
             </div>
           )}
@@ -1881,36 +1775,36 @@ function DevisGratuitsV3Content() {
                 access_details={state.access_details ?? ""}
                 selectedFormule={state.formule as "ECONOMIQUE" | "STANDARD" | "PREMIUM"}
                 onFormuleChange={(v) => updateField("formule", v)}
-                pricingByFormule={
-                  pricingByFormule
-                    ? {
-                        ECONOMIQUE: {
-                          priceMin: pricingByFormule.ECONOMIQUE.prixMin,
-                          priceMax: pricingByFormule.ECONOMIQUE.prixMax,
-                        },
-                        STANDARD: {
-                          priceMin: pricingByFormule.STANDARD.prixMin,
-                          priceMax: pricingByFormule.STANDARD.prixMax,
-                        },
-                        PREMIUM: {
-                          priceMin: pricingByFormule.PREMIUM.prixMin,
-                          priceMax: pricingByFormule.PREMIUM.prixMax,
-                        },
-                      }
-                    : null
-                }
+              pricingByFormule={
+                pricingByFormule
+                  ? {
+                      ECONOMIQUE: {
+                        priceMin: pricingByFormule.ECONOMIQUE.prixMin,
+                        priceMax: pricingByFormule.ECONOMIQUE.prixMax,
+                      },
+                      STANDARD: {
+                        priceMin: pricingByFormule.STANDARD.prixMin,
+                        priceMax: pricingByFormule.STANDARD.prixMax,
+                      },
+                      PREMIUM: {
+                        priceMin: pricingByFormule.PREMIUM.prixMin,
+                        priceMax: pricingByFormule.PREMIUM.prixMax,
+                      },
+                    }
+                  : null
+              }
                 firstName={state.firstName}
                 email={state.email}
                 phone={state.phone}
-                serviceFurnitureStorage={state.serviceFurnitureStorage}
-                serviceCleaning={state.serviceCleaning}
-                serviceFullPacking={state.serviceFullPacking}
-                serviceFurnitureAssembly={state.serviceFurnitureAssembly}
-                serviceInsurance={state.serviceInsurance}
-                serviceWasteRemoval={state.serviceWasteRemoval}
-                serviceHelpWithoutTruck={state.serviceHelpWithoutTruck}
-                serviceSpecificSchedule={state.serviceSpecificSchedule}
-                specificNotes={state.specificNotes}
+              serviceFurnitureStorage={state.serviceFurnitureStorage}
+              serviceCleaning={state.serviceCleaning}
+              serviceFullPacking={state.serviceFullPacking}
+              serviceFurnitureAssembly={state.serviceFurnitureAssembly}
+              serviceInsurance={state.serviceInsurance}
+              serviceWasteRemoval={state.serviceWasteRemoval}
+              serviceHelpWithoutTruck={state.serviceHelpWithoutTruck}
+              serviceSpecificSchedule={state.serviceSpecificSchedule}
+              specificNotes={state.specificNotes}
               />
             </div>
           )}
@@ -1923,22 +1817,22 @@ function DevisGratuitsV3Content() {
                 // Économies basées sur la formule sélectionnée (pas la fourchette globale)
                 estimateMinEur={activePricing?.prixMin ?? null}
                 estimateMaxEur={activePricing?.prixMax ?? null}
-                estimateIsIndicative={estimateIsIndicative}
+              estimateIsIndicative={estimateIsIndicative}
                 email={state.email}
-                recap={{
-                  originCity: state.originCity,
-                  originPostalCode: state.originPostalCode,
-                  destinationCity: state.destinationCity,
-                  destinationPostalCode: state.destinationPostalCode,
-                  movingDate: state.movingDate,
-                  formule: state.formule,
-                  surfaceM2: state.surfaceM2,
-                }}
-              />
-            </div>
-          )}
-        </div>
-      </main>
+              recap={{
+                originCity: state.originCity,
+                originPostalCode: state.originPostalCode,
+                destinationCity: state.destinationCity,
+                destinationPostalCode: state.destinationPostalCode,
+                movingDate: state.movingDate,
+                formule: state.formule,
+                surfaceM2: state.surfaceM2,
+              }}
+            />
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
 

@@ -1,5 +1,44 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 — Distance unifiée OSRM partout (API + Step 2 + Step 3)
+
+**Problème** : les montants "Première estimation" (Step 2, Step 3 sidebar, moverz.fr)
+ne correspondaient pas entre eux. Cause racine : 3 méthodes de calcul de distance différentes :
+- API `/api/estimate` : heuristique CP (ex. Paris→Marseille = 1005 km, réalité ≈ 779 km)
+- Step 2 / Step 3 baseline : Haversine vol d'oiseau (≈ 660 km)
+- Step 3 "Budget affiné" : OSRM route réelle (≈ 779 km)
+
+**Solution** : tout unifier sur **OSRM (route réelle)** + buffer de +5 km pour les estimations
+(le client a une "bonne surprise" quand il entre ses vraies adresses).
+
+### Changements
+
+| Endroit | Avant | Après |
+|---|---|---|
+| API `/api/estimate` | Heuristique CP (serveur) | BAN géocodage → OSRM (serveur) + 5 km |
+| Step 2 | `estimateCityDistanceKm()` (Haversine/CP) | `cityOsrmDistanceKm + 5` |
+| Step 3 "1ère estimation" | `estimateCityDistanceKm()` (Haversine/CP) | `cityOsrmDistanceKm + 5` |
+| Step 3 "Budget affiné" | `routeDistanceKm` (OSRM adresses) | inchangé |
+
+### `cityOsrmDistanceKm` (nouveau state)
+- Capturé depuis `routeDistanceKm` tant que `currentStep < 3` (coords = ville)
+- Figé une fois en Step 3 (ne bouge plus quand les adresses exactes arrivent)
+- Si arrivée directe en Step 3 (moverz.fr), capture la 1ère valeur OSRM puis fige
+
+### API `/api/estimate` — OSRM côté serveur
+- Accepte désormais `originLat/originLon/destinationLat/destinationLon` (optionnel)
+- Si pas de coords : géocode via BAN (`api-adresse.data.gouv.fr`)
+- Appelle OSRM (`router.project-osrm.org`) pour distance route
+- Fallback heuristique CP si BAN/OSRM échouent
+- Retourne `distanceProvider: "osrm" | "heuristic"` pour debug
+
+### Code supprimé
+- `estimateDistanceKm()` (Haversine + heuristique CP)
+- `v2CityCoordsRef` (capture coords ville pour Haversine)
+- `estimateCityDistanceKm()` (wrapper)
+
+---
+
 ## 2026-02-11 — Responsive "best-in-class" (mobile / desktop)
 
 **Objectif** : rendre le code responsive clair, cohérent et facilement modifiable.
