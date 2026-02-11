@@ -1,5 +1,124 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 (7ème itération) — Mobile-First : Design sobre et clean
+
+**Problème** : Le design premium 2026 était trop chargé sur mobile (glassmorphism, shadows complexes, effets shine, padding généreux, pills massives). Principe **Mobile-First** non respecté.
+
+**Solution** : Design sobre mobile + design premium desktop uniquement.
+
+### 🎯 Règles Mobile-First
+
+| Élément | Mobile (sobre) | Desktop (premium) |
+|---------|----------------|-------------------|
+| **Cards principales** | `bg-white` opaque, `shadow-sm`, `p-6`, `rounded-xl`, `border-gray-100` | `bg-white/80 backdrop-blur-xl`, `shadow-[0_8px_32px_rgba(107,207,207,0.12)]`, `p-10`, `rounded-2xl`, `border-white/20` |
+| **CTA buttons** | `bg-[#6BCFCF]` solid, `shadow-sm`, `py-4`, `text-base`, hover `bg-[#5AB8B8]` | `bg-gradient-to-r from-[#A8E6D8] via-[#6BCFCF] to-[#5AB8B8]`, `shadow-[0_8px_30px_rgba(107,207,207,0.4)]`, `py-5`, `text-lg`, shine effect |
+| **Pills sélection** | `px-5 py-3`, `rounded-xl`, `shadow-sm`, scale `1.0` | `px-8 py-5`, `rounded-2xl`, `shadow-[0_8px_30px_rgba(107,207,207,0.3)]`, `hover:scale-[1.02]` |
+| **Sub-cards** | `bg-white`, `shadow-sm`, `p-6`, `border-gray-100` | `bg-white/70 backdrop-blur-xl`, `shadow-[0_8px_32px_rgba(0,0,0,0.08)]`, `p-8`, `border-white/30` |
+| **Espacements** | `space-y-6`, `gap-3` | `space-y-8`, `gap-4` |
+| **Sidebar** | En bas (mobile), `p-5`, `space-y-5`, `rounded-xl`, `shadow-md` | Sticky droite, `p-10`, `space-y-8`, `rounded-3xl`, `shadow-2xl` |
+| **Textes badges** | `text-xs`, `px-3 py-1.5` | `text-sm`, `px-4 py-2` |
+| **Icons** | `w-3 h-3` | `w-4 h-4` |
+| **Budget hero** | Montant `text-5xl`, min/max `text-lg` | Montant `text-7xl`, min/max `text-2xl` |
+
+### ✅ Modifications appliquées
+
+**1. Cards principales (Steps 1-4)**
+```tsx
+// Mobile sobre → Desktop premium
+className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/80 sm:backdrop-blur-xl border border-gray-100 sm:border-white/20 shadow-sm sm:shadow-[0_8px_32px_rgba(107,207,207,0.12)] p-6 sm:p-10"
+```
+
+**2. CTA Buttons (tous les steps)**
+```tsx
+// Mobile solid cyan → Desktop gradient + shine
+className="bg-[#6BCFCF] sm:bg-gradient-to-r sm:from-[#A8E6D8] sm:via-[#6BCFCF] sm:to-[#5AB8B8] py-4 sm:py-5 text-base sm:text-lg shadow-sm sm:shadow-[0_8px_30px_rgba(107,207,207,0.4)]"
+
+// Shine effect desktop only
+<div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+```
+
+**3. Pills (densité, cuisine, formules, accès)**
+```tsx
+// Mobile compactes → Desktop généreuses
+className="px-5 py-3 sm:px-8 sm:py-5 rounded-xl sm:rounded-2xl shadow-sm sm:shadow-[0_8px_30px_rgba(107,207,207,0.3)]"
+```
+
+**4. Sub-cards (Step 2 budget, Step 3 adresses, Step 4 recap)**
+```tsx
+// Mobile opaques → Desktop glassmorphism
+className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/70 sm:backdrop-blur-xl border border-gray-100 sm:border-white/30 shadow-sm sm:shadow-[0_8px_32px_rgba(0,0,0,0.08)] p-6 sm:p-8"
+```
+
+**5. Sidebar mobile (Step 3)**
+- **Ordre** : `order-last lg:order-none` (sidebar en bas mobile, droite desktop)
+- **Sticky** : désactivé mobile, `lg:sticky lg:top-20` desktop
+- **Padding** : `p-5 sm:p-10`, `space-y-5 sm:space-y-8`
+- **Border radius** : `rounded-xl sm:rounded-3xl`
+- **Shadow** : `shadow-md sm:shadow-2xl`
+- **Pills ajustements** : `px-4 py-3 sm:px-5 sm:py-4`, `rounded-xl sm:rounded-2xl`
+- **Dots** : `w-2 h-2 sm:w-2.5 sm:h-2.5`
+- **Textes** : `text-xs sm:text-sm`, `text-base sm:text-lg`
+
+**6. Budget hero (sidebar)**
+- **Titre** : `text-lg sm:text-xl`
+- **Montant principal** : `text-5xl sm:text-7xl`
+- **Min/Max** : `text-lg sm:text-2xl`
+- **Padding** : `p-5 sm:p-8`, `mb-4 sm:mb-6`
+
+**7. Espacements globaux**
+```tsx
+// Mobile compact → Desktop aéré
+space-y-6 sm:space-y-8
+gap-3 sm:gap-4
+p-6 sm:p-10
+```
+
+**8. Badges (Step 4 "Dossier créé")**
+```tsx
+px-3 py-1.5 sm:px-4 sm:py-2
+text-xs sm:text-sm
+<Check className="w-3 h-3 sm:w-4 sm:h-4" />
+```
+
+### 📊 Impact
+
+| Métrique | Mobile avant | Mobile après | Desktop |
+|----------|--------------|--------------|---------|
+| **Lisibilité** | ❌ Glassmorphism difficile à lire | ✅ Opaque, contraste max | ✅ Glassmorphism subtil |
+| **Performance** | ❌ Backdrop-blur coûteux | ✅ Pas de blur | ✅ Blur si GPU OK |
+| **UX tactile** | ❌ Pills petites, CTA fins | ✅ Zones tactiles généreuses | ✅ Hover states riches |
+| **Cohérence** | ❌ Même design mobile/desktop | ✅ Sobre mobile, premium desktop | ✅ Premium assumé |
+| **Load time** | ❌ Effets lourds mobile | ✅ Minimal CSS mobile | ✅ Premium CSS chargé |
+
+### 🎨 Philosophie Mobile-First
+
+**Mobile = SOBRE ET EFFICACE**  
+- Opacité totale (meilleure lisibilité)
+- Shadows simples (`shadow-sm`)
+- Pas d'effets shine/blur/glow
+- Padding réduit (`p-5`, `p-6`)
+- CTA solid avec hover simple
+- Textes compacts mais lisibles
+
+**Desktop = PREMIUM ET IMMERSIF**  
+- Glassmorphism subtil (`backdrop-blur-xl`, `bg-white/80`)
+- Shadows colorées complexes (`shadow-[0_8px_32px_rgba(107,207,207,0.12)]`)
+- Effets shine, hover scale, glow
+- Padding généreux (`p-8`, `p-10`)
+- CTA gradient avec multi-layers
+- Typographie massive et aérée
+
+**Breakpoint** : `sm` (640px) pour tout (cohérence absolue)
+
+### ✅ Résultat
+
+- **Mobile** : Design sobre, rapide, tactile optimal, lisibilité maximale
+- **Desktop** : Design premium 2026 conservé, immersif, moderne
+- **Responsive** : Cohérent sur toutes tailles d'écran
+- **Performance** : Optimisé mobile (pas de blur/glow/shine), premium assumé desktop
+
+---
+
 ## 2026-02-11 (6ème itération) — Sidebar Step 3 ultra-premium : détails visuels + micro-interactions
 
 **Problème** : La sidebar Step 3 avait le design premium mais manquait de détails visuels (pills plates, dots invisibles, titres sans décoration, couleurs ternes).

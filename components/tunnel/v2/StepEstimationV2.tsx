@@ -39,9 +39,9 @@ export function StepEstimationV2({
       : "—";
 
   return (
-    <form onSubmit={onSubmit} className="space-y-8">
+    <form onSubmit={onSubmit} className="space-y-6 sm:space-y-8">
       <div className="space-y-3">
-        <div className="rounded-2xl bg-white/70 backdrop-blur-xl border border-white/30 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500 space-y-4">
+        <div className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/70 sm:backdrop-blur-xl border border-gray-100 sm:border-white/30 p-6 sm:p-8 shadow-sm sm:shadow-[0_8px_32px_rgba(0,0,0,0.08)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500 space-y-4">
           <div>
             <p className="text-sm text-[#1E293B]/70">Basé sur des déménagements similaires</p>
           </div>
@@ -71,7 +71,7 @@ export function StepEstimationV2({
       </p>
 
       {debug && debugRows.length > 0 && (
-        <div className="rounded-2xl bg-white/70 backdrop-blur-xl border border-white/30 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500">
+        <div className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/70 sm:backdrop-blur-xl border border-gray-100 sm:border-white/30 p-6 sm:p-8 shadow-sm sm:shadow-[0_8px_32px_rgba(0,0,0,0.08)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500">
           <p className="text-sm font-semibold text-[#0F172A]">Debug — détail du calcul</p>
           <div className="mt-3 space-y-2 text-sm">
             {debugRows.map((r) => (
@@ -90,15 +90,15 @@ export function StepEstimationV2({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="group relative w-full rounded-xl bg-gradient-to-r from-[#A8E6D8] via-[#6BCFCF] to-[#5AB8B8] border border-white/20 py-5 text-lg font-bold text-white shadow-[0_8px_30px_rgba(107,207,207,0.4)] hover:shadow-[0_12px_50px_rgba(107,207,207,0.6)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 overflow-hidden"
+          className="group relative w-full rounded-xl bg-[#6BCFCF] sm:bg-gradient-to-r sm:from-[#A8E6D8] sm:via-[#6BCFCF] sm:to-[#5AB8B8] border border-white/20 py-4 sm:py-5 text-base sm:text-lg font-bold text-white shadow-sm sm:shadow-[0_8px_30px_rgba(107,207,207,0.4)] hover:bg-[#5AB8B8] sm:hover:shadow-[0_12px_50px_rgba(107,207,207,0.6)] transition-all duration-300 sm:hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 overflow-hidden"
         >
           <span className="relative z-10">{isSubmitting ? "Chargement..." : "Affiner mon devis"}</span>
           
-          {/* Gradient hover overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#A8E6D8] to-[#6BCFCF] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {/* Gradient hover overlay - desktop only */}
+          <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-[#A8E6D8] to-[#6BCFCF] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
-          {/* Shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+          {/* Shine effect - desktop only */}
+          <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
         </button>
         <p className="text-center text-sm text-[#1E293B]/70">~1 min restante</p>
       </div>

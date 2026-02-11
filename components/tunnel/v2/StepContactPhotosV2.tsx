@@ -106,11 +106,11 @@ export function StepContactPhotosV2({
   ]);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-10">
+    <div className="max-w-3xl mx-auto space-y-6 sm:space-y-10">
       <div className="text-center space-y-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 border border-emerald-300 px-4 py-2 text-sm font-bold text-emerald-700">
+        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold text-emerald-700">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <Check className="w-4 h-4" strokeWidth={3} />
+          <Check className="w-3 h-3 sm:w-4 sm:h-4" strokeWidth={3} />
           Dossier créé
         </div>
 
@@ -119,7 +119,7 @@ export function StepContactPhotosV2({
         </h1>
       </div>
 
-      <div className="rounded-2xl bg-white/70 backdrop-blur-xl border border-white/30 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500">
+      <div className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/70 sm:backdrop-blur-xl border border-gray-100 sm:border-white/30 p-6 sm:p-8 shadow-sm sm:shadow-[0_8px_32px_rgba(0,0,0,0.08)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500">
         <div className="flex items-start gap-4">
           <div className="mt-0.5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6BCFCF]/10">
             <Mail className="h-6 w-6 text-[#6BCFCF]" strokeWidth={2} />
@@ -157,7 +157,7 @@ export function StepContactPhotosV2({
         </div>
       </div>
 
-      <div className="rounded-2xl bg-[#F8FAFB]/80 backdrop-blur-xl p-8 border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500">
+      <div className="rounded-xl sm:rounded-2xl bg-[#F8FAFB] sm:bg-[#F8FAFB]/80 sm:backdrop-blur-xl p-6 sm:p-8 border border-gray-100 sm:border-white/30 shadow-sm sm:shadow-[0_8px_32px_rgba(0,0,0,0.08)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#6BCFCF]/10 flex items-center justify-center">
             <FileText className="h-5 w-5 text-[#6BCFCF]" strokeWidth={2} />
@@ -172,7 +172,7 @@ export function StepContactPhotosV2({
             {recapRows.map((r) => (
               <div
                 key={r.label}
-                className="flex items-start justify-between gap-4 rounded-xl bg-white px-5 py-4 border border-gray-100 shadow-sm"
+                className="flex items-start justify-between gap-4 rounded-xl bg-white px-4 py-3 sm:px-5 sm:py-4 border border-gray-100 shadow-sm"
               >
                 <p className="text-sm font-medium text-[#1E293B]/70">{r.label}</p>
                 <p className="text-sm font-semibold text-[#0F172A] text-right">{r.value}</p>
