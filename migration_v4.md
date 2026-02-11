@@ -1,5 +1,117 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 (6ème itération) — Sidebar Step 3 ultra-premium : détails visuels + micro-interactions
+
+**Problème** : La sidebar Step 3 avait le design premium mais manquait de détails visuels (pills plates, dots invisibles, titres sans décoration, couleurs ternes).
+
+**Améliorations micro-détails** :
+- ✅ Pills ajustements glassmorphism avec border glow
+- ✅ Dots colorés plus gros avec shadow glow coloré
+- ✅ Titre "AJUSTEMENTS" avec séparateurs gradient stylés
+- ✅ Budget hero avec subtle glow top turquoise
+- ✅ Montants ajustements plus gros et couleurs vives
+- ✅ Première estimation plus visible avec glassmorphism
+- ✅ Cohérence couleurs rose-400/emerald-400 partout
+
+### 1️⃣ Pills Ajustements Glassmorphism Premium
+
+**Avant** : `bg-white/90` simple  
+**Après** :
+```tsx
+bg-white/95 backdrop-blur-sm
+border border-white/40
+hover:bg-white 
+hover:border-white/60 
+hover:shadow-[0_4px_16px_rgba(255,255,255,0.3)]
+```
+
+### 2️⃣ Dots Colorés avec Shadow Glow
+
+**Avant** : `w-2 h-2` sans glow  
+**Après** :
+```tsx
+w-2.5 h-2.5 rounded-full
+
+// Rose (positif)
+bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.6)]
+
+// Emerald (négatif)
+bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]
+
+// Gray (neutre)
+bg-gray-400
+```
+
+### 3️⃣ Titre "AJUSTEMENTS" avec Séparateurs
+
+**Avant** : texte simple  
+**Après** :
+```tsx
+<div className="flex items-center gap-3">
+  <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/40" />
+  <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/90">
+    Ajustements
+  </p>
+  <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/40" />
+</div>
+```
+
+### 4️⃣ Budget Hero avec Subtle Glow Top
+
+**Ajout** :
+```tsx
+<div className="rounded-2xl bg-white/95 backdrop-blur-sm p-8 shadow-lg relative overflow-hidden">
+  {/* Subtle glow top */}
+  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#6BCFCF]/30 to-transparent" />
+  
+  {/* Contenu */}
+</div>
+```
+
+### 5️⃣ Montants Ajustements Plus Gros
+
+**Avant** : `text-base` + couleurs foncées (600)  
+**Après** :
+```tsx
+// Typographie
+text-lg font-black (au lieu de text-base)
+
+// Couleurs vives
+text-rose-400 (au lieu de rose-600)
+text-emerald-400 (au lieu de emerald-600)
+```
+
+### 6️⃣ Première Estimation Plus Visible
+
+**Avant** : `bg-white/10` invisible  
+**Après** :
+```tsx
+bg-white/10 backdrop-blur-sm
+border border-white/20
+hover:bg-white/15 
+hover:border-white/30
+shadow-sm
+```
+
+### 7️⃣ Cohérence Couleurs Partout
+
+**Changement global** :
+- Min/Max budget hero : `emerald-600` → `emerald-400`
+- Min/Max budget hero : `rose-600` → `rose-400`
+- Min/Max première estimation : `emerald-600` → `emerald-400`
+- Min/Max première estimation : `rose-600` → `rose-400`
+- Montants ajustements : `rose-600` → `rose-400`, `emerald-600` → `emerald-400`
+
+**Résultat** : couleurs vives cohérentes `rose-400` et `emerald-400` dans toute la sidebar.
+
+### ⚠️ Aucun changement fonctionnel
+- Tracking inchangé
+- Champs inchangés
+- Payload inchangé
+- Textes et liens inchangés
+
+---
+
 ## 2026-02-11 (5ème itération) — Design System Premium 2026 Moverz : glassmorphism + effets ultra-modernes
 
 **Problème** : La 4ème itération respectait la charte couleurs mais manquait tous les effets visuels premium 2026 (glassmorphism, shadows colorées, gradients sophistiqués, micro-animations, shine effects).
