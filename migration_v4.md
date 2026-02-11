@@ -180,6 +180,9 @@ ring-cyan-500/30    // Focus states
 
 **Aucun changement** : les données envoyées restent identiques.
 
+### Fix build (CapRover)
+- Correction TypeScript : `fmtEur` défini au scope du composant (utilisable dans le JSX Step 3) pour éviter `Cannot find name 'fmtEur'` en build.
+
 ---
 
 ## 2026-02-11 — Centrage desktop corrigé + layout Step 3 "premium 2026" (v2)

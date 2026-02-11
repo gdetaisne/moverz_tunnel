@@ -64,6 +64,10 @@ function DevisGratuitsV3Content() {
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
 
+  // Formatter utilisé dans le rendu (sidebar Step 3, etc.)
+  const fmtEur = (n: number) =>
+    new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+
   const containerClassName = useMemo(() => {
     if (state.currentStep === 3) {
       // Step 3: layout grille desktop (formulaire + sidebar côte à côte)
