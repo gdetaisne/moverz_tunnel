@@ -232,6 +232,47 @@ function DevisGratuitsV3Content() {
     };
   }, [urlLeadId, updateFields]);
 
+  // ── Hydratation depuis query params (moverz.fr → tunnel Step 3) ──
+  // URL type: /devis-gratuits-v3?step=3&originPostalCode=75011&originCity=Paris&destinationPostalCode=13001&destinationCity=Marseille&surfaceM2=60&movingDate=2026-06-15
+  const hydratedFromUrlRef = useRef(false);
+  useEffect(() => {
+    if (hydratedFromUrlRef.current) return;
+    const stepParam = searchParams.get("step");
+    if (stepParam !== "3") return; // uniquement si renvoyé depuis moverz.fr
+
+    hydratedFromUrlRef.current = true;
+
+    const next: Partial<typeof state> = {};
+
+    const oPC = searchParams.get("originPostalCode")?.trim();
+    if (oPC) next.originPostalCode = oPC;
+
+    const oCity = searchParams.get("originCity")?.trim();
+    if (oCity) next.originCity = oCity;
+
+    const dPC = searchParams.get("destinationPostalCode")?.trim();
+    if (dPC) next.destinationPostalCode = dPC;
+
+    const dCity = searchParams.get("destinationCity")?.trim();
+    if (dCity) next.destinationCity = dCity;
+
+    const surfParam = searchParams.get("surfaceM2")?.trim();
+    if (surfParam && Number.isFinite(Number(surfParam)) && Number(surfParam) >= 10) {
+      next.surfaceM2 = surfParam;
+    }
+
+    const dateParam = searchParams.get("movingDate")?.trim();
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      next.movingDate = dateParam;
+    }
+
+    if (Object.keys(next).length > 0) {
+      next.currentStep = 3;
+      updateFields(next);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Assurer des coordonnées même si l'adresse provient d'un lien / BO.
   useEffect(() => {
     if (state.originLat != null && state.originLon != null) return;
@@ -1554,12 +1595,59 @@ function DevisGratuitsV3Content() {
           : kitchenIncludedForBo === "appliances"
           ? kitchenAppliancesCount
           : undefined;
+      // --- Mappings tunnel → Back Office ---
+      const densityToBO = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" | undefined => {
+        if (d === "light") return "LIGHT";
+        if (d === "normal") return "MEDIUM";
+        if (d === "dense") return "HEAVY";
+        return undefined;
+      };
+      const elevatorToBO = (e: string): "OUI" | "NON" | "PARTIEL" => {
+        const p = toPricingElevator(e);
+        if (p === "yes") return "OUI";
+        if (p === "partial") return "PARTIEL";
+        return "NON";
+      };
+
+      const originIsHouse = isHouseType(state.originHousingType);
+      const destIsHouse = isHouseType(state.destinationHousingType);
+
+      // Snapshot complet du panier ("Votre panier") pour archivage BO
+      const pricingSnapshot = (() => {
+        if (!v2PricingCart || !pricingByFormule || !activePricing) return undefined;
+        return {
+          capturedAt: new Date().toISOString(),
+          formule: state.formule,
+          // Résultat final pour la formule sélectionnée
+          refinedMinEur: v2PricingCart.refinedMinEur,
+          refinedMaxEur: v2PricingCart.refinedMaxEur,
+          refinedCenterEur: v2PricingCart.refinedCenterEur,
+          // Première estimation (baseline)
+          firstEstimateMinEur: v2PricingCart.firstEstimateMinEur,
+          firstEstimateMaxEur: v2PricingCart.firstEstimateMaxEur,
+          firstEstimateCenterEur: v2PricingCart.firstEstimateCenterEur,
+          // Lignes d'ajustement du panier
+          lines: v2PricingCart.lines,
+          // Prix par formule (les 3 formules)
+          byFormule: (Object.entries(pricingByFormule) as [string, ReturnType<typeof calculatePricing>][]).reduce(
+            (acc, [key, val]) => {
+              acc[key] = { prixMin: val.prixMin, prixMax: val.prixMax, prixFinal: val.prixFinal, volumeM3: val.volumeM3 };
+              return acc;
+            },
+            {} as Record<string, { prixMin: number; prixMax: number; prixFinal: number; volumeM3: number }>
+          ),
+        };
+      })();
+
       const payload = {
-        firstName: state.firstName.trim(), // obligatoire côté contrat BO (string, possiblement vide)
+        // Contact
+        firstName: state.firstName.trim(),
         email: state.email.trim().toLowerCase(),
         phone: state.phone.trim() || undefined,
         source,
         estimationMethod: "FORM" as const,
+
+        // Adresses
         originAddress: state.originAddress || undefined,
         originCity: state.originCity || undefined,
         originPostalCode: state.originPostalCode || undefined,
@@ -1568,6 +1656,43 @@ function DevisGratuitsV3Content() {
         destCity: state.destinationCity || undefined,
         destPostalCode: state.destinationPostalCode || undefined,
         destCountryCode: state.destinationCountryCode || undefined,
+
+        // Volume & Surface
+        surfaceM2: parseInt(state.surfaceM2) || undefined,
+        estimatedVolume: activePricing?.volumeM3 ?? undefined,
+        density: densityToBO(state.density || "dense"),
+
+        // Formule & Prix
+        formule: state.formule,
+        estimatedPriceMin: activePricing?.prixMin ?? undefined,
+        estimatedPriceAvg: activePricing?.prixFinal ?? undefined,
+        estimatedPriceMax: activePricing?.prixMax ?? undefined,
+
+        // Logement origine
+        originHousingType: state.originHousingType || undefined,
+        originFloor: originIsHouse
+          ? undefined
+          : Math.max(0, parseInt(state.originFloor || "0", 10) || 0),
+        originElevator: state.originElevator ? elevatorToBO(state.originElevator) : undefined,
+        originFurnitureLift: state.originFurnitureLift || undefined,
+        originCarryDistance: state.originCarryDistance || undefined,
+        originParkingAuth: state.originParkingAuth || undefined,
+
+        // Logement destination
+        destHousingType: state.destinationHousingType || undefined,
+        destFloor: destIsHouse
+          ? undefined
+          : Math.max(0, parseInt(state.destinationFloor || "0", 10) || 0),
+        destElevator: state.destinationElevator ? elevatorToBO(state.destinationElevator) : undefined,
+        destFurnitureLift: state.destinationFurnitureLift || undefined,
+        destCarryDistance: state.destinationCarryDistance || undefined,
+        destParkingAuth: state.destinationParkingAuth || undefined,
+
+        // Dates
+        movingDate: toIsoDate(state.movingDate),
+        dateFlexible: state.dateFlexible,
+
+        // Options tunnel (JSON structuré — source de vérité pour toutes les données détaillées)
         tunnelOptions: {
           pricing: {
             distanceKm: routeDistanceKm ?? undefined,
@@ -1586,21 +1711,22 @@ function DevisGratuitsV3Content() {
             kitchenApplianceCount: kitchenApplianceCountForBo,
             extraVolumeM3: kitchenExtraVolumeM3,
           },
+          services: {
+            furnitureStorage: state.serviceFurnitureStorage,
+            cleaning: state.serviceCleaning,
+            fullPacking: state.serviceFullPacking,
+            furnitureAssembly: state.serviceFurnitureAssembly,
+            insurance: state.serviceInsurance,
+            wasteRemoval: state.serviceWasteRemoval,
+            helpWithoutTruck: state.serviceHelpWithoutTruck,
+            specificSchedule: state.serviceSpecificSchedule,
+            debarras: state.serviceDebarras,
+            dismantling: state.serviceDismantling,
+            piano: state.servicePiano !== "none" ? state.servicePiano : undefined,
+          },
+          notes: state.specificNotes?.trim() || undefined,
+          pricingSnapshot: pricingSnapshot,
         },
-        // Logement (Back Office)
-        originHousingType: state.originHousingType || undefined,
-        originFloor:
-          (state.originHousingType || "").trim() === "house"
-            ? undefined
-            : Math.max(0, parseInt(state.originFloor || "0", 10) || 0),
-        destHousingType: state.destinationHousingType || undefined,
-        destFloor:
-          (state.destinationHousingType || "").trim() === "house"
-            ? undefined
-            : Math.max(0, parseInt(state.destinationFloor || "0", 10) || 0),
-        // Dates
-        movingDate: toIsoDate(state.movingDate),
-        dateFlexible: state.dateFlexible,
       };
 
       if (state.leadId) {

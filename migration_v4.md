@@ -1,5 +1,34 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 — Intégration moverz.fr ↔ Tunnel (API estimate + deep link Step 3)
+
+**Objectif** : permettre à la homepage `moverz.fr` d'afficher une estimation budget à partir de 3 champs (origine, destination, surface), puis de rediriger vers le tunnel Step 3 avec les champs pré-remplis.
+
+### 1) Endpoint `GET /api/estimate`
+- **Route** : `app/api/estimate/route.ts`
+- **Params** : `originPostalCode`, `destinationPostalCode`, `surface` (m²)
+- **Retour** : `{ prixMin, prixMax, prixCentre, volumeM3, distanceKm, formule: "STANDARD" }`
+- **Hypothèses** : mêmes que Step 2 du tunnel (dense, cuisine 3 appareils, pas de saison, accès RAS, formule STANDARD).
+- **Distance** : heuristique départementale (pas de GPS côté home).
+- **CORS** : à configurer dans `next.config.ts` si moverz.fr est sur un domaine différent.
+
+### 2) Deep link vers Step 3
+- **URL type** : `/devis-gratuits-v3?step=3&originPostalCode=75011&originCity=Paris&destinationPostalCode=13001&destinationCity=Marseille&surfaceM2=60&movingDate=2026-06-15`
+- **Comportement** : si `?step=3` est présent, le tunnel hydrate son state depuis les query params et démarre directement en Step 3.
+- **Params supportés** : `originPostalCode`, `originCity`, `destinationPostalCode`, `destinationCity`, `surfaceM2`, `movingDate`.
+- **Fichier modifié** : `app/devis-gratuits-v3/page.tsx` (useEffect d'hydratation).
+
+### 3) Côté moverz.fr (repo séparé)
+- Ajouter un mini formulaire (3 champs : villes départ/arrivée + surface).
+- Appeler `GET /api/estimate?…` pour afficher le budget.
+- CTA "Affiner mon budget" → redirige vers le deep link Step 3.
+
+### Fichiers ajoutés/modifiés
+- **Ajouté** : `app/api/estimate/route.ts`
+- **Modifié** : `app/devis-gratuits-v3/page.tsx`
+
+---
+
 ## 2026-02-11 — Choix formule déplacé de Step 2 vers Step 3
 
 - **Décision** : déplacer le sélecteur de formule (Éco/Standard/Premium) de l'écran estimation (Step 2) vers l'écran accès/logistique (Step 3), entre "Options supplémentaires" et "Où recevoir vos devis".
