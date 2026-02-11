@@ -41,7 +41,7 @@ export function StepEstimationV2({
   return (
     <form onSubmit={onSubmit} className="space-y-8">
       <div className="space-y-3">
-        <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg space-y-4">
+        <div className="rounded-2xl bg-white/70 backdrop-blur-xl border border-white/30 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500 space-y-4">
           <div>
             <p className="text-sm text-[#1E293B]/70">Basé sur des déménagements similaires</p>
           </div>
@@ -71,7 +71,7 @@ export function StepEstimationV2({
       </p>
 
       {debug && debugRows.length > 0 && (
-        <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+        <div className="rounded-2xl bg-white/70 backdrop-blur-xl border border-white/30 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500">
           <p className="text-sm font-semibold text-[#0F172A]">Debug — détail du calcul</p>
           <div className="mt-3 space-y-2 text-sm">
             {debugRows.map((r) => (

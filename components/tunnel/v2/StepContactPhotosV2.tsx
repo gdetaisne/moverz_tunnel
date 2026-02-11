@@ -119,7 +119,7 @@ export function StepContactPhotosV2({
         </h1>
       </div>
 
-      <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+      <div className="rounded-2xl bg-white/70 backdrop-blur-xl border border-white/30 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500">
         <div className="flex items-start gap-4">
           <div className="mt-0.5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6BCFCF]/10">
             <Mail className="h-6 w-6 text-[#6BCFCF]" strokeWidth={2} />
@@ -157,7 +157,7 @@ export function StepContactPhotosV2({
         </div>
       </div>
 
-      <div className="rounded-2xl bg-[#F8FAFB] p-8 border border-gray-100">
+      <div className="rounded-2xl bg-[#F8FAFB]/80 backdrop-blur-xl p-8 border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#6BCFCF]/10 flex items-center justify-center">
             <FileText className="h-5 w-5 text-[#6BCFCF]" strokeWidth={2} />
