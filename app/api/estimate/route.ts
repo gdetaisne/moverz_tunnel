@@ -3,14 +3,17 @@ import { z } from "zod";
 import { calculatePricing } from "@/lib/pricing/calculate";
 
 /**
- * GET /api/estimate?originPostalCode=75011&destinationPostalCode=13001&surface=60
+ * GET /api/estimate?originPostalCode=75011&destinationPostalCode=13001&surface=60&formule=STANDARD
  *
- * Retourne une estimation STANDARD rapide (fourchette min/max)
+ * Retourne une estimation rapide (fourchette min/max)
  * avec des hypothèses conservatrices (mêmes que Step 2 du tunnel).
+ * Le paramètre `formule` est optionnel (défaut: STANDARD).
  *
  * Utilisé par la home moverz.fr pour afficher un budget indicatif
  * avant de rediriger vers le tunnel complet (Step 3).
  */
+
+const FORMULES = ["ECONOMIQUE", "STANDARD", "PREMIUM"] as const;
 
 const EstimateQuerySchema = z.object({
   originPostalCode: z
@@ -26,6 +29,7 @@ const EstimateQuerySchema = z.object({
     .int()
     .min(10, "Surface min 10 m²")
     .max(500, "Surface max 500 m²"),
+  formule: z.enum(FORMULES).optional().default("STANDARD"),
 });
 
 /**
@@ -57,7 +61,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const { originPostalCode, destinationPostalCode, surface } = parsed.data;
+    const { originPostalCode, destinationPostalCode, surface, formule } = parsed.data;
 
     // Distance heuristique (+5 km buffer, comme Step 2 du tunnel)
     const cityDistanceKm = estimateDistanceFromPostalCodes(
@@ -77,7 +81,7 @@ export async function GET(req: NextRequest) {
       originElevator: "yes",
       destinationFloor: 0,
       destinationElevator: "yes",
-      formule: "STANDARD",
+      formule,
       services: { monteMeuble: false, piano: null, debarras: false },
       extraVolumeM3: 3 * 0.6, // ~cuisine (3 appareils)
     });
@@ -88,7 +92,7 @@ export async function GET(req: NextRequest) {
       prixCentre: Math.round((result.prixMin + result.prixMax) / 2),
       volumeM3: result.volumeM3,
       distanceKm,
-      formule: "STANDARD",
+      formule,
       // Métadonnées pour debug
       input: {
         originPostalCode,

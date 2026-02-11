@@ -43,12 +43,13 @@ interface StepAccessLogisticsV2Props {
     refinedMaxEur: number | null;
     refinedCenterEur: number | null;
     lines: Array<{
-      key: "distance" | "density" | "kitchen" | "date" | "access" | "formule";
+      key: "distance" | "density" | "kitchen" | "date" | "access";
       label: string;
       status: string;
       amountEur: number;
       confirmed?: boolean;
     }>;
+    formuleLabel?: string;
   };
   onFieldChange: (field: string, value: any) => void;
   onSubmit: () => void;
@@ -1050,7 +1051,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               <div className="text-sm text-[#1E293B]/60">—</div>
             )}
             <p className="text-[10px] text-[#1E293B]/60">
-              formule Standard • villes +5 km • densité très meublé • cuisine 3 équipements • pas de saison • accès RAS
+              formule {cart?.formuleLabel ?? "Standard"} • villes +5 km • densité très meublé • cuisine 3 équipements • pas de saison • accès RAS
             </p>
           </div>
 
@@ -1065,13 +1066,10 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 const isAccess = l.key === "access";
                 const isDate = l.key === "date";
                 const isDistance = l.key === "distance";
-                const isFormule = l.key === "formule";
-                
                 const tooltips: Record<string, string> = {
                   distance: "La distance est recalculée à partir des adresses quand elles sont renseignées",
                   access: "Les étages et l'absence d'ascenseur augmentent le temps de manutention",
                   date: "Les périodes de forte demande (été, fin de mois) impactent les tarifs",
-                  formule: "Éco = transport seul, Standard = transport + aide, Premium = tout inclus",
                 };
                 
                 return (
@@ -1079,7 +1077,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-[#0F172A] truncate flex items-center gap-1.5">
                         <span className="truncate">{l.label}</span>
-                        {(isDistance || isAccess || isDate || isFormule) && (
+                        {(isDistance || isAccess || isDate) && (
                           <span
                             className="inline-flex items-center"
                             title={tooltips[l.key]}

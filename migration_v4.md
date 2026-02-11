@@ -1,5 +1,18 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 — Formule unifiée Step 2 / Step 3 / API
+
+**Problème** : le prix affiché en Step 2 (toujours STANDARD) ne correspondait pas au prix en Step 3 quand l'utilisateur avait choisi une autre formule.
+
+**Solution** : `state.formule` est maintenant utilisé partout :
+- **Step 2** (`activePricingStep2`) : utilise `state.formule` (STANDARD par défaut, mais si l'utilisateur revient de Step 3 après avoir changé, le prix reflète le choix).
+- **Step 3 panier** : le baseline "Première estimation" utilise `state.formule` au lieu de forcer STANDARD. La ligne "Formule" séparée dans les ajustements est supprimée (la formule est intégrée au baseline).
+- **API `/api/estimate`** : accepte un param optionnel `formule` (défaut STANDARD) → `GET /api/estimate?...&formule=PREMIUM`.
+
+**Fichiers modifiés** : `page.tsx`, `StepEstimationV2.tsx`, `StepAccessLogisticsV2.tsx`, `app/api/estimate/route.ts`.
+
+---
+
 ## 2026-02-11 — Nouveau sélecteur de date (mois → jour + indicateur saisonnalité)
 
 **Fichier modifié** : `components/tunnel/DatePickerFr.tsx`

@@ -9,6 +9,7 @@ interface StepEstimationV2Props {
   displayDistanceKm?: number | null;
   priceMin: number | null;
   priceMax: number | null;
+  formuleLabel?: string;
   onSubmit: (e: FormEvent) => void;
   isSubmitting: boolean;
   debug?: boolean;
@@ -21,6 +22,7 @@ export function StepEstimationV2({
   displayDistanceKm = null,
   priceMin,
   priceMax,
+  formuleLabel = "Standard",
   onSubmit,
   isSubmitting,
   debug = false,
@@ -62,10 +64,10 @@ export function StepEstimationV2({
         </div>
       </div>
 
-      {/* Note: le prix affiché est basé sur la formule Standard (par défaut).
+      {/* Note: le prix affiché est basé sur la formule sélectionnée.
           Le choix de formule se fait en Step 3. */}
       <p className="text-xs text-center text-[#1E293B]/60">
-        Estimation basée sur la formule Standard — vous pourrez changer à l&apos;étape suivante.
+        Estimation basée sur la formule {formuleLabel} — vous pourrez changer à l&apos;étape suivante.
       </p>
 
       {debug && debugRows.length > 0 && (

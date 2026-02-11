@@ -841,11 +841,11 @@ function DevisGratuitsV3Content() {
     state.destinationPostalCode,
   ]);
 
-  // Step 2 affiche toujours le prix STANDARD (le choix de formule est en Step 3)
+  // Step 2 affiche le prix de la formule sélectionnée (STANDARD par défaut)
   const activePricingStep2 = useMemo(() => {
     if (!v2PricingByFormuleStep2) return null;
-    return v2PricingByFormuleStep2.STANDARD ?? null;
-  }, [v2PricingByFormuleStep2]);
+    return v2PricingByFormuleStep2[state.formule as PricingFormuleType] ?? v2PricingByFormuleStep2.STANDARD ?? null;
+  }, [v2PricingByFormuleStep2, state.formule]);
 
   const v2FirstEstimateDistanceKm = useMemo(() => {
     if (state.destinationUnknown) return null;
@@ -991,11 +991,11 @@ function DevisGratuitsV3Content() {
     const formule = state.formule as PricingFormuleType;
 
     // Première estimation: distance "villes" +5km, densité=Très meublé, cuisine=3 équipements,
-    // date sans saison, accès RAS, formule STANDARD (baseline).
+    // date sans saison, accès RAS, formule = celle sélectionnée (STANDARD par défaut).
     const cityDistanceKm = estimateCityDistanceKm(state.originPostalCode, state.destinationPostalCode);
     const baseDistanceKm = Math.max(0, cityDistanceKm + 5);
 
-    // Baseline toujours STANDARD (le delta formule est une ligne séparée dans le panier)
+    // Baseline = formule sélectionnée (cohérent avec Step 2)
     const baselineInput: Parameters<typeof calculatePricing>[0] = {
       surfaceM2: surface,
       housingType: "t2" as const,
@@ -1007,7 +1007,7 @@ function DevisGratuitsV3Content() {
       destinationFloor: 0,
       destinationElevator: "yes" as const,
       services: { monteMeuble: false, piano: null as null, debarras: false },
-      formule: "STANDARD" as PricingFormuleType,
+      formule,
       extraVolumeM3: 3 * 0.6, // cuisine = 3 équipements
     };
 
@@ -1135,13 +1135,8 @@ function DevisGratuitsV3Content() {
     const sAccess = calculatePricing(inputAccess);
     const deltaAccessEur = accessConfirmed ? formatDelta(sAccess.prixFinal - sDate.prixFinal) : 0;
 
-    // 6) Formule (delta vs STANDARD)
-    const formuleTouched = formule !== "STANDARD";
-    const inputFormule = { ...inputAccess, formule };
-    const sFormule = calculatePricing(inputFormule);
-    const deltaFormuleEur = formuleTouched ? formatDelta(sFormule.prixFinal - sAccess.prixFinal) : 0;
-
-    const refinedCenterEur = centerEur(sFormule.prixMin, sFormule.prixMax);
+    // La formule est déjà intégrée au baseline → pas de delta séparé.
+    const refinedCenterEur = centerEur(sAccess.prixMin, sAccess.prixMax);
 
     const densityLabel =
       !densityTouched
@@ -1169,7 +1164,7 @@ function DevisGratuitsV3Content() {
       formule === "ECONOMIQUE" ? "Éco" : formule === "PREMIUM" ? "Premium" : "Standard";
 
     const lines: Array<{
-      key: "distance" | "density" | "kitchen" | "date" | "access" | "formule";
+      key: "distance" | "density" | "kitchen" | "date" | "access";
       label: string;
       status: string;
       amountEur: number;
@@ -1210,23 +1205,17 @@ function DevisGratuitsV3Content() {
         amountEur: deltaAccessEur,
         confirmed: accessConfirmed,
       },
-      {
-        key: "formule",
-        label: "Formule",
-        status: formuleTouched ? formuleLabel : "Standard (par défaut)",
-        amountEur: deltaFormuleEur,
-        confirmed: true, // toujours confirmé (STANDARD par défaut)
-      },
     ];
 
     return {
       firstEstimateMinEur: s0.prixMin,
       firstEstimateMaxEur: s0.prixMax,
       firstEstimateCenterEur,
-      refinedMinEur: sFormule.prixMin,
-      refinedMaxEur: sFormule.prixMax,
+      refinedMinEur: sAccess.prixMin,
+      refinedMaxEur: sAccess.prixMax,
       refinedCenterEur,
       lines,
+      formuleLabel,
     };
   }, [
     routeDistanceKm,
@@ -1842,6 +1831,7 @@ function DevisGratuitsV3Content() {
                 displayDistanceKm={v2FirstEstimateDistanceKm}
                 priceMin={activePricingStep2?.prixMin ?? activePricing?.prixMin ?? null}
                 priceMax={activePricingStep2?.prixMax ?? activePricing?.prixMax ?? null}
+                formuleLabel={state.formule === "ECONOMIQUE" ? "Éco" : state.formule === "PREMIUM" ? "Premium" : "Standard"}
                 onSubmit={handleSubmitEstimationV2}
                 isSubmitting={false}
                 debug={debugMode}
