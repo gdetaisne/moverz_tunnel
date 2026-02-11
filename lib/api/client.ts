@@ -390,7 +390,6 @@ export interface UpdateBackofficeLeadPayload {
   estimatedPriceMin?: number;
   estimatedPriceAvg?: number;
   estimatedPriceMax?: number;
-  estimatedSavingsEur?: number;
 
   // Détails logement origine
   originHousingType?: string;
@@ -408,11 +407,8 @@ export interface UpdateBackofficeLeadPayload {
   destCarryDistance?: string;
   destParkingAuth?: boolean;
 
-  // Photos
-  photosUrls?: string;
-  aiEstimationConfidence?: number;
-
   // Options détaillées du tunnel (JSON structuré)
+  // Contient : pricing, accessV2, volumeAdjustments, services, notes, pricingSnapshot
   tunnelOptions?: unknown;
 }
 

@@ -232,47 +232,6 @@ function DevisGratuitsV3Content() {
     };
   }, [urlLeadId, updateFields]);
 
-  // ── Hydratation depuis query params (moverz.fr → tunnel Step 3) ──
-  // URL type: /devis-gratuits-v3?step=3&originPostalCode=75011&originCity=Paris&destinationPostalCode=13001&destinationCity=Marseille&surfaceM2=60&movingDate=2026-06-15
-  const hydratedFromUrlRef = useRef(false);
-  useEffect(() => {
-    if (hydratedFromUrlRef.current) return;
-    const stepParam = searchParams.get("step");
-    if (stepParam !== "3") return; // uniquement si renvoyé depuis moverz.fr
-
-    hydratedFromUrlRef.current = true;
-
-    const next: Partial<typeof state> = {};
-
-    const oPC = searchParams.get("originPostalCode")?.trim();
-    if (oPC) next.originPostalCode = oPC;
-
-    const oCity = searchParams.get("originCity")?.trim();
-    if (oCity) next.originCity = oCity;
-
-    const dPC = searchParams.get("destinationPostalCode")?.trim();
-    if (dPC) next.destinationPostalCode = dPC;
-
-    const dCity = searchParams.get("destinationCity")?.trim();
-    if (dCity) next.destinationCity = dCity;
-
-    const surfParam = searchParams.get("surfaceM2")?.trim();
-    if (surfParam && Number.isFinite(Number(surfParam)) && Number(surfParam) >= 10) {
-      next.surfaceM2 = surfParam;
-    }
-
-    const dateParam = searchParams.get("movingDate")?.trim();
-    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
-      next.movingDate = dateParam;
-    }
-
-    if (Object.keys(next).length > 0) {
-      next.currentStep = 3;
-      updateFields(next);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Assurer des coordonnées même si l'adresse provient d'un lien / BO.
   useEffect(() => {
     if (state.originLat != null && state.originLon != null) return;
