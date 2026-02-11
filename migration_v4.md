@@ -1,5 +1,187 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 — Refonte design complète "Vercel 2026" : glassmorphism + gradients cyan + layout grille
+
+**Problème** : Le design était trop plat et daté. La sidebar Step 3 se superposait au formulaire (layout fixed bancal). Les couleurs turquoise/noir n'étaient pas assez premium. Pas de micro-animations, shadows ternes, buttons rectangulaires.
+
+**Objectif** : Refonte design complète inspirée de moverz.fr + Vercel/Linear 2026 :
+- ✅ Glassmorphism partout : `backdrop-blur-xl`, transparence, borders subtils
+- ✅ Gradients cyan/blue : `from-cyan-600 via-cyan-700 to-blue-700` (remplace turquoise/noir)
+- ✅ Micro-animations : `scale`, `translate`, `glow effects`, `pulse`
+- ✅ Shadows cyan modernes : `shadow-[0_12px_40px_rgba(6,182,212,0.35)]`
+- ✅ Pills : `rounded-full` avec `border` gradients
+- ✅ Focus states : `ring-4` avec `ring-cyan-500/30`
+- ✅ Layout grille propre : plus de superposition
+
+### 1️⃣ Layout grille (fini la superposition)
+
+**Avant** : sidebar `position: fixed right-8` qui se superposait au formulaire desktop.
+
+**Après** : grille CSS propre `grid-cols-[1fr_420px] gap-8` :
+- Formulaire : colonne gauche (width fluide)
+- Sidebar : colonne droite (sticky top-8, 420px fixed)
+- Plus de superposition, layout équilibré style Vercel
+
+**Container adaptatif** :
+- Mobile : stack vertical (formulaire → sidebar mobile en bas)
+- Desktop (≥ lg / 1024px) : grille 2 colonnes côte à côte
+- Max-width : `1400px` au lieu de `3xl` (768px)
+
+### 2️⃣ Sidebar gradient hero (Step 3)
+
+**Nouveau design** :
+```tsx
+bg-gradient-to-br from-cyan-600 via-cyan-700 to-blue-700
+backdrop-blur-xl
+shadow-[0_20px_60px_rgba(6,182,212,0.5)]
+```
+
+**Budget affiné** :
+- Glow animé : `bg-gradient-to-br from-cyan-300/30 to-blue-300/30 rounded-full blur-3xl animate-pulse`
+- Montant : `text-6xl font-black text-white drop-shadow-[0_4px_24px_rgba(255,255,255,0.4)]`
+- Min/Max : cards glassmorphism `bg-white/10 backdrop-blur-sm` avec couleurs emerald/rose
+
+**Ajustements** :
+- Pills glassmorphism : `bg-white/10 backdrop-blur-md border border-white/20`
+- Hover effect : `hover:bg-white/20 hover:scale-[1.02]`
+- Dots colorés : `bg-rose-300` (positif) / `bg-emerald-300` (négatif)
+
+### 3️⃣ Cards glassmorphism (formulaire)
+
+**Avant** : `bg-white/95 backdrop-blur-sm border border-[#E3E5E8]`
+
+**Après** :
+```tsx
+rounded-3xl 
+bg-white/80 backdrop-blur-xl 
+border border-cyan-100/50 
+shadow-[0_8px_32px_rgba(6,182,212,0.2)]
+hover:shadow-[0_12px_48px_rgba(6,182,212,0.3)]
+transition-all duration-300
+```
+
+**Appliqué sur** :
+- Cards principales (Steps 1/2/4)
+- Card formulaire Step 3
+- Toutes les sous-cards (adresses, densité, cuisine, accès, contact)
+
+### 4️⃣ Buttons gradient cyan + pills
+
+**CTA principal** (ex: "Finaliser mon estimation") :
+```tsx
+rounded-full
+bg-gradient-to-r from-cyan-600 via-cyan-700 to-blue-700
+py-5 font-bold text-white
+shadow-[0_12px_40px_rgba(6,182,212,0.5)]
+hover:shadow-[0_16px_56px_rgba(6,182,212,0.65)]
+hover:scale-[1.02] active:scale-[0.98]
+transition-all duration-300
+```
+
+**Pills sélecteurs** (Densité, Cuisine, Accès) :
+
+**État sélectionné** :
+```tsx
+rounded-2xl
+border-cyan-500
+bg-gradient-to-br from-cyan-600 to-blue-600
+text-white
+shadow-[0_8px_32px_rgba(6,182,212,0.5)]
+ring-4 ring-cyan-500/20
+scale-[1.03]
+```
+
+**État normal** :
+```tsx
+rounded-2xl
+border-2 border-cyan-500/30
+bg-gradient-to-br from-white/90 to-cyan-50/50
+backdrop-blur-lg
+shadow-[0_4px_16px_rgba(6,182,212,0.15)]
+hover:border-cyan-500
+hover:shadow-[0_8px_24px_rgba(6,182,212,0.3)]
+hover:scale-[1.03]
+```
+
+**Boutons Oui/Non** (accès simple/contraint) : même style `rounded-full` avec gradient cyan.
+
+### 5️⃣ Inputs focus ring-4 cyan
+
+**Avant** : `focus:ring-2 focus:ring-[#6BCFCF]/40`
+
+**Après** :
+```tsx
+border-cyan-200
+bg-white/90 backdrop-blur-sm
+focus:border-cyan-500
+focus:ring-4 focus:ring-cyan-500/30
+focus:ring-offset-2
+```
+
+**Appliqué sur** : tous les inputs texte, number, date, email, tel.
+
+### 6️⃣ Micro-animations & effects
+
+- **Glow animé** : `animate-pulse` sur gradient blur (sidebar hero)
+- **Dots pulsants** : `animate-pulse` sur les indicateurs (sidebar header, lignes ajustements)
+- **Scale hover** : `hover:scale-[1.02]` / `hover:scale-[1.03]` partout
+- **Active state** : `active:scale-[0.98]` sur CTA principal
+- **Transitions** : `transition-all duration-300` (au lieu de 200ms)
+- **Drop shadow** : `drop-shadow-[0_4px_24px_rgba(255,255,255,0.4)]` sur montant principal
+
+### Fichiers modifiés
+
+- `app/devis-gratuits-v3/page.tsx` : layout grille + sidebar déplacée + cards principales
+- `components/tunnel/v2/StepAccessLogisticsV2.tsx` : sidebar cachée (déplacée dans page.tsx) + cards + buttons + inputs
+- `migration_v4.md` : documentation complète
+
+### Palette couleurs (mise à jour)
+
+**Avant** : turquoise `#6BCFCF` / `#A8E8E8` + noir `#0F172A` / `#1E293B`
+
+**Après (Cyan/Blue)** :
+```tsx
+// Gradients primaires
+from-cyan-600 via-cyan-700 to-blue-700  // Sidebar hero + CTA
+from-cyan-600 to-blue-600               // Pills sélectionnées
+
+// Borders
+border-cyan-100/50   // Cards principales
+border-cyan-200      // Inputs normaux
+border-cyan-500/30   // Pills normales
+border-cyan-500      // Pills hover / inputs focus
+
+// Shadows
+rgba(6,182,212,0.25) - rgba(6,182,212,0.5)  // Cards & buttons
+rgba(255,255,255,0.15) - rgba(255,255,255,0.4)  // Sidebar (sur fond gradient)
+
+// Rings
+ring-cyan-500/20    // Pills sélectionnées
+ring-cyan-500/30    // Focus states
+```
+
+### Breakpoints & responsive
+
+- Grille activée à **`lg:` (1024px)** (sidebar + formulaire côte à côte)
+- Mobile (< 1024px) : stack vertical, sidebar masquée (budget bar sticky en bas)
+- Tous les hover effects désactivés sur mobile via `:hover` natif
+
+### Tracking
+
+**Aucun changement** : zéro impact sur events GA4 / logicalStep / screenId.
+
+### Champs / Inputs
+
+- **supprimés** : AUCUN
+- **ajoutés** : AUCUN
+- **modifiés** : style visuel uniquement (glassmorphism + gradients cyan)
+
+### Back Office payload
+
+**Aucun changement** : les données envoyées restent identiques.
+
+---
+
 ## 2026-02-11 — Centrage desktop corrigé + layout Step 3 "premium 2026" (v2)
 
 **Problème** : Le conteneur principal du tunnel avait des marges desktop qui décalaient tout vers la droite, même sans sidebar. En Step 3 :

@@ -66,9 +66,9 @@ function DevisGratuitsV3Content() {
 
   const containerClassName = useMemo(() => {
     if (state.currentStep === 3) {
-      // Step 3: sidebar desktop (fixed right-8, w-[360px], visible à lg:1024px)
-      // → formulaire max-w adaptatif pour éviter débordement
-      return "w-full max-w-3xl px-4 py-8 space-y-6 mx-auto lg:max-w-none lg:mr-[420px] lg:ml-8";
+      // Step 3: layout grille desktop (formulaire + sidebar côte à côte)
+      // → grille 2 colonnes avec gap propre, pas de superposition
+      return "w-full px-4 py-8 mx-auto lg:px-8 lg:max-w-[1400px]";
     }
     // Steps 1/2/4: centré classique
     return "max-w-3xl px-4 py-8 space-y-6 mx-auto";
@@ -1771,7 +1771,7 @@ function DevisGratuitsV3Content() {
           <V2ProgressBar step={state.currentStep} onReset={reset} />
 
           {state.currentStep === 1 && (
-            <div className="rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-white/40 p-8">
+            <div className="rounded-3xl bg-white/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(6,182,212,0.25)] border border-cyan-100/50 p-8 hover:shadow-[0_16px_56px_rgba(6,182,212,0.35)] transition-shadow duration-300">
               <StepQualificationV2
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
@@ -1791,7 +1791,7 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 2 && (
-            <div className="rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-white/40 p-8 relative">
+            <div className="rounded-3xl bg-white/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(6,182,212,0.25)] border border-cyan-100/50 p-8 hover:shadow-[0_16px_56px_rgba(6,182,212,0.35)] transition-shadow duration-300 relative">
               <StepEstimationV2
                 volume={activePricingStep2?.volumeM3 ?? activePricing?.volumeM3 ?? null}
                 routeDistanceKm={v2FirstEstimateDistanceKm}
@@ -1808,8 +1808,10 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 3 && (
-            <div className="rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-white/40 p-8 relative">
-              <StepAccessLogisticsV2
+            <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[1fr_420px] lg:gap-8 lg:items-start">
+              {/* Formulaire (colonne gauche) */}
+              <div className="rounded-3xl bg-white/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(6,182,212,0.25)] border border-cyan-100/50 p-8 hover:shadow-[0_16px_56px_rgba(6,182,212,0.35)] transition-shadow duration-300">
+                <StepAccessLogisticsV2
                 originAddress={state.originAddress}
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
@@ -1878,11 +1880,119 @@ function DevisGratuitsV3Content() {
               serviceSpecificSchedule={state.serviceSpecificSchedule}
               specificNotes={state.specificNotes}
               />
+              </div>
+
+              {/* Sidebar panier (colonne droite, sticky) */}
+              <aside className="hidden lg:block lg:sticky lg:top-8">
+                <div className="rounded-3xl bg-gradient-to-br from-cyan-600 via-cyan-700 to-blue-700 backdrop-blur-xl p-8 shadow-[0_20px_60px_rgba(6,182,212,0.5)] space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-black text-white">Votre estimation</h3>
+                    <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  </div>
+
+                  {/* Budget affiné (hero avec glow) */}
+                  {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
+                    <div className="relative overflow-hidden rounded-3xl bg-white/10 backdrop-blur-md border-2 border-white/30 p-8 shadow-[0_12px_48px_rgba(255,255,255,0.15)]">
+                      {/* Glow effect animé */}
+                      <div className="absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br from-cyan-300/30 to-blue-300/30 rounded-full blur-3xl animate-pulse" />
+                      
+                      <div className="relative">
+                        <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/90 mb-4 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                          Budget affiné
+                        </p>
+                        
+                        <div className="text-center mb-6">
+                          <p className="text-6xl font-black text-white leading-none tracking-tight drop-shadow-[0_4px_24px_rgba(255,255,255,0.4)] transition-all duration-500">
+                            {fmtEur(v2PricingCart.refinedCenterEur)}
+                          </p>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/20">
+                          <div className="text-center rounded-2xl bg-white/10 backdrop-blur-sm p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 mb-2">Minimum</p>
+                            <p className="text-2xl font-black text-emerald-300">
+                              {typeof v2PricingCart.refinedMinEur === "number" ? fmtEur(v2PricingCart.refinedMinEur) : "—"}
+                            </p>
+                          </div>
+                          <div className="text-center rounded-2xl bg-white/10 backdrop-blur-sm p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 mb-2">Maximum</p>
+                            <p className="text-2xl font-black text-rose-300">
+                              {typeof v2PricingCart.refinedMaxEur === "number" ? fmtEur(v2PricingCart.refinedMaxEur) : "—"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ajustements */}
+                  {v2PricingCart && v2PricingCart.lines && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">
+                          Ajustements
+                        </p>
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                      </div>
+                      
+                      {v2PricingCart.lines.map((l) => (
+                        <div 
+                          key={l.key} 
+                          className="group flex items-center justify-between gap-4 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-[1.02] transition-all duration-200"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`w-2 h-2 rounded-full ${l.amountEur > 0 ? 'bg-rose-300' : l.amountEur < 0 ? 'bg-emerald-300' : 'bg-gray-300'} animate-pulse`} />
+                            <p className="text-sm font-semibold text-white">{l.label}</p>
+                          </div>
+                          <p className={`text-base font-black tabular-nums ${l.amountEur > 0 ? 'text-rose-300' : l.amountEur < 0 ? 'text-emerald-300' : 'text-white/60'}`}>
+                            {l.amountEur > 0 ? '+' : ''}{l.amountEur} €
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Première estimation (collapsible) */}
+                  {v2PricingCart && typeof v2PricingCart.firstEstimateCenterEur === "number" && (
+                    <details className="group">
+                      <summary className="cursor-pointer list-none rounded-2xl bg-white/5 hover:bg-white/10 p-4 transition-all duration-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-white/60 mb-1">Première estimation</p>
+                            <p className="text-2xl font-black text-white/60">
+                              {fmtEur(v2PricingCart.firstEstimateCenterEur)}
+                            </p>
+                          </div>
+                          <svg className="w-5 h-5 text-white/60 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </summary>
+                      <div className="mt-3 grid grid-cols-2 gap-3 px-4 pb-4">
+                        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-1">Min</p>
+                          <p className="text-sm font-black text-emerald-300">
+                            {typeof v2PricingCart.firstEstimateMinEur === "number" ? fmtEur(v2PricingCart.firstEstimateMinEur) : "—"}
+                          </p>
+                        </div>
+                        <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-center">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-rose-300 mb-1">Max</p>
+                          <p className="text-sm font-black text-rose-300">
+                            {typeof v2PricingCart.firstEstimateMaxEur === "number" ? fmtEur(v2PricingCart.firstEstimateMaxEur) : "—"}
+                          </p>
+                        </div>
+                      </div>
+                    </details>
+                  )}
+                </div>
+              </aside>
             </div>
           )}
 
           {state.currentStep === 4 && (
-            <div className="rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-white/40 p-8 relative">
+            <div className="rounded-3xl bg-white/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(6,182,212,0.25)] border border-cyan-100/50 p-8 hover:shadow-[0_16px_56px_rgba(6,182,212,0.35)] transition-shadow duration-300 relative">
               <StepContactPhotosV2
                 leadId={state.leadId}
                 linkingCode={state.linkingCode}
