@@ -1059,49 +1059,58 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
       </div>
 
       {/* Desktop only: panneau Budget & hypothèses (≥ lg / 1024px) */}
-      <aside className="hidden lg:block lg:fixed lg:top-24 lg:right-0 lg:w-[300px] lg:z-30">
-        <div className="rounded-2xl border border-[#E3E5E8] bg-white/95 backdrop-blur-sm p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)] space-y-3">
-          <p className="text-sm font-semibold text-[#0F172A]">Votre panier</p>
-
-          {/* Première estimation */}
-          <div className="space-y-2 rounded-xl bg-[#0F172A]/5 p-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0F172A]/70">
-              Première estimation
-            </p>
-            {typeof cart?.firstEstimateCenterEur === "number" ? (
-              <>
-                <div className="text-center">
-                  <p className="text-3xl font-black text-[#0F172A] leading-[0.95] tabular-nums">
-                    {fmtEur(cart.firstEstimateCenterEur)}
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-center">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">min</p>
-                    <p className="text-sm font-semibold text-[#14532D]">
-                      {typeof cart?.firstEstimateMinEur === "number" ? fmtEur(cart.firstEstimateMinEur) : "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">max</p>
-                    <p className="text-sm font-semibold text-[#7F1D1D]">
-                      {typeof cart?.firstEstimateMaxEur === "number" ? fmtEur(cart.firstEstimateMaxEur) : "—"}
-                    </p>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="text-sm text-[#1E293B]/60">—</div>
-            )}
-            <p className="text-[10px] text-[#1E293B]/60">
-              formule {cart?.formuleLabel ?? "Standard"} • villes +5 km • densité très meublé • cuisine 3 équipements • pas de saison • accès RAS
-            </p>
+      <aside className="hidden lg:block lg:fixed lg:top-24 lg:right-8 lg:w-[360px] lg:z-30">
+        <div className="rounded-3xl border border-white/40 bg-white/90 backdrop-blur-xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.12)] space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-black text-[#0F172A]">Votre estimation</h3>
+            <div className="w-2 h-2 rounded-full bg-[#6BCFCF] animate-pulse" />
           </div>
 
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
-              Ajustements
-            </p>
+          {/* Budget affiné - EN PREMIER (hiérarchie inversée) */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#6BCFCF]/10 via-[#A8E8E8]/5 to-transparent border-2 border-[#6BCFCF]/30 p-6 shadow-[0_8px_32px_rgba(107,207,207,0.15)]">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#6BCFCF]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="relative">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#6BCFCF] mb-3 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#6BCFCF]" />
+                Budget affiné
+              </p>
+              {typeof cart?.refinedCenterEur === "number" ? (
+                <>
+                  <div className="text-center mb-4">
+                    <p className="text-5xl font-black text-[#0F172A] leading-none tabular-nums tracking-tight transition-all duration-300 drop-shadow-sm">
+                      {fmtEur(cart.refinedCenterEur)}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#6BCFCF]/20">
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#1E293B]/50 mb-1">Minimum</p>
+                      <p className="text-lg font-black text-[#10B981]">
+                        {typeof cart?.refinedMinEur === "number" ? fmtEur(cart.refinedMinEur) : "—"}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#1E293B]/50 mb-1">Maximum</p>
+                      <p className="text-lg font-black text-[#EF4444]">
+                        {typeof cart?.refinedMaxEur === "number" ? fmtEur(cart.refinedMaxEur) : "—"}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-4 text-sm text-[#1E293B]/60">Calcul en cours...</div>
+              )}
+            </div>
+          </div>
+
+          {/* Ajustements - design moderne */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#E3E5E8] to-transparent" />
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#1E293B]/40">
+                Ajustements
+              </p>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#E3E5E8] to-transparent" />
+            </div>
             <div className="space-y-2">
               {(cart?.lines ?? []).map((l) => {
                 const isPos = l.amountEur > 0;
@@ -1116,25 +1125,28 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                 };
                 
                 return (
-                  <div key={l.key} className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#0F172A] truncate flex items-center gap-1.5">
+                  <div 
+                    key={l.key} 
+                    className="group flex items-center justify-between gap-3 p-3 rounded-xl bg-white/50 border border-[#E3E5E8]/50 hover:border-[#6BCFCF]/30 hover:bg-white/80 transition-all duration-200"
+                  >
+                    <div className="min-w-0 flex items-center gap-2">
+                      <span className={`w-1 h-1 rounded-full ${isPos ? 'bg-red-400' : isNeg ? 'bg-green-400' : 'bg-gray-300'}`} />
+                      <p className="text-sm font-semibold text-[#0F172A] truncate flex items-center gap-1.5">
                         <span className="truncate">{l.label}</span>
                         {(isDistance || isAccess || isDate) && (
                           <span
-                            className="inline-flex items-center"
+                            className="inline-flex items-center opacity-0 group-hover:opacity-100 transition-opacity"
                             title={tooltips[l.key]}
                           >
-                            <HelpCircle className="w-4 h-4 text-[#1E293B]/50" />
+                            <HelpCircle className="w-3.5 h-3.5 text-[#6BCFCF]" />
                           </span>
                         )}
                       </p>
-                      {/* status retiré — on ne montre que le label + montant */}
                     </div>
                     <div
                       className={[
-                        "shrink-0 text-sm font-semibold tabular-nums",
-                        isPos ? "text-[#7F1D1D]" : isNeg ? "text-[#14532D]" : "text-[#1E293B]/60",
+                        "shrink-0 text-base font-black tabular-nums transition-colors",
+                        isPos ? "text-[#EF4444]" : isNeg ? "text-[#10B981]" : "text-[#1E293B]/40",
                       ].join(" ")}
                     >
                       {l.amountEur > 0 ? "+" : ""}
@@ -1146,37 +1158,56 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
             </div>
           </div>
 
-          {/* Budget affiné */}
-          <div className="space-y-2 rounded-xl bg-[#6BCFCF]/5 p-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6BCFCF]">
-              Budget affiné
-            </p>
-            {typeof cart?.refinedCenterEur === "number" ? (
-              <>
-                <div className="text-center">
-                  <p className="text-3xl font-black text-[#0F172A] leading-[0.95] tabular-nums">
-                    {fmtEur(cart.refinedCenterEur)}
+          {/* Première estimation - design subtil et collapsible */}
+          <details className="group">
+            <summary className="cursor-pointer list-none rounded-xl bg-[#F8F9FA] p-4 hover:bg-[#F1F2F4] transition-colors">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1E293B]/50 mb-1">
+                    Première estimation
                   </p>
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-center">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">min</p>
-                    <p className="text-sm font-semibold text-[#14532D]">
-                      {typeof cart?.refinedMinEur === "number" ? fmtEur(cart.refinedMinEur) : "—"}
+                  {typeof cart?.firstEstimateCenterEur === "number" && (
+                    <p className="text-2xl font-black text-[#1E293B]/60 tabular-nums">
+                      {fmtEur(cart.firstEstimateCenterEur)}
                     </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">max</p>
-                    <p className="text-sm font-semibold text-[#7F1D1D]">
-                      {typeof cart?.refinedMaxEur === "number" ? fmtEur(cart.refinedMaxEur) : "—"}
-                    </p>
-                  </div>
+                  )}
                 </div>
-              </>
-            ) : (
-              <div className="text-sm text-[#1E293B]/60">—</div>
-            )}
-          </div>
+                <svg 
+                  className="w-5 h-5 text-[#1E293B]/40 transition-transform group-open:rotate-180" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </summary>
+            <div className="mt-3 space-y-3 px-4">
+              {typeof cart?.firstEstimateCenterEur === "number" ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="text-center p-3 rounded-lg bg-green-50/50">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#1E293B]/40 mb-1">Min</p>
+                      <p className="text-base font-bold text-[#10B981]">
+                        {typeof cart?.firstEstimateMinEur === "number" ? fmtEur(cart.firstEstimateMinEur) : "—"}
+                      </p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-red-50/50">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#1E293B]/40 mb-1">Max</p>
+                      <p className="text-base font-bold text-[#EF4444]">
+                        {typeof cart?.firstEstimateMaxEur === "number" ? fmtEur(cart.firstEstimateMaxEur) : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-[#1E293B]/40 leading-relaxed">
+                    formule {cart?.formuleLabel ?? "Standard"} • villes +5 km • densité très meublé • cuisine 3 équipements • pas de saison • accès RAS
+                  </p>
+                </>
+              ) : (
+                <div className="text-sm text-[#1E293B]/40 text-center py-2">Aucune estimation initiale</div>
+              )}
+            </div>
+          </details>
         </div>
       </aside>
     </div>

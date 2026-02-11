@@ -64,6 +64,14 @@ function DevisGratuitsV3Content() {
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
 
+  const containerClassName = useMemo(() => {
+    return [
+      "max-w-3xl mx-auto px-4 py-8 space-y-6",
+      // Step 3: sidebar desktop (fixed, w-[360px], right-8) => on réserve 360 + 32 = 392px
+      state.currentStep === 3 ? "lg:max-w-[calc(48rem+392px)] lg:pr-[392px]" : "",
+    ].join(" ");
+  }, [state.currentStep]);
+
   const toInputDate = (raw: string | null | undefined): string | undefined => {
     if (!raw) return undefined;
     const d = new Date(raw);
@@ -1703,19 +1711,21 @@ function DevisGratuitsV3Content() {
     }
   }
 
-                return (
+  return (
       <main className="min-h-screen bg-[#F8F9FA] text-[#0F172A]">
-        {/* Container adaptatif : décalé à gauche quand sidebar panier visible (≥ lg) */}
-        <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 lg:mr-[320px] lg:ml-auto">
+        <div className={containerClassName}>
           {/* Top back/edit */}
           {state.currentStep > 1 && (
             <button
               onClick={() => {
-                // Si on est en Step 3 et qu'on y est arrivé directement depuis le site
-                if (state.currentStep === 3 && state.enteredAtStep === 3) {
+                // Détecter si on vient du site : le param "from" est différent de la valeur par défaut
+                const comesFromSite = from !== "/devis-gratuits-v3";
+                
+                // Si on est en Step 3 et qu'on vient du site externe
+                if (state.currentStep === 3 && (state.enteredAtStep === 3 || comesFromSite)) {
                   // Retour vers le site (URL from)
                   window.location.href = from;
-                } else if (state.currentStep === 4 && state.enteredAtStep === 3) {
+                } else if (state.currentStep === 4 && (state.enteredAtStep === 3 || comesFromSite)) {
                   // En Step 4, si on a sauté Steps 1-2, retour Step 3 (pas Step 2)
                   goToStep(3);
                 } else {

@@ -1,5 +1,112 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 — Panier desktop premium "Vercel-level" (Step 3)
+
+**Problème** : Le panier desktop (sidebar Step 3) manquait d'impact visuel et de hiérarchie. L'affichage était plat, sans différenciation claire entre le budget affiné (le plus important) et les autres éléments.
+
+**Solution** : Refonte complète du panier desktop pour un rendu **premium / Vercel-level** avec hiérarchie visuelle forte, animations fluides et micro-interactions.
+
+### Changements visuels
+
+#### Container principal
+- **Avant** : `rounded-2xl`, padding `p-6`, shadow générique
+- **Après** :
+  ```tsx
+  rounded-3xl bg-white/90 backdrop-blur-xl
+  border border-white/40
+  shadow-[0_20px_60px_rgba(0,0,0,0.12)]
+  p-8 space-y-6
+  right-8 (au lieu de right-0)
+  w-[360px] (au lieu de [300px])
+  ```
+- **Impact** : effet glassmorphism renforcé, spacing généreux, shadow premium
+
+#### Header
+- **Nouveau** : titre "Votre estimation" + dot animé turquoise (`animate-pulse`)
+- **Impact** : dynamisme et attention visuelle
+
+#### Budget affiné (section principale)
+- **Avant** : simple card avec `bg-[#6BCFCF]/5`, texte 3xl
+- **Après** :
+  ```tsx
+  // Container avec gradient + glow effect
+  bg-gradient-to-br from-[#6BCFCF]/10 via-[#A8E8E8]/5 to-transparent
+  border-2 border-[#6BCFCF]/30
+  shadow-[0_8px_32px_rgba(107,207,207,0.15)]
+  
+  // Glow bubble décoratif
+  absolute top-0 right-0 w-32 h-32 bg-[#6BCFCF]/10 rounded-full blur-3xl
+  
+  // Montant principal
+  text-5xl font-black (au lieu de 3xl)
+  tracking-tight transition-all duration-300 drop-shadow-sm
+  
+  // Min/Max
+  text-lg font-black (au lieu de sm font-semibold)
+  couleurs: #10B981 (vert) / #EF4444 (rouge)
+  border-t separator entre montant et min/max
+  ```
+- **Impact** : effet "héro" sur le budget principal, hierarchy ultra-claire, animations fluides
+
+#### Ajustements (lignes)
+- **Avant** : simple liste avec `space-y-2`
+- **Après** :
+  ```tsx
+  // Separator élégant avec gradient
+  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#E3E5E8] to-transparent" />
+  
+  // Chaque ligne
+  group flex items-center justify-between gap-3
+  p-3 rounded-xl
+  bg-white/50 border border-[#E3E5E8]/50
+  hover:border-[#6BCFCF]/30 hover:bg-white/80
+  transition-all duration-200
+  
+  // Dot coloré par type
+  w-1 h-1 rounded-full (rouge si +, vert si -, gris si neutre)
+  
+  // Icon help au hover
+  opacity-0 group-hover:opacity-100 transition-opacity
+  
+  // Montants
+  text-base font-black (au lieu de sm semibold)
+  couleurs: #EF4444 (rouge) / #10B981 (vert)
+  ```
+- **Impact** : feedback hover premium, micro-interactions, couleurs expressives
+
+#### Première estimation (collapsible)
+- **Nouveau** : élément `<details>` avec design subtil
+- **Avant** : affichage plein écran
+- **Après** :
+  ```tsx
+  // Summary (fermé)
+  bg-[#F8F9FA] hover:bg-[#F1F2F4]
+  text-2xl font-black text-[#1E293B]/60 (montant désaccentué)
+  icône chevron rotate-180 au clic
+  
+  // Contenu (ouvert)
+  grid 2 colonnes (min/max)
+  bg-green-50/50 / bg-red-50/50
+  text petit + note hypothèses
+  ```
+- **Impact** : hiérarchie claire (budget affiné > ajustements > première estimation), économie d'espace, design "archive"
+
+### Fichiers modifiés
+- `components/tunnel/v2/StepAccessLogisticsV2.tsx` (lignes 1061-1220)
+
+### Tracking
+- **Aucun changement** : design uniquement
+
+### Champs / Inputs
+- **supprimés** : AUCUN
+- **ajoutés** : AUCUN
+- **modifiés** : apparence visuelle uniquement
+
+### Back Office payload
+- **changements** : AUCUN
+
+---
+
 ## 2026-02-11 — Application Design System Moverz 2026 (cohérence visuelle complète)
 
 **Problème** : Le tunnel avait un style propre mais n'était pas aligné avec le guide de Design System du site principal Moverz. Il manquait de cohérence sur : glassmorphism, gradients, shadows, hover effects, spacing, etc.
@@ -149,10 +256,12 @@
 ### Implémentation
 
 1. **Nouveau champ state** : `enteredAtStep: number | null` dans `TunnelFormState` (`hooks/useTunnelState.ts`)
-2. **Capture entrée directe** : lors de l'hydratation Step 3 (`?step=3`), on marque `enteredAtStep = 3`
-3. **Navigation retour conditionnelle** :
-   - Si `currentStep === 3 && enteredAtStep === 3` → redirect vers `from` (site)
-   - Si `currentStep === 4 && enteredAtStep === 3` → `goToStep(3)` (pas Step 2)
+2. **Capture entrée directe** : lors de l'hydratation Step 3 (query params présents), on marque `enteredAtStep = 3`
+3. **Détection provenance site** : `comesFromSite = (from !== "/devis-gratuits-v3")`
+   - Si `from` est différent de la valeur par défaut → on vient du site
+4. **Navigation retour conditionnelle** :
+   - Si Step 3 ET (`enteredAtStep === 3` OU `comesFromSite`) → redirect vers `from` (site)
+   - Si Step 4 ET (`enteredAtStep === 3` OU `comesFromSite`) → `goToStep(3)` (pas Step 2)
    - Sinon → navigation tunnel normale (`goToStep(currentStep - 1)`)
 
 ### URL from
@@ -227,8 +336,11 @@ Avant : mélange de `sm`, `md`, `xl` sans logique. Maintenant **2 breakpoints se
 
 ### Sidebar panier abaissée (xl → lg)
 - Sidebar visible à `lg:` (1024px) au lieu de `xl:` (1280px) → plus de "trou" entre md et xl.
-- Container page.tsx : `lg:mr-[320px]` pour éviter le chevauchement contenu/sidebar.
-- Budget bar sticky : masquée à `lg:` (quand sidebar visible).
+- Container (`app/devis-gratuits-v3/page.tsx`) : **centré** par défaut, et en **Step 3 uniquement** on réserve l’espace de la sidebar desktop (fixed) via :
+  - `lg:max-w-[calc(48rem+392px)]` (48rem = `max-w-3xl`)
+  - `lg:pr-[392px]` (392 = `w-[360px]` + `right-8`)
+  → évite le chevauchement **sans** décentrer les Steps 1/2/4 sur desktop.
+- Budget bar sticky : masquée à `lg:` (quand sidebar desktop visible).
 
 ### CTA sticky + safe-area
 - `pb-[env(safe-area-inset-bottom,8rem)]` remplace le hack `pb-32` → fonctionne sur iPhone avec barre Home.
