@@ -1198,3 +1198,18 @@ Migration progressive : les hex inline seront remplacés par ces tokens au fil d
 - [ ] Mobile-first validé (iPhone/Android: lisibilité, CTA, scroll, clavier)
 - [ ] Tests uniquement sur staging (URL staging + vraie navigation)
 
+
+---
+
+### 2026-02-11 — Fix RDC + auto-surface Step 3
+
+- **Décision** : L'auto-surface (`HOUSING_SURFACE_DEFAULTS`) ne doit s'appliquer qu'en Step 1.
+  En Step 3, le changement Maison/Appartement concerne l'accès (étage, ascenseur),
+  **pas** la surface. Sans ce garde-fou, passer de Maison (110 m²) à Appart (40 m²)
+  écrasait la surface et faisait chuter la "Première estimation" de ~50 %.
+- **Changements UI** :
+  - "RDV" → "RDC" (Rez-de-chaussée) dans le sélecteur d'étage.
+  - Guard `if (state.currentStep > 1) return;` dans l'effet `HOUSING_SURFACE_DEFAULTS`.
+- **Tracking** : aucun impact.
+- **Champs / Inputs** : aucun ajout/suppression.
+- **Back Office payload** : aucun changement.
