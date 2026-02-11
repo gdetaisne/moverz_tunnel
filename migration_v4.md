@@ -1,5 +1,94 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 (9ème itération) — Panier ultra-moderne 2026 : Gradient turquoise→violet + Glassmorphism premium
+
+**Problème** : Le panier était trop turquoise classique (100% cyan), pas assez moderne ni sophistiqué pour 2026.
+
+**Solution** : Gradient turquoise→violet sophistiqué + glassmorphism renforcé + overlay lumineux.
+
+### 🎨 Background gradient premium turquoise→violet
+
+**Avant** : `bg-gradient-to-br from-[#6BCFCF] via-[#5AB8B8] to-[#4AA8A5]` (100% turquoise)  
+**Après** :
+```tsx
+bg-gradient-to-br from-[#6BCFCF] via-[#7BC4CC] to-[#A78BFA]
+```
+- **From** : Turquoise signature `#6BCFCF`
+- **Via** : Blend turquoise-violet `#7BC4CC` (transition douce)
+- **To** : Violet premium `#A78BFA`
+
+### ✨ Overlay glow moderne 2026
+
+**Nouveauté** : Layer overlay subtil pour effet depth
+```tsx
+<div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-[#A78BFA]/10 pointer-events-none" />
+```
+- **Direction** : `to-tr` (top-right) pour effet diagonal moderne
+- **Via white/5** : Subtle glow blanc
+- **To violet/10** : Accent violet en haut à droite
+- **pointer-events-none** : Ne bloque pas les interactions
+
+### 💎 Shadow violette (au lieu de turquoise)
+
+**Avant** : `shadow-[#6BCFCF]/20`  
+**Après** : `shadow-[#A78BFA]/25`
+
+### 🪟 Glassmorphism renforcé sur les cards
+
+**Cards budget/ajustements** :
+- **Avant** : `bg-white/95 backdrop-blur-sm shadow-sm border border-white/40`
+- **Après** : `bg-white/98 backdrop-blur-xl shadow-lg sm:shadow-2xl shadow-white/20 border border-white/40`
+
+**Pills ajustements** :
+- **Avant** : `bg-white/95 backdrop-blur-sm border border-white/40`
+- **Après** : `bg-white/98 backdrop-blur-md border border-white/50`
+
+**Collapsible première estimation** :
+- **Avant** : `bg-white/10 backdrop-blur-sm border border-white/20`
+- **Après** : `bg-white/15 backdrop-blur-md border border-white/30`
+
+### 🏷️ Badge "Live" ultra-premium
+
+**Avant** : `from-[#6BCFCF]/20 to-[#A78BFA]/20 border border-[#A78BFA]/30`  
+**Après** :
+```tsx
+bg-gradient-to-r from-white/10 via-[#A78BFA]/20 to-[#A78BFA]/30 
+border border-white/30 
+backdrop-blur-md 
+shadow-[0_4px_16px_rgba(167,139,250,0.3)]
+```
+
+### 📐 Z-index layering
+
+Toutes les sections ont `relative z-10` pour être au-dessus de l'overlay :
+- Titre + badge
+- Budget affiné card
+- Ajustements
+- Première estimation
+
+### 🎨 Résultat couleurs 2026
+
+| Zone | Couleur | Effet |
+|------|---------|-------|
+| **Background gradient** | Turquoise `#6BCFCF` → Blend `#7BC4CC` → Violet `#A78BFA` | Sophistication premium |
+| **Overlay** | White/5 → Violet/10 | Depth moderne |
+| **Shadow** | Violet `#A78BFA/25` | Cohérence violet |
+| **Cards** | White/98 + blur-xl | Glassmorphism ultra |
+| **Pills** | White/98 + blur-md | Clarté parfaite |
+| **Badge Live** | White/10 → Violet/20 → Violet/30 | Premium accent |
+
+### 📊 Impact
+
+- **Modernité** : Gradient turquoise→violet = 2026 ultra-premium ✅
+- **Depth** : Overlay + z-index = effet layered sophistiqué ✅
+- **Glassmorphism** : Blur renforcé + opacité 98% = clarté + style ✅
+- **Cohérence** : Violet partout (background, shadow, badge, hover) ✅
+- **Lisibilité** : White/98 au lieu de /95 = meilleur contraste ✅
+
+**Message visuel** : "Innovation technologique premium" grâce au gradient turquoise→violet sophistiqué ! 🚀💎
+
+---
+
 ## 2026-02-11 (8ème itération) — Panier premium : Tooltips + Touches violet signature 💎
 
 **Problème** : Le panier Step 3 manquait de tooltips explicatifs sur les ajustements et n'exploitait pas assez le violet accent (couleur "Innovation & Premium").

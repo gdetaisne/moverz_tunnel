@@ -1847,10 +1847,13 @@ function DevisGratuitsV3Content() {
 
               {/* Sidebar panier mobile (en bas, ordre inversé) + desktop (droite sticky) — GAME CHANGER */}
               <aside className="lg:sticky lg:top-20 order-last lg:order-none">
-                <div className="rounded-xl sm:rounded-3xl bg-gradient-to-br from-[#6BCFCF] via-[#5AB8B8] to-[#4AA8A5] p-5 sm:p-10 shadow-md sm:shadow-2xl shadow-[#6BCFCF]/20 space-y-5 sm:space-y-8">
-                  <div className="flex items-center justify-between">
+                <div className="rounded-xl sm:rounded-3xl bg-gradient-to-br from-[#6BCFCF] via-[#7BC4CC] to-[#A78BFA] p-5 sm:p-10 shadow-md sm:shadow-2xl shadow-[#A78BFA]/25 space-y-5 sm:space-y-8 relative overflow-hidden">
+                  {/* Overlay glow moderne 2026 */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-[#A78BFA]/10 pointer-events-none" />
+                  
+                  <div className="relative z-10 flex items-center justify-between">
                     <h3 className="text-lg sm:text-xl font-bold text-white">Votre estimation</h3>
-                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#6BCFCF]/20 to-[#A78BFA]/20 border border-[#A78BFA]/30 backdrop-blur-sm">
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-white/10 via-[#A78BFA]/20 to-[#A78BFA]/30 border border-white/30 backdrop-blur-md shadow-[0_4px_16px_rgba(167,139,250,0.3)]">
                       <span className="relative inline-flex h-2 w-2">
                         {/* Ping animation outer violet */}
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A78BFA] opacity-75" />
@@ -1863,7 +1866,7 @@ function DevisGratuitsV3Content() {
 
                   {/* Budget affiné (hero moderne massif) */}
                   {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
-                    <div className="rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-sm p-5 sm:p-8 shadow-sm sm:shadow-lg relative overflow-hidden">
+                    <div className="relative z-10 rounded-xl sm:rounded-2xl bg-white/98 backdrop-blur-xl p-5 sm:p-8 shadow-lg sm:shadow-2xl shadow-white/20 overflow-hidden border border-white/40">
                       {/* Subtle glow top turquoise→violet */}
                       <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#6BCFCF]/30 via-[#A78BFA]/20 to-transparent" />
                       
@@ -1896,7 +1899,7 @@ function DevisGratuitsV3Content() {
 
                   {/* Ajustements (meilleur contraste) */}
                   {v2PricingCart && v2PricingCart.lines && (
-                    <div className="space-y-2 sm:space-y-3">
+                    <div className="relative z-10 space-y-2 sm:space-y-3">
                       <div className="flex items-center gap-3 mb-4">
                         <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/40 to-[#A78BFA]/30" />
                         <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/90">
@@ -1923,7 +1926,7 @@ function DevisGratuitsV3Content() {
                         return (
                           <div 
                             key={l.key} 
-                            className="group flex items-center justify-between gap-3 sm:gap-4 px-4 py-3 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-sm border border-white/40 hover:bg-white hover:border-[#A78BFA]/30 sm:hover:shadow-[0_4px_16px_rgba(167,139,250,0.25)] transition-all duration-200"
+                            className="group flex items-center justify-between gap-3 sm:gap-4 px-4 py-3 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl bg-white/98 backdrop-blur-md border border-white/50 hover:bg-white hover:border-[#A78BFA]/40 hover:shadow-[0_4px_16px_rgba(167,139,250,0.35)] transition-all duration-200"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <span className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${
@@ -1962,8 +1965,8 @@ function DevisGratuitsV3Content() {
 
                   {/* Première estimation (collapsible moderne) */}
                   {v2PricingCart && typeof v2PricingCart.firstEstimateCenterEur === "number" && (
-                    <details className="group">
-                      <summary className="cursor-pointer list-none rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/15 hover:border-white/30 p-3 sm:p-4 transition-all duration-200 shadow-sm">
+                    <details className="relative z-10 group">
+                      <summary className="cursor-pointer list-none rounded-xl bg-white/15 backdrop-blur-md border border-white/30 hover:bg-white/20 hover:border-white/40 hover:shadow-[0_4px_16px_rgba(255,255,255,0.2)] p-3 sm:p-4 transition-all duration-200">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-[10px] sm:text-xs font-semibold text-white/80 mb-1">Première estimation</p>
@@ -1977,13 +1980,13 @@ function DevisGratuitsV3Content() {
                         </div>
                       </summary>
                       <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-2 sm:gap-3 px-3 pb-3 sm:px-4 sm:pb-4">
-                        <div className="rounded-lg sm:rounded-xl bg-white/95 backdrop-blur-sm p-2 sm:p-3 text-center shadow-sm border border-white/40">
+                        <div className="rounded-lg sm:rounded-xl bg-white/98 backdrop-blur-md p-2 sm:p-3 text-center border border-white/50">
                           <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Min</p>
                           <p className="text-sm sm:text-base font-black text-emerald-400">
                             {typeof v2PricingCart.firstEstimateMinEur === "number" ? fmtEur(v2PricingCart.firstEstimateMinEur) : "—"}
                           </p>
                         </div>
-                        <div className="rounded-lg sm:rounded-xl bg-white/95 backdrop-blur-sm p-2 sm:p-3 text-center shadow-sm border border-white/40">
+                        <div className="rounded-lg sm:rounded-xl bg-white/98 backdrop-blur-md p-2 sm:p-3 text-center border border-white/50">
                           <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Max</p>
                           <p className="text-sm sm:text-base font-black text-rose-400">
                             {typeof v2PricingCart.firstEstimateMaxEur === "number" ? fmtEur(v2PricingCart.firstEstimateMaxEur) : "—"}
