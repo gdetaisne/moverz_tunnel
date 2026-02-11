@@ -365,6 +365,10 @@ function DevisGratuitsV3Content() {
   const lastOriginHousingTypeRef = useRef<string>("");
 
   useEffect(() => {
+    // Auto-surface uniquement en Step 1 (aide à la saisie).
+    // En Step 3, le changement Maison/Appartement concerne l'accès, pas la surface.
+    if (state.currentStep > 1) return;
+
     const nextType = (state.originHousingType || "").trim();
     const prevType = lastOriginHousingTypeRef.current;
     if (nextType === prevType) return;
@@ -379,7 +383,7 @@ function DevisGratuitsV3Content() {
     const nextDefault = HOUSING_SURFACE_DEFAULTS[nextType];
     if (!nextDefault) return;
 
-    // V2 rule: on n’écrase que si surface vide ou égale à l’ancien défaut.
+    // V2 rule: on n'écrase que si surface vide ou égale à l'ancien défaut.
     const surface = (state.surfaceM2 || "").trim();
     const prevDefault = HOUSING_SURFACE_DEFAULTS[prevType] ?? null;
     // Compat: si une ancienne session a `surfaceM2="60"` (ancien default V3),
@@ -390,7 +394,7 @@ function DevisGratuitsV3Content() {
     if (shouldOverwrite) {
       updateFields({ surfaceM2: nextDefault });
     }
-  }, [state.originHousingType]);
+  }, [state.originHousingType, state.currentStep]);
   
   const { trackStep, trackStepChange, trackCompletion, trackError } = useTunnelTracking({
     source,

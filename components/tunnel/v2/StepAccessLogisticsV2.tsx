@@ -114,7 +114,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
   const isApartment = (t: string) => (t || "").trim() !== "house";
   const FLOOR_OPTIONS: Array<{ value: string; label: string }> = [
-    { value: "0", label: "RDV" },
+    { value: "0", label: "RDC" },
     { value: "1", label: "1er" },
     { value: "2", label: "2e" },
     { value: "3", label: "3e" },
