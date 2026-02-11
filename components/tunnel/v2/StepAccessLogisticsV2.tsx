@@ -1117,7 +1117,7 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-[#1E293B]/60">{l.status}</p>
+                      {/* status retiré — on ne montre que le label + montant */}
                     </div>
                     <div
                       className={[
