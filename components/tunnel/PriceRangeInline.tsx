@@ -60,8 +60,8 @@ export function PriceRangeInline({
     variant === "compact"
       ? {
           label: "text-[10px]",
-          side: "text-[11px]",
-          center: "text-base",
+          side: "text-xs",
+          center: "text-xl",
         }
       : {
           label: "text-[11px]",
@@ -79,10 +79,10 @@ export function PriceRangeInline({
       {...rest}
     >
       <div className="text-left">
-        <p className={`${size.label} font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60`}>
+        <p className={`${size.label} font-bold uppercase tracking-[0.2em] text-[#64748B]`}>
           min
         </p>
-        <p className={`${size.side} font-semibold text-[#14532D]`}>{euro(minEur)}</p>
+        <p className={`${size.side} font-bold text-emerald-500`}>{euro(minEur)}</p>
       </div>
 
       <div className="text-center">
@@ -92,10 +92,10 @@ export function PriceRangeInline({
       </div>
 
       <div className="text-right">
-        <p className={`${size.label} font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60`}>
+        <p className={`${size.label} font-bold uppercase tracking-[0.2em] text-[#64748B]`}>
           max
         </p>
-        <p className={`${size.side} font-semibold text-[#7F1D1D]`}>{euro(maxEur)}</p>
+        <p className={`${size.side} font-bold text-rose-400`}>{euro(maxEur)}</p>
       </div>
     </div>
   );

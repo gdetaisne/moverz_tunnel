@@ -1,5 +1,152 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 (10ème itération) — Cards formules mobile : Design premium moderne
+
+**Problème** : Les cards de sélection formule (Éco, Standard, Premium) étaient moches en mobile : trop petites, badges illisibles, textes minuscules, ombres plates.
+
+**Solution** : Cards plus larges, gradient subtil sur sélection, badge simplifié, textes agrandis, ombres colorées.
+
+### 📱 Cards formules améliorées (mobile-first)
+
+#### 1️⃣ Taille et espacement
+
+**Avant** :
+- Width: `w-[260px]` (trop petite)
+- Padding: `p-5`
+- Gap: `gap-3`
+- Border radius: `rounded-xl`
+
+**Après** :
+- Width: `w-[280px]` (plus large, meilleure lisibilité)
+- Padding: `p-6` (plus généreux)
+- Gap: `gap-4` (plus d'air)
+- Border radius: `rounded-2xl` (plus moderne)
+- Negative margin trick: `-mx-6 px-6` pour full-bleed sur mobile
+
+#### 2️⃣ État sélectionné avec gradient
+
+**Avant** : `bg-[#6BCFCF]/10 shadow-sm`  
+**Après** :
+```tsx
+bg-gradient-to-br from-[#6BCFCF]/10 via-white/50 to-[#A78BFA]/5
+shadow-lg shadow-[#6BCFCF]/20
+```
+- Gradient turquoise→violet subtil
+- Shadow colorée turquoise
+- Plus de depth
+
+#### 3️⃣ État non-sélectionné
+
+**Avant** : `bg-white shadow-sm`  
+**Après** :
+```tsx
+bg-white shadow-md
+hover:shadow-lg hover:shadow-[#6BCFCF]/15
+```
+- Shadow de base plus prononcée (`shadow-md` vs `shadow-sm`)
+- Hover avec shadow colorée turquoise
+
+#### 4️⃣ Badge "Recommandé" → "Top"
+
+**Avant** :
+```tsx
+<span className="... px-3 py-1">
+  <span className="bg-gradient-to-r from-[#6BCFCF] to-[#A78BFA] bg-clip-text text-transparent text-[10px]">
+    ✨ Recommandé
+  </span>
+</span>
+```
+**Problème** : Gradient text illisible, texte trop long
+
+**Après** :
+```tsx
+<span className="... px-2.5 py-1">
+  <span className="text-[#A78BFA] text-[10px] font-bold uppercase">
+    ✨ Top
+  </span>
+</span>
+```
+- Texte violet uni (lisible)
+- "Top" au lieu de "Recommandé" (plus court)
+- Badge plus compact
+
+#### 5️⃣ Titre formule agrandi
+
+**Avant** : `text-lg font-black`  
+**Après** : `text-xl sm:text-2xl font-black`
+
+- Hiérarchie visuelle claire
+- Meilleure lisibilité mobile
+
+#### 6️⃣ Prix plus visible (PriceRangeInline)
+
+**Avant** (variant compact) :
+- Center: `text-base`
+- Side (min/max): `text-[11px]`
+- Colors: vert foncé `#14532D` / rouge foncé `#7F1D1D`
+
+**Après** (variant compact) :
+```tsx
+center: "text-xl"  // agrandi
+side: "text-xs"    // agrandi
+// Couleurs modernes
+min: text-emerald-500  // vert vif
+max: text-rose-400     // rose moderne
+```
+
+#### 7️⃣ Bullets agrandis et stylés
+
+**Avant** :
+```tsx
+<ul className="mt-2 space-y-1 text-xs text-[#1E293B]/70">
+  <li>• {b}</li>
+</ul>
+```
+
+**Après** :
+```tsx
+<ul className="space-y-2 text-sm text-[#1E293B]/80">
+  <li className="flex items-start gap-2">
+    <span className="text-[#6BCFCF] font-bold mt-0.5">•</span>
+    <span>{b}</span>
+  </li>
+</ul>
+```
+- Texte `text-sm` (vs `text-xs`)
+- Bullets turquoise (vs noirs)
+- Layout flex pour alignement parfait
+
+#### 8️⃣ Titre section "Votre formule"
+
+**Avant** : `text-sm font-semibold`  
+**Après** : `text-base font-bold`
+
+### 📊 Comparaison avant/après
+
+| Élément | Avant (moche) | Après (premium) |
+|---------|---------------|-----------------|
+| **Card width** | 260px | 280px |
+| **Padding** | p-5 | p-6 |
+| **Border radius** | rounded-xl | rounded-2xl |
+| **Shadow sélection** | shadow-sm | shadow-lg + colorée |
+| **Background sélection** | flat turquoise/10 | gradient turquoise→violet |
+| **Badge** | "Recommandé" gradient text | "Top" violet uni |
+| **Titre formule** | text-lg | text-xl sm:text-2xl |
+| **Prix center** | text-base | text-xl |
+| **Prix min/max** | text-[11px] | text-xs |
+| **Bullets** | text-xs noirs | text-sm turquoise |
+
+### 🎯 Résultat
+
+- **Lisibilité** : Textes agrandis (`text-xl`, `text-sm`) ✅
+- **Hiérarchie** : Titre/Prix/Bullets bien distincts ✅
+- **Modernité** : Gradient sélection + shadows colorées ✅
+- **Premium** : Cards plus larges, padding généreux ✅
+- **UX** : Badge "Top" court et lisible ✅
+- **Color scheme** : Turquoise→Violet cohérent ✅
+
+---
+
 ## 2026-02-11 (9ème itération) — Panier ultra-moderne 2026 : Gradient turquoise→violet + Glassmorphism premium
 
 **Problème** : Le panier était trop turquoise classique (100% cyan), pas assez moderne ni sophistiqué pour 2026.

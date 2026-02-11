@@ -884,9 +884,9 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
 
       {/* Choix formule (déplacé depuis Step 2) */}
       {props.pricingByFormule && (
-        <div className="space-y-3">
-          <p className="text-sm font-semibold text-[#0F172A]">Votre formule</p>
-          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 sm:snap-none">
+        <div className="space-y-4">
+          <p className="text-base font-bold text-[#0F172A]">Votre formule</p>
+          <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 sm:snap-none -mx-6 px-6 sm:mx-0 sm:px-0">
             {([
               {
                 id: "ECONOMIQUE" as const,
@@ -914,32 +914,35 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
                   key={f.id}
                   type="button"
                   onClick={() => props.onFormuleChange(f.id)}
-                  className={`w-[260px] flex-shrink-0 snap-start rounded-xl sm:rounded-2xl border-2 p-5 sm:p-6 text-left transition-all duration-300 sm:w-full sm:flex-shrink sm:snap-none ${
+                  className={`w-[280px] flex-shrink-0 snap-start rounded-2xl border-2 p-6 text-left transition-all duration-300 sm:w-full sm:flex-shrink sm:snap-none ${
                     selected
-                      ? "border-[#6BCFCF] bg-[#6BCFCF]/10 shadow-sm sm:shadow-[0_8px_30px_rgba(107,207,207,0.3)] ring-2 ring-[#6BCFCF]/30"
-                      : "border-gray-200 bg-white hover:border-[#6BCFCF] hover:shadow-sm sm:hover:shadow-[0_8px_24px_rgba(107,207,207,0.25)] sm:hover:scale-[1.02]"
+                      ? "border-[#6BCFCF] bg-gradient-to-br from-[#6BCFCF]/10 via-white/50 to-[#A78BFA]/5 shadow-lg shadow-[#6BCFCF]/20 ring-2 ring-[#6BCFCF]/30 sm:shadow-[0_8px_30px_rgba(107,207,207,0.3)]"
+                      : "border-gray-200 bg-white shadow-md hover:border-[#6BCFCF] hover:shadow-lg hover:shadow-[#6BCFCF]/15 sm:hover:shadow-[0_8px_24px_rgba(107,207,207,0.25)] sm:hover:scale-[1.02]"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <p className="text-lg font-black text-[#0F172A]">{f.label}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xl sm:text-2xl font-black text-[#0F172A]">{f.label}</p>
                     {f.recommended && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#6BCFCF]/20 to-[#A78BFA]/20 border border-[#A78BFA]/50 px-3 py-1 shadow-[0_4px_16px_rgba(167,139,250,0.25)]">
-                        <span className="bg-gradient-to-r from-[#6BCFCF] to-[#A78BFA] bg-clip-text text-transparent text-[10px] font-bold tracking-wider">
-                          ✨ Recommandé
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#6BCFCF]/15 to-[#A78BFA]/15 border border-[#A78BFA]/40 px-2.5 py-1 shadow-sm">
+                        <span className="text-[#A78BFA] text-[10px] font-bold uppercase tracking-wide">
+                          ✨ Top
                         </span>
                       </span>
                     )}
                   </div>
-                  <div className="mt-1">
+                  <div className="mt-3 mb-4">
                     <PriceRangeInline
                       minEur={price?.priceMin ?? null}
                       maxEur={price?.priceMax ?? null}
                       variant="compact"
                     />
                   </div>
-                  <ul className="mt-2 space-y-1 text-xs text-[#1E293B]/70">
+                  <ul className="space-y-2 text-sm text-[#1E293B]/80">
                     {f.bullets.map((b) => (
-                      <li key={b}>• {b}</li>
+                      <li key={b} className="flex items-start gap-2">
+                        <span className="text-[#6BCFCF] font-bold mt-0.5">•</span>
+                        <span>{b}</span>
+                      </li>
                     ))}
                   </ul>
                 </button>
