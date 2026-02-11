@@ -8,7 +8,7 @@ import { calculatePricing } from "@/lib/pricing/calculate";
  * Retourne une estimation rapide (fourchette min/max)
  * avec des hypothèses conservatrices (mêmes que Step 2 du tunnel).
  *
- * Distance : OSRM (route réelle) entre centres-villes + 5 km de buffer.
+ * Distance : OSRM (route réelle) entre centres-villes + 15 km de buffer.
  * Fallback : heuristique CP si BAN ou OSRM échouent.
  *
  * Accepte aussi originLat/originLon/destinationLat/destinationLon pour
@@ -42,7 +42,7 @@ const EstimateQuerySchema = z.object({
   destinationLon: z.coerce.number().finite().min(-180).max(180).optional(),
 });
 
-const BUFFER_KM = 5;
+const BUFFER_KM = 15;
 
 // ─── Helpers ────────────────────────────────────────────
 

@@ -8,14 +8,14 @@ ne correspondaient pas entre eux. Cause racine : 3 méthodes de calcul de distan
 - Step 2 / Step 3 baseline : Haversine vol d'oiseau (≈ 660 km)
 - Step 3 "Budget affiné" : OSRM route réelle (≈ 779 km)
 
-**Solution** : tout unifier sur **OSRM (route réelle)** + buffer de +5 km pour les estimations
+**Solution** : tout unifier sur **OSRM (route réelle)** + buffer de +15 km pour les estimations
 (le client a une "bonne surprise" quand il entre ses vraies adresses).
 
 ### Changements
 
 | Endroit | Avant | Après |
 |---|---|---|
-| API `/api/estimate` | Heuristique CP (serveur) | BAN géocodage → OSRM (serveur) + 5 km |
+| API `/api/estimate` | Heuristique CP (serveur) | BAN géocodage → OSRM (serveur) + 15 km |
 | Step 2 | `estimateCityDistanceKm()` (Haversine/CP) | `cityOsrmDistanceKm + 5` |
 | Step 3 "1ère estimation" | `estimateCityDistanceKm()` (Haversine/CP) | `cityOsrmDistanceKm + 5` |
 | Step 3 "Budget affiné" | `routeDistanceKm` (OSRM adresses) | inchangé |
@@ -430,9 +430,9 @@ Migration progressive : les hex inline seront remplacés par ces tokens au fil d
   - baseline figée au passage Step 2 → Step 3
 - **Fichier**: `app/devis-gratuits-v3/page.tsx`
 
-### 2026-02-06 — Step 3 (V2) : buffer baseline distance réduit (+5 km au lieu de +20 km)
+### 2026-02-06 — Step 3 (V2) : buffer baseline distance réduit (+15 km au lieu de +20 km)
 
-- **Décision**: remplacer le buffer “villes +20 km” par **“villes +5 km”** dans les baselines Step 2/3 (V2).
+- **Décision**: remplacer le buffer "villes +20 km" par **"villes +15 km"** dans les baselines Step 2/3 (V2).
 - **Pourquoi**: éviter qu’entrer des adresses “réduise” la distance mais “augmente” le prix (baseline trop gonflée).
 - **Fichier**: `app/devis-gratuits-v3/page.tsx`
 

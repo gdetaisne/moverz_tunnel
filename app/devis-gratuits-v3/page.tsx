@@ -705,7 +705,7 @@ function DevisGratuitsV3Content() {
 
   // Step 2 (V2) : estimation basée sur hypothèses fixes (reward) tant qu'on n'a pas les adresses exactes.
   // Hypothèses (alignées sur "Première estimation" du panier Step 3):
-  // - distance OSRM ville-à-ville + 5 km (buffer "bonne surprise")
+  // - distance OSRM ville-à-ville + 15 km (buffer "bonne surprise")
   // - densité très meublé
   // - cuisine = 3 équipements (0,6m³/équipement)
   // - pas de saison
@@ -717,7 +717,7 @@ function DevisGratuitsV3Content() {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const distanceKm = cityOsrmDistanceKm + 5;
+    const distanceKm = cityOsrmDistanceKm + 15;
 
     const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
       surfaceM2: surface,
@@ -756,7 +756,7 @@ function DevisGratuitsV3Content() {
   const v2FirstEstimateDistanceKm = useMemo(() => {
     if (state.destinationUnknown) return null;
     if (cityOsrmDistanceKm == null) return null;
-    return cityOsrmDistanceKm + 5;
+    return cityOsrmDistanceKm + 15;
   }, [
     state.destinationUnknown,
     cityOsrmDistanceKm,
@@ -769,7 +769,7 @@ function DevisGratuitsV3Content() {
 
     const surface = parseInt(state.surfaceM2) || 60;
     const formule = state.formule as PricingFormuleType;
-    const distanceKm = cityOsrmDistanceKm + 5;
+    const distanceKm = cityOsrmDistanceKm + 15;
     const extraVolumeM3 = 3 * 0.6; // debug Step 2: cuisine=3 équipements
     const baseVolumeM3 = calculateVolume(surface, "t2", "dense");
     const volumeM3 = Math.round((baseVolumeM3 + extraVolumeM3) * 10) / 10;
@@ -809,7 +809,7 @@ function DevisGratuitsV3Content() {
       new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
     return [
-      { label: "distance baseline (OSRM villes +5)", value: `${Math.round(distanceKm)} km` },
+      { label: "distance baseline (OSRM villes +15)", value: `${Math.round(distanceKm)} km` },
       { label: "band distance", value: band },
       { label: "rate €/m³ (raw)", value: fmt(rateRaw) },
       { label: `DECOTE`, value: `${Math.round(DECOTE * 100)}% (×${fmt(decoteFactor)})` },
@@ -837,7 +837,7 @@ function DevisGratuitsV3Content() {
 
   // Reward baseline (figé) : en cas de refresh direct en Step 3, on hydrate une fois le baseline
   // (mêmes hypothèses que la Step 2) pour éviter l'affichage vide.
-  // Utilise la distance OSRM ville-à-ville + 5 km.
+  // Utilise la distance OSRM ville-à-ville + 15 km.
   useEffect(() => {
     if (state.currentStep < 3) return;
     if (state.rewardBaselineMinEur != null && state.rewardBaselineMaxEur != null) return;
@@ -846,7 +846,7 @@ function DevisGratuitsV3Content() {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return;
 
-    const distanceKm = cityOsrmDistanceKm + 5;
+    const distanceKm = cityOsrmDistanceKm + 15;
 
     const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
       surfaceM2: surface,
@@ -892,11 +892,11 @@ function DevisGratuitsV3Content() {
 
     const formule = state.formule as PricingFormuleType;
 
-    // Première estimation: distance OSRM ville-à-ville + 5 km (buffer),
+    // Première estimation: distance OSRM ville-à-ville + 15 km (buffer),
     // densité=Très meublé, cuisine=3 équipements, date sans saison, accès RAS,
     // formule = celle sélectionnée (STANDARD par défaut).
     if (cityOsrmDistanceKm == null) return null; // attend l'OSRM
-    const baseDistanceKm = cityOsrmDistanceKm + 5;
+    const baseDistanceKm = cityOsrmDistanceKm + 15;
 
     // Baseline = formule sélectionnée (cohérent avec Step 2 et API /api/estimate)
     const baselineInput: Parameters<typeof calculatePricing>[0] = {
@@ -1076,7 +1076,7 @@ function DevisGratuitsV3Content() {
       {
         key: "distance",
         label: "Distance",
-        status: canUseOsrmDistance ? "adresses (OSRM)" : "villes +5 km",
+        status: canUseOsrmDistance ? "adresses (OSRM)" : "villes +15 km",
         amountEur: deltaDistanceEur,
         confirmed: canUseOsrmDistance,
       },
@@ -1346,7 +1346,7 @@ function DevisGratuitsV3Content() {
     e.preventDefault();
     // Reward: figer la valeur Step 2 (avec buffers) au passage vers Step 3
     if (v2PricingByFormuleStep2 && activePricingStep2) {
-      const baselineDistanceKm = cityOsrmDistanceKm != null ? cityOsrmDistanceKm + 5 : null;
+      const baselineDistanceKm = cityOsrmDistanceKm != null ? cityOsrmDistanceKm + 15 : null;
       updateFields({
         rewardBaselineMinEur: activePricingStep2.prixMin ?? null,
         rewardBaselineMaxEur: activePricingStep2.prixMax ?? null,
