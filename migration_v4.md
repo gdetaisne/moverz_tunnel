@@ -1,5 +1,23 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 — Nouveau sélecteur de date (mois → jour + indicateur saisonnalité)
+
+**Fichier modifié** : `components/tunnel/DatePickerFr.tsx`
+
+**UX** :
+1. L'utilisateur clique sur le champ date → une popup s'ouvre en **phase "mois"** : 12 mois affichés en grille 3×4.
+2. Chaque mois est coloré selon la saisonnalité prix :
+   - 🟢 **Vert clair** (basse saison `×0.85`) : janvier, février, novembre → tarifs réduits
+   - 🔴 **Rouge clair** (haute saison `×1.3`) : juin, juillet, août, septembre, décembre → tarifs majorés
+   - ⚪ **Neutre** : mars, avril, mai, octobre
+3. L'utilisateur sélectionne un mois → **phase "jours"** : grille classique des jours du mois choisi. Un badge contextuel ("📈 Haute saison" / "📉 Basse saison") s'affiche en haut.
+4. Bouton "← Mois" pour revenir à la sélection du mois.
+5. Le composant garde la même interface (`id`, `value`, `onChange`, `min`, `error`) → **aucun changement** dans `StepAccessLogisticsV2.tsx`.
+
+**Données saisonnalité** : alignées sur `getSeasonFactor()` dans `page.tsx` (mêmes mois, mêmes coefficients).
+
+---
+
 ## 2026-02-11 — Intégration moverz.fr ↔ Tunnel (API estimate + deep link Step 3)
 
 **Objectif** : permettre à la homepage `moverz.fr` d'afficher une estimation budget à partir de 3 champs (origine, destination, surface), puis de rediriger vers le tunnel Step 3 avec les champs pré-remplis.
