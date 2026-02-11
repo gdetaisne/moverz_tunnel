@@ -1847,47 +1847,47 @@ function DevisGratuitsV3Content() {
 
               {/* Sidebar panier mobile (en bas, ordre inversé) + desktop (droite sticky) — GAME CHANGER */}
               <aside className="lg:sticky lg:top-28 order-last lg:order-none">
-                <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#0F172A] p-6 sm:p-10 shadow-2xl shadow-black/20 space-y-6 sm:space-y-8 relative overflow-hidden border border-white/10">
-                  {/* Subtle accent gradient overlay */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#6BCFCF]/10 to-[#A78BFA]/10 blur-3xl pointer-events-none" />
+                <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#A8E6D8] via-[#6BCFCF] to-[#A78BFA]/60 p-6 sm:p-10 shadow-xl shadow-[#6BCFCF]/20 space-y-6 sm:space-y-8 relative overflow-hidden border border-white/20">
+                  {/* Subtle white glow overlay */}
+                  <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
                   
                   <div className="relative z-10 flex items-center justify-between">
-                    <h3 className="text-xl sm:text-2xl font-bold text-white/90">Votre estimation</h3>
-                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/20">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white">Votre estimation</h3>
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/30 backdrop-blur-xl border border-white/40">
                       <span className="relative inline-flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
                       </span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70">Live</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-white">Live</span>
                     </span>
                   </div>
 
                   {/* Budget affiné (hero moderne massif) */}
                   {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
-                    <div className="relative z-10 rounded-2xl bg-white/5 backdrop-blur-xl p-6 sm:p-8 overflow-hidden border border-white/10 hover:border-white/20 transition-colors duration-300">
+                    <div className="relative z-10 rounded-2xl bg-white/90 backdrop-blur-xl p-6 sm:p-8 overflow-hidden border border-white/50 shadow-lg shadow-white/30">
                       {/* Accent line top */}
-                      <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#6BCFCF] to-transparent opacity-50" />
+                      <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#6BCFCF] to-transparent" />
                       
-                      <p className="text-[10px] sm:text-xs font-medium uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4">
+                      <p className="text-[10px] sm:text-xs font-medium uppercase tracking-[0.2em] text-[#0F172A]/50 mb-3 sm:mb-4">
                         Budget affiné
                       </p>
                       
                       <div className="text-center mb-5 sm:mb-6">
-                        <p className="text-5xl sm:text-7xl font-bold text-white leading-none tracking-tight tabular-nums">
+                        <p className="text-5xl sm:text-7xl font-bold text-[#0F172A] leading-none tracking-tight tabular-nums">
                           {fmtEur(v2PricingCart.refinedCenterEur)}
                         </p>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4 pt-5 border-t border-white/10">
+                      <div className="grid grid-cols-2 gap-4 pt-5 border-t border-[#0F172A]/10">
                         <div className="text-left">
-                          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1.5">Minimum</p>
-                          <p className="text-base sm:text-lg font-semibold text-white/70 tabular-nums">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/40 mb-1.5">Minimum</p>
+                          <p className="text-base sm:text-lg font-semibold text-emerald-600 tabular-nums">
                             {typeof v2PricingCart.refinedMinEur === "number" ? fmtEur(v2PricingCart.refinedMinEur) : "—"}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1.5">Maximum</p>
-                          <p className="text-base sm:text-lg font-semibold text-white/70 tabular-nums">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/40 mb-1.5">Maximum</p>
+                          <p className="text-base sm:text-lg font-semibold text-rose-500 tabular-nums">
                             {typeof v2PricingCart.refinedMaxEur === "number" ? fmtEur(v2PricingCart.refinedMaxEur) : "—"}
                           </p>
                         </div>
@@ -1899,7 +1899,7 @@ function DevisGratuitsV3Content() {
                   {v2PricingCart && v2PricingCart.lines && (
                     <div className="relative z-10 space-y-2 sm:space-y-3">
                       <div className="mb-4">
-                        <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-white/40">
+                        <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-white/90">
                           Ajustements
                         </p>
                       </div>
@@ -1922,34 +1922,34 @@ function DevisGratuitsV3Content() {
                         return (
                           <div 
                             key={l.key} 
-                            className="group flex items-center justify-between gap-3 sm:gap-4 px-4 py-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+                            className="group flex items-center justify-between gap-3 sm:gap-4 px-4 py-3 rounded-xl bg-white/80 backdrop-blur-xl border border-white/60 hover:bg-white hover:border-white shadow-sm hover:shadow-md transition-all duration-200"
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <span className={`w-1.5 h-1.5 rounded-full ${
+                              <span className={`w-2 h-2 rounded-full ${
                                 l.amountEur > 0 
-                                  ? 'bg-red-400' 
+                                  ? 'bg-rose-500' 
                                   : l.amountEur < 0 
-                                  ? 'bg-emerald-400' 
-                                  : 'bg-white/30'
+                                  ? 'bg-emerald-500' 
+                                  : 'bg-gray-300'
                               }`} />
-                              <p className="text-sm font-medium text-white/90 flex items-center gap-2">
+                              <p className="text-sm font-medium text-[#0F172A] flex items-center gap-2">
                                 <span>{l.label}</span>
                                 {tooltips[l.key] && (
                                   <span
-                                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-help"
+                                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gradient-to-br from-[#6BCFCF] to-[#A78BFA] hover:from-[#A78BFA] hover:to-[#6BCFCF] transition-all cursor-help"
                                     title={tooltips[l.key]}
                                   >
-                                    <HelpCircle className="w-3 h-3 text-white/50" strokeWidth={2} />
+                                    <HelpCircle className="w-3 h-3 text-white" strokeWidth={2} />
                                   </span>
                                 )}
                               </p>
                             </div>
                             <p className={`text-sm font-semibold tabular-nums ${
                               l.amountEur > 0 
-                                ? 'text-red-400' 
+                                ? 'text-rose-500' 
                                 : l.amountEur < 0 
-                                ? 'text-emerald-400' 
-                                : 'text-white/40'
+                                ? 'text-emerald-500' 
+                                : 'text-gray-400'
                             }`}>
                               {l.amountEur > 0 ? '+' : ''}{l.amountEur} €
                             </p>
@@ -1962,29 +1962,29 @@ function DevisGratuitsV3Content() {
                   {/* Première estimation (collapsible moderne) */}
                   {v2PricingCart && typeof v2PricingCart.firstEstimateCenterEur === "number" && (
                     <details className="relative z-10 group">
-                      <summary className="cursor-pointer list-none rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 p-3.5 sm:p-4 transition-colors duration-200">
+                      <summary className="cursor-pointer list-none rounded-xl bg-white/60 backdrop-blur-xl border border-white/60 hover:bg-white/80 hover:border-white shadow-sm hover:shadow-md p-3.5 sm:p-4 transition-all duration-200">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Première estimation</p>
-                            <p className="text-base sm:text-lg font-semibold text-white/70 tabular-nums">
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/50 mb-1">Première estimation</p>
+                            <p className="text-base sm:text-lg font-semibold text-[#0F172A]/80 tabular-nums">
                               {fmtEur(v2PricingCart.firstEstimateCenterEur)}
                             </p>
                           </div>
-                          <svg className="w-4 h-4 text-white/40 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-4 h-4 text-[#0F172A]/50 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </div>
                       </summary>
                       <div className="mt-3 grid grid-cols-2 gap-3 px-4 pb-4">
                         <div className="text-left">
-                          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Min</p>
-                          <p className="text-sm font-semibold text-white/70 tabular-nums">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/40 mb-1">Min</p>
+                          <p className="text-sm font-semibold text-emerald-600 tabular-nums">
                             {typeof v2PricingCart.firstEstimateMinEur === "number" ? fmtEur(v2PricingCart.firstEstimateMinEur) : "—"}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Max</p>
-                          <p className="text-sm font-semibold text-white/70 tabular-nums">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/40 mb-1">Max</p>
+                          <p className="text-sm font-semibold text-rose-500 tabular-nums">
                             {typeof v2PricingCart.firstEstimateMaxEur === "number" ? fmtEur(v2PricingCart.firstEstimateMaxEur) : "—"}
                           </p>
                         </div>

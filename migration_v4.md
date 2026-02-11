@@ -1,5 +1,204 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-11 (13ème itération) — Panier light mode gradient turquoise→violet premium
+
+**Problème** : Le dark mode était trop sombre, manquait de clarté. Besoin d'un light mode avec gradient turquoise→violet élégant.
+
+**Solution** : Retour à un gradient light sophistiqué avec glassmorphism blanc, texte sombre, couleurs vives pour prix.
+
+### 🎨 Background : Gradient turquoise→violet léger et lumineux
+
+**Dark mode (avant)** :
+```tsx
+bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#0F172A]
+shadow-2xl shadow-black/20
+border border-white/10
+```
+
+**Light mode gradient (après)** :
+```tsx
+bg-gradient-to-br from-[#A8E6D8] via-[#6BCFCF] to-[#A78BFA]/60
+shadow-xl shadow-[#6BCFCF]/20
+border border-white/20
+```
+
+**Gradient détails** :
+- `from-[#A8E6D8]` — Turquoise pastel clair (top-left)
+- `via-[#6BCFCF]` — Turquoise signature Moverz (centre)
+- `to-[#A78BFA]/60` — Violet dilué à 60% (bottom-right)
+- Shadow turquoise colorée pour cohérence
+
+**Overlay lumineux** :
+```tsx
+<div className="absolute top-0 left-0 w-full h-32 
+  bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+```
+- White glow en haut pour effet lumineux
+- Gradient vertical to-b pour naturel
+
+### 💎 Badge "Live" : Dot blanc sur fond glassmorphism
+
+**Dark (avant)** :
+```tsx
+bg-white/10 border-white/20
+<span bg-emerald-400>Live</span>
+text-white/70
+```
+
+**Light (après)** :
+```tsx
+bg-white/30 backdrop-blur-xl border-white/40
+<span bg-white animate-ping>Live</span>
+text-white font-semibold
+```
+
+- Dot blanc éclatant (plus premium)
+- Ping blanc pour dynamisme
+- Texte blanc pur pour contraste
+
+### 🪟 Card budget : Blanc glassmorphism
+
+**Dark (avant)** :
+```tsx
+bg-white/5 border-white/10
+text-white
+```
+
+**Light (après)** :
+```tsx
+bg-white/90 backdrop-blur-xl border-white/50
+shadow-lg shadow-white/30
+text-[#0F172A]  // Noir pour lisibilité
+```
+
+**Prix** :
+```tsx
+// Principal
+text-[#0F172A] font-bold
+
+// Min
+text-emerald-600  // Vert foncé
+
+// Max
+text-rose-500  // Rose vif
+```
+
+### 📝 Section "Ajustements" : Texte blanc sur gradient
+
+**Dark (avant)** : `text-white/40`  
+**Light (après)** : `text-white/90` (contraste sur gradient)
+
+### 💊 Pills ajustements : Blanc glassmorphism avec couleurs
+
+**Dark (avant)** :
+```tsx
+bg-white/5 border-white/10
+text-white/90
+```
+
+**Light (après)** :
+```tsx
+bg-white/80 backdrop-blur-xl border-white/60
+hover:bg-white hover:border-white
+shadow-sm hover:shadow-md
+text-[#0F172A]  // Noir pour lisibilité
+```
+
+**Dots et montants** :
+```tsx
+// Positif (supplément)
+w-2 h-2 bg-rose-500
+text-rose-500
+
+// Négatif (réduction)
+bg-emerald-500
+text-emerald-500
+
+// Neutre
+bg-gray-300
+text-gray-400
+```
+
+### 🔍 Tooltip icon : Gradient turquoise→violet
+
+**Dark (avant)** :
+```tsx
+bg-white/10 hover:bg-white/20
+<HelpCircle text-white/50 />
+```
+
+**Light (après)** :
+```tsx
+bg-gradient-to-br from-[#6BCFCF] to-[#A78BFA]
+hover:from-[#A78BFA] hover:to-[#6BCFCF]
+<HelpCircle text-white />
+```
+
+- Retour au cercle gradient premium
+- Hover inversé pour interactivité
+- Icon blanche pour contraste
+
+### 📂 Collapsible "Première estimation" : Blanc translucide
+
+**Dark (avant)** :
+```tsx
+bg-white/5 border-white/10
+text-white/40
+```
+
+**Light (après)** :
+```tsx
+bg-white/60 backdrop-blur-xl border-white/60
+hover:bg-white/80 hover:shadow-md
+text-[#0F172A]/50  // Labels sombres
+text-[#0F172A]/80  // Valeurs sombres
+```
+
+**Sub-cards min/max** :
+```tsx
+text-emerald-600  // Min vert
+text-rose-500     // Max rose
+```
+
+### 📊 Palette light mode gradient
+
+| Élément | Couleur | Usage |
+|---------|---------|-------|
+| **Background** | `from-[#A8E6D8] via-[#6BCFCF] to-[#A78BFA]/60` | Gradient principal |
+| **Overlay** | `white/20 to-transparent` | Glow lumineux top |
+| **Cards blanches** | `white/90` | Glassmorphism opaque |
+| **Pills blanches** | `white/80` | Glassmorphism translucide |
+| **Collapsible** | `white/60` | Translucide |
+| **Texte principal** | `#0F172A` (noir) | Lisibilité max |
+| **Labels** | `#0F172A/50` | Secondaire |
+| **Prix min** | `emerald-600` | Vert foncé |
+| **Prix max** | `rose-500` | Rose vif |
+| **Positif** | `rose-500` | Suppléments |
+| **Négatif** | `emerald-500` | Réductions |
+| **Badge Live** | `white` | Dot + texte |
+| **Tooltip** | Gradient `#6BCFCF→#A78BFA` | Premium |
+
+### ✅ Résultat vs dark mode
+
+| Aspect | Dark mode | Light mode gradient |
+|--------|-----------|---------------------|
+| **Lisibilité** | Blanc/gris difficile | Noir sur blanc = parfait |
+| **Luminosité** | Trop sombre | Lumineux et accueillant |
+| **Gradient** | Noir/gris terne | Turquoise→violet vibrant |
+| **Premium** | Élégant mais sombre | Coloré et sophistiqué |
+| **Contraste** | Moyen (blanc/40-70) | Maximal (noir sur blanc) |
+| **Couleurs** | Monochromes | Vert/rose pour prix |
+| **Glassmorphism** | white/5 invisible | white/80-90 élégant |
+
+### 🎯 Design final
+
+**Premium moderne** : Gradient turquoise→violet + glassmorphism blanc  
+**Lisibilité optimale** : Noir sur blanc, vert/rose pour prix  
+**Sophistication** : Shadows colorées, borders subtiles, overlay lumineux  
+**Cohérence Moverz** : Turquoise signature + violet accent (80/20)  
+
+---
+
 ## 2026-02-11 (12ème itération) — Panier dark mode pro : Stripe/Linear style 2026
 
 **Problème** : Le gradient turquoise→violet était trop chargé, pas assez pro/sleek/tech. Trop "jouet", manquait de sophistication.
