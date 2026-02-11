@@ -6,7 +6,6 @@ import { ga4Event } from "@/lib/analytics/ga4";
 import {
   createBackofficeLead,
   getBackofficeLead,
-  requestBackofficeConfirmation,
   updateBackofficeLead,
 } from "@/lib/api/client";
 import {

@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, FileText, Mail } from "lucide-react";
-import { requestBackofficeConfirmation } from "@/lib/api/client";
-
 interface StepContactPhotosV2Props {
   leadId?: string | null;
   // Conservé pour compat (ancien écran) — plus utilisé
@@ -42,35 +40,15 @@ export function StepContactPhotosV2({
     setMounted(true);
   }, []);
 
-  // Demande d'email de confirmation (1 fois par lead, avec garde localStorage)
+  // L'email de confirmation est déclenché automatiquement par le Back Office
+  // dès que le lead a un email et que les documents sont prêts.
+  // Pas d'appel côté tunnel.
   useEffect(() => {
     if (!mounted) return;
     if (!leadId) return;
     if (requestOnceRef.current) return;
     requestOnceRef.current = true;
-
-    const storageKey = `moverz_confirmation_requested_${leadId}`;
-    if (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1") {
-      setConfirmationState({ status: "sent", message: "Email de confirmation envoyé" });
-      return;
-    }
-
-    setConfirmationState({ status: "sending" });
-    (async () => {
-      try {
-        const res = await requestBackofficeConfirmation(leadId);
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem(storageKey, "1");
-        }
-        setConfirmationState({ status: "sent", message: res.message });
-      } catch (err: unknown) {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : "Impossible d'envoyer l'email de confirmation.";
-        setConfirmationState({ status: "error", message: msg });
-      }
-    })();
+    setConfirmationState({ status: "sent", message: "Email de confirmation envoyé" });
   }, [mounted, leadId]);
 
   const normalizedEmail = (email || "").trim().toLowerCase();
