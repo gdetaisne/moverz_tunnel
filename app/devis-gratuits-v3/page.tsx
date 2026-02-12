@@ -1821,7 +1821,6 @@ function DevisGratuitsV3Content() {
                 showValidation={showValidationStep3}
                 routeDistanceKm={routeDistanceKm}
                 routeDistanceProvider={routeDistanceProvider}
-                pricingCart={v2PricingCart ?? undefined}
                 access_type={state.access_type ?? "simple"}
                 narrow_access={!!state.narrow_access}
                 long_carry={!!state.long_carry}
@@ -1830,36 +1829,27 @@ function DevisGratuitsV3Content() {
                 access_details={state.access_details ?? ""}
                 selectedFormule={state.formule as "ECONOMIQUE" | "STANDARD" | "PREMIUM"}
                 onFormuleChange={(v) => updateField("formule", v)}
-              pricingByFormule={
-                pricingByFormule
-                  ? {
-                      ECONOMIQUE: {
-                        priceMin: pricingByFormule.ECONOMIQUE.prixMin,
-                        priceMax: pricingByFormule.ECONOMIQUE.prixMax,
-                      },
-                      STANDARD: {
-                        priceMin: pricingByFormule.STANDARD.prixMin,
-                        priceMax: pricingByFormule.STANDARD.prixMax,
-                      },
-                      PREMIUM: {
-                        priceMin: pricingByFormule.PREMIUM.prixMin,
-                        priceMax: pricingByFormule.PREMIUM.prixMax,
-                      },
-                    }
-                  : null
-              }
+                pricingByFormule={
+                  pricingByFormule
+                    ? {
+                        ECONOMIQUE: {
+                          priceMin: pricingByFormule.ECONOMIQUE.prixMin,
+                          priceMax: pricingByFormule.ECONOMIQUE.prixMax,
+                        },
+                        STANDARD: {
+                          priceMin: pricingByFormule.STANDARD.prixMin,
+                          priceMax: pricingByFormule.STANDARD.prixMax,
+                        },
+                        PREMIUM: {
+                          priceMin: pricingByFormule.PREMIUM.prixMin,
+                          priceMax: pricingByFormule.PREMIUM.prixMax,
+                        },
+                      }
+                    : null
+                }
                 firstName={state.firstName}
                 email={state.email}
                 phone={state.phone}
-              serviceFurnitureStorage={state.serviceFurnitureStorage}
-              serviceCleaning={state.serviceCleaning}
-              serviceFullPacking={state.serviceFullPacking}
-              serviceFurnitureAssembly={state.serviceFurnitureAssembly}
-              serviceInsurance={state.serviceInsurance}
-              serviceWasteRemoval={state.serviceWasteRemoval}
-              serviceHelpWithoutTruck={state.serviceHelpWithoutTruck}
-              serviceSpecificSchedule={state.serviceSpecificSchedule}
-              specificNotes={state.specificNotes}
               />
               </div>
 
