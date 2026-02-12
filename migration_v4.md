@@ -1,5 +1,319 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 (14ème itération) — Refonte "Unicorn-Grade" complète du tunnel
+
+**Objectif** : Transformer le tunnel en expérience premium type Ramp (micro-interactions, clarté, confiance), sans casser l'intégration backoffice.
+
+**Contrainte NON NÉGOCIABLE** : 100% UI-only. Aucun endpoint, aucun payload, aucun event GA4, aucun champ ne doit être modifié.
+
+### 📦 Livrables Phase 1 : Design System & Documentation
+
+#### Design System Local (app/devis-gratuits-v3/_ui/)
+Création de 9 composants réutilisables, Tailwind uniquement, mobile-first :
+
+1. **Button.tsx** — 3 variants (primary avec gradient + shine effect, secondary, ghost), 3 sizes
+2. **Card.tsx** — 3 variants (default glass, gradient turquoise→violet, glass), hoverable option
+3. **Field.tsx** — Input fields avec validation visuelle (check vert), icons lucide, helper text/error
+4. **Badge.tsx** — 5 variants (default, success, warning, info, premium gradient), 2 sizes
+5. **Tooltip.tsx** — Tooltip animé avec icon HelpCircle optional, fade-in smooth
+6. **Skeleton.tsx** — 3 variants (text, rect, circle) avec shimmer animation gradient
+7. **Stepper.tsx** — Progress stepper horizontal/vertical avec states (completed, current, upcoming)
+8. **Toast.tsx** — Toast notifications 4 types + hook useToast pour faciliter l'usage
+9. **CountUp.tsx** — Counter animé easeOutExpo pour révéler les prix (effet dopamine)
+
+**Exports** : `app/devis-gratuits-v3/_ui/index.ts` — exports centralisés
+
+#### Documentation Backoffice Contract
+Fichier **BACKOFFICE_CONTRACT.md** exhaustif :
+- Tous les endpoints API (routes internes Next.js + Back Office)
+- Tous les champs de formulaire intouchables (TunnelFormState)
+- Mapping complet tunnel → Back Office (transformations, types)
+- Events GA4 et tracking (form_start, tunnel_step_viewed, lead_submit)
+- Mapping steps → logicalStep → screenId (source de vérité métier)
+- Checklist QA complète (payload integrity, events, champs, endpoints, fonctionnel, mobile/desktop, régression)
+- Interdictions absolues (10 règles)
+- Ce qui est autorisé (UI-only : styles, animations, wrappers, hiérarchie, accessibilité)
+
+#### Documentation Refonte UI Log
+Fichier **REFONTE_UI_LOG.md** — journal de progression :
+- Phase 1 (design system + doc) — TERMINÉ ✅
+- Phase 2 (STEP 2 premium) — TERMINÉ ✅
+- Phase 3 (steps restants) — EN COURS 🚧
+- Méthodologie de refactor step-by-step
+- Guidelines visuelles (couleurs, spacing, border-radius, shadows, animations)
+- Checklist finale avant merge
+
+### 🚀 Phase 2 : STEP 2 (Budget estimé) — Moment Dopamine
+
+**Nouveau composant** : `components/tunnel/v2/StepEstimationV2Premium.tsx`
+
+#### Innovations UX/UI
+
+**1. Skeleton → Reveal (1.2s)**
+```tsx
+// Loading state
+<div className="flex items-center justify-center gap-2">
+  <div className="w-2 h-2 bg-[#6BCFCF] rounded-full animate-bounce [animation-delay:-0.3s]" />
+  <div className="w-2 h-2 bg-[#6BCFCF] rounded-full animate-bounce [animation-delay:-0.15s]" />
+  <div className="w-2 h-2 bg-[#6BCFCF] rounded-full animate-bounce" />
+</div>
+<Skeleton variant="text" width="60%" height="2rem" />
+<Skeleton variant="text" width="80%" height="4rem" />
+```
+- Bouncing dots turquoise (effet attente playful)
+- Skeletons avec shimmer gradient
+- Transition fade-in après 1.2s
+
+**2. Count-up prix central (1.8s, easeOutExpo)**
+```tsx
+<CountUp
+  end={centerPrice}
+  duration={1800}
+  suffix=" €"
+  className="text-6xl sm:text-7xl font-black bg-gradient-to-r from-[#6BCFCF] via-[#0F172A] to-[#A78BFA] bg-clip-text text-transparent"
+/>
+```
+- Effet "compteur casino" sur le budget (effet dopamine ✨)
+- Gradient texte turquoise → noir → violet
+- Typo massive : 6xl mobile, 7xl desktop
+- Easing easeOutExpo pour accélération naturelle
+
+**3. Fourchette min/max premium**
+```tsx
+// Card minimum (vert emerald)
+<div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50 p-4">
+  <p className="text-xs uppercase text-emerald-700 flex items-center gap-1.5">
+    <TrendingDown className="w-3.5 h-3.5" />
+    Minimum
+  </p>
+  <p className="text-2xl font-black text-emerald-600 tabular-nums">{fmtEur(priceMin)}</p>
+</div>
+
+// Card maximum (rose)
+<div className="rounded-xl bg-gradient-to-br from-rose-50 to-rose-100/50 border border-rose-200/50 p-4">
+  <p className="text-xs uppercase text-rose-700 flex items-center gap-1.5">
+    <Sparkles className="w-3.5 h-3.5" />
+    Maximum
+  </p>
+  <p className="text-2xl font-black text-rose-600 tabular-nums">{fmtEur(priceMax)}</p>
+</div>
+```
+- Cards avec gradients pastels subtils
+- Icons lucide contextuels
+- Typo 2xl font-black, tabular-nums pour alignement
+
+**4. Chips explicatives (apparaissent après count-up, +1.5s delay)**
+3 chips : Distance, Volume, Formule
+```tsx
+<div className="flex items-start gap-3 p-4 rounded-xl bg-white border border-[#E3E5E8] hover:border-[#6BCFCF] hover:shadow-md transition-all">
+  <div className="w-10 h-10 rounded-lg bg-[#6BCFCF]/10 flex items-center justify-center">
+    <Truck className="w-5 h-5 text-[#6BCFCF]" />
+  </div>
+  <div className="flex-1">
+    <div className="flex items-center gap-2">
+      <p className="text-xs font-bold uppercase text-[#1E293B]/60">Distance</p>
+      <Tooltip content="Distance calculée via OSRM..." iconOnly />
+    </div>
+    <p className="text-lg font-black text-[#0F172A]">{distanceText}</p>
+    <p className="text-xs text-[#1E293B]/50">{originCity} → {destinationCity}</p>
+  </div>
+</div>
+```
+- Hover states élégants (border turquoise, shadow)
+- Tooltips explicatifs (HelpCircle icon)
+- Sous-texte contextuel (villes, surface déclarée)
+
+**5. Bloc rassurance "Pourquoi affiner en 60 sec ?"**
+```tsx
+<div className="rounded-xl bg-gradient-to-r from-[#F0F9FF] to-[#F8FAFB] border border-[#E3E5E8] p-4 sm:p-6">
+  <div className="flex items-start gap-3">
+    <div className="w-10 h-10 rounded-full bg-[#6BCFCF]/10 flex items-center justify-center">
+      <svg><!-- Check icon --></svg>
+    </div>
+    <div>
+      <p className="font-bold">🎯 Pourquoi affiner en 60 secondes ?</p>
+      <ul className="space-y-1.5 text-sm">
+        <li>• <strong>Budget ultra-précis</strong> : accès, date, densité</li>
+        <li>• <strong>Devis sur-mesure</strong> : les pros voient vos besoins exacts</li>
+        <li>• <strong>Zéro mauvaise surprise</strong> : prix final = prix estimé</li>
+      </ul>
+    </div>
+  </div>
+</div>
+```
+- Gradient background subtil bleu clair
+- 3 bénéfices clairs (gras + détail)
+- Icon check vert pour confiance
+
+**6. CTA optimisé**
+```tsx
+<Button type="submit" variant="primary" size="lg" isLoading={isSubmitting} className="w-full">
+  Affiner mon estimation en 60 sec 🚀
+</Button>
+<p className="text-center text-sm text-[#1E293B]/70">
+  ~1 minute • Gratuit • Sans engagement
+</p>
+```
+- Copy action-oriented avec emoji fusée
+- Gradient desktop avec shine effect (via Button component)
+- Sous-texte rassurance (durée + gratuit + sans engagement)
+
+#### 🔒 Backoffice Safe (Garanties)
+- ✅ Props interface identique (volume, priceMin, priceMax, formuleLabel, etc.)
+- ✅ onSubmit handler inchangé (handleSubmitEstimationV2)
+- ✅ Aucun nouveau field / state ajouté
+- ✅ Aucune modification de payload
+- ✅ Debug mode préservé (debugRows)
+- ✅ Aucun event GA4 ajouté/supprimé/modifié
+
+### ✅ Phase 3 : Steps restants (TERMINÉ)
+
+#### STEP 1 (Trajet) — Status: COMPLETED ✅
+**Nouveau composant** : `StepQualificationV2Premium.tsx`
+
+**Innovations UX/UI** :
+- Hero section avec badge premium + gradient icon
+- Cards pour trajet et surface avec hover states
+- Labels A/B colorés (turquoise/violet) pour départ/arrivée
+- Flèche de direction animée entre les villes
+- Validation visuelle avec check vert + message de confirmation animé
+- Input surface avec validation inline (check vert à droite)
+- Helper text avec icon info turquoise
+- Bloc rassurance "100% gratuit et sans engagement" avec 3 bullets
+- CTA "Voir mon estimation gratuite" avec emojis
+- Sous-texte "⚡ 2 minutes • 🎁 Gratuit • 🔒 Sans engagement"
+
+**Backoffice Safe** :
+- ✅ AddressAutocomplete préservé (pas de modification)
+- ✅ Props interface identique
+- ✅ Validation coords inchangée
+- ✅ Handler onSubmit préservé
+
+#### STEP 3 (Affinage) — Status: COMPLETED ✅
+**Décision** : Le composant existant `StepAccessLogisticsV2` est déjà très bien structuré et premium (sidebar gradient turquoise→violet, cards glassmorphism, micro-animations). Aucune modification n'a été apportée pour éviter de créer des régressions. Le composant actuel est cohérent avec le nouveau design system.
+
+#### STEP 4 (Bravo) — Status: COMPLETED ✅
+**Nouveau composant** : `StepContactPhotosV2Premium.tsx`
+
+**Innovations UX/UI** :
+- Hero avec confetti CSS (4 dots animés bounce)
+- Badge "Dossier créé avec succès" avec check vert
+- Titre "🎉 Bravo !" en 5xl/6xl
+- Timeline verticale premium via Stepper component (3 étapes : completed, current, upcoming)
+- Card email confirmation avec badge success
+- Grid 2 colonnes (desktop) : Récap dossier + Économies potentielles
+- Card récap avec emojis par ligne (📍 Départ, 🎯 Arrivée, etc.)
+- Card gradient "Économies potentielles" avec calcul ~15% du budget
+- Bloc rassurance anti-démarchage avec icon Shield et 3 garanties
+- Toutes les cards avec animations fade-in + slide-in échelonnées (delay 200-500ms)
+
+**Backoffice Safe** :
+- ✅ Props interface identique
+- ✅ Email confirmation logic préservée
+- ✅ Recap rows inchangés
+
+### ✅ Phase 4 : QA finale (TERMINÉ)
+
+#### Vérifications techniques
+- ✅ **Linting** : Aucune erreur TypeScript/ESLint
+- ✅ **Imports** : Tous les imports résolus
+- ✅ **Props** : Toutes les interfaces matchent
+- ✅ **Handlers** : Tous les handlers préservés (handleSubmitQualificationV2, handleSubmitEstimationV2, handleSubmitAccessV2)
+- ✅ **State** : TunnelFormState inchangé
+- ✅ **Payload** : Aucune modification (createBackofficeLead, updateBackofficeLead)
+- ✅ **Events GA4** : Aucune modification (form_start, tunnel_step_viewed, lead_submit)
+- ✅ **Tracking** : useTunnelTracking préservé
+
+#### Composants créés/modifiés
+**Nouveaux composants** :
+- `app/devis-gratuits-v3/_ui/` (9 composants design system)
+- `components/tunnel/v2/StepQualificationV2Premium.tsx`
+- `components/tunnel/v2/StepEstimationV2Premium.tsx`
+- `components/tunnel/v2/StepContactPhotosV2Premium.tsx`
+
+**Composants préservés** :
+- `components/tunnel/v2/StepAccessLogisticsV2.tsx` (inchangé)
+- `components/tunnel/AddressAutocomplete.tsx` (inchangé)
+- `components/tunnel/DatePickerFr.tsx` (inchangé)
+- `components/tunnel/PriceRangeInline.tsx` (inchangé)
+- `components/tunnel/v2/V2ProgressBar.tsx` (inchangé)
+
+**Fichiers modifiés** :
+- `app/devis-gratuits-v3/page.tsx` — Imports mis à jour (3 composants Premium)
+- `migration_v4.md` — Documentation complète
+
+**Fichiers créés (documentation)** :
+- `app/devis-gratuits-v3/BACKOFFICE_CONTRACT.md`
+- `app/devis-gratuits-v3/REFONTE_UI_LOG.md`
+
+#### Tests à effectuer en prod
+- [ ] Navigation Step 1 → 2 → 3 → 4 complète
+- [ ] Validation bloque bien les champs requis (ville, surface, email)
+- [ ] Coords récupérées via API Adresse
+- [ ] Distance OSRM calculée correctement
+- [ ] Pricing affiché correctement (min/max, count-up Step 2)
+- [ ] Lead créé dans Back Office (DB Postgres)
+- [ ] Email de confirmation envoyé
+- [ ] Animations smooth (pas de lag, 60fps)
+- [ ] Mobile iOS Safari OK
+- [ ] Mobile Android Chrome OK
+- [ ] Desktop Chrome/Firefox/Safari OK
+- [ ] Entry avec ?leadId=xxx fonctionne (reprise dossier)
+- [ ] Entry avec ?step=3&originPostalCode=... fonctionne (depuis moverz.fr)
+- [ ] Debug mode ?debug=1 fonctionne
+
+### 🎨 Guidelines visuelles adoptées
+
+**Couleurs principales** :
+- Primary gradient : `from-[#A8E6D8] via-[#6BCFCF] to-[#5AB8B8]`
+- Accent purple : `[#A78BFA]`
+- Text dark : `[#0F172A]`
+- Text subtle : `[#1E293B]/70`
+- Success : `[#10B981]`
+- Error : `[#EF4444]`
+- Warning : `[#F59E0B]`
+- Border : `[#E3E5E8]`
+
+**Spacing** :
+- Section gap : `space-y-6` mobile → `space-y-8` desktop
+- Card padding : `p-6` mobile → `p-8` ou `p-10` desktop
+
+**Border radius** :
+- Small : `rounded-lg` (8px)
+- Medium : `rounded-xl` (12px)
+- Large : `rounded-2xl` (16px)
+- Extra : `rounded-3xl` (24px)
+
+**Shadows** :
+- Subtle : `shadow-sm`
+- Medium : `shadow-[0_8px_32px_rgba(107,207,207,0.12)]`
+- Hover : `shadow-[0_12px_48px_rgba(107,207,207,0.15)]`
+- Premium : `shadow-xl shadow-[#6BCFCF]/20`
+
+**Animations** :
+- Transition : `transition-all duration-200` ou `duration-300`
+- Hover scale : `sm:hover:scale-[1.01]` ou `[1.02]`
+- Active scale : `active:scale-[0.98]`
+- Fade in : `animate-in fade-in duration-500`
+- Slide in : `animate-in slide-in-from-bottom-4 duration-700`
+
+### 📊 Impact attendu
+
+**UX** :
+- ⬆️ Engagement Step 2 : effet dopamine (count-up) + rassurance (chips + bloc "Pourquoi")
+- ⬇️ Abandon Step 2 → Step 3 : CTA action-oriented + bénéfices clairs
+- ⬆️ Conversion finale : expérience premium cohérente du début à la fin
+
+**Tech** :
+- ✅ Aucun breaking change backoffice
+- ✅ Performance identique (animations CSS pures, pas de lib lourde)
+- ✅ Maintenabilité améliorée (design system local réutilisable)
+- ✅ Accessibilité préservée (aria-labels, focus states, keyboard navigation)
+
+---
+
+**Migration_v4 à jour.** ✅
+
 ## 2026-02-11 (13ème itération) — Panier light mode gradient turquoise→violet premium
 
 **Problème** : Le dark mode était trop sombre, manquait de clarté. Besoin d'un light mode avec gradient turquoise→violet élégant.
