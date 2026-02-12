@@ -190,7 +190,143 @@ Fichier **REFONTE_UI_LOG.md** — journal de progression :
 - ✅ Handler onSubmit préservé
 
 #### STEP 3 (Affinage) — Status: COMPLETED ✅
-**Décision** : Le composant existant `StepAccessLogisticsV2` est déjà très bien structuré et premium (sidebar gradient turquoise→violet, cards glassmorphism, micro-animations). Aucune modification n'a été apportée pour éviter de créer des régressions. Le composant actuel est cohérent avec le nouveau design system.
+**Nouveau composant** : `components/tunnel/v2/LiveEstimatePanel.tsx`
+
+**Décision** : Extraction du sidebar d'estimation en composant réutilisable premium avec desktop sticky + mobile bottom bar/sheet.
+
+**Innovations UX/UI** :
+
+**1. Desktop : Panneau sticky premium**
+```tsx
+<aside className="hidden lg:block">
+  <div className="rounded-3xl bg-gradient-to-br from-[#A8E6D8] via-[#6BCFCF] to-[#A78BFA]/60">
+    {/* Header avec badge LIVE pulsé */}
+    {/* Budget principal avec CountUp (150-250ms) */}
+    {/* Min/Max cards */}
+    {/* Ajustements (max 5 drivers) avec micro-animations highlight */}
+    {/* CTA "Voir détail" → Drawer/Modal */}
+    {/* Trust line (3 garanties) */}
+    {/* Première estimation collapsible */}
+  </div>
+</aside>
+```
+- Badge "LIVE" avec pulse animation (ping effect)
+- CountUp animé sur changement de prix (refinedCenterEur)
+- Micro-animation highlight sur la ligne d'ajustement modifiée (200ms scale + ring turquoise)
+- Drawer/Modal détail avec 5 bullets max (TrendingUp/Down icons)
+- Trust line : Entreprises vérifiées, Numéro masqué, 0 démarchage (CheckCircle, PhoneOff, Shield)
+
+**2. Mobile : Bottom bar + Bottom sheet**
+```tsx
+{/* Bottom bar fixed (z-20, bottom-20px) */}
+<div className="lg:hidden fixed bottom-20 left-0 right-0">
+  <button onClick={openSheet}>
+    <Badge>LIVE</Badge>
+    <p>Budget affiné</p>
+    <p>{fmtEur(refinedCenterEur)}</p>
+  </button>
+</div>
+
+{/* Bottom sheet (slide-in-from-bottom, max-h-90vh) */}
+{showMobileSheet && (
+  <div className="fixed inset-0 z-50">
+    <div className="backdrop" />
+    <div className="sheet rounded-t-3xl">
+      {/* Handle drag indicator */}
+      {/* Contenu identique desktop */}
+    </div>
+  </div>
+)}
+```
+- Bottom bar collapsée avec badge LIVE + prix principal
+- Tap → Bottom sheet avec animation slide-in (300ms)
+- Handle drag indicator blanc/50
+- Backdrop blur + close on tap outside
+- Attention au chevauchement avec CTA principal (z-index 20 vs 10)
+
+**3. Props & Data Flow**
+```tsx
+interface LiveEstimatePanelProps {
+  refinedMinEur: number | null;
+  refinedMaxEur: number | null;
+  refinedCenterEur: number | null;
+  firstEstimateMinEur?: number | null;
+  firstEstimateMaxEur?: number | null;
+  firstEstimateCenterEur?: number | null;
+  lines?: PricingLine[]; // max 5 drivers
+  formuleLabel?: string;
+  className?: string;
+}
+
+interface PricingLine {
+  key: "distance" | "density" | "kitchen" | "date" | "access";
+  label: string;
+  status: string;
+  amountEur: number;
+  confirmed?: boolean;
+}
+```
+- Data source : `v2PricingCart` (useMemo dans page.tsx)
+- Aucune logique métier dans le composant (100% présentation)
+- Lines limited to 5 drivers max (specs)
+
+**4. Micro-interactions**
+```tsx
+// Highlight animation sur changement de ligne
+useEffect(() => {
+  if (refinedCenterEur !== previousCenterRef.current) {
+    const lastConfirmedLine = lines.findLast(l => l.confirmed && l.amountEur !== 0);
+    if (lastConfirmedLine) {
+      setHighlightedLine(lastConfirmedLine.key);
+      setTimeout(() => setHighlightedLine(null), 500);
+    }
+  }
+}, [refinedCenterEur, lines]);
+```
+- Ring turquoise + scale 1.02 sur la ligne modifiée (500ms)
+- Fade/slide du montant (150ms)
+- Respect prefers-reduced-motion
+
+**5. Drawer "Détail du calcul"**
+- Desktop : Modal centered (zoom-in-95, max-w-lg)
+- Mobile : Réutilise le bottom sheet
+- 5 bullets max avec icons TrendingUp/Down
+- Format : Numéro + Label + Status + Montant
+- Footer : "Formule {formuleLabel} • Calcul basé sur vos données déclarées"
+
+**Backoffice Safe** :
+- ✅ Composant 100% présentation (no logic)
+- ✅ Data source inchangée (v2PricingCart)
+- ✅ Aucun nouveau field ajouté
+- ✅ Aucun event GA4 ajouté
+- ✅ StepAccessLogisticsV2 formulaire préservé (colonne gauche)
+- ✅ Layout grid préservé (lg:grid-cols-[1fr_420px])
+
+**Intégration dans page.tsx** :
+```tsx
+{state.currentStep === 3 && (
+  <div className="lg:grid lg:grid-cols-[1fr_420px] lg:gap-8">
+    {/* Formulaire (gauche) */}
+    <div><StepAccessLogisticsV2 ... /></div>
+    
+    {/* Panneau estimation (droite) */}
+    <LiveEstimatePanel
+      refinedMinEur={v2PricingCart?.refinedMinEur ?? null}
+      refinedMaxEur={v2PricingCart?.refinedMaxEur ?? null}
+      refinedCenterEur={v2PricingCart?.refinedCenterEur ?? null}
+      firstEstimateMinEur={v2PricingCart?.firstEstimateMinEur ?? null}
+      firstEstimateMaxEur={v2PricingCart?.firstEstimateMaxEur ?? null}
+      firstEstimateCenterEur={v2PricingCart?.firstEstimateCenterEur ?? null}
+      lines={v2PricingCart?.lines ?? []}
+      formuleLabel={v2PricingCart?.formuleLabel ?? "Standard"}
+      className="lg:sticky lg:top-28"
+    />
+  </div>
+)}
+```
+- Import HelpCircle retiré de page.tsx (déplacé dans LiveEstimatePanel)
+- ~150 lignes de code inline remplacées par 1 appel de composant
+- Meilleure maintenabilité + réutilisabilité
 
 #### STEP 4 (Bravo) — Status: COMPLETED ✅
 **Nouveau composant** : `StepContactPhotosV2Premium.tsx`
@@ -230,6 +366,7 @@ Fichier **REFONTE_UI_LOG.md** — journal de progression :
 - `app/devis-gratuits-v3/_ui/` (9 composants design system)
 - `components/tunnel/v2/StepQualificationV2Premium.tsx`
 - `components/tunnel/v2/StepEstimationV2Premium.tsx`
+- `components/tunnel/v2/LiveEstimatePanel.tsx`
 - `components/tunnel/v2/StepContactPhotosV2Premium.tsx`
 
 **Composants préservés** :

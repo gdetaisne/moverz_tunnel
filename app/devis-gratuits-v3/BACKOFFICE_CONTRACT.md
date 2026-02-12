@@ -374,3 +374,24 @@
 - **Toute modification de ce contrat doit être validée par le product owner + backend team**.
 - **En cas de doute, toujours privilégier la stabilité backoffice sur l'UX**.
 - **La refonte est 100% UI-only : on encapsule, on ne modifie pas**.
+
+### Historique des composants UI ajoutés (Backoffice Safe ✅)
+
+#### 2026-02-12 : LiveEstimatePanel.tsx (Step 3)
+**Composant** : `components/tunnel/v2/LiveEstimatePanel.tsx`  
+**Objectif** : Extraction du sidebar d'estimation du Step 3 en composant réutilisable premium (desktop sticky + mobile bottom bar/sheet).
+
+**Garanties Backoffice Safe** :
+- ✅ 100% présentation (aucune logique métier)
+- ✅ Data source inchangée (`v2PricingCart` dans page.tsx)
+- ✅ Aucun nouveau champ ajouté à `TunnelFormState`
+- ✅ Aucun event GA4 ajouté/modifié
+- ✅ `StepAccessLogisticsV2` formulaire préservé intégralement
+- ✅ Layout grid préservé (`lg:grid-cols-[1fr_420px]`)
+- ✅ Props interface statique (refinedMinEur, refinedMaxEur, refinedCenterEur, lines, formuleLabel)
+- ✅ Aucune modification du calcul de pricing (useMemo v2PricingCart)
+
+**Modifications dans page.tsx** :
+- Remplacement inline sidebar (lignes 1852-1999) par composant `<LiveEstimatePanel />`
+- Import `HelpCircle` retiré de page.tsx (déplacé dans LiveEstimatePanel)
+- ~150 lignes de code inline → 1 appel de composant (meilleure maintenabilité)

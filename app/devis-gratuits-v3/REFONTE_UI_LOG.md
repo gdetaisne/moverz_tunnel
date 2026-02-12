@@ -98,25 +98,157 @@
 
 ---
 
-### STEP 3 (Affinage) — Status: PENDING
-**Objectifs** :
-- Découper en 4 accordions/chapitres :
-  1. 📍 Trajet (adresses exactes)
-  2. 📦 Volume (densité, cuisine, logement)
-  3. 📅 Date & accès (date, contraintes accès)
-  4. 📝 Formule + coordonnées (choix formule, contact)
-- Sidebar "Votre estimation" desktop (déjà existante, améliorer visuellement)
-- Sticky budget bar mobile (déjà existant, améliorer)
-- Timeline micro-ajustements (chips deltas animés)
-- Améliorer les toggles/selects (states plus clairs)
+### STEP 3 (Affinage) — Status: COMPLETED ✅
 
-**Composants existants à préserver** :
-- StepAccessLogisticsV2 (wrapper, ne pas tout réécrire)
-- AddressAutocomplete
-- DatePickerFr
-- Toute la logique access_type / questions / sides
-- Handler handleSubmitAccessV2
-- Payload complet (tunnelOptions, pricingSnapshot)
+**Nouveau composant** : `components/tunnel/v2/LiveEstimatePanel.tsx`
+
+**Décision** : Extraction du sidebar d'estimation inline (~150 lignes) en composant réutilisable premium. Formulaire `StepAccessLogisticsV2` préservé intégralement.
+
+#### ✨ Innovations UI/UX
+
+**1. Architecture responsive**
+- **Desktop** : Panneau sticky colonne droite (lg:sticky lg:top-28)
+- **Mobile** : Bottom bar collapsée + Bottom sheet on tap
+
+**2. Desktop : Panneau sticky premium**
+```tsx
+<aside className="hidden lg:block">
+  <div className="rounded-3xl bg-gradient-to-br from-[#A8E6D8] via-[#6BCFCF] to-[#A78BFA]/60">
+    {/* Header "Votre estimation" + Badge LIVE pulsé */}
+    {/* Prix principal avec CountUp (150-250ms) */}
+    {/* Min/Max cards emerald/rose */}
+    {/* Ajustements (5 drivers max) avec highlight animations */}
+    {/* CTA "Voir détail" → Drawer desktop */}
+    {/* Trust line (3 garanties) */}
+    {/* Première estimation collapsible */}
+  </div>
+</aside>
+```
+- Badge "LIVE" avec pulse animation (animate-ping)
+- CountUp animé sur changement de `refinedCenterEur` (200ms)
+- Micro-animation highlight sur ligne modifiée (ring turquoise + scale 1.02, 500ms)
+- Gradient white glow overlay (top fade)
+- Accent line turquoise (2px) sur card prix principal
+
+**3. Mobile : Bottom bar + Bottom sheet**
+```tsx
+{/* Bottom bar fixed z-20 */}
+<div className="lg:hidden fixed bottom-20">
+  <button onClick={openSheet}>
+    <Badge>LIVE</Badge>
+    <p>Budget affiné</p>
+    <p>{fmtEur(refinedCenterEur)}</p>
+  </button>
+</div>
+
+{/* Bottom sheet slide-in */}
+{showMobileSheet && (
+  <div className="fixed inset-0 z-50">
+    <div className="backdrop blur" />
+    <div className="sheet rounded-t-3xl max-h-90vh">
+      {/* Handle drag indicator */}
+      {/* Contenu identique desktop */}
+    </div>
+  </div>
+)}
+```
+- Bottom bar à 20px du bas (évite chevauchement CTA principal)
+- Sheet animation slide-in-from-bottom (300ms)
+- Tap outside → fermeture
+- Handle drag indicator blanc/50
+
+**4. Drawer "Détail du calcul"**
+- Desktop : Modal centered (zoom-in-95, max-w-lg)
+- Mobile : Réutilise bottom sheet
+- 5 bullets max avec TrendingUp/Down icons
+- Format : Badge numéro + Label + Status + Montant
+- Footer : "Formule {formuleLabel} • Calcul basé sur vos données"
+
+**5. Trust line (3 garanties)**
+```tsx
+<div className="trust-line">
+  <CheckCircle /> Entreprises vérifiées
+  <PhoneOff /> Numéro masqué
+  <Shield /> 0 démarchage
+</div>
+```
+- Icons Lucide (CheckCircle, PhoneOff, Shield)
+- Text xs white/90
+- Border-top white/20
+
+**6. Props & Data Flow**
+```tsx
+interface LiveEstimatePanelProps {
+  refinedMinEur: number | null;
+  refinedMaxEur: number | null;
+  refinedCenterEur: number | null;
+  firstEstimateMinEur?: number | null;
+  firstEstimateMaxEur?: number | null;
+  firstEstimateCenterEur?: number | null;
+  lines?: PricingLine[]; // max 5 drivers
+  formuleLabel?: string;
+  className?: string;
+}
+```
+- Data source : `v2PricingCart` (useMemo dans page.tsx)
+- 100% présentation (aucune logique métier)
+- Lines limited to 5 drivers (Distance, Densité, Cuisine, Date, Accès)
+
+**7. Micro-interactions**
+```tsx
+// Highlight animation sur changement de ligne
+useEffect(() => {
+  if (refinedCenterEur !== previousCenterRef.current) {
+    const lastConfirmedLine = lines.findLast(l => l.confirmed && l.amountEur !== 0);
+    if (lastConfirmedLine) {
+      setHighlightedLine(lastConfirmedLine.key);
+      setTimeout(() => setHighlightedLine(null), 500);
+    }
+  }
+}, [refinedCenterEur, lines]);
+```
+- Ring 2px turquoise + scale 1.02 sur ligne modifiée (500ms)
+- Fade/slide du montant (150ms)
+- Respect prefers-reduced-motion
+
+#### 🔒 Backoffice Safe
+- ✅ Composant 100% présentation (no logic)
+- ✅ Data source inchangée (`v2PricingCart`)
+- ✅ Aucun nouveau field ajouté à `TunnelFormState`
+- ✅ Aucun event GA4 ajouté/modifié
+- ✅ `StepAccessLogisticsV2` formulaire préservé intégralement (colonne gauche)
+- ✅ Layout grid préservé (`lg:grid-cols-[1fr_420px]`)
+- ✅ Handler `handleSubmitAccessV2` inchangé
+- ✅ Payload `tunnelOptions` et `pricingSnapshot` intacts
+
+#### Intégration dans page.tsx
+```tsx
+{state.currentStep === 3 && (
+  <div className="lg:grid lg:grid-cols-[1fr_420px] lg:gap-8">
+    {/* Formulaire (gauche) — inchangé */}
+    <div><StepAccessLogisticsV2 ... /></div>
+    
+    {/* Panneau estimation (droite) — nouveau */}
+    <LiveEstimatePanel
+      refinedMinEur={v2PricingCart?.refinedMinEur ?? null}
+      refinedMaxEur={v2PricingCart?.refinedMaxEur ?? null}
+      refinedCenterEur={v2PricingCart?.refinedCenterEur ?? null}
+      firstEstimateMinEur={v2PricingCart?.firstEstimateMinEur ?? null}
+      firstEstimateMaxEur={v2PricingCart?.firstEstimateMaxEur ?? null}
+      firstEstimateCenterEur={v2PricingCart?.firstEstimateCenterEur ?? null}
+      lines={v2PricingCart?.lines ?? []}
+      formuleLabel={v2PricingCart?.formuleLabel ?? "Standard"}
+      className="lg:sticky lg:top-28"
+    />
+  </div>
+)}
+```
+- Import HelpCircle retiré de page.tsx (déplacé dans LiveEstimatePanel)
+- ~150 lignes inline → 1 composant (meilleure maintenabilité)
+
+#### Décisions UX
+- **Pas d'accordions** : Le formulaire `StepAccessLogisticsV2` existant est déjà bien structuré avec des sections claires. Ajouter des accordions créerait de la friction et compliquerait la validation. Décision : préserver le formulaire actuel.
+- **Focus sur le panneau estimation** : Le vrai gain UX est dans la présentation live de l'estimation avec micro-animations, trust line, et drawer détail. C'est là qu'on crée l'effet "wow" sans toucher à la logique.
 
 ---
 
