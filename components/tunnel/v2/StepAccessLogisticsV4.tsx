@@ -757,6 +757,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 {
                   id: "ECONOMIQUE" as const,
                   label: "Éco",
+                  recommended: false,
                   bullets: ["Transport uniquement", "Vous emballez"],
                 },
                 {
@@ -768,6 +769,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 {
                   id: "PREMIUM" as const,
                   label: "Premium",
+                  recommended: false,
                   bullets: ["Tout inclus", "Emballage complet"],
                 },
               ] as const).map((f) => {
