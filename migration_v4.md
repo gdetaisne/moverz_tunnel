@@ -2,6 +2,17 @@
 
 ## 2026-02-12 (14ème itération) — Refonte "Unicorn-Grade" complète du tunnel
 
+### 🔧 Fix déploiement CapRover (v419-420)
+**Problème** : Build échouait avec erreur TypeScript dans `StepContactPhotosV4.tsx` ligne 356
+**Cause** : Prop `style` invalide sur `CardV4` (non définie dans `CardV4Props`)
+**Solution** : Retrait de la prop `style` — la border turquoise est déjà gérée par `variant="highlighted"`
+**Commit** : `c7c1888` — `fix: remove invalid style prop on CardV4 in StepContactPhotosV4`
+**Status** : ✅ Build passe, push vers prod
+
+---
+
+## 2026-02-12 (14ème itération) — Refonte "Unicorn-Grade" complète du tunnel
+
 **Objectif** : Transformer le tunnel en expérience premium type Ramp (micro-interactions, clarté, confiance), sans casser l'intégration backoffice.
 
 **Contrainte NON NÉGOCIABLE** : 100% UI-only. Aucun endpoint, aucun payload, aucun event GA4, aucun champ ne doit être modifié.
