@@ -353,9 +353,6 @@ export function StepContactPhotosV4({
             padding="md"
             variant="highlighted"
             animate
-            style={{
-              border: "1.5px solid var(--color-accent)",
-            }}
           >
             <div className="flex items-center gap-3 mb-4">
               <div
