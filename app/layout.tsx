@@ -1,5 +1,21 @@
 import type { Metadata } from "next";
+import { Sora, Inter } from "next/font/google";
 import "./globals.css";
+
+/* Moverz Design System V4 Fonts */
+const sora = Sora({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-sora",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Moverz – Tunnel de demande de devis",
@@ -17,8 +33,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
-      <body className="min-h-screen bg-surface-0 text-text-1 antialiased">
+    <html lang="fr" className={`${sora.variable} ${inter.variable}`}>
+      <body className="min-h-screen bg-surface-0 text-text-1 antialiased font-inter">
         {children}
       </body>
     </html>

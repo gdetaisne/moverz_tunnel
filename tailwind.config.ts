@@ -1,6 +1,6 @@
 /**
- * Tailwind Config — Tunnel Moverz Premium
- * Design System V1 Premium Applied
+ * Tailwind Config — Moverz Official V4
+ * Design System: Turquoise signature #0EA5A6, Sora + Inter fonts
  * Mapped from styles/tokens.css
  */
 
@@ -23,84 +23,53 @@ const config: Config = {
           navy: "rgb(var(--brand-navy) / <alpha-value>)",
           slate: "rgb(var(--brand-slate) / <alpha-value>)",
           warm: "rgb(var(--brand-warm) / <alpha-value>)",
-          /* New premium tunnel tokens */
-          primary: "var(--color-brand-primary)",
-          "primary-hover": "var(--color-brand-primary-hover)",
-          "primary-light": "var(--color-brand-primary-light)",
         },
         
-        /* Premium neutral scale */
-        neutral: {
-          50: "var(--color-neutral-50)",
-          100: "var(--color-neutral-100)",
-          200: "var(--color-neutral-200)",
-          300: "var(--color-neutral-300)",
-          400: "var(--color-neutral-400)",
-          500: "var(--color-neutral-500)",
-          600: "var(--color-neutral-600)",
-          700: "var(--color-neutral-700)",
-          800: "var(--color-neutral-800)",
-          900: "var(--color-neutral-900)",
-        },
-        
-        /* Semantic text colors */
-        text: {
-          primary: "var(--color-text-primary)",
-          secondary: "var(--color-text-secondary)",
-          muted: "var(--color-text-muted)",
-          disabled: "var(--color-text-disabled)",
-          inverse: "var(--color-text-inverse)",
-          /* Legacy tokens (keep for backwards compat) */
-          1: "rgb(var(--text-1) / <alpha-value>)",
-          2: "rgb(var(--text-2) / <alpha-value>)",
-          3: "rgb(var(--text-3) / <alpha-value>)",
-        },
-        
-        /* Semantic background colors */
+        /* Moverz V4 Colors */
         bg: {
-          primary: "var(--color-bg-primary)",
-          secondary: "var(--color-bg-secondary)",
-          tertiary: "var(--color-bg-tertiary)",
-          inverse: "var(--color-bg-inverse)",
-          overlay: "var(--color-bg-overlay)",
+          primary: "var(--color-bg-primary)",      /* #FAFAFA */
+          dark: "var(--color-bg-dark)",            /* #0B0F14 */
         },
-        
-        /* Semantic border colors */
-        border: {
-          neutral: "var(--color-border-neutral)",
-          strong: "var(--color-border-strong)",
-          focus: "var(--color-border-focus)",
-        },
-        
-        /* Surface colors */
         surface: {
-          primary: "var(--color-surface-primary)",
-          secondary: "var(--color-surface-secondary)",
-          hover: "var(--color-surface-hover)",
-          /* Legacy tokens (keep for backwards compat) */
+          primary: "var(--color-surface-primary)", /* #FFFFFF */
+          /* Legacy */
           0: "rgb(var(--surface-0) / <alpha-value>)",
           1: "rgb(var(--surface-1) / <alpha-value>)",
           2: "rgb(var(--surface-2) / <alpha-value>)",
           3: "rgb(var(--surface-3) / <alpha-value>)",
         },
+        text: {
+          primary: "var(--color-text-primary)",      /* #0B0F19 */
+          secondary: "var(--color-text-secondary)",  /* #6B7280 */
+          muted: "var(--color-text-muted)",          /* #9CA3AF */
+          /* Legacy */
+          1: "rgb(var(--text-1) / <alpha-value>)",
+          2: "rgb(var(--text-2) / <alpha-value>)",
+          3: "rgb(var(--text-3) / <alpha-value>)",
+        },
+        accent: {
+          DEFAULT: "var(--color-accent)",            /* #0EA5A6 ⭐ */
+          hover: "var(--color-accent-hover)",        /* #0D9495 */
+          light: "var(--color-accent-light)",        /* #E0F7F7 */
+        },
+        navy: "var(--color-navy)",                   /* #04163A */
+        turquoise: "var(--color-turquoise-legacy)",  /* #6BCFCF */
         
-        /* Feedback colors */
-        success: {
-          DEFAULT: "var(--color-success)",
-          light: "var(--color-success-light)",
+        border: {
+          DEFAULT: "var(--color-border)",            /* #E5E7EB */
+          light: "var(--color-border-light)",        /* #F3F4F6 */
         },
-        error: {
-          DEFAULT: "var(--color-error)",
-          light: "var(--color-error-light)",
-        },
-        warning: {
-          DEFAULT: "var(--color-warning)",
-          light: "var(--color-warning-light)",
-        },
-        info: {
-          DEFAULT: "var(--color-info)",
-          light: "var(--color-info-light)",
-        },
+        
+        /* Semantic */
+        success: "var(--color-success)",             /* #16A34A */
+        danger: "var(--color-danger)",               /* #DC2626 */
+        warning: "var(--color-warning)",             /* #F59E0B */
+      },
+      
+      /* ===== FONTS ===== */
+      fontFamily: {
+        sora: "var(--font-sora)",     /* Titres (500, 600, 700) */
+        inter: "var(--font-inter)",   /* Texte (400, 500, 600) */
       },
       
       /* ===== SPACING ===== */
@@ -108,7 +77,6 @@ const config: Config = {
         section: "var(--space-section)",    /* 24px */
         block: "var(--space-block)",        /* 16px */
         inline: "var(--space-inline)",      /* 12px */
-        compact: "var(--space-compact)",    /* 8px */
       },
       
       /* ===== SIZING ===== */
@@ -128,11 +96,11 @@ const config: Config = {
       
       /* ===== BORDER RADIUS ===== */
       borderRadius: {
-        sm: "var(--radius-sm)",     /* 6px */
-        md: "var(--radius-md)",     /* 8px */
-        lg: "var(--radius-lg)",     /* 12px */
-        xl: "var(--radius-xl)",     /* 16px */
-        "2xl": "var(--radius-2xl)", /* 24px */
+        sm: "var(--radius-sm)",       /* 8px */
+        md: "var(--radius-md)",       /* 12px */
+        card: "var(--radius-card)",   /* 12px */
+        btn: "var(--radius-btn)",     /* 8px */
+        input: "var(--radius-input)", /* 8px */
         full: "var(--radius-full)",
       },
       
@@ -142,10 +110,9 @@ const config: Config = {
         sm: "var(--shadow-sm)",
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
-        xl: "var(--shadow-xl)",
-        "2xl": "var(--shadow-2xl)",
+        "glow-turquoise": "var(--shadow-glow-turquoise)", /* ✨ */
         focus: "var(--shadow-focus)",
-        /* Legacy shadows (keep for backwards compat) */
+        /* Legacy */
         brand: "0 14px 30px rgba(var(--brand-deep-teal) / 0.18)",
         soft: "0 10px 30px rgba(15, 23, 42, 0.06)",
       },
@@ -167,34 +134,9 @@ const config: Config = {
         popover: "var(--z-popover)",
         tooltip: "var(--z-tooltip)",
       },
-      
-      /* ===== TYPOGRAPHY ===== */
-      fontFamily: {
-        sans: "var(--font-sans)",
-        mono: "var(--font-mono)",
-      },
-      fontSize: {
-        xs: ["var(--text-xs)", { lineHeight: "var(--leading-normal)" }],
-        sm: ["var(--text-sm)", { lineHeight: "var(--leading-normal)" }],
-        base: ["var(--text-base)", { lineHeight: "var(--leading-normal)" }],
-        lg: ["var(--text-lg)", { lineHeight: "var(--leading-normal)" }],
-        xl: ["var(--text-xl)", { lineHeight: "var(--leading-snug)" }],
-        "2xl": ["var(--text-2xl)", { lineHeight: "var(--leading-snug)" }],
-        "3xl": ["var(--text-3xl)", { lineHeight: "var(--leading-tight)" }],
-        "4xl": ["var(--text-4xl)", { lineHeight: "var(--leading-tight)" }],
-        "5xl": ["var(--text-5xl)", { lineHeight: "var(--leading-tight)" }],
-      },
-      fontWeight: {
-        normal: "var(--font-normal)",
-        medium: "var(--font-medium)",
-        semibold: "var(--font-semibold)",
-        bold: "var(--font-bold)",
-      },
     },
   },
   plugins: [],
 };
 
 export default config;
-
-
