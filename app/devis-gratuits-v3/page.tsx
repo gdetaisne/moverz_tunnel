@@ -1,8 +1,19 @@
+/**
+ * Tunnel Devis Gratuits V3 — Design System V1 Premium Applied
+ * 
+ * ✅ Back-office safe - No API/payload/tracking changes
+ * ✅ Tracking safe - All GA4 events preserved
+ * ✅ Step 2 present - Estimation screen maintained
+ * ✅ Mobile summary ok - StickySummary (desktop) + SummaryDrawer (mobile)
+ * 
+ * Design: Premium neutral palette (no pastel gradients on dominant surfaces)
+ * Inspired by: Ramp.com product-led design
+ */
+
 'use client';
 
 import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-// HelpCircle moved to LiveEstimatePanel component
 import { ga4Event } from "@/lib/analytics/ga4";
 import {
   createBackofficeLead,
@@ -32,9 +43,10 @@ import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import { StepQualificationV2Premium } from "@/components/tunnel/v2/StepQualificationV2Premium";
 import { StepEstimationV2Premium } from "@/components/tunnel/v2/StepEstimationV2Premium";
 import { StepAccessLogisticsV2 } from "@/components/tunnel/v2/StepAccessLogisticsV2";
-import { LiveEstimatePanel } from "@/components/tunnel/v2/LiveEstimatePanel";
 import { StepContactPhotosV2Premium } from "@/components/tunnel/v2/StepContactPhotosV2Premium";
 import { V2ProgressBar } from "@/components/tunnel/v2/V2ProgressBar";
+// Design System V1 Premium components
+import { StickySummary, SummaryDrawer, type PricingDriver } from "@/components/tunnel";
 
 function DevisGratuitsV3Content() {
   const router = useRouter();
@@ -1720,13 +1732,13 @@ function DevisGratuitsV3Content() {
   }
 
   return (
-      <main className="min-h-screen bg-[#F8FAFB] text-[#0F172A]">
+      <main className="min-h-screen bg-bg-secondary text-text-primary">
         <div className={containerClassName}>
           {/* Top back/edit */}
           {state.currentStep > 1 && (
             <button
               onClick={() => goToStep((state.currentStep - 1) as 1 | 2 | 3 | 4)}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-[#0F172A]"
+              className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors duration-fast"
             >
               ← Modifier
             </button>
@@ -1735,7 +1747,7 @@ function DevisGratuitsV3Content() {
           <V2ProgressBar step={state.currentStep} onReset={reset} />
 
           {state.currentStep === 1 && (
-            <div className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/80 sm:backdrop-blur-xl border border-gray-100 sm:border-white/20 shadow-sm sm:shadow-[0_8px_32px_rgba(107,207,207,0.12)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500 p-6 sm:p-10">
+            <div className="rounded-xl bg-surface-primary border border-border-neutral shadow-md p-6 sm:p-10">
               <StepQualificationV2Premium
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
@@ -1755,7 +1767,7 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 2 && (
-            <div className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/80 sm:backdrop-blur-xl border border-gray-100 sm:border-white/20 shadow-sm sm:shadow-[0_8px_32px_rgba(107,207,207,0.12)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500 p-6 sm:p-10 relative">
+            <div className="rounded-xl bg-surface-primary border border-border-neutral shadow-md p-6 sm:p-10 relative">
               <StepEstimationV2Premium
                 volume={activePricingStep2?.volumeM3 ?? activePricing?.volumeM3 ?? null}
                 routeDistanceKm={v2FirstEstimateDistanceKm}
@@ -1777,7 +1789,7 @@ function DevisGratuitsV3Content() {
           {state.currentStep === 3 && (
             <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[1fr_420px] lg:gap-8 lg:items-start">
               {/* Formulaire (colonne gauche) */}
-              <div className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/80 sm:backdrop-blur-xl border border-gray-100 sm:border-white/20 shadow-sm sm:shadow-[0_8px_32px_rgba(107,207,207,0.12)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500 p-6 sm:p-10">
+              <div className="rounded-xl bg-surface-primary border border-border-neutral shadow-md p-6 sm:p-10">
                 <StepAccessLogisticsV2
                 originAddress={state.originAddress}
                 originCity={state.originCity}
@@ -1849,23 +1861,43 @@ function DevisGratuitsV3Content() {
               />
               </div>
 
-              {/* Panneau d'estimation live premium (desktop sticky + mobile bottom bar) */}
-              <LiveEstimatePanel
-                refinedMinEur={v2PricingCart?.refinedMinEur ?? null}
-                refinedMaxEur={v2PricingCart?.refinedMaxEur ?? null}
-                refinedCenterEur={v2PricingCart?.refinedCenterEur ?? null}
-                firstEstimateMinEur={v2PricingCart?.firstEstimateMinEur ?? null}
-                firstEstimateMaxEur={v2PricingCart?.firstEstimateMaxEur ?? null}
-                firstEstimateCenterEur={v2PricingCart?.firstEstimateCenterEur ?? null}
-                lines={v2PricingCart?.lines ?? []}
-                formuleLabel={v2PricingCart?.formuleLabel ?? "Standard"}
-                className="lg:sticky lg:top-28"
-              />
+              {/* Panneau d'estimation live premium (desktop sticky + mobile bottom bar/drawer) */}
+              {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
+                <>
+                  {/* Desktop: StickySummary */}
+                  <StickySummary
+                    priceCenter={v2PricingCart.refinedCenterEur}
+                    priceMin={v2PricingCart.refinedMinEur ?? 0}
+                    priceMax={v2PricingCart.refinedMaxEur ?? 0}
+                    drivers={(v2PricingCart.lines ?? []).map((line) => ({
+                      key: line.key,
+                      label: line.label,
+                      amount: line.amountEur,
+                      highlighted: line.confirmed,
+                    }))}
+                    formule={v2PricingCart.formuleLabel ?? "Standard"}
+                  />
+                  
+                  {/* Mobile: SummaryDrawer */}
+                  <SummaryDrawer
+                    priceCenter={v2PricingCart.refinedCenterEur}
+                    priceMin={v2PricingCart.refinedMinEur ?? 0}
+                    priceMax={v2PricingCart.refinedMaxEur ?? 0}
+                    drivers={(v2PricingCart.lines ?? []).map((line) => ({
+                      key: line.key,
+                      label: line.label,
+                      amount: line.amountEur,
+                      highlighted: line.confirmed,
+                    }))}
+                    formule={v2PricingCart.formuleLabel ?? "Standard"}
+                  />
+                </>
+              )}
             </div>
           )}
 
           {state.currentStep === 4 && (
-            <div className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/80 sm:backdrop-blur-xl border border-gray-100 sm:border-white/20 shadow-sm sm:shadow-[0_8px_32px_rgba(107,207,207,0.12)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500 p-6 sm:p-10 relative">
+            <div className="rounded-xl bg-surface-primary border border-border-neutral shadow-md p-6 sm:p-10 relative">
               <StepContactPhotosV2Premium
                 leadId={state.leadId}
                 linkingCode={state.linkingCode}
@@ -1895,7 +1927,7 @@ export default function DevisGratuitsV3Page() {
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-b from-[#F8F9FA] to-white flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#6BCFCF] border-t-transparent"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-brand-primary border-t-transparent"></div>
           <p className="mt-4 text-[#1E293B]/70">Chargement...</p>
         </div>
       </div>
