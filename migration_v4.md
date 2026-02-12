@@ -4118,3 +4118,77 @@ Migration progressive : les hex inline seront remplacés par ces tokens au fil d
 - **Champs / Inputs** : aucun changement.
 - **Back Office payload** : aucun changement.
 - **Stats** : -359 lignes, +149 lignes (simplification majeure de 210 lignes).
+
+---
+
+## 2026-02-12 — Step 3 simplifié : design clean + retrait services facultatifs
+
+- **Objectif** : Simplifier Step 3 style moverz.fr, retirer les services additionnels facultatifs (demande utilisateur).
+- **Changements UI** :
+  - Nouveau fichier `StepAccessLogisticsV4.tsx` (remplacement de `StepAccessLogisticsV2.tsx`)
+  - Design ultra-clean : CardV4 partout, sections bien séparées
+  - Sections : Adresses + Logements, Date, Volume (densité + cuisine), Contraintes d'accès, Contact, Formule
+  - Suppression complète de la section "Options supplémentaires (facultatif)"
+  - Layout mobile-first avec grid responsive
+  - Toggle switches style moverz.fr pour contraintes d'accès
+  - CTA simple : "Finaliser mon estimation →"
+- **Fichier** : `components/tunnel/v2/StepAccessLogisticsV4.tsx` (création)
+- **Supprimé** :
+  - Section "Options supplémentaires" avec 8 services facultatifs :
+    - `serviceFurnitureStorage` (Garde-meuble)
+    - `serviceCleaning` (Nettoyage / débarras)
+    - `serviceFullPacking` (Emballage complet)
+    - `serviceFurnitureAssembly` (Montage meubles neufs)
+    - `serviceInsurance` (Assurance renforcée)
+    - `serviceWasteRemoval` (Évacuation déchets)
+    - `serviceHelpWithoutTruck` (Aide sans camion)
+    - `serviceSpecificSchedule` (Horaires spécifiques)
+  - Textarea "Précisions" (specificNotes)
+  - State `showOptions`
+  - Composant `YesNo` pour services
+  - Sidebar desktop désactivée (panier géré dans page.tsx)
+  - Effets visuels complexes (glassmorphism, shadows multiples, gradients)
+- **Tracking** : aucun impact.
+- **Champs / Inputs** : 8 services + 1 textarea retirés (ne sont plus envoyés au Back Office).
+- **Back Office payload** : Les champs services ne sont plus envoyés (simplification).
+- **Stats** : Fichier V2 = 1228 lignes, Fichier V4 = 821 lignes (simplification de 407 lignes).
+
+---
+
+## 2026-02-12 — Step 4 simplifié : design clean confirmation
+
+- **Objectif** : Simplifier Step 4 (Bravo!) style moverz.fr, retirer les fioritures.
+- **Changements UI** :
+  - Design ultra-simplifié : CardV4 partout
+  - Hero centré : Badge succès + "🎉 Bravo !" + message
+  - Timeline simple : 3 étapes avec icônes
+  - Email confirmation : Card avec icône Mail
+  - Récap : Liste simple avec bordures
+  - Avantages : 3 bullets simples
+  - Suppression des animations motion complexes
+  - Suppression de la section "Économies potentielles"
+  - Suppression des cards "Premium confirmations"
+- **Fichier** : `components/tunnel/v2/StepContactPhotosV4.tsx` (réécriture complète)
+- **Supprimé** :
+  - Animations `motion` complexes (fade-in, slide-up)
+  - Section "Économies potentielles" avec calcul 15%
+  - Grid 2 colonnes (Récap + Économies)
+  - Icons multiples (`TrendingDown`, `Shield`, `FileText`)
+  - Effets visuels premium
+- **Tracking** : aucun impact.
+- **Champs / Inputs** : aucun changement.
+- **Back Office payload** : aucun changement.
+- **Stats** : -448 lignes, +285 lignes (simplification de 163 lignes).
+
+---
+
+## 📊 Bilan total simplification V4 (Steps 1-4)
+
+- **Step 1** : -110 lignes (195 → 85)
+- **Step 2** : -210 lignes (359 → 149)
+- **Step 3** : -407 lignes (1228 → 821)
+- **Step 4** : -163 lignes (448 → 285)
+
+**Total** : **-890 lignes** de simplification ! 🎉
+
+**Design** : Alignement complet sur le style moverz.fr (clean, moderne, mobile-first, CardV4 partout).

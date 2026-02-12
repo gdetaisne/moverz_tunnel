@@ -42,7 +42,7 @@ import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import { StepQualificationV4 } from "@/components/tunnel/v2/StepQualificationV4";
 import { StepEstimationV4 } from "@/components/tunnel/v2/StepEstimationV4";
-import { StepAccessLogisticsV2 } from "@/components/tunnel/v2/StepAccessLogisticsV2";
+import { StepAccessLogisticsV4 } from "@/components/tunnel/v2/StepAccessLogisticsV4";
 import { StepContactPhotosV4 } from "@/components/tunnel/v2/StepContactPhotosV4";
 import { V2ProgressBar } from "@/components/tunnel/v2/V2ProgressBar";
 // Design System V1 Premium components
@@ -1791,8 +1791,8 @@ function DevisGratuitsV3Content() {
           {state.currentStep === 3 && (
             <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[1fr_420px] lg:gap-8 lg:items-start">
               {/* Formulaire (colonne gauche) */}
-              <div className="rounded-xl bg-surface-primary border border-border-neutral shadow-md p-6 sm:p-10">
-                <StepAccessLogisticsV2
+              <div>
+                <StepAccessLogisticsV4
                 originAddress={state.originAddress}
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
