@@ -1,5 +1,26 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Fix rendu délavé intermittent (toutes steps)
+
+**Symptôme prod** : rendu parfois "grisé/délavé" sur certains devices (Step 1→4), alors que d'autres devices affichent correctement.
+
+**Cause racine** :
+- Les composants V4 utilisent encore des variables CSS legacy `--color-bg`, `--color-surface`, `--color-text`.
+- Les tokens avaient été renommés en `--color-bg-primary`, `--color-surface-primary`, `--color-text-primary`.
+- Sans alias de compatibilité, `var(--color-...)` devenait invalide sur certains clients (selon cache/device), d'où rendu incohérent.
+
+**Correction appliquée** :
+- Ajout d'aliases de compatibilité dans `styles/tokens.css` :
+  - `--color-bg: var(--color-bg-primary);`
+  - `--color-surface: var(--color-surface-primary);`
+  - `--color-text: var(--color-text-primary);`
+
+**Impact** :
+- Fix UI global (Step 1, 2, 3, 4).
+- Aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-12 — Refonte page confirmation (Step 4)
 
 **Contexte** : La page de confirmation manquait de hiérarchie claire et contenait du contenu marketing superflu.

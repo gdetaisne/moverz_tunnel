@@ -29,6 +29,11 @@
   /* Borders */
   --color-border: #E5E7EB;            /* Border standard */
   --color-border-light: #F3F4F6;      /* Border léger */
+
+  /* Compat aliases (legacy names still used in V4 components) */
+  --color-bg: var(--color-bg-primary);
+  --color-surface: var(--color-surface-primary);
+  --color-text: var(--color-text-primary);
   
   /* Semantic */
   --color-success: #16A34A;           /* Vert */
