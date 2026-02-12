@@ -4074,3 +4074,21 @@ Migration progressive : les hex inline seront remplacés par ces tokens au fil d
 - **Champs / Inputs** : aucun changement.
 - **Back Office payload** : aucun changement.
 - **Lesson learned** : Toujours vérifier que les nouveaux composants sont correctement exportés dans les fichiers `index.ts` avant le commit.
+
+---
+
+## 2026-02-12 — Step 1 simplifié : style homepage moverz.fr
+
+- **Objectif** : Simplifier Step 1 pour qu'il ressemble au formulaire clean de la homepage moverz.fr, tout en gardant le Design System V4.
+- **Changements UI** :
+  - Formulaire ultra-épuré dans une seule `CardV4`
+  - 3 champs uniquement : Ville de départ, Ville d'arrivée, Surface (m²)
+  - Header centré avec titre "Obtenez votre estimation en 2 minutes"
+  - CTA simple "Voir mon estimation →"
+  - Trust badges en bas : "⚡ 2 minutes • 🔒 Gratuit • 🎯 Sans engagement"
+  - Mobile-first, design propre et moderne
+- **Fichier** : `components/tunnel/v2/StepQualificationV4.tsx` (réécriture complète)
+- **Tracking** : aucun impact (step reste `PROJECT`, screenId `project_v4`).
+- **Champs / Inputs** : aucun ajout/suppression, mêmes champs envoyés au Back Office.
+- **Back Office payload** : aucun changement.
+- **Stats** : -195 lignes, +85 lignes (simplification nette).
