@@ -47,6 +47,8 @@ import { StepContactPhotosV4 } from "@/components/tunnel/v2/StepContactPhotosV4"
 import { V2ProgressBar } from "@/components/tunnel/v2/V2ProgressBar";
 // Design System V1 Premium components
 import { StickySummary, SummaryDrawer, type PricingDriver } from "@/components/tunnel";
+// Design System V4 SmartCart
+import { SmartCart, type CartItem } from "@/components/tunnel-v4";
 
 function DevisGratuitsV3Content() {
   const router = useRouter();
@@ -1861,37 +1863,27 @@ function DevisGratuitsV3Content() {
               />
               </div>
 
-              {/* Panneau d'estimation live premium (desktop sticky + mobile bottom bar/drawer) */}
+              {/* SmartCart V4 (desktop sticky + mobile FAB + drawer) */}
               {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
-                <>
-                  {/* Desktop: StickySummary */}
-                  <StickySummary
-                    priceCenter={v2PricingCart.refinedCenterEur}
-                    priceMin={v2PricingCart.refinedMinEur ?? 0}
-                    priceMax={v2PricingCart.refinedMaxEur ?? 0}
-                    drivers={(v2PricingCart.lines ?? []).map((line) => ({
-                      key: line.key,
-                      label: line.label,
-                      amount: line.amountEur,
-                      highlighted: line.confirmed,
-                    }))}
-                    formule={v2PricingCart.formuleLabel ?? "Standard"}
-                  />
-                  
-                  {/* Mobile: SummaryDrawer */}
-                  <SummaryDrawer
-                    priceCenter={v2PricingCart.refinedCenterEur}
-                    priceMin={v2PricingCart.refinedMinEur ?? 0}
-                    priceMax={v2PricingCart.refinedMaxEur ?? 0}
-                    drivers={(v2PricingCart.lines ?? []).map((line) => ({
-                      key: line.key,
-                      label: line.label,
-                      amount: line.amountEur,
-                      highlighted: line.confirmed,
-                    }))}
-                    formule={v2PricingCart.formuleLabel ?? "Standard"}
-                  />
-                </>
+                <SmartCart
+                  currentPrice={v2PricingCart.refinedCenterEur}
+                  minPrice={v2PricingCart.refinedMinEur ?? 0}
+                  maxPrice={v2PricingCart.refinedMaxEur ?? 0}
+                  items={(v2PricingCart.lines ?? []).map((line) => ({
+                    id: line.key,
+                    label: line.label,
+                    amountEur: line.amountEur,
+                    category: line.status,
+                  }))}
+                  projectInfo={{
+                    origin: state.originCity || undefined,
+                    destination: state.destinationCity || undefined,
+                    surface: parseInt(state.surfaceM2) || undefined,
+                    volume: activePricing?.volumeM3 || undefined,
+                  }}
+                  ctaLabel="Valider mon devis"
+                  onSubmit={handleSubmitAccessV2}
+                />
               )}
             </div>
           )}

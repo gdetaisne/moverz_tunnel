@@ -154,4 +154,31 @@ body {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
+/* ============================================================
+   SMART CART V4 SCROLLBAR
+============================================================ */
+.smart-cart-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.smart-cart-scrollbar::-webkit-scrollbar-track {
+  background: var(--color-border-light);
+  border-radius: 999px;
+}
+
+.smart-cart-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+  transition: background 150ms;
+}
+
+.smart-cart-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+.smart-cart-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) var(--color-border-light);
+}
+
 
