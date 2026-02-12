@@ -1,17 +1,8 @@
-/**
- * StepQualificationV4 — Moverz V4 Design System
- * Écran 1: Ville de départ + arrivée + surface
- * 
- * ✅ Back-office safe: tous les champs conservent leurs IDs/names/handlers
- * ✅ Tracking safe: pas de changement de tracking
- */
-
 "use client";
 
 import { FormEvent } from "react";
-import { MapPin, Home, ArrowRight, Shield } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
-import { CardV4, InputV4, ButtonV4 } from "@/components/tunnel-v4";
+import { CardV4 } from "@/components/tunnel-v4";
 
 interface StepQualificationV4Props {
   originCity: string;
@@ -52,12 +43,13 @@ export function StepQualificationV4({
     const n = Number.parseInt(String(surfaceM2 || "").trim(), 10);
     return Number.isFinite(n) && n >= 10 && n <= 500;
   })();
-  
+
   const originInitialValue = originCity
     ? originPostalCode
       ? `${originCity} (${originPostalCode})`
       : originCity
     : originPostalCode;
+
   const destinationInitialValue = destinationCity
     ? destinationPostalCode
       ? `${destinationCity} (${destinationPostalCode})`
@@ -65,71 +57,30 @@ export function StepQualificationV4({
     : destinationPostalCode;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6 sm:space-y-8">
-      {/* Hero section */}
-      <div className="text-center space-y-3 sm:space-y-4">
-        <h1
-          className="text-3xl sm:text-4xl font-bold leading-tight"
-          style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
-        >
-          Obtenez votre estimation<br />en 2 minutes
-        </h1>
-        <p
-          className="text-base sm:text-lg max-w-xl mx-auto"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Comparez jusqu'à 3 devis gratuits de déménageurs professionnels
-        </p>
-      </div>
-
-      {/* Trajet section */}
-      <CardV4 padding="lg" animate>
+    <form onSubmit={onSubmit} className="space-y-6">
+      <CardV4 padding="lg">
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 flex items-center justify-center"
-              style={{
-                background: "var(--color-accent-light)",
-                borderRadius: "var(--radius-sm)",
-              }}
+          <div className="text-center space-y-2">
+            <h1
+              className="text-2xl sm:text-3xl font-bold"
+              style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
             >
-              <MapPin className="w-5 h-5" style={{ color: "var(--color-accent)" }} />
-            </div>
-            <div className="flex-1">
-              <p
-                className="text-sm font-semibold"
-                style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
-              >
-                Votre trajet
-              </p>
-              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                D'où à où déménagez-vous ?
-              </p>
-            </div>
+              Obtenez votre estimation
+              <br />
+              en 2 minutes
+            </h1>
+            <p className="text-sm sm:text-base" style={{ color: "var(--color-text-secondary)" }}>
+              Comparez jusqu'à 3 devis gratuits de déménageurs professionnels
+            </p>
           </div>
 
-          {/* Origine */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label
-                className="text-sm font-medium flex items-center gap-2"
-                style={{ color: "var(--color-text)" }}
-              >
-                <span
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white"
-                  style={{ background: "var(--color-accent)" }}
-                >
-                  A
-                </span>
-                Ville de départ
-              </label>
-            </div>
-            
+          {/* Form fields */}
+          <div className="space-y-4">
             <AddressAutocomplete
               label="Ville de départ"
-              placeholder="Ex: Paris, Lyon, Marseille..."
-              inputId="v2-origin-city"
+              placeholder="Ex: Paris"
+              inputId="v4-origin-city"
               initialValue={originInitialValue}
               kind="city"
               validated={isOriginCoordsOk}
@@ -155,41 +106,11 @@ export function StepQualificationV4({
                 onFieldChange("originLon", s.lon ?? null);
               }}
             />
-          </div>
 
-          {/* Flèche de direction */}
-          <div className="flex items-center justify-center">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{
-                background: "var(--color-accent-light)",
-              }}
-            >
-              <ArrowRight className="w-5 h-5" style={{ color: "var(--color-accent)" }} />
-            </div>
-          </div>
-
-          {/* Destination */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label
-                className="text-sm font-medium flex items-center gap-2"
-                style={{ color: "var(--color-text)" }}
-              >
-                <span
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white"
-                  style={{ background: "var(--color-accent)" }}
-                >
-                  B
-                </span>
-                Ville d'arrivée
-              </label>
-            </div>
-            
             <AddressAutocomplete
               label="Ville d'arrivée"
-              placeholder="Ex: Bordeaux, Toulouse, Nice..."
-              inputId="v2-destination-city"
+              placeholder="Ex: Lyon"
+              inputId="v4-destination-city"
               initialValue={destinationInitialValue}
               kind="city"
               validated={isDestinationCoordsOk}
@@ -215,111 +136,80 @@ export function StepQualificationV4({
                 onFieldChange("destinationLon", s.lon ?? null);
               }}
             />
-          </div>
-        </div>
-      </CardV4>
 
-      {/* Surface section */}
-      <CardV4 padding="lg" animate>
-        <div className="space-y-5">
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 flex items-center justify-center"
-              style={{
-                background: "var(--color-accent-light)",
-                borderRadius: "var(--radius-sm)",
-              }}
-            >
-              <Home className="w-5 h-5" style={{ color: "var(--color-accent)" }} />
-            </div>
-            <div className="flex-1">
-              <p
-                className="text-sm font-semibold"
-                style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
+            {/* Surface */}
+            <div className="space-y-2">
+              <label
+                htmlFor="v4-surface-m2"
+                className="block text-sm font-medium"
+                style={{ color: "var(--color-text)" }}
               >
-                Votre logement
-              </p>
+                Surface (m²)
+                {showValidation && !isSurfaceValid && (
+                  <span className="ml-2 text-xs font-normal" style={{ color: "var(--color-danger)" }}>
+                    Surface requise (10–500 m²)
+                  </span>
+                )}
+              </label>
+              <div className="relative">
+                <input
+                  id="v4-surface-m2"
+                  type="number"
+                  min={10}
+                  max={500}
+                  value={surfaceM2}
+                  onChange={(e) => {
+                    onFieldChange("surfaceM2", e.target.value);
+                    onFieldChange("surfaceTouched", true);
+                  }}
+                  className="w-full rounded-xl px-4 py-3 text-base transition-all"
+                  style={{
+                    background: "var(--color-bg)",
+                    border: `2px solid ${
+                      showValidation && !isSurfaceValid
+                        ? "var(--color-danger)"
+                        : "var(--color-border)"
+                    }`,
+                    color: "var(--color-text)",
+                  }}
+                  placeholder="Ex: 70"
+                />
+                <span
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sm pointer-events-none"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
+                  m²
+                </span>
+              </div>
               <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                Surface totale (garages et dépendances inclus)
+                Une estimation approximative suffit, vous pourrez affiner ensuite
               </p>
             </div>
           </div>
 
-          {/* Input surface */}
-          <InputV4
-            id="v2-surface-m2"
-            type="number"
-            label="Surface approximative (m²)"
-            helper="Une estimation approximative suffit, vous pourrez affiner ensuite"
-            placeholder="60"
-            min={10}
-            max={500}
-            value={surfaceM2}
-            isValid={isSurfaceValid}
-            error={
-              showValidation && !isSurfaceValid
-                ? "Veuillez indiquer une surface entre 10 et 500 m²"
-                : undefined
-            }
-            onChange={(e) => {
-              onFieldChange("surfaceM2", e.target.value);
-              onFieldChange("surfaceTouched", true);
+          {/* CTA */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-4 rounded-xl font-semibold text-base transition-all active:scale-[0.98] disabled:opacity-50"
+            style={{
+              background: "var(--color-accent)",
+              color: "#FFFFFF",
             }}
-            required
-          />
-        </div>
-      </CardV4>
-
-      {/* Rassurance */}
-      <CardV4 padding="md" className="flex items-start gap-3">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{
-            background: "var(--color-accent-light)",
-          }}
-        >
-          <Shield className="w-5 h-5" style={{ color: "var(--color-accent)" }} />
-        </div>
-        <div className="flex-1">
-          <p
-            className="text-sm font-semibold mb-2"
-            style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
           >
-            100% gratuit et sans engagement
-          </p>
-          <ul className="space-y-1.5 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            <li className="flex items-start gap-2">
-              <span style={{ color: "var(--color-accent)" }}>•</span>
-              <span>Comparez jusqu'à 3 devis de déménageurs pros</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span style={{ color: "var(--color-accent)" }}>•</span>
-              <span>Aucune donnée bancaire requise</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span style={{ color: "var(--color-accent)" }}>•</span>
-              <span>Vous choisissez la meilleure offre, ou aucune</span>
-            </li>
-          </ul>
+            {isSubmitting ? "Chargement..." : "Voir mon estimation →"}
+          </button>
+
+          {/* Trust badges */}
+          <div className="flex items-center justify-center gap-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span>⚡ 2 minutes</span>
+            <span>•</span>
+            <span>🔒 Gratuit</span>
+            <span>•</span>
+            <span>🎯 Sans engagement</span>
+          </div>
         </div>
       </CardV4>
-
-      {/* CTA */}
-      <div className="space-y-3">
-        <ButtonV4
-          type="submit"
-          variant="primary"
-          size="lg"
-          isLoading={isSubmitting}
-          className="w-full"
-        >
-          Voir mon estimation gratuite
-        </ButtonV4>
-        <p className="text-center text-sm" style={{ color: "var(--color-text-muted)" }}>
-          ⚡ 2 minutes • 🎁 Gratuit • 🔒 Sans engagement
-        </p>
-      </div>
     </form>
   );
 }
