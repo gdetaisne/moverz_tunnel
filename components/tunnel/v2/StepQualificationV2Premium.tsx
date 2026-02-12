@@ -108,6 +108,7 @@ export function StepQualificationV2Premium({
             </div>
             
             <AddressAutocomplete
+              label="Ville de départ"
               placeholder="Ex: Paris, Lyon, Marseille..."
               inputId="v2-origin-city"
               initialValue={originInitialValue}
@@ -170,6 +171,7 @@ export function StepQualificationV2Premium({
             </div>
             
             <AddressAutocomplete
+              label="Ville d'arrivée"
               placeholder="Ex: Bordeaux, Toulouse, Nice..."
               inputId="v2-destination-city"
               initialValue={destinationInitialValue}

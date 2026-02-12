@@ -216,6 +216,7 @@ Fichier **REFONTE_UI_LOG.md** — journal de progression :
 
 #### Vérifications techniques
 - ✅ **Linting** : Aucune erreur TypeScript/ESLint
+- ✅ **Fix build CapRover** : ajout de la prop requise `label` sur `AddressAutocomplete` (Step 1 Premium)
 - ✅ **Imports** : Tous les imports résolus
 - ✅ **Props** : Toutes les interfaces matchent
 - ✅ **Handlers** : Tous les handlers préservés (handleSubmitQualificationV2, handleSubmitEstimationV2, handleSubmitAccessV2)
