@@ -4060,3 +4060,17 @@ Migration progressive : les hex inline seront remplacés par ces tokens au fil d
 - **Tracking** : aucun impact.
 - **Champs / Inputs** : aucun ajout/suppression.
 - **Back Office payload** : aucun changement.
+
+---
+
+## 2026-02-12 — Fix build CapRover : export SmartCart manquant
+
+- **Problème** : Le build CapRover échouait avec erreur Turbopack : `Export SmartCart doesn't exist in target module [project]/components/tunnel-v4/index.ts`.
+- **Root cause** : Le fichier `SmartCart.tsx` était bien commité (commit `50e8608`), mais l'export dans `components/tunnel-v4/index.ts` n'avait jamais été ajouté au repo. Le fichier local contenait la ligne, mais elle n'avait jamais été commitée.
+- **Solution** :
+  - Ajout de `export { SmartCart, type SmartCartProps, type CartItem } from "./SmartCart";` dans `components/tunnel-v4/index.ts`
+  - Commit `69428fa` : `fix: export SmartCart from tunnel-v4 index`
+- **Tracking** : aucun impact.
+- **Champs / Inputs** : aucun changement.
+- **Back Office payload** : aucun changement.
+- **Lesson learned** : Toujours vérifier que les nouveaux composants sont correctement exportés dans les fichiers `index.ts` avant le commit.
