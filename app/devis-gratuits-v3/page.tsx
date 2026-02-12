@@ -41,7 +41,7 @@ import {
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import { StepQualificationV4 } from "@/components/tunnel/v2/StepQualificationV4";
-import { StepEstimationV2Premium } from "@/components/tunnel/v2/StepEstimationV2Premium";
+import { StepEstimationV4 } from "@/components/tunnel/v2/StepEstimationV4";
 import { StepAccessLogisticsV2 } from "@/components/tunnel/v2/StepAccessLogisticsV2";
 import { StepContactPhotosV2Premium } from "@/components/tunnel/v2/StepContactPhotosV2Premium";
 import { V2ProgressBar } from "@/components/tunnel/v2/V2ProgressBar";
@@ -1768,7 +1768,7 @@ function DevisGratuitsV3Content() {
 
           {state.currentStep === 2 && (
             <div className="rounded-xl bg-surface-primary border border-border-neutral shadow-md p-6 sm:p-10 relative">
-              <StepEstimationV2Premium
+              <StepEstimationV4
                 volume={activePricingStep2?.volumeM3 ?? activePricing?.volumeM3 ?? null}
                 routeDistanceKm={v2FirstEstimateDistanceKm}
                 displayDistanceKm={v2FirstEstimateDistanceKm}
