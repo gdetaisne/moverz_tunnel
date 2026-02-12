@@ -29,10 +29,10 @@ import {
 } from "@/lib/pricing/constants";
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
-import { StepQualificationV2 } from "@/components/tunnel/v2/StepQualificationV2";
-import { StepEstimationV2 } from "@/components/tunnel/v2/StepEstimationV2";
+import { StepQualificationV2Premium } from "@/components/tunnel/v2/StepQualificationV2Premium";
+import { StepEstimationV2Premium } from "@/components/tunnel/v2/StepEstimationV2Premium";
 import { StepAccessLogisticsV2 } from "@/components/tunnel/v2/StepAccessLogisticsV2";
-import { StepContactPhotosV2 } from "@/components/tunnel/v2/StepContactPhotosV2";
+import { StepContactPhotosV2Premium } from "@/components/tunnel/v2/StepContactPhotosV2Premium";
 import { V2ProgressBar } from "@/components/tunnel/v2/V2ProgressBar";
 
 function DevisGratuitsV3Content() {
@@ -1735,7 +1735,7 @@ function DevisGratuitsV3Content() {
 
           {state.currentStep === 1 && (
             <div className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/80 sm:backdrop-blur-xl border border-gray-100 sm:border-white/20 shadow-sm sm:shadow-[0_8px_32px_rgba(107,207,207,0.12)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500 p-6 sm:p-10">
-              <StepQualificationV2
+              <StepQualificationV2Premium
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
                 originLat={state.originLat}
@@ -1755,17 +1755,20 @@ function DevisGratuitsV3Content() {
 
           {state.currentStep === 2 && (
             <div className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/80 sm:backdrop-blur-xl border border-gray-100 sm:border-white/20 shadow-sm sm:shadow-[0_8px_32px_rgba(107,207,207,0.12)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500 p-6 sm:p-10 relative">
-              <StepEstimationV2
+              <StepEstimationV2Premium
                 volume={activePricingStep2?.volumeM3 ?? activePricing?.volumeM3 ?? null}
                 routeDistanceKm={v2FirstEstimateDistanceKm}
                 displayDistanceKm={v2FirstEstimateDistanceKm}
                 priceMin={activePricingStep2?.prixMin ?? activePricing?.prixMin ?? null}
                 priceMax={activePricingStep2?.prixMax ?? activePricing?.prixMax ?? null}
                 formuleLabel={state.formule === "ECONOMIQUE" ? "Éco" : state.formule === "PREMIUM" ? "Premium" : "Standard"}
+                originCity={state.originCity}
+                destinationCity={state.destinationCity}
+                surfaceM2={state.surfaceM2}
                 onSubmit={handleSubmitEstimationV2}
                 isSubmitting={false}
-                  debug={debugMode}
-                  debugRows={v2DebugRowsStep2 ?? undefined}
+                debug={debugMode}
+                debugRows={v2DebugRowsStep2 ?? undefined}
               />
             </div>
           )}
@@ -1998,26 +2001,25 @@ function DevisGratuitsV3Content() {
 
           {state.currentStep === 4 && (
             <div className="rounded-xl sm:rounded-2xl bg-white sm:bg-white/80 sm:backdrop-blur-xl border border-gray-100 sm:border-white/20 shadow-sm sm:shadow-[0_8px_32px_rgba(107,207,207,0.12)] sm:hover:shadow-[0_12px_48px_rgba(107,207,207,0.15)] transition-all duration-500 p-6 sm:p-10 relative">
-              <StepContactPhotosV2
+              <StepContactPhotosV2Premium
                 leadId={state.leadId}
                 linkingCode={state.linkingCode}
-                // Économies basées sur la formule sélectionnée (pas la fourchette globale)
                 estimateMinEur={activePricing?.prixMin ?? null}
                 estimateMaxEur={activePricing?.prixMax ?? null}
-              estimateIsIndicative={estimateIsIndicative}
+                estimateIsIndicative={estimateIsIndicative}
                 email={state.email}
-              recap={{
-                originCity: state.originCity,
-                originPostalCode: state.originPostalCode,
-                destinationCity: state.destinationCity,
-                destinationPostalCode: state.destinationPostalCode,
-                movingDate: state.movingDate,
-                formule: state.formule,
-                surfaceM2: state.surfaceM2,
-              }}
-            />
-          </div>
-        )}
+                recap={{
+                  originCity: state.originCity,
+                  originPostalCode: state.originPostalCode,
+                  destinationCity: state.destinationCity,
+                  destinationPostalCode: state.destinationPostalCode,
+                  movingDate: state.movingDate,
+                  formule: state.formule,
+                  surfaceM2: state.surfaceM2,
+                }}
+              />
+            </div>
+          )}
       </div>
     </main>
   );
