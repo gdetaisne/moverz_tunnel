@@ -35,6 +35,9 @@ export interface SmartCartProps {
   minPrice: number;
   maxPrice: number;
   
+  // Budget initial (Step 2 baseline)
+  initialPrice?: number;
+  
   // Items
   items: CartItem[];
   
@@ -58,6 +61,7 @@ export function SmartCart({
   currentPrice,
   minPrice,
   maxPrice,
+  initialPrice,
   items = [],
   projectInfo,
   isLoading = false,
@@ -99,18 +103,18 @@ export function SmartCart({
 
   // Cart content (réutilisé desktop + drawer)
   const CartContent = () => (
-    <div className="space-y-5">
+    <div className={isMobile && drawerOpen ? "space-y-6" : "space-y-5"}>
       {/* Header */}
       <div>
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-3">
           <p
-            className="text-xs font-bold uppercase tracking-wide"
+            className={`font-bold uppercase tracking-wide ${isMobile && drawerOpen ? "text-sm" : "text-xs"}`}
             style={{ color: "var(--color-text-muted)" }}
           >
             Votre estimation
           </p>
           <div
-            className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+            className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"
             style={{
               background: "var(--color-accent-light)",
               color: "var(--color-accent)",
@@ -128,7 +132,7 @@ export function SmartCart({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="text-4xl font-bold tabular-nums"
+            className={isMobile && drawerOpen ? "text-5xl font-bold tabular-nums" : "text-4xl font-bold tabular-nums"}
             style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
           >
             {fmtEur(currentPrice)}
@@ -136,9 +140,9 @@ export function SmartCart({
         </AnimatePresence>
 
         {/* Progress bar dans fourchette */}
-        <div className="mt-4 space-y-2">
+        <div className="mt-5 space-y-2.5">
           <div
-            className="h-2 rounded-full overflow-hidden"
+            className={isMobile && drawerOpen ? "h-2.5 rounded-full overflow-hidden" : "h-2 rounded-full overflow-hidden"}
             style={{ background: "var(--color-border-light)" }}
           >
             <motion.div
@@ -149,7 +153,7 @@ export function SmartCart({
               transition={{ duration: 0.3, ease: "easeOut" }}
             />
           </div>
-          <div className="flex items-center justify-between text-xs">
+          <div className={`flex items-center justify-between ${isMobile && drawerOpen ? "text-sm" : "text-xs"}`}>
             <span style={{ color: "var(--color-text-muted)" }}>
               Min {fmtEur(minPrice)}
             </span>
@@ -163,7 +167,7 @@ export function SmartCart({
       {/* Project info (si fourni) */}
       {projectInfo && (
         <div
-          className="p-3 rounded-lg space-y-1.5 text-xs"
+          className={`rounded-lg ${isMobile && drawerOpen ? "p-4 space-y-2.5 text-sm" : "p-3 space-y-1.5 text-xs"}`}
           style={{
             background: "var(--color-bg)",
             border: "1px solid var(--color-border)",
@@ -172,7 +176,7 @@ export function SmartCart({
           {projectInfo.origin && projectInfo.destination && (
             <div className="flex items-center justify-between">
               <span style={{ color: "var(--color-text-muted)" }}>Trajet</span>
-              <span style={{ color: "var(--color-text)" }} className="font-medium">
+              <span style={{ color: "var(--color-text)" }} className="font-semibold">
                 {projectInfo.origin} → {projectInfo.destination}
               </span>
             </div>
@@ -180,7 +184,7 @@ export function SmartCart({
           {projectInfo.surface && (
             <div className="flex items-center justify-between">
               <span style={{ color: "var(--color-text-muted)" }}>Surface</span>
-              <span style={{ color: "var(--color-text)" }} className="font-medium">
+              <span style={{ color: "var(--color-text)" }} className="font-semibold">
                 {projectInfo.surface} m²
               </span>
             </div>
@@ -188,7 +192,7 @@ export function SmartCart({
           {projectInfo.volume && (
             <div className="flex items-center justify-between">
               <span style={{ color: "var(--color-text-muted)" }}>Volume</span>
-              <span style={{ color: "var(--color-text)" }} className="font-medium">
+              <span style={{ color: "var(--color-text)" }} className="font-semibold">
                 {projectInfo.volume} m³
               </span>
             </div>
@@ -196,16 +200,65 @@ export function SmartCart({
         </div>
       )}
 
+      {/* Budget initial (si fourni) */}
+      {initialPrice && typeof initialPrice === "number" && (
+        <div
+          className={`rounded-lg ${isMobile && drawerOpen ? "p-4" : "p-3"}`}
+          style={{
+            background: "rgba(14,165,166,0.06)",
+            border: "1px dashed var(--color-accent)",
+          }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--color-accent)" }} />
+              <span
+                className={isMobile && drawerOpen ? "text-sm font-medium" : "text-xs font-medium"}
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                Budget initial (Step 2)
+              </span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span
+                className={`font-bold tabular-nums ${isMobile && drawerOpen ? "text-sm" : "text-xs"}`}
+                style={{ color: "var(--color-text)" }}
+              >
+                {fmtEur(initialPrice)}
+              </span>
+              {initialPrice !== currentPrice && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  {currentPrice > initialPrice ? (
+                    <TrendingUp className="w-3 h-3" style={{ color: "var(--color-danger)" }} />
+                  ) : (
+                    <TrendingDown className="w-3 h-3" style={{ color: "var(--color-success)" }} />
+                  )}
+                  <span
+                    className="text-[10px] font-bold tabular-nums"
+                    style={{
+                      color: currentPrice > initialPrice ? "var(--color-danger)" : "var(--color-success)",
+                    }}
+                  >
+                    {currentPrice > initialPrice ? "+" : ""}
+                    {fmtEur(currentPrice - initialPrice)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Items list */}
       {itemsCount > 0 && (
-        <div className="space-y-2">
+        <div className={isMobile && drawerOpen ? "space-y-3" : "space-y-2"}>
           <p
-            className="text-xs font-bold uppercase tracking-wide"
+            className={`font-bold uppercase tracking-wide ${isMobile && drawerOpen ? "text-sm" : "text-xs"}`}
             style={{ color: "var(--color-text-muted)" }}
           >
             Détails ({itemsCount})
           </p>
-          <div className="space-y-2 max-h-[240px] overflow-y-auto smart-cart-scrollbar">
+          <div className="space-y-2 max-h-[280px] overflow-y-auto smart-cart-scrollbar">
             <AnimatePresence>
               {items.map((item) => (
                 <motion.div
@@ -214,27 +267,39 @@ export function SmartCart({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 8 }}
                   transition={{ duration: 0.2 }}
-                  className="flex items-start justify-between gap-3 p-2.5 rounded-lg"
+                  className="flex items-start justify-between gap-3 p-3 rounded-lg"
                   style={{
                     background: "var(--color-surface)",
                     border: "1px solid var(--color-border)",
                   }}
                 >
                   <div className="flex items-start gap-2 flex-1 min-w-0">
-                    <CheckCircle2
-                      className="w-3.5 h-3.5 flex-shrink-0 mt-0.5"
-                      style={{ color: "var(--color-accent)" }}
-                    />
+                    {item.amountEur > 0 ? (
+                      <TrendingUp
+                        className="w-4 h-4 flex-shrink-0 mt-0.5"
+                        style={{ color: "var(--color-danger)" }}
+                      />
+                    ) : item.amountEur < 0 ? (
+                      <TrendingDown
+                        className="w-4 h-4 flex-shrink-0 mt-0.5"
+                        style={{ color: "var(--color-success)" }}
+                      />
+                    ) : (
+                      <CheckCircle2
+                        className="w-4 h-4 flex-shrink-0 mt-0.5"
+                        style={{ color: "var(--color-accent)" }}
+                      />
+                    )}
                     <div className="flex-1 min-w-0">
                       <p
-                        className="text-xs font-medium leading-tight"
+                        className="text-sm font-medium leading-tight"
                         style={{ color: "var(--color-text)" }}
                       >
                         {item.label}
                       </p>
                       {item.category && (
                         <p
-                          className="text-[10px] mt-0.5"
+                          className="text-xs mt-1"
                           style={{ color: "var(--color-text-muted)" }}
                         >
                           {item.category}
@@ -244,7 +309,7 @@ export function SmartCart({
                   </div>
                   {item.amountEur !== 0 && (
                     <span
-                      className="text-xs font-bold tabular-nums flex-shrink-0"
+                      className="text-sm font-bold tabular-nums flex-shrink-0"
                       style={{
                         color:
                           item.amountEur > 0
@@ -265,14 +330,14 @@ export function SmartCart({
 
       {/* Badge transparence */}
       <div
-        className="flex items-start gap-2 p-3 rounded-lg"
+        className="flex items-start gap-2 p-3.5 rounded-lg"
         style={{
           background: "rgba(14,165,166,0.04)",
           border: "1px solid var(--color-accent)",
         }}
       >
         <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--color-accent)" }} />
-        <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+        <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
           <strong style={{ color: "var(--color-text)" }}>Prix transparent</strong> : cette
           estimation inclut tous les ajustements selon vos critères.
         </p>
@@ -281,9 +346,15 @@ export function SmartCart({
       {/* CTA (mobile uniquement dans drawer) */}
       {isMobile && drawerOpen && onSubmit && (
         <button
-          onClick={onSubmit}
+          onClick={() => {
+            setDrawerOpen(false);
+            // Petit délai pour que le drawer se ferme avant le scroll
+            setTimeout(() => {
+              onSubmit();
+            }, 300);
+          }}
           disabled={isLoading}
-          className="w-full py-3.5 rounded-lg font-semibold text-sm transition-all active:scale-[0.98]"
+          className="w-full py-4 rounded-xl font-bold text-base transition-all active:scale-[0.98] shadow-md"
           style={{
             background: "var(--color-accent)",
             color: "#FFFFFF",
@@ -390,14 +461,14 @@ export function SmartCart({
               className="fixed bottom-0 left-0 right-0 z-[100] rounded-t-3xl overflow-hidden"
               style={{
                 background: "var(--color-surface)",
-                maxHeight: "85vh",
+                maxHeight: "90vh",
                 boxShadow: "var(--shadow-lg)",
               }}
             >
               {/* Drag handle */}
-              <div className="flex items-center justify-center py-3">
+              <div className="flex items-center justify-center py-4">
                 <div
-                  className="w-10 h-1 rounded-full"
+                  className="w-12 h-1.5 rounded-full"
                   style={{ background: "var(--color-border)" }}
                 />
               </div>
@@ -405,18 +476,18 @@ export function SmartCart({
               {/* Close button */}
               <button
                 onClick={() => setDrawerOpen(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                className="absolute top-5 right-5 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
                 style={{
                   background: "var(--color-border-light)",
                   color: "var(--color-text-muted)",
                 }}
                 aria-label="Fermer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
 
               {/* Content */}
-              <div className="px-6 pb-8 overflow-y-auto" style={{ maxHeight: "calc(85vh - 60px)" }}>
+              <div className="px-6 pb-6 overflow-y-auto" style={{ maxHeight: "calc(90vh - 80px)" }}>
                 <CartContent />
               </div>
             </motion.div>

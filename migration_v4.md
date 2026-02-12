@@ -1,5 +1,180 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Refonte page confirmation (Step 4)
+
+**Contexte** : La page de confirmation manquait de hiérarchie claire et contenait du contenu marketing superflu.
+
+**Modifications apportées** :
+
+1. **Section "Vos avantages Moverz" supprimée** ❌
+   - Marketing inutile à ce stade (l'utilisateur a déjà converti)
+   - Allège la page
+   - Focus sur l'essentiel : récap + prochaines étapes
+
+2. **Réorganisation logique** 🔄
+   - **Avant** : Hero → Timeline → Email → Récap → Avantages
+   - **Après** : Hero → **Récap** → Timeline → Email
+   - L'utilisateur voit d'abord CE QU'IL A DEMANDÉ, puis ce qui va se passer
+
+3. **Hiérarchie narrative améliorée** 📖
+   - "Bravo!" (célébration)
+   - "Voici ce que vous avez demandé" (récap + estimation)
+   - "Voici ce qui se passe maintenant" (timeline)
+   - "Confirmez votre email" (action)
+
+**Fichier** : `components/tunnel/v2/StepContactPhotosV4.tsx`
+
+**Impact** : UI uniquement (meilleure UX de confirmation), aucun changement fonctionnel ou de tracking
+
+---
+
+### 💡 Suggestions d'améliorations supplémentaires (non implémentées)
+
+Si tu veux aller plus loin, voici ce qu'on pourrait ajouter :
+
+1. **CTA secondaire "Télécharger le récap PDF"** 
+   - Permet à l'utilisateur de garder une trace
+   - Rassurance supplémentaire
+
+2. **Section "En attendant, préparez votre déménagement"**
+   - Checklist interactive
+   - Conseils pratiques
+   - Garde l'engagement pendant les 24-48h d'attente
+
+3. **Partage social** (facultatif)
+   - "Partagez cette estimation avec votre conjoint/famille"
+   - Link copy-to-clipboard
+
+4. **Timeline plus interactive**
+   - Progress bar animée
+   - Notifications push opt-in
+
+5. **Email confirmation plus actionnable**
+   - Bouton "Je confirme" au lieu de juste un badge statique
+   - Permettrait de tracker qui a bien reçu l'email
+
+Dis-moi si tu veux implémenter l'une de ces améliorations !
+
+---
+
+## 2026-02-12 — Badge "Top" sans émoji (Step 3 formules)
+
+**Contexte** : Badge "✨ Top" contenait un émoji (violation de la règle "no emojis")
+
+**Modification** :
+- Avant : `✨ Top`
+- Après : `+ Top`
+
+**Fichier** : `components/tunnel/v2/StepAccessLogisticsV4.tsx` (ligne 802)
+
+**Impact** : UI uniquement (texte sobre), aucun changement fonctionnel
+
+**Note technique** : Les prix affichés dans les cartes de formules (priceMin - priceMax) proviennent directement de `calculatePricing()` avec tous les paramètres réels (distance OSRM, étages, densité, accès, etc.). Ce ne sont pas des valeurs hardcodées ou arrondies approximatives. Le moteur de pricing calcule dynamiquement les vraies fourchettes pour chaque formule (ECONOMIQUE, STANDARD, PREMIUM).
+
+---
+
+## 2026-02-12 — Flèches économies + Rappel budget initial (SmartCart)
+
+**Contexte** : Le drawer d'estimation manquait de contexte visuel pour comprendre les ajustements de prix.
+
+**Modifications apportées** :
+
+1. **Flèches visuelles sur les ajustements** :
+   - Items avec delta positif (coût supplémentaire) : 🔴 `TrendingUp` rouge
+   - Items avec delta négatif (économie) : 🟢 `TrendingDown` vert
+   - Items sans delta (confirmé) : ✅ `CheckCircle2` turquoise
+   - Avant : check turquoise pour tout le monde (pas de distinction visuelle)
+   - Après : icône qui reflète l'impact sur le prix
+
+2. **Section "Budget initial (Step 2)"** :
+   - Affiche le prix de la première estimation (Step 2 baseline)
+   - Montre le delta par rapport au prix actuel affiné
+   - Badge avec fond turquoise léger + bordure pointillée
+   - Flèche TrendingUp/Down + montant de la différence
+   - Ex: "Budget initial (Step 2) : 1 274 € → 🟢 ↓ -50 €" (économies)
+   - Ex: "Budget initial (Step 2) : 1 274 € → 🔴 ↑ +100 €" (augmentation)
+
+3. **Props SmartCart** :
+   - Nouvelle prop `initialPrice?: number` (facultative)
+   - Passée depuis `page.tsx` via `v2PricingCart.firstEstimateCenterEur`
+
+**Fichiers modifiés** :
+- `components/tunnel-v4/SmartCart.tsx` (interface + logique + UI)
+- `app/devis-gratuits-v3/page.tsx` (passage de la prop)
+
+**Impact** : UI uniquement (meilleure compréhension des ajustements), aucun changement fonctionnel ou de tracking
+
+**Principe** : Transparence visuelle — l'utilisateur voit clairement ce qui augmente ou réduit le prix par rapport à l'estimation initiale.
+
+---
+
+## 2026-02-12 — Labels "Logement" clarifiés (Step 3)
+
+**Problème** : Les deux sections "Logement" (origine et destination) n'étaient pas clairement distinguées.
+
+**Solution** : Ajout des labels "Départ" et "Arrivée"
+- Avant : `Logement` (× 2, impossible de savoir laquelle est laquelle)
+- Après : `Logement · Départ` et `Logement · Arrivée`
+
+**Fichier** : `components/tunnel/v2/StepAccessLogisticsV4.tsx` (ligne 157)
+
+**Impact** : UI uniquement (clarté améliorée), aucun changement fonctionnel
+
+---
+
+## 2026-02-12 — Optimisation drawer d'estimation mobile (Step 3)
+
+**Contexte** : Sur mobile, quand on clique sur le FAB "Budget" pour voir l'estimation, le drawer qui s'ouvre manquait d'aération et de lisibilité.
+
+**Modifications apportées** :
+
+1. **Typographie et espacement améliorés** :
+   - Titre "Votre estimation" : `text-xs` → `text-sm` sur mobile drawer
+   - Prix principal : `text-4xl` → `text-5xl` sur mobile drawer (plus impactant)
+   - Progress bar : `h-2` → `h-2.5` sur mobile drawer
+   - Labels min/max : `text-xs` → `text-sm` sur mobile drawer
+
+2. **Section Projet Info agrandie** :
+   - Padding : `p-3` → `p-4` sur mobile drawer
+   - Spacing interne : `space-y-1.5` → `space-y-2.5` sur mobile drawer
+   - Texte : `text-xs` → `text-sm` sur mobile drawer
+   - Font-weight labels : `font-medium` → `font-semibold` (meilleure hiérarchie)
+
+3. **Liste des détails plus lisible** :
+   - Items padding : `p-2.5` → `p-3` (plus d'espace tactile)
+   - Icons : `w-3.5 h-3.5` → `w-4 h-4`
+   - Label texte : `text-xs` → `text-sm`
+   - Category texte : `text-[10px]` → `text-xs`
+   - Amounts : `text-xs` → `text-sm`
+   - Max height : `240px` → `280px` (plus d'items visibles)
+   - Spacing section : `space-y-2` → `space-y-3` sur mobile drawer
+
+4. **Badge transparence amélioré** :
+   - Padding : `p-3` → `p-3.5`
+   - Texte : `text-xs` → `text-sm`
+
+5. **CTA plus visible** :
+   - Padding : `py-3.5` → `py-4`
+   - Border-radius : `rounded-lg` → `rounded-xl`
+   - Font : `text-sm font-semibold` → `text-base font-bold`
+   - Ajout shadow-md
+   - Comportement : ferme le drawer avant de scroller (UX plus fluide)
+
+6. **Drawer lui-même** :
+   - Max height : `85vh` → `90vh` (plus d'espace)
+   - Drag handle : `w-10 h-1` → `w-12 h-1.5` (plus visible)
+   - Close button : `w-8 h-8` + `w-4 h-4` icon → `w-9 h-9` + `w-5 h-5` icon
+   - Padding handle : `py-3` → `py-4`
+   - Content padding : `pb-8` → `pb-6` (optimisé)
+
+**Fichier** : `components/tunnel-v4/SmartCart.tsx`
+
+**Impact** : UI uniquement (mobile plus confortable et lisible), aucun changement fonctionnel ou de tracking
+
+**Principe** : Respecte le principe "mobile-first" — tout est plus grand, plus espacé, plus facile à lire sur petit écran.
+
+---
+
 ## 2026-02-12 — Ajustements Step 2 (mobile UX)
 
 **Modifications** :

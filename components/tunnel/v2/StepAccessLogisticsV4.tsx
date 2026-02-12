@@ -153,11 +153,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     setHousingType: (v: string) => void,
     setFloor: (v: string) => void
   ) => {
+    const locationLabel = prefix === "origin" ? "Départ" : "Arrivée";
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-            Logement
+            Logement · {locationLabel}
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -798,7 +799,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                           color: "#FFFFFF",
                         }}
                       >
-                        ✨ Top
+                        + Top
                       </div>
                     )}
                     <p

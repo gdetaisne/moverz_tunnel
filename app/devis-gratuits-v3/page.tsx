@@ -1859,6 +1859,7 @@ function DevisGratuitsV3Content() {
                   currentPrice={v2PricingCart.refinedCenterEur}
                   minPrice={v2PricingCart.refinedMinEur ?? 0}
                   maxPrice={v2PricingCart.refinedMaxEur ?? 0}
+                  initialPrice={v2PricingCart.firstEstimateCenterEur ?? undefined}
                   items={(v2PricingCart.lines ?? []).map((line) => ({
                     id: line.key,
                     label: line.label,

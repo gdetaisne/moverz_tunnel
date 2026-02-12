@@ -128,7 +128,61 @@ export function StepContactPhotosV4({
         </div>
       </CardV4>
 
-      {/* Timeline */}
+      {/* Récap (déplacé ici, AVANT timeline) */}
+      {recapRows.length > 0 && (
+        <CardV4 padding="md">
+          <div className="space-y-3">
+            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+              Récapitulatif de votre demande
+            </p>
+
+            {recapRows.map((r) => (
+              <div
+                key={r.label}
+                className="flex items-center justify-between gap-4 py-2"
+                style={{ borderBottom: "1px solid var(--color-border)" }}
+              >
+                <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                  {r.label}
+                </p>
+                <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                  {r.value}
+                </p>
+              </div>
+            ))}
+
+            {hasEstimate && (
+              <div
+                className="mt-4 p-4 rounded-xl"
+                style={{
+                  background: "var(--color-accent-light)",
+                  border: "1px solid var(--color-accent)",
+                }}
+              >
+                <p
+                  className="text-xs font-semibold uppercase tracking-wide mb-2"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
+                  Estimation
+                </p>
+                <p
+                  className="text-2xl font-bold tabular-nums"
+                  style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
+                >
+                  {euro(estimateMinEur!)} – {euro(estimateMaxEur!)}
+                </p>
+                {estimateIsIndicative && (
+                  <p className="text-xs mt-2" style={{ color: "var(--color-text-muted)" }}>
+                    Estimation indicative
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </CardV4>
+      )}
+
+      {/* Timeline (déplacé après récap) */}
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
@@ -219,94 +273,10 @@ export function StepContactPhotosV4({
                 }}
               >
                 <CheckCircle2 className="w-3 h-3" />
-                {confirmationState.message || "Email envoyé"}
+                {confirmationState.message || "Email de confirmation envoyé"}
               </div>
             )}
           </div>
-        </div>
-      </CardV4>
-
-      {/* Récap */}
-      {recapRows.length > 0 && (
-        <CardV4 padding="md">
-          <div className="space-y-3">
-            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-              Récapitulatif de votre demande
-            </p>
-
-            {recapRows.map((r) => (
-              <div
-                key={r.label}
-                className="flex items-center justify-between gap-4 py-2"
-                style={{ borderBottom: "1px solid var(--color-border)" }}
-              >
-                <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                  {r.label}
-                </p>
-                <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-                  {r.value}
-                </p>
-              </div>
-            ))}
-
-            {hasEstimate && (
-              <div
-                className="mt-4 p-4 rounded-xl"
-                style={{
-                  background: "var(--color-accent-light)",
-                  border: "1px solid var(--color-accent)",
-                }}
-              >
-                <p
-                  className="text-xs font-semibold uppercase tracking-wide mb-2"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
-                  Estimation
-                </p>
-                <p
-                  className="text-2xl font-bold tabular-nums"
-                  style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
-                >
-                  {euro(estimateMinEur!)} – {euro(estimateMaxEur!)}
-                </p>
-                {estimateIsIndicative && (
-                  <p className="text-xs mt-2" style={{ color: "var(--color-text-muted)" }}>
-                    Estimation indicative
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        </CardV4>
-      )}
-
-      {/* Avantages */}
-      <CardV4 padding="md">
-        <div className="space-y-3">
-          <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-            Vos avantages Moverz
-          </p>
-
-          <ul className="space-y-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            <li className="flex items-start gap-2">
-              <span style={{ color: "var(--color-accent)" }}>✓</span>
-              <span>
-                <strong>Comparaison facile</strong> : jusqu'à 3 devis de pros vérifiés
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span style={{ color: "var(--color-accent)" }}>✓</span>
-              <span>
-                <strong>Transparence totale</strong> : prix clairs, pas de mauvaise surprise
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span style={{ color: "var(--color-accent)" }}>✓</span>
-              <span>
-                <strong>Accompagnement</strong> : notre équipe disponible si besoin
-              </span>
-            </li>
-          </ul>
         </div>
       </CardV4>
     </div>
