@@ -12,3 +12,4 @@ export {
   type SegmentedControlV4Props,
   type SegmentOption,
 } from "./SegmentedControl";
+export { SmartCart, type SmartCartProps, type CartItem } from "./SmartCart";
