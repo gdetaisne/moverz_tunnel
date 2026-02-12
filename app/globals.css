@@ -35,6 +35,20 @@ body {
   color: rgb(var(--text-1));
 }
 
+/* Force light palette for the live tunnel, regardless of OS dark mode */
+.tunnel-v3-force-light {
+  --color-bg-primary: #FAFAFA;
+  --color-surface-primary: #FFFFFF;
+  --color-text-primary: #0B0F19;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-bg: var(--color-bg-primary);
+  --color-surface: var(--color-surface-primary);
+  --color-text: var(--color-text-primary);
+}
+
 /* ============================================================
    PREMIUM ANIMATIONS & MICRO-INTERACTIONS (2025)
 ============================================================ */

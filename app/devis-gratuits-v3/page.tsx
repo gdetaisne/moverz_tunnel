@@ -1734,7 +1734,7 @@ function DevisGratuitsV3Content() {
   }
 
   return (
-      <main className="min-h-screen bg-bg-secondary text-text-primary">
+      <main className="tunnel-v3-force-light min-h-screen bg-bg-secondary text-text-primary">
         <div className={containerClassName}>
           {/* Top back/edit */}
           {state.currentStep > 1 && (

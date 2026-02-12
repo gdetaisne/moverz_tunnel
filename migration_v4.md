@@ -1,5 +1,23 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Force palette light sur le tunnel live
+
+**Contexte** : Après le fix des aliases tokens, certains devices restaient en rendu sombre (OS/browser en dark mode), alors que la direction UX du tunnel V4 est light.
+
+**Cause** :
+- `styles/tokens.css` applique un override global via `@media (prefers-color-scheme: dark)`.
+- Le tunnel live héritait de ces variables dark selon l'environnement client.
+
+**Correction appliquée** :
+- Scope local sur la page live `app/devis-gratuits-v3/page.tsx` avec la classe `tunnel-v3-force-light`.
+- Override des variables de couleur dans `app/globals.css` sous `.tunnel-v3-force-light` (palette light + aliases).
+
+**Impact** :
+- Couleurs stabilisées en light sur Step 1 à 4, quel que soit le mode dark de l'appareil.
+- Aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-12 — Fix rendu délavé intermittent (toutes steps)
 
 **Symptôme prod** : rendu parfois "grisé/délavé" sur certains devices (Step 1→4), alors que d'autres devices affichent correctement.
