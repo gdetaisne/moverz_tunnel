@@ -43,7 +43,7 @@ import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import { StepQualificationV4 } from "@/components/tunnel/v2/StepQualificationV4";
 import { StepEstimationV4 } from "@/components/tunnel/v2/StepEstimationV4";
 import { StepAccessLogisticsV2 } from "@/components/tunnel/v2/StepAccessLogisticsV2";
-import { StepContactPhotosV2Premium } from "@/components/tunnel/v2/StepContactPhotosV2Premium";
+import { StepContactPhotosV4 } from "@/components/tunnel/v2/StepContactPhotosV4";
 import { V2ProgressBar } from "@/components/tunnel/v2/V2ProgressBar";
 // Design System V1 Premium components
 import { StickySummary, SummaryDrawer, type PricingDriver } from "@/components/tunnel";
@@ -1898,7 +1898,7 @@ function DevisGratuitsV3Content() {
 
           {state.currentStep === 4 && (
             <div className="rounded-xl bg-surface-primary border border-border-neutral shadow-md p-6 sm:p-10 relative">
-              <StepContactPhotosV2Premium
+              <StepContactPhotosV4
                 leadId={state.leadId}
                 linkingCode={state.linkingCode}
                 estimateMinEur={activePricing?.prixMin ?? null}

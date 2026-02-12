@@ -188,24 +188,24 @@ export function StepAccessLogisticsV2(props: StepAccessLogisticsV2Props) {
               <button
                 type="button"
                 onClick={() => setHousingType("house")}
-                className={[
-                  "px-3 py-2 rounded-xl text-xs font-semibold transition-all",
-                  !isApartment(housingType)
-                    ? "bg-[#0F172A] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-                ].join(" ")}
+                style={{
+                  background: !isApartment(housingType) ? "var(--color-text)" : "var(--color-surface)",
+                  color: !isApartment(housingType) ? "#FFFFFF" : "var(--color-text)",
+                  border: !isApartment(housingType) ? "none" : "2px solid var(--color-border)",
+                }}
+                className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
               >
                 Maison
               </button>
               <button
                 type="button"
                 onClick={() => setHousingType("t2")}
-                className={[
-                  "px-3 py-2 rounded-xl text-xs font-semibold transition-all",
-                  isApartment(housingType)
-                    ? "bg-[#0F172A] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]",
-                ].join(" ")}
+                style={{
+                  background: isApartment(housingType) ? "var(--color-text)" : "var(--color-surface)",
+                  color: isApartment(housingType) ? "#FFFFFF" : "var(--color-text)",
+                  border: isApartment(housingType) ? "none" : "2px solid var(--color-border)",
+                }}
+                className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
               >
                 Appartement
               </button>
