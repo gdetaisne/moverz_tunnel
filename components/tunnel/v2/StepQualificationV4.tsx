@@ -202,11 +202,11 @@ export function StepQualificationV4({
 
           {/* Trust badges */}
           <div className="flex items-center justify-center gap-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
-            <span>⚡ 2 minutes</span>
+            <span>2 minutes</span>
             <span>•</span>
-            <span>🔒 Gratuit</span>
+            <span>Gratuit</span>
             <span>•</span>
-            <span>🎯 Sans engagement</span>
+            <span>Sans engagement</span>
           </div>
         </div>
       </CardV4>

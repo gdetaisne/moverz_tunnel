@@ -89,7 +89,7 @@ export function StepEstimationV4({
             <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
               {originCity && destinationCity ? (
                 <>
-                  {originCity} → {destinationCity} · {surfaceM2 || volumeText}
+                  {originCity} → {destinationCity} · {surfaceM2 ? `${surfaceM2} m²` : volumeText}
                 </>
               ) : (
                 "Basé sur des déménagements similaires"
@@ -156,8 +156,8 @@ export function StepEstimationV4({
         </div>
       </CardV4>
       
-      {/* Rassurance simple */}
-      <CardV4 padding="md">
+      {/* Rassurance simple (desktop uniquement) */}
+      <CardV4 padding="md" className="hidden md:block">
         <div className="space-y-2">
           <p
             className="text-sm font-semibold"

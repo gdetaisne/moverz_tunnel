@@ -1,5 +1,40 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Ajustements Step 2 (mobile UX)
+
+**Modifications** :
+1. Ajout "m²" après la surface dans le sous-titre
+   - Avant : `Paris → Lyon · 33`
+   - Après : `Paris → Lyon · 33 m²`
+
+2. Section "Pourquoi affiner" masquée sur mobile
+   - Raison : Alléger l'écran mobile, focus sur le prix et le CTA
+   - Desktop : section visible (rassurance)
+   - Mobile : section masquée (`hidden md:block`)
+
+**Fichier** : `components/tunnel/v2/StepEstimationV4.tsx`
+
+**Impact** : UI uniquement (mobile plus épuré), aucun changement fonctionnel
+
+---
+
+## 2026-02-12 — Suppression des emojis (remplacés par texte simple)
+
+**Demande** : Retirer les emojis du tunnel (émoticônes textuelles OK)
+
+**Fichiers modifiés** :
+1. `components/tunnel/v2/StepQualificationV4.tsx` (lignes 204-210)
+   - Avant : `⚡ 2 minutes • 🔒 Gratuit • 🎯 Sans engagement`
+   - Après : `2 minutes • Gratuit • Sans engagement`
+
+2. `components/tunnel/v2/StepContactPhotosV4.tsx` (ligne 122)
+   - Avant : `🎉 Bravo !`
+   - Après : `Bravo !`
+
+**Impact** : UI uniquement (texte plus sobre), aucun changement fonctionnel
+
+---
+
 ## 2026-02-12 (14ème itération) — Refonte "Unicorn-Grade" complète du tunnel
 
 ### 🔧 Fix déploiement CapRover (v419-420)

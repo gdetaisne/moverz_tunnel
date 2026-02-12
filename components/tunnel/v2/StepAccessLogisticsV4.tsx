@@ -382,15 +382,17 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </div>
 
           <DatePickerFr
+            id="v4-moving-date"
             value={props.movingDate}
             onChange={(d) => props.onFieldChange("movingDate", d)}
             min={minMovingDate}
-            errorMessage={
-              showValidation && !isMovingDateValid
-                ? "Date requise (minimum 15 jours)"
-                : null
-            }
+            error={showValidation && !isMovingDateValid}
           />
+          {showValidation && !isMovingDateValid && (
+            <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
+              Date requise (minimum 15 jours)
+            </p>
+          )}
 
           <label className="flex items-center gap-2 cursor-pointer">
             <input

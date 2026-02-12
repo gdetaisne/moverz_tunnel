@@ -119,7 +119,7 @@ export function StepContactPhotosV4({
             className="text-4xl sm:text-5xl font-bold"
             style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
           >
-            🎉 Bravo !
+            Bravo !
           </h1>
 
           <p className="text-base sm:text-lg" style={{ color: "var(--color-text-secondary)" }}>
