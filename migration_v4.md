@@ -4092,3 +4092,29 @@ Migration progressive : les hex inline seront remplacés par ces tokens au fil d
 - **Champs / Inputs** : aucun ajout/suppression, mêmes champs envoyés au Back Office.
 - **Back Office payload** : aucun changement.
 - **Stats** : -195 lignes, +85 lignes (simplification nette).
+
+---
+
+## 2026-02-12 — Step 2 simplifié : design clean moverz.fr (HeroBudgetCard)
+
+- **Objectif** : Aligner Step 2 sur le design actuel de moverz.fr (`HeroBudgetCard`), supprimer les animations complexes et les fioritures.
+- **Changements UI** :
+  - Suppression des animations complexes (skeleton loading, count-up, chips animés)
+  - Suppression des 3 cards détails (Distance, Volume, Formule)
+  - Design ultra-simplifié : CardV4 unique avec prix fourchette au centre
+  - Prix format : `1 113 € – 1 670 €` (fourchette min-max en une ligne)
+  - Details en grid 2 colonnes : Distance + Volume
+  - Rassurance simplifiée : 3 bullets simples
+  - CTA clean style moverz.fr : "Affiner mon estimation →"
+  - Trust line : "Gratuit · Sans engagement · Sans appel"
+- **Fichier** : `components/tunnel/v2/StepEstimationV4.tsx` (réécriture complète)
+- **Supprimé** :
+  - Imports `CountUp`, `motion`, `AnimatePresence`
+  - Composants `Truck`, `Calendar`, `TrendingDown`, `Sparkles`, `Shield`, `HelpCircle`
+  - States `showContent`, `showDetails`
+  - Animations skeleton → reveal → chips
+  - Grid 3 colonnes avec cards détails
+- **Tracking** : aucun impact.
+- **Champs / Inputs** : aucun changement.
+- **Back Office payload** : aucun changement.
+- **Stats** : -359 lignes, +149 lignes (simplification majeure de 210 lignes).
