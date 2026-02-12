@@ -40,7 +40,7 @@ import {
 } from "@/lib/pricing/constants";
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
-import { StepQualificationV2Premium } from "@/components/tunnel/v2/StepQualificationV2Premium";
+import { StepQualificationV4 } from "@/components/tunnel/v2/StepQualificationV4";
 import { StepEstimationV2Premium } from "@/components/tunnel/v2/StepEstimationV2Premium";
 import { StepAccessLogisticsV2 } from "@/components/tunnel/v2/StepAccessLogisticsV2";
 import { StepContactPhotosV2Premium } from "@/components/tunnel/v2/StepContactPhotosV2Premium";
@@ -1748,7 +1748,7 @@ function DevisGratuitsV3Content() {
 
           {state.currentStep === 1 && (
             <div className="rounded-xl bg-surface-primary border border-border-neutral shadow-md p-6 sm:p-10">
-              <StepQualificationV2Premium
+              <StepQualificationV4
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}
                 originLat={state.originLat}
