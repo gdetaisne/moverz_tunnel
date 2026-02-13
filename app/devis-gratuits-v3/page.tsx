@@ -1168,6 +1168,15 @@ function DevisGratuitsV3Content() {
         confirmed: true,
       });
     }
+    if (isMovingDateValid) {
+      lines.push({
+        key: "date",
+        label: "Date",
+        status: "confirmée",
+        amountEur: deltaDateEur,
+        confirmed: true,
+      });
+    }
     if (densityTouched) {
       lines.push({
         key: "density",
@@ -1183,15 +1192,6 @@ function DevisGratuitsV3Content() {
         label: "Cuisine",
         status: kitchenLabel,
         amountEur: deltaKitchenEur,
-        confirmed: true,
-      });
-    }
-    if (isMovingDateValid) {
-      lines.push({
-        key: "date",
-        label: "Date",
-        status: "confirmée",
-        amountEur: deltaDateEur,
         confirmed: true,
       });
     }
@@ -1960,7 +1960,7 @@ function DevisGratuitsV3Content() {
                     id: line.key,
                     label: line.label,
                     amountEur: line.amountEur,
-                    category: line.status,
+                    explanation: line.status,
                   }))}
                   projectInfo={{
                     origin: state.originCity || undefined,

@@ -27,6 +27,7 @@ export interface CartItem {
   label: string;
   amountEur: number;
   category?: string;
+  explanation?: string;
 }
 
 export interface SmartCartProps {
@@ -267,6 +268,7 @@ export function SmartCart({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 8 }}
                   transition={{ duration: 0.2 }}
+                  title={!isMobile ? item.explanation ?? item.category ?? "" : undefined}
                   className="flex items-start justify-between gap-3 p-3 rounded-lg"
                   style={{
                     background: "var(--color-surface)",
@@ -297,14 +299,6 @@ export function SmartCart({
                       >
                         {item.label}
                       </p>
-                      {item.category && (
-                        <p
-                          className="text-xs mt-1"
-                          style={{ color: "var(--color-text-muted)" }}
-                        >
-                          {item.category}
-                        </p>
-                      )}
                     </div>
                   </div>
                   {item.amountEur !== 0 && (

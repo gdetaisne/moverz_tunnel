@@ -1,5 +1,25 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — SmartCart détails: sans sous-texte + ordre stable + info au survol
+
+**Demandes** :
+- Retirer les sous-descriptions affichées sous chaque ligne de détail (ex: `adresses (OSRM)`).
+- Conserver un ordre d'apparition métier stable des lignes.
+- Afficher une explication au survol desktop.
+
+**Modifications** :
+- `components/tunnel-v4/SmartCart.tsx`
+  - suppression de l'affichage de `item.category` sous le label,
+  - ajout d'un `title` sur chaque ligne détail en desktop (tooltip natif navigateur).
+- `app/devis-gratuits-v3/page.tsx`
+  - ordre des lignes ajusté pour refléter l'ordre des sections du formulaire :
+    `Distance` → `Date` → `Densité` → `Cuisine` → `Accès · Logement` → `Accès · Contraintes`,
+  - passage de l'explication via `explanation: line.status`.
+
+**Impact** : UI uniquement (présentation + lisibilité), aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-12 — Step 3: ordre des blocs (Formule avant Coordonnées)
 
 **Demande** : afficher le bloc `Votre formule` au-dessus du bloc `Vos coordonnées`.
