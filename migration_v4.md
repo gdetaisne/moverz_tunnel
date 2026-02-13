@@ -1,5 +1,52 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3 mobile: B + D (blocs auto-réductibles + dock reward fixe)
+
+**Contexte UX** :
+- La Step 3 est volontairement riche (champs majoritairement non facultatifs, ordre métier conservé).
+- Objectif: réduire la perception de longueur, renforcer le sentiment d'avancement et matérialiser le système reward.
+
+**Implémentation B (structure premium)** :
+
+`components/tunnel/v2/StepAccessLogisticsV4.tsx`
+- Ajout d'états de section (`trajet`, `date`, `volume`, `formule`, `contact`) avec statut:
+  - `Validé`
+  - `En cours`
+  - `À compléter`
+- Ajout d'en-têtes de sections cliquables avec résumé compact quand section fermée.
+- Auto-réduction des sections validées + ouverture automatique de la prochaine section incomplète.
+- Scroll guidé vers la section suivante lors d'une validation de bloc.
+- Aucun champ supprimé, aucun ordre métier modifié.
+
+**Implémentation D (dock reward fixe mobile)** :
+
+`components/tunnel-v4/SmartCart.tsx`
+- Remplacement du FAB mobile par un dock fixe bas d'écran contenant:
+  - progression dossier (`X/Y`)
+  - score de précision (`%`)
+  - budget affiné live
+  - dernier impact (ligne et montant)
+- Tap dock => ouverture du drawer.
+- Drawer enrichi avec mini synthèse:
+  - progression
+  - barre de précision
+  - historique des 3 derniers impacts.
+- Gestion viewport mobile conservée (position dynamique et clavier).
+
+`app/devis-gratuits-v3/page.tsx`
+- Calcul d'un `step3Progress` métier (5 blocs) et passage au `SmartCart`:
+  - `progressCompleted`
+  - `progressTotal`
+  - `precisionScore`
+
+**Impact** :
+- Perception de tunnel plus courte sans retirer d'information.
+- Sensation d'avancement continue et explicite.
+- Reward rendu concret: chaque clarification alimente un feedback lisible.
+- Tracking/payload/backoffice inchangés.
+
+---
+
 ## 2026-02-13 — Step 3 mobile: retrait du bandeau "Progression Step 3"
 
 **Demande** :

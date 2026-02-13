@@ -103,6 +103,7 @@ const FLOOR_OPTIONS: Array<{ value: string; label: string }> = [
 ];
 
 export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
+  type SectionKey = "trajet" | "date" | "volume" | "formule" | "contact";
   type PipelineStepKey =
     | "normalize"
     | "compress"
@@ -158,6 +159,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   };
   const shouldShowFieldError = (field: keyof typeof touched) =>
     showValidation || touched[field];
+  const sectionOrder: SectionKey[] = ["trajet", "date", "volume", "formule", "contact"];
+  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
+    trajet: true,
+    date: true,
+    volume: true,
+    formule: true,
+    contact: true,
+  });
   const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
   const missingInfoPanelOpen = showMissingInfoPanel;
   const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("photos");
@@ -640,6 +649,146 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     }
   };
 
+  const isOriginHousingValid = !!(props.originHousingType || "").trim();
+  const isDestinationHousingValid = !!(props.destinationHousingType || "").trim();
+  const isOriginFloorValid = !isApartment(props.originHousingType) || !!(props.originFloor || "").trim();
+  const isDestinationFloorValid =
+    !isApartment(props.destinationHousingType) || !!(props.destinationFloor || "").trim();
+  const isFormuleValid =
+    props.selectedFormule === "ECONOMIQUE" ||
+    props.selectedFormule === "STANDARD" ||
+    props.selectedFormule === "PREMIUM";
+
+  const sectionMeta: Record<SectionKey, { valid: boolean; summary: string }> = {
+    trajet: {
+      valid:
+        isOriginAddressValid &&
+        isDestinationAddressValid &&
+        isOriginHousingValid &&
+        isDestinationHousingValid &&
+        isOriginFloorValid &&
+        isDestinationFloorValid,
+      summary: `${props.originCity || "Départ"} → ${props.destinationCity || "Arrivée"}`,
+    },
+    date: {
+      valid: isMovingDateValid,
+      summary: props.movingDate ? props.movingDate : "Date à confirmer",
+    },
+    volume: {
+      valid: isDensityValid && isKitchenSelectionValid && isKitchenValid,
+      summary: `${props.density ? densityLabelFromId(props.density) : "Densité ?"} · ${
+        props.kitchenIncluded === "full"
+          ? "Cuisine complète"
+          : props.kitchenIncluded === "appliances"
+          ? "Cuisine équipée"
+          : props.kitchenIncluded === "none"
+          ? "Sans cuisine"
+          : "Cuisine ?"
+      }`,
+    },
+    formule: {
+      valid: isFormuleValid,
+      summary:
+        props.selectedFormule === "ECONOMIQUE"
+          ? "Éco"
+          : props.selectedFormule === "PREMIUM"
+          ? "Premium"
+          : "Standard",
+    },
+    contact: {
+      valid: isFirstNameValid && isEmailValid,
+      summary: props.firstName && props.email ? `${props.firstName} · ${props.email}` : "Coordonnées à finaliser",
+    },
+  };
+
+  const prevSectionValidityRef = useRef<Record<SectionKey, boolean>>({
+    trajet: sectionMeta.trajet.valid,
+    date: sectionMeta.date.valid,
+    volume: sectionMeta.volume.valid,
+    formule: sectionMeta.formule.valid,
+    contact: sectionMeta.contact.valid,
+  });
+
+  useEffect(() => {
+    const prev = prevSectionValidityRef.current;
+    const next = {
+      trajet: sectionMeta.trajet.valid,
+      date: sectionMeta.date.valid,
+      volume: sectionMeta.volume.valid,
+      formule: sectionMeta.formule.valid,
+      contact: sectionMeta.contact.valid,
+    };
+
+    const newlyValidated = sectionOrder.find((k) => !prev[k] && next[k]);
+    if (newlyValidated) {
+      const currentIndex = sectionOrder.indexOf(newlyValidated);
+      const following = sectionOrder.find((k, idx) => idx > currentIndex && !next[k]);
+      setOpenSections((state) => ({
+        ...state,
+        [newlyValidated]: false,
+        ...(following ? { [following]: true } : {}),
+      }));
+      if (following) {
+        requestAnimationFrame(() => {
+          document.getElementById(`v4-section-${following}`)?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+      }
+    }
+    prevSectionValidityRef.current = next;
+  }, [
+    sectionMeta.trajet.valid,
+    sectionMeta.date.valid,
+    sectionMeta.volume.valid,
+    sectionMeta.formule.valid,
+    sectionMeta.contact.valid,
+  ]);
+
+  const renderSectionHeader = (key: SectionKey, title: string) => {
+    const meta = sectionMeta[key];
+    const isOpen = openSections[key];
+    const statusLabel = meta.valid ? "Validé" : isOpen ? "En cours" : "À compléter";
+    const statusColor = meta.valid
+      ? "var(--color-success)"
+      : isOpen
+      ? "var(--color-accent)"
+      : "var(--color-text-muted)";
+    return (
+      <button
+        type="button"
+        onClick={() => setOpenSections((state) => ({ ...state, [key]: !state[key] }))}
+        className="w-full rounded-xl border px-3 py-2 text-left flex items-center justify-between gap-3"
+        style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+      >
+        <div className="min-w-0">
+          <p className="text-sm font-semibold truncate" style={{ color: "var(--color-text)" }}>
+            {title}
+          </p>
+          {!isOpen && (
+            <p className="text-xs truncate mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+              {meta.summary}
+            </p>
+          )}
+        </div>
+        <div className="shrink-0 flex items-center gap-2">
+          <span className="text-xs font-semibold" style={{ color: statusColor }}>
+            {statusLabel}
+          </span>
+          {meta.valid ? (
+            <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
+          ) : (
+            <ChevronDown
+              className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+              style={{ color: "var(--color-text-muted)" }}
+            />
+          )}
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <input
@@ -655,7 +804,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         }}
       />
       {/* Addresses */}
-      <div id="v4-section-trajet">
+      <div id="v4-section-trajet" className="space-y-2">
+      {renderSectionHeader("trajet", "Trajet & logements")}
+      {openSections.trajet && (
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -765,10 +916,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </div>
         </div>
       </CardV4>
+      )}
       </div>
 
       {/* Date */}
-      <div id="v4-section-date">
+      <div id="v4-section-date" className="space-y-2">
+      {renderSectionHeader("date", "Date de déménagement")}
+      {openSections.date && (
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -808,10 +962,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </label>
         </div>
       </CardV4>
+      )}
       </div>
 
       {/* Volume */}
-      <div id="v4-section-volume">
+      <div id="v4-section-volume" className="space-y-2">
+      {renderSectionHeader("volume", "Volume & densité")}
+      {openSections.volume && (
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -975,6 +1132,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           )}
         </div>
       </CardV4>
+      )}
       </div>
 
       {/* Informations complémentaires (dépliant) */}
@@ -1374,7 +1532,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
       {/* Formule */}
       {props.pricingByFormule && (
-        <div id="v4-section-formule">
+        <div id="v4-section-formule" className="space-y-2">
+        {renderSectionHeader("formule", "Formule")}
+        {openSections.formule && (
         <CardV4 padding="md">
           <div className="space-y-4">
             <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
@@ -1453,11 +1613,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             </div>
           </div>
         </CardV4>
+        )}
         </div>
       )}
 
       {/* Contact */}
-      <div id="v4-section-contact">
+      <div id="v4-section-contact" className="space-y-2">
+      {renderSectionHeader("contact", "Coordonnées")}
+      {openSections.contact && (
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -1577,6 +1740,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </div>
         </div>
       </CardV4>
+      )}
       </div>
 
       {/* CTA */}

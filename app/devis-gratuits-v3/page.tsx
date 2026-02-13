@@ -1324,6 +1324,63 @@ function DevisGratuitsV3Content() {
     state.destinationUnknown,
   ]);
 
+  const step3Progress = useMemo(() => {
+    const isOriginAddrValid = state.originAddress.trim().length >= 5;
+    const isDestinationAddrValid = state.destinationAddress.trim().length >= 5;
+    const isOriginMetaValid =
+      state.originCity.trim().length >= 2 &&
+      state.originPostalCode.trim().length >= 2 &&
+      state.originCountryCode.trim().length >= 2;
+    const isDestMetaValid =
+      state.destinationCity.trim().length >= 2 &&
+      state.destinationPostalCode.trim().length >= 2 &&
+      state.destinationCountryCode.trim().length >= 2;
+    const isRouteDistanceValid = routeDistanceKm != null && routeDistanceProvider === "osrm";
+    const blocTrajet = isOriginAddrValid && isDestinationAddrValid && isOriginMetaValid && isDestMetaValid && isRouteDistanceValid;
+
+    const minMovingDateV2 = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 15);
+      return d.toISOString().split("T")[0]!;
+    })();
+    const blocDate = typeof state.movingDate === "string" && state.movingDate.length > 0 && state.movingDate >= minMovingDateV2;
+
+    const blocVolume =
+      (state.density === "light" || state.density === "normal" || state.density === "dense") &&
+      (state.kitchenIncluded === "none" ||
+        state.kitchenIncluded === "appliances" ||
+        state.kitchenIncluded === "full") &&
+      (state.kitchenIncluded !== "appliances" ||
+        (Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0) >= 1);
+
+    const blocFormule = !!state.formule;
+    const blocContact =
+      state.firstName.trim().length >= 2 &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim());
+
+    const completed = [blocTrajet, blocDate, blocVolume, blocFormule, blocContact].filter(Boolean).length;
+    const total = 5;
+    return { completed, total, score: Math.round((completed / total) * 100) };
+  }, [
+    state.originAddress,
+    state.destinationAddress,
+    state.originCity,
+    state.destinationCity,
+    state.originPostalCode,
+    state.destinationPostalCode,
+    state.originCountryCode,
+    state.destinationCountryCode,
+    state.movingDate,
+    state.density,
+    state.kitchenIncluded,
+    state.kitchenApplianceCount,
+    state.formule,
+    state.firstName,
+    state.email,
+    routeDistanceKm,
+    routeDistanceProvider,
+  ]);
+
   const activePricingDetails = useMemo(() => {
     if (!activePricing) return null;
 
@@ -2029,6 +2086,9 @@ function DevisGratuitsV3Content() {
                   }}
                   ctaLabel="Lancer ma demande de devis"
                   onSubmit={handleSubmitAccessV2}
+                  progressCompleted={step3Progress.completed}
+                  progressTotal={step3Progress.total}
+                  precisionScore={step3Progress.score}
                 />
               )}
             </div>

@@ -10,7 +10,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart,
@@ -56,6 +56,9 @@ export interface SmartCartProps {
   // Mobile
   ctaLabel?: string;
   onSubmit?: () => void;
+  progressCompleted?: number;
+  progressTotal?: number;
+  precisionScore?: number;
 }
 
 export function SmartCart({
@@ -68,12 +71,16 @@ export function SmartCart({
   isLoading = false,
   ctaLabel = "Valider mon devis",
   onSubmit,
+  progressCompleted,
+  progressTotal,
+  precisionScore,
 }: SmartCartProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [prevPrice, setPrevPrice] = useState(currentPrice);
   const [mobileFabBottom, setMobileFabBottom] = useState(88);
-  const [hideMobileFab, setHideMobileFab] = useState(false);
+  const [impactHistory, setImpactHistory] = useState<CartItem[]>([]);
+  const previousItemsRef = useRef<Map<string, number>>(new Map());
 
   // Detect mobile
   useEffect(() => {
@@ -97,7 +104,6 @@ export function SmartCart({
       const submitCta = document.getElementById("v4-primary-submit-cta");
       if (!submitCta) {
         setMobileFabBottom(baseBottom);
-        setHideMobileFab(false);
         return;
       }
 
@@ -105,13 +111,12 @@ export function SmartCart({
       const ctaVisible = rect.top < viewportHeight && rect.bottom > 0;
       if (!ctaVisible) {
         setMobileFabBottom(baseBottom);
-        setHideMobileFab(false);
         return;
       }
 
-      // If the submit CTA is in view, hide floating cart to keep one clear action.
-      setHideMobileFab(true);
-      setMobileFabBottom(baseBottom);
+      // Keep the dock visible, but move it above the primary CTA when needed.
+      const ctaOffset = Math.max(0, viewportHeight - rect.top + 12);
+      setMobileFabBottom(Math.max(baseBottom, ctaOffset));
     };
 
     updateFabPosition();
@@ -126,7 +131,7 @@ export function SmartCart({
       window.visualViewport?.removeEventListener("resize", updateFabPosition);
       window.visualViewport?.removeEventListener("scroll", updateFabPosition);
     };
-  }, [isMobile, drawerOpen]);
+  }, [isMobile]);
 
   // Track price changes for animation
   useEffect(() => {
@@ -134,6 +139,27 @@ export function SmartCart({
       setPrevPrice(currentPrice);
     }
   }, [currentPrice, prevPrice]);
+
+  useEffect(() => {
+    const nextMap = new Map(items.map((item) => [item.id, item.amountEur]));
+    const changedImpacts = items.filter((item) => {
+      const prev = previousItemsRef.current.get(item.id);
+      return item.amountEur !== 0 && (prev == null || prev !== item.amountEur);
+    });
+    if (changedImpacts.length > 0) {
+      const latest = changedImpacts[changedImpacts.length - 1]!;
+      setImpactHistory((prev) => {
+        const deduped = prev.filter(
+          (x) => !(x.id === latest.id && x.amountEur === latest.amountEur)
+        );
+        return [latest, ...deduped].slice(0, 3);
+      });
+    } else if (impactHistory.length === 0) {
+      const fallback = [...items].reverse().find((item) => item.amountEur !== 0);
+      if (fallback) setImpactHistory([fallback]);
+    }
+    previousItemsRef.current = nextMap;
+  }, [items, impactHistory.length]);
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -148,6 +174,16 @@ export function SmartCart({
     : 50;
 
   const itemsCount = items.length;
+  const latestImpact = impactHistory[0] ?? null;
+  const computedProgressTotal = Math.max(progressTotal ?? 0, 1);
+  const computedProgressCompleted = Math.max(
+    0,
+    Math.min(progressCompleted ?? 0, computedProgressTotal)
+  );
+  const computedPrecisionScore = useMemo(() => {
+    if (typeof precisionScore === "number") return Math.max(0, Math.min(100, precisionScore));
+    return Math.round((computedProgressCompleted / computedProgressTotal) * 100);
+  }, [precisionScore, computedProgressCompleted, computedProgressTotal]);
 
   // Cart content (réutilisé desktop + drawer)
   const CartContent = () => (
@@ -429,42 +465,89 @@ export function SmartCart({
     );
   }
 
-  // Mobile : FAB + Drawer
+  // Mobile : Dock reward + Drawer
   return (
     <>
-      {/* FAB (Floating Action Button) */}
+      {/* Dock fixe bas d'ecran */}
       <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 20 }}
+        initial={{ y: 16, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.25, duration: 0.25 }}
         onClick={() => setDrawerOpen(true)}
-        className="fixed z-[90] rounded-full shadow-lg flex items-center gap-2 px-4 py-3 transition-opacity"
+        className="fixed z-[90] left-3 right-3 rounded-2xl shadow-lg px-4 py-3 transition-opacity text-left"
         style={{
-          right: "16px",
           bottom: `${mobileFabBottom}px`,
-          background: "var(--color-accent)",
-          color: "#FFFFFF",
+          background: "var(--color-surface)",
+          color: "var(--color-text)",
           boxShadow: "0 4px 16px rgba(14,165,166,0.3)",
-          opacity: hideMobileFab || drawerOpen ? 0 : 1,
-          pointerEvents: hideMobileFab || drawerOpen ? "none" : "auto",
+          border: "1px solid var(--color-border)",
+          opacity: drawerOpen ? 0 : 1,
+          pointerEvents: drawerOpen ? "none" : "auto",
         }}
-        aria-label="Voir le panier"
+        aria-label="Voir la progression du devis"
       >
-        <ShoppingCart className="w-5 h-5" />
-        <div className="flex flex-col items-start">
-          <span className="text-xs font-medium opacity-90">Budget</span>
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={currentPrice}
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -10, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="text-sm font-bold tabular-nums"
-            >
-              {fmtEur(currentPrice)}
-            </motion.span>
-          </AnimatePresence>
+        <div className="flex items-start gap-3">
+          <div
+            className="mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ background: "var(--color-accent-light)", color: "var(--color-accent)" }}
+          >
+            <ShoppingCart className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
+                Progression {computedProgressCompleted}/{computedProgressTotal}
+              </span>
+              <span className="text-xs font-bold" style={{ color: "var(--color-accent)" }}>
+                {computedPrecisionScore}% précis
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--color-border-light)" }}>
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{ width: `${computedPrecisionScore}%`, background: "var(--color-accent)" }}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                Budget affiné
+              </span>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={currentPrice}
+                  initial={{ y: 6, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -6, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-sm font-bold tabular-nums"
+                  style={{ color: "var(--color-text)" }}
+                >
+                  {fmtEur(currentPrice)}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+            {latestImpact && (
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs truncate" style={{ color: "var(--color-text-secondary)" }}>
+                  Dernier impact: {latestImpact.label}
+                </span>
+                <span
+                  className="text-xs font-bold tabular-nums"
+                  style={{
+                    color:
+                      latestImpact.amountEur > 0
+                        ? "var(--color-danger)"
+                        : latestImpact.amountEur < 0
+                        ? "var(--color-success)"
+                        : "var(--color-text-muted)",
+                  }}
+                >
+                  {latestImpact.amountEur > 0 ? "+" : latestImpact.amountEur < 0 ? "-" : ""}
+                  {fmtEur(Math.abs(latestImpact.amountEur))}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         {itemsCount > 0 && (
           <div
@@ -533,6 +616,57 @@ export function SmartCart({
               >
                 <X className="w-5 h-5" />
               </button>
+
+              <div className="px-6 pb-4">
+                <div
+                  className="rounded-xl p-3"
+                  style={{
+                    background: "var(--color-bg)",
+                    border: "1px solid var(--color-border)",
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span style={{ color: "var(--color-text-muted)" }}>Dossier complété</span>
+                    <span className="font-bold" style={{ color: "var(--color-accent)" }}>
+                      {computedProgressCompleted}/{computedProgressTotal}
+                    </span>
+                  </div>
+                  <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--color-border-light)" }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{ width: `${computedPrecisionScore}%`, background: "var(--color-accent)" }}
+                    />
+                  </div>
+                  {impactHistory.length > 0 && (
+                    <div className="mt-3 space-y-1.5">
+                      {impactHistory.map((impact) => (
+                        <div
+                          key={`${impact.id}-${impact.amountEur}`}
+                          className="flex items-center justify-between gap-2 text-xs"
+                        >
+                          <span className="truncate" style={{ color: "var(--color-text-secondary)" }}>
+                            {impact.label}
+                          </span>
+                          <span
+                            className="font-bold tabular-nums"
+                            style={{
+                              color:
+                                impact.amountEur > 0
+                                  ? "var(--color-danger)"
+                                  : impact.amountEur < 0
+                                  ? "var(--color-success)"
+                                  : "var(--color-text-muted)",
+                            }}
+                          >
+                            {impact.amountEur > 0 ? "+" : impact.amountEur < 0 ? "-" : ""}
+                            {fmtEur(Math.abs(impact.amountEur))}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Content */}
               <div className="px-6 pb-6 overflow-y-auto" style={{ maxHeight: "calc(90vh - 80px)" }}>
