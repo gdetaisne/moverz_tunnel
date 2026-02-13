@@ -1007,15 +1007,6 @@ function DevisGratuitsV3Content() {
 
     const inputDistance = { ...baselineInput, distanceKm: refinedDistanceKm };
     const sDist = calculatePricing(inputDistance);
-    if (canUseOsrmDistance) {
-      lines.push({
-        key: "distance",
-        label: "Distance",
-        status: "adresses validées",
-        amountEur: deltaDistanceEur,
-        confirmed: true,
-      });
-    }
 
     // 2) Densité (delta vs "Très meublé")
     const densityTouched = state.density !== "";
@@ -1205,6 +1196,15 @@ function DevisGratuitsV3Content() {
       confirmed: boolean;
     }> = [];
 
+    if (canUseOsrmDistance) {
+      lines.push({
+        key: "distance",
+        label: "Distance",
+        status: "adresses validées",
+        amountEur: deltaDistanceEur,
+        confirmed: true,
+      });
+    }
     if (isMovingDateValid) {
       lines.push({
         key: "date",

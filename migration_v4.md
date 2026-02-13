@@ -1,5 +1,23 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Hotfix build: correction `lines` avant déclaration (Step 3 panier)
+
+**Incident** :
+- Build KO en prod (`Block-scoped variable 'lines' used before its declaration`) dans `app/devis-gratuits-v3/page.tsx`.
+
+**Cause** :
+- La réintroduction de la ligne "Distance" avait été injectée avant la déclaration du tableau `lines`.
+
+**Correction** :
+- Suppression du `lines.push(distance)` dans la zone amont.
+- Réinsertion du push distance juste après la déclaration de `lines` (ordre logique des détails conservé).
+
+**Impact** :
+- Build rétabli.
+- Détail distance conservé sans casser la compilation.
+
+---
+
 ## 2026-02-13 — Panier Step 3: rétablissement du détail Distance sans refaire bouger le montant
 
 **Constat** :
