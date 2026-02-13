@@ -303,7 +303,7 @@ export function SmartCart({
                   </div>
                   {item.amountEur !== 0 && (
                     <span
-                      className="text-sm font-bold tabular-nums flex-shrink-0"
+                      className="text-sm font-bold tabular-nums flex-shrink-0 inline-flex items-center gap-1"
                       style={{
                         color:
                           item.amountEur > 0
@@ -311,8 +311,12 @@ export function SmartCart({
                             : "var(--color-success)",
                       }}
                     >
-                      {item.amountEur > 0 ? "+" : ""}
-                      {fmtEur(Math.abs(item.amountEur))}
+                      {item.amountEur > 0 ? (
+                        <TrendingUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <TrendingDown className="w-3.5 h-3.5" />
+                      )}
+                      <span>{fmtEur(Math.abs(item.amountEur))}</span>
                     </span>
                   )}
                 </motion.div>

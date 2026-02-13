@@ -1,5 +1,19 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — SmartCart détails: symbole visuel devant montants
+
+**Demande** : remplacer les signes textuels devant les montants de détails par des symboles visuels.
+
+**Modification** :
+- Dans `components/tunnel-v4/SmartCart.tsx`, affichage du montant avec icône inline :
+  - hausse de prix : `TrendingUp` rouge,
+  - baisse de prix : `TrendingDown` verte.
+- Suppression des préfixes textuels (`+`/absence de signe) dans la colonne montant.
+
+**Impact** : UI uniquement (lisibilité des deltas), aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-12 — Fix build TS (debug Step 2)
 
 **Contexte** : échec de build prod sur `page.tsx` (`TS`), variable `formule` non définie dans `v2DebugRowsStep2`.
