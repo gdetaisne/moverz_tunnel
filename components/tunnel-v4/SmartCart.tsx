@@ -128,12 +128,19 @@ export function SmartCart({
 
   useEffect(() => {
     const nextMap = new Map(items.map((item) => [item.id, item.amountEur]));
-    const changedImpacts = items.filter((item) => {
-      const prev = previousItemsRef.current.get(item.id);
-      return item.amountEur !== 0 && (prev == null || prev !== item.amountEur);
-    });
-    if (changedImpacts.length > 0) {
-      const latest = changedImpacts[changedImpacts.length - 1]!;
+    const changedWithDelta = items
+      .map((item) => {
+        const prev = previousItemsRef.current.get(item.id);
+        const delta = prev == null ? item.amountEur : item.amountEur - prev;
+        return { item, prev, delta };
+      })
+      .filter(({ item, prev, delta }) => item.amountEur !== 0 && prev != null && delta !== 0);
+
+    if (changedWithDelta.length > 0) {
+      // Priorité à la vraie ligne impactée ; on évite de favoriser "formule" si d'autres lignes ont bougé.
+      const nonFormule = changedWithDelta.filter(({ item }) => item.id !== "formule");
+      const pool = nonFormule.length > 0 ? nonFormule : changedWithDelta;
+      const latest = pool.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))[0]!.item;
       setImpactHistory((prev) => {
         const deduped = prev.filter(
           (x) => !(x.id === latest.id && x.amountEur === latest.amountEur)
@@ -515,7 +522,7 @@ export function SmartCart({
             {latestImpact && (
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs truncate" style={{ color: "var(--color-text-secondary)" }}>
-                  Dernier impact: {latestImpact.label}
+                  Impact {latestImpact.label.toLowerCase()}
                 </span>
                 <span
                   className="text-xs font-bold tabular-nums"

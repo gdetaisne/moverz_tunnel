@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Dock reward: "dernier impact" aligné avec la ligne détail réellement modifiée
+
+**Retour UX** :
+- Le libellé `Dernier impact` pouvait afficher `Formule` alors qu'une autre ligne (ex: `Date`) était la vraie variation perçue.
+
+**Correction** (`components/tunnel-v4/SmartCart.tsx`) :
+- Recalcul du dernier impact basé sur les deltas entre ancien et nouveau panier.
+- En cas de plusieurs lignes modifiées simultanément:
+  - priorité aux lignes non-`formule`,
+  - puis sélection de la ligne avec le delta absolu le plus fort.
+- Libellé dock harmonisé: `Impact {ligne}` (ex: `Impact date`).
+
+**Impact** :
+- Le dock reflète mieux la ligne détail responsable de la variation de prix.
+
+---
+
 ## 2026-02-13 — Step 3 mobile: dock reward ancré bas + marge formulaire augmentée
 
 **Retour UI** :
