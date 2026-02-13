@@ -1,5 +1,28 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Densité: bouton photo desktop + prompt IA dédié
+
+**Demande** :
+- Ajouter, sur "Densité de meubles", un 4e bouton desktop avec icône photo.
+- Utiliser un prompt IA spécifique à la question densité.
+
+**Modifications** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - Grille densité passée en `3 colonnes mobile / 4 colonnes desktop`.
+  - Ajout d'un bouton caméra (desktop only) qui ouvre directement le flux photo.
+  - Envoi d'un contexte d'analyse (`analysisContext: "density"`) vers l'API.
+  - Libellé du bloc retour IA adapté selon le contexte (`densité` vs `contraintes spécifiques`).
+- `app/api/ai/analyze-photos/route.ts`
+  - Support du champ `analysisContext` dans la requête.
+  - Prompt dédié densité activé quand `analysisContext === "density"`.
+  - Propagation du contexte sur le process principal et le process chunké.
+
+**Impact** :
+- Le parcours photo+IA devient réutilisable par question.
+- Première extension faite sur la densité avec un prompt métier ciblé.
+
+---
+
 ## 2026-02-13 — Icône photo dans l’entête "Ajouter des précisions"
 
 **Demande** :

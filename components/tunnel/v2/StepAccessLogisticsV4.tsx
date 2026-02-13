@@ -107,6 +107,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     | "temp_save"
     | "ai_analysis";
   type PipelineStepStatus = "pending" | "in_progress" | "done" | "error";
+  type PhotoAnalysisContext = "specific_constraints" | "density";
 
   const PIPELINE_STEPS: Array<{ key: PipelineStepKey; label: string }> = [
     { key: "normalize", label: "Normalisation de l'image" },
@@ -150,6 +151,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [fallbackUploadLeadId, setFallbackUploadLeadId] = useState<string | null>(null);
   const [isDragOverPhotos, setIsDragOverPhotos] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const [photoAnalysisContext, setPhotoAnalysisContext] =
+    useState<PhotoAnalysisContext>("specific_constraints");
+  const [openPhotoPickerRequested, setOpenPhotoPickerRequested] = useState(false);
   const [pipelineStatuses, setPipelineStatuses] = useState<Record<PipelineStepKey, PipelineStepStatus>>({
     normalize: "pending",
     compress: "pending",
@@ -164,6 +168,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       ),
     [uploadedPhotos, activePhotoKeys]
   );
+
+  useEffect(() => {
+    if (!openPhotoPickerRequested) return;
+    if (!missingInfoPanelOpen || activeMissingInfoTab !== "photos") return;
+    photoInputRef.current?.click();
+    setOpenPhotoPickerRequested(false);
+  }, [openPhotoPickerRequested, missingInfoPanelOpen, activeMissingInfoTab]);
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -358,6 +369,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           leadId: props.leadId ?? undefined,
+          analysisContext: photoAnalysisContext,
           photos: photos.map((p) => ({
             id: p.id,
             storageKey: p.storageKey,
@@ -405,6 +417,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       reader.onerror = () => reject(new Error("Impossible de lire le fichier sélectionné."));
       reader.readAsDataURL(file);
     });
+
+  const openDensityPhotoFlow = () => {
+    setPhotoAnalysisContext("density");
+    setShowMissingInfoPanel(true);
+    setActiveMissingInfoTab("photos");
+    setOpenPhotoPickerRequested(true);
+  };
 
   const parseInsightsFromText = (text: string): string[] =>
     text
@@ -706,7 +725,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             >
               Densité de meubles
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {[
                 { id: "light", label: "Léger" },
                 { id: "normal", label: "Normal" },
@@ -728,6 +747,20 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   {d.label}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={openDensityPhotoFlow}
+                className="hidden sm:flex items-center justify-center px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                style={{
+                  background: "var(--color-surface)",
+                  color: "var(--color-text)",
+                  border: "2px solid var(--color-border)",
+                }}
+                title="Ajouter des photos pour aider l'estimation de densité"
+                aria-label="Ajouter des photos pour la densité de meubles"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
             </div>
             {showValidation && !isDensityValid && (
               <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
@@ -853,7 +886,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                     <button
                       key={tab.id}
                       type="button"
-                      onClick={() => setActiveMissingInfoTab(tab.id)}
+                      onClick={() => {
+                        setActiveMissingInfoTab(tab.id);
+                        if (tab.id === "photos") {
+                          setPhotoAnalysisContext("specific_constraints");
+                        }
+                      }}
                       className="px-3 py-2 rounded-xl text-sm font-semibold transition-all"
                       style={{
                         background: selected ? "var(--color-accent)" : "var(--color-surface)",
@@ -1109,7 +1147,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                       style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)" }}
                     >
                       <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                        Retour IA (contraintes spécifiques)
+                        {photoAnalysisContext === "density"
+                          ? "Retour IA (densité de meubles)"
+                          : "Retour IA (contraintes spécifiques)"}
                       </p>
                       {moverInsights.length === 0 && !isAnalyzingPhotos && (
                         <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>

@@ -10,6 +10,7 @@ interface AnalyzePhotoInput {
 
 interface AnalyzeRequestBody {
   leadId?: string;
+  analysisContext?: "specific_constraints" | "density";
   photos: AnalyzePhotoInput[];
 }
 
@@ -105,7 +106,8 @@ export async function POST(req: NextRequest) {
     }
 
     const promptProcess1 = buildPrompt(
-      validImagesProcess1.map((i) => i.photo)
+      validImagesProcess1.map((i) => i.photo),
+      json.analysisContext
     );
 
     // Process 2 : on souhaite couvrir toutes les photos (avec chunking)
@@ -147,7 +149,8 @@ export async function POST(req: NextRequest) {
       callClaudeChunkedForRooms(
         CLAUDE_MODEL_CHUNKED,
         validImagesAll,
-        json.photos
+        json.photos,
+        json.analysisContext
       ),
     ]);
 
@@ -281,7 +284,8 @@ async function callClaudeForRooms(
 async function callClaudeChunkedForRooms(
   model: string,
   validImages: { photo: AnalyzePhotoInput; base64: string; index: number }[],
-  allPhotos: AnalyzePhotoInput[]
+  allPhotos: AnalyzePhotoInput[],
+  analysisContext?: AnalyzeRequestBody["analysisContext"]
 ): Promise<AnalysisProcessPayload | null> {
   const CHUNK_SIZE = MAX_PHOTOS_PER_CHUNK;
   if (validImages.length === 0) return null;
@@ -300,7 +304,7 @@ async function callClaudeChunkedForRooms(
 
   const results = await Promise.allSettled(
     chunks.map(async (chunk, idx) => {
-      const chunkPrompt = buildPrompt(chunk.photos);
+      const chunkPrompt = buildPrompt(chunk.photos, analysisContext);
       console.log("[AI][Process2] Appel chunk", {
         model,
         chunkIndex: idx,
@@ -331,10 +335,45 @@ async function callClaudeChunkedForRooms(
   return { model, rooms: allRooms, totalMs };
 }
 
-function buildPrompt(photos: AnalyzePhotoInput[]): string {
+function buildPrompt(
+  photos: AnalyzePhotoInput[],
+  analysisContext: AnalyzeRequestBody["analysisContext"] = "specific_constraints"
+): string {
   const list = photos
     .map((p, index) => `- photoId: "${p.id}", filename: "${p.originalFilename}" (n°${index + 1})`)
     .join("\n");
+
+  if (analysisContext === "density") {
+    return `
+Tu es déménageur professionnel.
+Le client a envoyé des photos pour aider l'évaluation de la densité de meubles.
+Ton rôle: produire une note opérationnelle courte utile pour juger la densité réelle et son impact.
+
+Tu dois produire UNIQUEMENT une note opérationnelle "densité de meubles" :
+- Décrire le niveau de densité observé (léger, normal, dense) avec justification factuelle.
+- Citer uniquement les éléments visuels qui influencent la densité (volume occupé, empilement, encombrement de circulation).
+- Si le niveau semble mixte selon les zones, le préciser brièvement.
+- Rester concret et actionnable pour une équipe de déménagement.
+
+CONTRAINTES DE TON :
+- Jamais de jugement de valeur.
+- Vocabulaire neutre et professionnel.
+- Très synthétique.
+
+IMPORTANT :
+- Réponds STRICTEMENT en JSON valide UTF-8, sans texte avant/après.
+- Le JSON doit respecter cette forme :
+{
+  "moverInsights": [
+    "Point 1",
+    "Point 2"
+  ]
+}
+
+Voici la liste des photos :
+${list}
+`.trim();
+  }
 
   return `
 Tu es déménageur professionnel.
