@@ -1,5 +1,28 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: un seul bloc "actif" (encadré) à la fois
+
+**Demande UX** :
+- Ne jamais afficher deux blocs actifs en même temps.
+- Le bloc actif = dernier bloc cliqué.
+- Si un clic valide un bloc, le bloc suivant devient actif.
+
+**Implémentation** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Ajout d’un état dédié `activeSection` (`trajet|date|volume|missingInfo|formule|contact|null`).
+- Les cadres d’accent utilisent désormais `activeSection` (et non l’état d’ouverture seul).
+- Clic header bloc:
+  - ouverture => bloc devient actif,
+  - fermeture => actif retiré si c’était le bloc actif.
+- Auto-validation séquentielle:
+  - quand un bloc se valide et ouvre le suivant, l’actif bascule automatiquement sur ce suivant.
+- Bloc `Ajouter des précisions` raccordé à la même logique d’activation.
+
+**Impact** :
+- UI plus cohérente: un seul focus visuel.
+- Lecture du parcours plus claire pour l’utilisateur.
+
+---
+
 ## 2026-02-13 — Dock reward: conservation des lignes à 0€ pour fiabiliser le "dernier détail"
 
 **Problème remonté** :

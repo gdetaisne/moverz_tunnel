@@ -170,6 +170,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     formule: true,
     contact: true,
   });
+  const [activeSection, setActiveSection] = useState<SectionKey | "missingInfo" | null>("trajet");
   const [formuleExplicitChoice, setFormuleExplicitChoice] = useState(
     props.selectedFormule !== "STANDARD"
   );
@@ -770,6 +771,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         ...(following ? { [following]: true } : {}),
       }));
       if (following) {
+        setActiveSection(following);
+      }
+      if (following) {
         // Laisse le layout se stabiliser après collapse, puis scrolle de façon contrôlée
         // (alignement haut) pour éviter les "sauts" trop bas en mobile.
         window.setTimeout(() => {
@@ -819,6 +823,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     }));
     if (isMissingInfoLocked && missingInfoPanelOpen) {
       setShowMissingInfoPanel(false);
+      if (activeSection === "missingInfo") setActiveSection(null);
     }
   }, [
     sectionLocked.date,
@@ -827,6 +832,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     sectionLocked.contact,
     isMissingInfoLocked,
     missingInfoPanelOpen,
+    activeSection,
   ]);
 
   useEffect(() => {
@@ -839,6 +845,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       contact: false,
     });
     setShowMissingInfoPanel(false);
+    setActiveSection(null);
   }, [props.collapseAllOnEnterToken]);
 
   const renderSectionHeader = (key: SectionKey, title: string) => {
@@ -862,11 +869,15 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           if (isLocked) return;
           setOpenSections((state) => {
             const willOpen = !state[key];
-            if (!willOpen) return { ...state, [key]: false };
+            if (!willOpen) {
+              setActiveSection((prev) => (prev === key ? null : prev));
+              return { ...state, [key]: false };
+            }
 
             const currentIndex = sectionOrder.indexOf(key);
             const previousKey = currentIndex > 0 ? sectionOrder[currentIndex - 1] : null;
             const shouldClosePrevious = previousKey ? sectionMeta[previousKey].valid : false;
+            setActiveSection(key);
 
             return {
               ...state,
@@ -919,9 +930,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     );
   };
 
-  const sectionFrameStyle = (isOpen: boolean): React.CSSProperties => ({
-    borderColor: isOpen ? "var(--color-accent)" : "transparent",
-    background: isOpen ? "var(--color-accent-light)" : "transparent",
+  const sectionFrameStyle = (isActive: boolean): React.CSSProperties => ({
+    borderColor: isActive ? "var(--color-accent)" : "transparent",
+    background: isActive ? "var(--color-accent-light)" : "transparent",
   });
 
   return (
@@ -942,7 +953,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       <div
         id="v4-section-trajet"
         className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
-        style={sectionFrameStyle(openSections.trajet)}
+        style={sectionFrameStyle(activeSection === "trajet")}
       >
       {renderSectionHeader("trajet", "Trajet & logements")}
       {openSections.trajet && (
@@ -1059,7 +1070,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       <div
         id="v4-section-date"
         className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
-        style={sectionFrameStyle(openSections.date)}
+        style={sectionFrameStyle(activeSection === "date")}
       >
       {renderSectionHeader("date", "Date de déménagement")}
       {openSections.date && (
@@ -1109,7 +1120,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       <div
         id="v4-section-volume"
         className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
-        style={sectionFrameStyle(openSections.volume)}
+        style={sectionFrameStyle(activeSection === "volume")}
       >
       {renderSectionHeader("volume", "Volume & densité")}
       {openSections.volume && (
@@ -1282,14 +1293,19 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {/* Informations complémentaires (dépliant) */}
       <div
         className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
-        style={sectionFrameStyle(missingInfoPanelOpen)}
+        style={sectionFrameStyle(activeSection === "missingInfo")}
       >
           <button
             type="button"
             disabled={isMissingInfoLocked}
             onClick={() => {
               if (isMissingInfoLocked) return;
-              setShowMissingInfoPanel((v) => !v);
+              setShowMissingInfoPanel((v) => {
+                const next = !v;
+                if (next) setActiveSection("missingInfo");
+                else setActiveSection((prev) => (prev === "missingInfo" ? null : prev));
+                return next;
+              });
             }}
             className={`w-full rounded-xl border px-3 text-left flex items-center justify-between gap-3 disabled:cursor-not-allowed ${
               missingInfoValidated && !missingInfoPanelOpen ? "py-1.5" : "py-2"
@@ -1740,7 +1756,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         <div
           id="v4-section-formule"
           className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
-          style={sectionFrameStyle(openSections.formule)}
+          style={sectionFrameStyle(activeSection === "formule")}
         >
         {renderSectionHeader("formule", "Formule")}
         {openSections.formule && (
@@ -1835,7 +1851,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       <div
         id="v4-section-contact"
         className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
-        style={sectionFrameStyle(openSections.contact)}
+        style={sectionFrameStyle(activeSection === "contact")}
       >
       {renderSectionHeader("contact", "Coordonnées")}
       {openSections.contact && (
