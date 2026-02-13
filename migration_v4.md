@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Wording badge transparence (SmartCart)
+
+**Demande** : préciser que l'estimation peut évoluer après visite.
+
+**Modification** :
+- Texte mis à jour dans le badge "Prix transparent" :
+  - avant : "…inclut tous les ajustements selon vos critères."
+  - après : "…inclut tous les ajustements selon vos critères, ajustable après visite si nécessaire."
+
+**Fichier** : `components/tunnel-v4/SmartCart.tsx`
+
+**Impact** : UI copy uniquement, aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-12 — Panier Step 3: détails progressifs + split accès
 
 **Demande** :

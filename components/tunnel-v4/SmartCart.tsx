@@ -339,7 +339,8 @@ export function SmartCart({
         <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--color-accent)" }} />
         <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
           <strong style={{ color: "var(--color-text)" }}>Prix transparent</strong> : cette
-          estimation inclut tous les ajustements selon vos critères.
+          estimation inclut tous les ajustements selon vos critères, ajustable après visite si
+          nécessaire.
         </p>
       </div>
 
