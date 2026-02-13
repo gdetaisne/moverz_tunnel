@@ -1,5 +1,28 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3 mobile: auto-scroll bloc ajusté + formule standard non surlignée par défaut
+
+**Retours terrain** :
+1. À la validation d'un bloc, le scroll automatique descendait parfois trop bas.
+2. La formule `STANDARD` était visuellement affichée comme sélectionnée par défaut, alors qu'elle doit rester une base de calcul sans surlignage initial.
+
+**Corrections** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Auto-scroll bloc:
+  - ciblage du header de section (`v4-header-*`) au lieu d'un conteneur plus large,
+  - scroll différé après stabilisation du layout,
+  - scroll exécuté uniquement si la section suivante n'est pas déjà confortablement visible.
+- Formule:
+  - introduction d'un état `formuleExplicitChoice`,
+  - tant que l'utilisateur n'a pas explicitement choisi, `STANDARD` n'est pas visuellement surlignée,
+  - le calcul budget reste basé sur `STANDARD` par défaut (inchangé).
+
+**Impact** :
+- Navigation entre blocs plus naturelle, sans "saut" excessif.
+- UX formule alignée avec l'intention produit (default métier sans pré-sélection visuelle).
+- Aucun changement BO/Prisma/tracking/payload.
+
+---
+
 ## 2026-02-13 — Step 1 villes: retry API BAN + CP requis
 
 **Incident** :

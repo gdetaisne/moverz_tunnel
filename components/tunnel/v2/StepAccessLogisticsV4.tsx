@@ -167,6 +167,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     formule: true,
     contact: true,
   });
+  const [formuleExplicitChoice, setFormuleExplicitChoice] = useState(
+    props.selectedFormule !== "STANDARD"
+  );
+  useEffect(() => {
+    if (props.selectedFormule !== "STANDARD") {
+      setFormuleExplicitChoice(true);
+    }
+  }, [props.selectedFormule]);
   const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
   const missingInfoPanelOpen = showMissingInfoPanel;
   const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("photos");
@@ -689,7 +697,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     formule: {
       valid: isFormuleValid,
       summary:
-        props.selectedFormule === "ECONOMIQUE"
+        !formuleExplicitChoice && props.selectedFormule === "STANDARD"
+          ? "Standard (par défaut)"
+          : props.selectedFormule === "ECONOMIQUE"
           ? "Éco"
           : props.selectedFormule === "PREMIUM"
           ? "Premium"
@@ -729,12 +739,19 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         ...(following ? { [following]: true } : {}),
       }));
       if (following) {
-        requestAnimationFrame(() => {
-          document.getElementById(`v4-section-${following}`)?.scrollIntoView({
+        // Laisse le layout se stabiliser après collapse, puis ne scrolle que si nécessaire.
+        window.setTimeout(() => {
+          const target = document.getElementById(`v4-header-${following}`);
+          if (!target) return;
+          const rect = target.getBoundingClientRect();
+          const vh = window.innerHeight || document.documentElement.clientHeight;
+          const isComfortablyVisible = rect.top >= 80 && rect.bottom <= vh - 120;
+          if (isComfortablyVisible) return;
+          target.scrollIntoView({
             behavior: "smooth",
-            block: "start",
+            block: "center",
           });
-        });
+        }, 140);
       }
     }
     prevSectionValidityRef.current = next;
@@ -757,6 +774,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       : "var(--color-text-muted)";
     return (
       <button
+        id={`v4-header-${key}`}
         type="button"
         onClick={() => setOpenSections((state) => ({ ...state, [key]: !state[key] }))}
         className="w-full rounded-xl border px-3 py-2 text-left flex items-center justify-between gap-3"
@@ -1563,12 +1581,17 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 },
               ] as const).map((f) => {
                 const price = props.pricingByFormule![f.id];
-                const selected = props.selectedFormule === f.id;
+                const selected =
+                  (formuleExplicitChoice || props.selectedFormule !== "STANDARD") &&
+                  props.selectedFormule === f.id;
                 return (
                   <button
                     key={f.id}
                     type="button"
-                    onClick={() => props.onFormuleChange(f.id)}
+                    onClick={() => {
+                      setFormuleExplicitChoice(true);
+                      props.onFormuleChange(f.id);
+                    }}
                     className="relative rounded-xl p-4 text-left transition-all"
                     style={{
                       background: selected
