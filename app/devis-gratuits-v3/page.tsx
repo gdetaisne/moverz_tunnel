@@ -2017,8 +2017,10 @@ function DevisGratuitsV3Content() {
                 destinationUnknown={state.destinationUnknown}
                 originHousingType={state.originHousingType}
                 originFloor={state.originFloor}
+                originFloorTouched={state.originFloorTouched}
                 destinationHousingType={state.destinationHousingType}
                 destinationFloor={state.destinationFloor}
+                destinationFloorTouched={state.destinationFloorTouched}
                 density={state.density}
                 kitchenIncluded={state.kitchenIncluded}
                 kitchenApplianceCount={state.kitchenApplianceCount}

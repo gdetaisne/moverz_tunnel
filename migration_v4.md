@@ -1,5 +1,30 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: appartement non validable sans choix explicite d'étage
+
+**Retour UX** :
+- Le bloc trajet pouvait passer `Validé` juste après clic `Appartement`, même sans choix explicite d'étage (RDC implicite).
+
+**Corrections** :
+
+`components/tunnel/v2/StepAccessLogisticsV4.tsx`
+- Ajout des props `originFloorTouched` / `destinationFloorTouched`.
+- Validation étage durcie pour un appartement:
+  - valide seulement si étage renseigné **et** choix explicite utilisateur,
+  - exception conservée pour reprises avec étage non-RDC déjà présent.
+- Clic sur `Appartement`:
+  - reset de l'étage (`""`),
+  - reset du flag touched étage (`false`) pour forcer un choix explicite (RDC inclus).
+
+`app/devis-gratuits-v3/page.tsx`
+- Passage des flags `originFloorTouched` et `destinationFloorTouched` au composant Step 3.
+
+**Impact** :
+- Le statut `Validé` n'arrive plus trop tôt sur logement appartement.
+- L'utilisateur doit explicitement confirmer l'étage, comme attendu.
+
+---
+
 ## 2026-02-13 — Dock reward: "dernier impact" aligné avec la ligne détail réellement modifiée
 
 **Retour UX** :

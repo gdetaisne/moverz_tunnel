@@ -43,6 +43,7 @@ interface StepAccessLogisticsV4Props {
   originLon?: number | null;
   originHousingType: string;
   originFloor: string;
+  originFloorTouched?: boolean;
   destinationAddress: string;
   destinationPostalCode: string;
   destinationCity: string;
@@ -52,6 +53,7 @@ interface StepAccessLogisticsV4Props {
   destinationUnknown?: boolean;
   destinationHousingType: string;
   destinationFloor: string;
+  destinationFloorTouched?: boolean;
   // Volume
   density: "" | "light" | "normal" | "dense";
   kitchenIncluded: "" | "none" | "appliances" | "full";
@@ -289,7 +291,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             </button>
             <button
               type="button"
-              onClick={() => setHousingType("t2")}
+              onClick={() => {
+                setHousingType("t2");
+                // Appartement: on force un choix explicite d'étage (RDC inclus).
+                setFloor("");
+                props.onFieldChange(`${prefix}FloorTouched`, false);
+              }}
               className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
               style={{
                 background: isApartment(housingType)
@@ -659,9 +666,15 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
   const isOriginHousingValid = !!(props.originHousingType || "").trim();
   const isDestinationHousingValid = !!(props.destinationHousingType || "").trim();
-  const isOriginFloorValid = !isApartment(props.originHousingType) || !!(props.originFloor || "").trim();
+  const isOriginFloorValid =
+    !isApartment(props.originHousingType) ||
+    (!!(props.originFloor || "").trim() &&
+      ((props.originFloorTouched ?? false) || (props.originFloor || "").trim() !== "0"));
   const isDestinationFloorValid =
-    !isApartment(props.destinationHousingType) || !!(props.destinationFloor || "").trim();
+    !isApartment(props.destinationHousingType) ||
+    (!!(props.destinationFloor || "").trim() &&
+      ((props.destinationFloorTouched ?? false) ||
+        (props.destinationFloor || "").trim() !== "0"));
   const isFormuleValid =
     props.selectedFormule === "ECONOMIQUE" ||
     props.selectedFormule === "STANDARD" ||
