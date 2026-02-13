@@ -137,10 +137,8 @@ export function SmartCart({
       .filter(({ item, prev, delta }) => item.amountEur !== 0 && prev != null && delta !== 0);
 
     if (changedWithDelta.length > 0) {
-      // Priorité à la vraie ligne impactée ; on évite de favoriser "formule" si d'autres lignes ont bougé.
-      const nonFormule = changedWithDelta.filter(({ item }) => item.id !== "formule");
-      const pool = nonFormule.length > 0 ? nonFormule : changedWithDelta;
-      const latest = pool.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))[0]!.item;
+      // "Dernier impact calculé" = dernière ligne modifiée dans l'ordre de calcul du panier.
+      const latest = changedWithDelta[changedWithDelta.length - 1]!.item;
       setImpactHistory((prev) => {
         const deduped = prev.filter(
           (x) => !(x.id === latest.id && x.amountEur === latest.amountEur)

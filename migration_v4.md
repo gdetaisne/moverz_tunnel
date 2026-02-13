@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Dock reward: "Impact" basé sur le dernier calcul (ordre métier)
+
+**Retour UX** :
+- Le dock n'affichait pas toujours le bon `Impact ...` attendu.
+
+**Cause** :
+- Sélection de l'impact via heuristique (delta absolu / priorité non-formule), non alignée avec l'ordre métier de calcul.
+
+**Correction** (`components/tunnel-v4/SmartCart.tsx`) :
+- `latestImpact` repose désormais sur la **dernière ligne modifiée dans l'ordre de calcul** des lignes panier.
+- Suppression de la logique heuristique précédente.
+
+**Impact** :
+- Le libellé `Impact ...` correspond au dernier impact calculé, de manière prévisible.
+
+---
+
 ## 2026-02-13 — Step 3 mobile: blocs resserrés + encadrement visuel du bloc actif
 
 **Retour UX** :
