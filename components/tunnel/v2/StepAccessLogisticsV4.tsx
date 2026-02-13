@@ -126,6 +126,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const missingInfoPanelOpen = showMissingInfoPanel;
   const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("constraints");
   const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
+  const [activePhotoKeys, setActivePhotoKeys] = useState<string[]>([]);
   const [photoPreviewUrls, setPhotoPreviewUrls] = useState<Record<string, string>>({});
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [isAnalyzingPhotos, setIsAnalyzingPhotos] = useState(false);
@@ -134,6 +135,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [fallbackUploadLeadId, setFallbackUploadLeadId] = useState<string | null>(null);
   const [isDragOverPhotos, setIsDragOverPhotos] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const activeUploadedPhotos = useMemo(
+    () =>
+      uploadedPhotos.filter((p) =>
+        activePhotoKeys.includes(p.storageKey || p.id)
+      ),
+    [uploadedPhotos, activePhotoKeys]
+  );
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -411,7 +419,26 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         return next;
       });
       setUploadedPhotos(nextPhotos);
-      await analyzePhotosLive(nextPhotos);
+      setActivePhotoKeys((prev) => {
+        const prevSet = new Set(prev);
+        const merged = [...prev];
+        for (const p of result.success) {
+          const key = p.storageKey || p.id;
+          if (!prevSet.has(key)) {
+            prevSet.add(key);
+            merged.push(key);
+          }
+        }
+        return merged;
+      });
+      const activeSetAfterUpload = new Set(activePhotoKeys);
+      for (const p of result.success) {
+        activeSetAfterUpload.add(p.storageKey || p.id);
+      }
+      const photosForAnalysis = nextPhotos.filter((p) =>
+        activeSetAfterUpload.has(p.storageKey || p.id)
+      );
+      await analyzePhotosLive(photosForAnalysis);
     } catch (error) {
       setPhotoPanelError(error instanceof Error ? error.message : "Erreur upload.");
     } finally {
@@ -431,10 +458,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       delete next[photoKey];
       return next;
     });
-    const remaining = uploadedPhotos.filter((p) => (p.storageKey || p.id) !== photoKey);
-    setUploadedPhotos(remaining);
+    setActivePhotoKeys((prev) => prev.filter((k) => k !== photoKey));
+    const remainingActive = uploadedPhotos.filter(
+      (p) =>
+        (p.storageKey || p.id) !== photoKey &&
+        activePhotoKeys.includes(p.storageKey || p.id)
+    );
     setPhotoPanelError(null);
-    await analyzePhotosLive(remaining);
+    await analyzePhotosLive(remainingActive);
   };
 
   return (
@@ -943,9 +974,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                       >
                         Importer des photos
                       </button>
-                      {uploadedPhotos.length > 0 && (
+                      {activeUploadedPhotos.length > 0 && (
                         <div className="grid grid-cols-3 gap-2">
-                          {uploadedPhotos.map((photo) => {
+                          {activeUploadedPhotos.map((photo) => {
                             const key = photo.storageKey || photo.id;
                             const previewSrc = photoPreviewUrls[key] || photo.url || "";
                             return (
@@ -1043,9 +1074,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                           {photoPanelError}
                         </p>
                       )}
-                      {uploadedPhotos.length > 0 && (
+                      {activeUploadedPhotos.length > 0 && (
                         <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                          {uploadedPhotos.length} photo(s) uploadée(s)
+                          {activeUploadedPhotos.length} photo(s) active(s)
+                        </p>
+                      )}
+                      {uploadedPhotos.length > activeUploadedPhotos.length && (
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                          {uploadedPhotos.length - activeUploadedPhotos.length} photo(s) masquée(s) (conservées en historique).
                         </p>
                       )}
                       {moverInsights.map((insight, idx) => (

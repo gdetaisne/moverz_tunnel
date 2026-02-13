@@ -1,5 +1,30 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Soft delete photo: analyse IA limitée aux photos actives à l'écran
+
+**Problème** :
+- perception de doublons / photos historiques prises en compte dans l'analyse IA.
+
+**Règle métier appliquée** :
+1. Toutes les photos envoyées restent enregistrées (historique conservé).
+2. Seules les photos non supprimées à l'écran (soft delete) sont analysées par l'IA.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- séparation explicite :
+  - `uploadedPhotos` = historique uploadé (conservé),
+  - `activePhotoKeys` = photos actives affichées/analyzées.
+- suppression d'une miniature = retrait de `activePhotoKeys` uniquement (soft delete UI).
+- analyse IA recalculée uniquement sur `activeUploadedPhotos`.
+- ajout d'un indicateur UX :
+  - nombre de photos actives,
+  - nombre de photos masquées (historique conservé).
+
+**Impact** :
+- plus de prise en compte IA des photos masquées.
+- conservation complète des uploads côté stockage.
+
+---
+
 ## 2026-02-13 — Indicateur d'analyse IA en cours (retour IA)
 
 **Demande** :
