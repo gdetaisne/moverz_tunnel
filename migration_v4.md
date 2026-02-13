@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Réorganisation onglets "Ajouter des précisions"
+
+**Demande** :
+- Mettre `photo + IA` à gauche et ouvert par défaut, puis `Contraintes Usuelles`, puis `champs libre`.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Ordre des onglets changé en : `photo + IA` → `Contraintes Usuelles` → `champs libre`.
+- Onglet actif par défaut changé vers `photo + IA`.
+- Panneau "Ajouter des précisions (facultatif)" ouvert par défaut.
+
+**Impact** :
+- Le parcours photo+IA devient l’entrée principale visible immédiatement.
+
+---
+
 ## 2026-02-13 — Densité: bouton photo desktop + prompt IA dédié
 
 **Demande** :

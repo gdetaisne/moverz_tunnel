@@ -137,9 +137,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const isKitchenValid =
     props.kitchenIncluded !== "appliances" ||
     (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
-  const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
+  const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(true);
   const missingInfoPanelOpen = showMissingInfoPanel;
-  const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("constraints");
+  const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("photos");
   const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
   const [activePhotoKeys, setActivePhotoKeys] = useState<string[]>([]);
   const [photoPreviewUrls, setPhotoPreviewUrls] = useState<Record<string, string>>({});
@@ -877,9 +877,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {[
+                  { id: "photos" as const, label: "photo + IA", withCamera: true },
                   { id: "constraints" as const, label: "Contraintes Usuelles" },
                   { id: "notes" as const, label: "champs libre" },
-                  { id: "photos" as const, label: "photo + IA", withCamera: true },
                 ].map((tab) => {
                   const selected = activeMissingInfoTab === tab.id;
                   return (
