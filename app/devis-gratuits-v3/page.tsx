@@ -42,6 +42,7 @@ import {
   computeBaselineEstimate,
   computeBaselineEstimateByFormule,
   computeMoverzFeeProvision,
+  deriveCenterBeforeProvision,
   getBaselineDistanceKm,
   getDisplayedCenter,
 } from "@/lib/pricing/scenarios";
@@ -967,7 +968,8 @@ function DevisGratuitsV3Content() {
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
     const selectedFormule = state.formule as PricingFormuleType;
-    const baselineFormule: PricingFormuleType = "STANDARD";
+    const baselineFormule: PricingFormuleType =
+      (state.rewardBaselineFormule as PricingFormuleType | null) ?? "STANDARD";
 
     // Première estimation figée (Step 2): distance baseline + hypothèses fixes
     // pour éviter un panier qui "bouge" pendant la saisie libre des adresses.
@@ -998,7 +1000,23 @@ function DevisGratuitsV3Content() {
       distanceKm: baseDistanceKm,
       formule: baselineFormule,
     });
-    const firstEstimateCenterEur = centerEur(s0.prixMin, s0.prixMax);
+    const hasFrozenBaseline =
+      state.rewardBaselineMinEur != null &&
+      Number.isFinite(state.rewardBaselineMinEur) &&
+      state.rewardBaselineMaxEur != null &&
+      Number.isFinite(state.rewardBaselineMaxEur);
+    const firstEstimateMinEur = hasFrozenBaseline ? state.rewardBaselineMinEur! : s0.prixMin;
+    const firstEstimateMaxEur = hasFrozenBaseline ? state.rewardBaselineMaxEur! : s0.prixMax;
+    const firstEstimateCenterEur = centerEur(firstEstimateMinEur, firstEstimateMaxEur);
+    const fixedProvisionEur = hasFrozenBaseline
+      ? computeMoverzFeeProvision(deriveCenterBeforeProvision(firstEstimateCenterEur))
+      : s0.moverzFeeProvisionEur;
+    const withFixedProvision = (pricing: ReturnType<typeof calculatePricing>) => ({
+      ...pricing,
+      prixMin: pricing.prixMin + fixedProvisionEur,
+      prixFinal: pricing.prixFinal + fixedProvisionEur,
+      prixMax: pricing.prixMax + fixedProvisionEur,
+    });
 
     const minMovingDate = getMinMovingDateIso();
     const isMovingDateValid = !!state.movingDate && state.movingDate >= minMovingDate;
@@ -1024,7 +1042,7 @@ function DevisGratuitsV3Content() {
     // - détail distance (info utilisateur) basé sur OSRM si disponible
     // - montant global reste basé sur la baseline figée
     const inputDistance = { ...baselineInput, distanceKm: refinedDistanceKm };
-    const sDist = calculatePricing(inputDistance);
+    const sDist = withFixedProvision(calculatePricing(inputDistance));
     const deltaDistanceEur = canUseOsrmDistance
       ? formatDelta(centerEur(sDist.prixMin, sDist.prixMax) - firstEstimateCenterEur)
       : 0;
@@ -1037,9 +1055,10 @@ function DevisGratuitsV3Content() {
       density: effectiveDensity,
     };
     const sDensity = calculatePricing(inputDensity);
+    const sDensityWithFee = withFixedProvision(sDensity);
     const deltaDensityEur = densityTouched
       ? formatDelta(
-          centerEur(sDensity.prixMin, sDensity.prixMax) -
+          centerEur(sDensityWithFee.prixMin, sDensityWithFee.prixMax) -
             centerEur(sDist.prixMin, sDist.prixMax)
         )
       : 0;
@@ -1060,11 +1079,11 @@ function DevisGratuitsV3Content() {
       return 0;
     })();
     const inputKitchen = { ...inputDensity, extraVolumeM3: kitchenExtraVolumeM3 };
-    const sKitchen = calculatePricing(inputKitchen);
+    const sKitchen = withFixedProvision(calculatePricing(inputKitchen));
     const deltaKitchenEur = kitchenTouched
       ? formatDelta(
           centerEur(sKitchen.prixMin, sKitchen.prixMax) -
-            centerEur(sDensity.prixMin, sDensity.prixMax)
+            centerEur(sDensityWithFee.prixMin, sDensityWithFee.prixMax)
         )
       : 0;
 
@@ -1073,7 +1092,7 @@ function DevisGratuitsV3Content() {
       ? getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate)
       : 1;
     const inputDate = { ...inputKitchen, seasonFactor };
-    const sDate = calculatePricing(inputDate);
+    const sDate = withFixedProvision(calculatePricing(inputDate));
     const deltaDateEur = formatDelta(
       centerEur(sDate.prixMin, sDate.prixMax) - centerEur(sKitchen.prixMin, sKitchen.prixMax)
     );
@@ -1142,9 +1161,10 @@ function DevisGratuitsV3Content() {
       };
     })();
     const sAccessHousing = calculatePricing(inputAccessHousing);
+    const sAccessHousingWithFee = withFixedProvision(sAccessHousing);
     const deltaAccessHousingEur = accessHousingConfirmed
       ? formatDelta(
-          centerEur(sAccessHousing.prixMin, sAccessHousing.prixMax) -
+          centerEur(sAccessHousingWithFee.prixMin, sAccessHousingWithFee.prixMax) -
             centerEur(sDate.prixMin, sDate.prixMax)
         )
       : 0;
@@ -1163,11 +1183,11 @@ function DevisGratuitsV3Content() {
         },
       };
     })();
-    const sAccessStandard = calculatePricing(inputAccessConstraints);
+    const sAccessStandard = withFixedProvision(calculatePricing(inputAccessConstraints));
     const deltaAccessConstraintsEur = accessConstraintsConfirmed
       ? formatDelta(
           centerEur(sAccessStandard.prixMin, sAccessStandard.prixMax) -
-            centerEur(sAccessHousing.prixMin, sAccessHousing.prixMax)
+            centerEur(sAccessHousingWithFee.prixMin, sAccessHousingWithFee.prixMax)
         )
       : 0;
 
@@ -1178,7 +1198,7 @@ function DevisGratuitsV3Content() {
     const sFinal =
       selectedFormule === baselineFormule
         ? sAccessStandard
-        : calculatePricing(inputSelectedFormule);
+        : withFixedProvision(calculatePricing(inputSelectedFormule));
     const deltaFormuleEur =
       selectedFormule === baselineFormule
         ? 0
@@ -1301,8 +1321,8 @@ function DevisGratuitsV3Content() {
     });
 
     return {
-      firstEstimateMinEur: s0.prixMin,
-      firstEstimateMaxEur: s0.prixMax,
+      firstEstimateMinEur,
+      firstEstimateMaxEur,
       firstEstimateCenterEur,
       refinedMinEur: sFinal.prixMin,
       refinedMaxEur: sFinal.prixMax,
@@ -1315,6 +1335,7 @@ function DevisGratuitsV3Content() {
     routeDistanceKm,
     routeDistanceProvider,
     state.rewardBaselineDistanceKm,
+    state.rewardBaselineFormule,
     state.originAddress,
     state.destinationAddress,
     state.surfaceM2,
@@ -1822,13 +1843,17 @@ function DevisGratuitsV3Content() {
       const originIsHouse = isHouseType(state.originHousingType);
       const destIsHouse = isHouseType(state.destinationHousingType);
 
-      const frozenStep2CenterEur =
+      const frozenStep2CenterAfterProvisionEur =
         state.rewardBaselineMinEur != null && state.rewardBaselineMaxEur != null
           ? getDisplayedCenter(state.rewardBaselineMinEur, state.rewardBaselineMaxEur)
           : null;
+      const frozenStep2CenterBeforeProvisionEur =
+        frozenStep2CenterAfterProvisionEur != null
+          ? deriveCenterBeforeProvision(frozenStep2CenterAfterProvisionEur)
+          : null;
       const moverzFeeProvisionFromStep2Eur =
-        frozenStep2CenterEur != null
-          ? computeMoverzFeeProvision(frozenStep2CenterEur)
+        frozenStep2CenterBeforeProvisionEur != null
+          ? computeMoverzFeeProvision(frozenStep2CenterBeforeProvisionEur)
           : undefined;
 
       // Snapshot complet du panier ("Votre panier") pour archivage BO
@@ -1841,7 +1866,8 @@ function DevisGratuitsV3Content() {
           refinedMinEur: v2PricingCart.refinedMinEur,
           refinedMaxEur: v2PricingCart.refinedMaxEur,
           refinedCenterEur: v2PricingCart.refinedCenterEur,
-          step2CenterBeforeProvisionEur: frozenStep2CenterEur ?? undefined,
+          step2CenterBeforeProvisionEur:
+            frozenStep2CenterBeforeProvisionEur ?? undefined,
           moverzFeeProvisionEur: moverzFeeProvisionFromStep2Eur,
           moverzFeeProvisionRule: "MAX(100;10% du montant estimé)",
           // Première estimation (baseline)
@@ -1919,7 +1945,8 @@ function DevisGratuitsV3Content() {
           pricing: {
             distanceKm: routeDistanceKm ?? undefined,
             distanceProvider: routeDistanceProvider ?? undefined,
-            step2CenterBeforeProvisionEur: frozenStep2CenterEur ?? undefined,
+            step2CenterBeforeProvisionEur:
+              frozenStep2CenterBeforeProvisionEur ?? undefined,
             moverzFeeProvisionEur: moverzFeeProvisionFromStep2Eur,
           },
           accessV2: {

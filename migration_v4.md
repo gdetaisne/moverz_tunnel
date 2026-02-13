@@ -1,5 +1,49 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: harmonisation référentiel calcul (budget + détails)
+
+**Objectif** :
+- Éviter les écarts entre `Budget initial`, `Budget affiné` et la somme des impacts.
+- Garantir un référentiel unique de calcul en Step 3.
+
+**Corrections** (`app/devis-gratuits-v3/page.tsx`) :
+- Baseline formule Step 3 alignée sur la baseline figée Step 2:
+  - `baselineFormule = rewardBaselineFormule ?? STANDARD`.
+- Provision Step 2 figée appliquée de façon constante à toute la chaîne Step 3:
+  - calcul d'un `fixedProvisionEur` unique (dérivé de la baseline figée),
+  - application sur chaque état intermédiaire (`Distance`, `Densité`, `Cuisine`, `Date`, `Accès`, `Formule`).
+- `Budget initial` en Step 3 priorise toujours `rewardBaselineMin/Max` quand disponibles.
+
+**Impact** :
+- `Budget affiné` et `Détails` évoluent sur le même référentiel monétaire.
+- Suppression des dérives dues au mix baseline/formule/provision.
+
+---
+
+## 2026-02-13 — Fix ordre Step 3: classes Tailwind `order-*` invalides
+
+**Bug observé** :
+- Le bloc `Trajet & logements` descendait en bas de la Step 3.
+
+**Cause** :
+- Utilisation de classes `order-20/30/40/50/60/70` non supportées par Tailwind (seules `order-1..12` existent par défaut).
+- Résultat: plusieurs sections restaient à `order: 0`, mais `Trajet` avait un ordre valide (`order-10`) et se retrouvait plus bas.
+
+**Correction** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Remplacement des ordres par des classes valides:
+  - Trajet `order-1`
+  - Date `order-2`
+  - Volume `order-3`
+  - Formule `order-4`
+  - Coordonnées `order-5`
+  - Ajouter des précisions `order-6`
+  - CTA `order-7`
+
+**Impact** :
+- Ordre restauré conformément au parcours attendu.
+
+---
+
 ## 2026-02-13 — Copy temps restant harmonisé avant Step 3
 
 **Demande** :

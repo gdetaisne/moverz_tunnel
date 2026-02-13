@@ -1019,7 +1019,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {/* Addresses */}
       <div
         id="v4-section-trajet"
-        className="order-10 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        className="order-1 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "trajet")}
       >
       {renderSectionHeader("trajet", "Trajet & logements")}
@@ -1148,7 +1148,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {/* Date */}
       <div
         id="v4-section-date"
-        className="order-20 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        className="order-2 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "date")}
       >
       {renderSectionHeader("date", "Date de déménagement")}
@@ -1198,7 +1198,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {/* Volume */}
       <div
         id="v4-section-volume"
-        className="order-30 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        className="order-3 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "volume")}
       >
       {renderSectionHeader("volume", "Volume & densité")}
@@ -1371,7 +1371,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
       {/* Informations complémentaires (dépliant) */}
       <div
-        className="order-60 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        className="order-6 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "missingInfo")}
       >
           <button
@@ -1834,7 +1834,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {props.pricingByFormule && (
         <div
           id="v4-section-formule"
-          className="order-40 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+          className="order-4 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
           style={sectionFrameStyle(activeSection === "formule")}
         >
         {renderSectionHeader("formule", "Formule")}
@@ -1929,7 +1929,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {/* Contact */}
       <div
         id="v4-section-contact"
-        className="order-50 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        className="order-5 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "contact")}
       >
       {renderSectionHeader("contact", "Coordonnées")}
@@ -2057,7 +2057,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       </div>
 
       {/* CTA */}
-      <div className="order-70 space-y-3">
+      <div className="order-7 space-y-3">
         <button
           id="v4-primary-submit-cta"
           type="button"

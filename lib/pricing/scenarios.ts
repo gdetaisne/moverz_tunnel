@@ -17,6 +17,12 @@ export const BASELINE_FORMULES: FormuleType[] = [
   "PREMIUM",
 ];
 
+export type BaselineEstimateOutput = PricingOutput & {
+  moverzFeeProvisionEur: number;
+  step2CenterBeforeProvisionEur: number;
+  step2CenterAfterProvisionEur: number;
+};
+
 export function getDisplayedCenter(
   minEur: number,
   maxEur: number,
@@ -28,6 +34,35 @@ export function getDisplayedCenter(
 export function computeMoverzFeeProvision(estimatedAmountEur: number): number {
   if (!Number.isFinite(estimatedAmountEur) || estimatedAmountEur <= 0) return 100;
   return Math.max(100, Math.round(estimatedAmountEur * 0.1));
+}
+
+export function deriveCenterBeforeProvision(
+  centerAfterProvisionEur: number
+): number {
+  if (!Number.isFinite(centerAfterProvisionEur) || centerAfterProvisionEur <= 0) return 0;
+  // En-dessous de 1100€, on est forcément sur le plancher fee=100.
+  if (centerAfterProvisionEur < 1100) return Math.max(0, Math.round(centerAfterProvisionEur - 100));
+  // Au-delà, fee=10% du centre "avant", donc after = before * 1.1
+  return Math.max(0, Math.round(centerAfterProvisionEur / 1.1));
+}
+
+function applyProvisionToBaselinePricing(pricing: PricingOutput): BaselineEstimateOutput {
+  const centerBefore = getDisplayedCenter(pricing.prixMin, pricing.prixMax);
+  const fee = computeMoverzFeeProvision(centerBefore);
+
+  const prixMinWithFee = pricing.prixMin + fee;
+  const prixFinalWithFee = pricing.prixFinal + fee;
+  const prixMaxWithFee = pricing.prixMax + fee;
+
+  return {
+    ...pricing,
+    prixMin: prixMinWithFee,
+    prixFinal: prixFinalWithFee,
+    prixMax: prixMaxWithFee,
+    moverzFeeProvisionEur: fee,
+    step2CenterBeforeProvisionEur: centerBefore,
+    step2CenterAfterProvisionEur: getDisplayedCenter(prixMinWithFee, prixMaxWithFee),
+  };
 }
 
 export function getBaselineDistanceKm(cityDistanceKm: number | null): number | null {
@@ -60,15 +95,16 @@ export function computeBaselineEstimate(params: {
   surfaceM2: number;
   distanceKm: number;
   formule: FormuleType;
-}): PricingOutput {
-  return calculatePricing(buildBaselinePricingInput(params));
+}): BaselineEstimateOutput {
+  const raw = calculatePricing(buildBaselinePricingInput(params));
+  return applyProvisionToBaselinePricing(raw);
 }
 
 export function computeBaselineEstimateByFormule(params: {
   surfaceM2: number;
   distanceKm: number;
-}): Record<FormuleType, PricingOutput> {
-  return BASELINE_FORMULES.reduce<Record<FormuleType, PricingOutput>>(
+}): Record<FormuleType, BaselineEstimateOutput> {
+  return BASELINE_FORMULES.reduce<Record<FormuleType, BaselineEstimateOutput>>(
     (acc, formule) => {
       acc[formule] = computeBaselineEstimate({
         surfaceM2: params.surfaceM2,
@@ -77,6 +113,6 @@ export function computeBaselineEstimateByFormule(params: {
       });
       return acc;
     },
-    {} as Record<FormuleType, PricingOutput>
+    {} as Record<FormuleType, BaselineEstimateOutput>
   );
 }
