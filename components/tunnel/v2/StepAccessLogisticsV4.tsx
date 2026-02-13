@@ -178,6 +178,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     }
   }, [props.selectedFormule]);
   const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
+  const [missingInfoValidated, setMissingInfoValidated] = useState(false);
   const missingInfoPanelOpen = showMissingInfoPanel;
   const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("photos");
   const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
@@ -239,6 +240,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   };
 
   const toggleSide = (q: QuestionKey, loc: "origin" | "destination") => {
+    setMissingInfoValidated(false);
     const current = parseAccessSides();
     const was = current[q]?.[loc] ?? false;
     current[q][loc] = !was;
@@ -643,10 +645,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
   const onPhotoFilesPicked = async (files: File[]) => {
     if (files.length === 0) return;
+    setMissingInfoValidated(false);
     await handlePhotoUploadAndAnalyze(files);
   };
 
   const removeUploadedPhoto = async (photo: UploadedPhoto) => {
+    setMissingInfoValidated(false);
     const photoKey = photo.storageKey || photo.id;
     setPhotoPreviewUrls((prev) => {
       const next = { ...prev };
@@ -1180,6 +1184,18 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               Ajouter des précisions (facultatif)
             </span>
             <span className="flex items-center gap-2" aria-hidden>
+              <span
+                className="text-xs font-semibold"
+                style={{
+                  color: missingInfoValidated
+                    ? "var(--color-success)"
+                    : missingInfoPanelOpen
+                    ? "var(--color-accent)"
+                    : "var(--color-text-muted)",
+                }}
+              >
+                {missingInfoValidated ? "Validé" : missingInfoPanelOpen ? "En cours" : "Facultatif"}
+              </span>
               <Camera className="w-3.5 h-3.5" style={{ color: "var(--color-text-muted)" }} />
               <ChevronDown
                 className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
@@ -1331,7 +1347,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   <textarea
                     id="v4-specific-notes"
                     value={props.specificNotes}
-                    onChange={(e) => props.onFieldChange("specificNotes", e.target.value)}
+                    onChange={(e) => {
+                      setMissingInfoValidated(false);
+                      props.onFieldChange("specificNotes", e.target.value);
+                    }}
                     rows={4}
                     className="w-full rounded-xl px-4 py-3 text-sm resize-y"
                     style={{
@@ -1526,6 +1545,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                             : constraintsReturnIaText
                         }
                         onChange={(e) => {
+                          setMissingInfoValidated(false);
                           const nextText = e.target.value;
                           const parsed = parseInsightsFromText(nextText);
                           setMoverInsights(parsed);
@@ -1556,6 +1576,21 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   </div>
                 </div>
               )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMissingInfoValidated(true);
+                  setShowMissingInfoPanel(false);
+                }}
+                className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold"
+                style={{
+                  background: "var(--color-accent)",
+                  color: "#FFFFFF",
+                }}
+              >
+                Valider ces précisions
+              </button>
             </div>
           )}
         </div>

@@ -1,5 +1,27 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Bloc "Ajouter des précisions": ajout bouton de validation explicite
+
+**Retour UX** :
+- Le bloc `Ajouter des précisions` restait en `En cours` et n'avait pas de mécanisme explicite pour passer en `Validé`.
+
+**Correction** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Ajout d'un bouton bas de bloc: `Valider ces précisions`.
+- Clic sur ce bouton:
+  - marque le bloc en `Validé`,
+  - referme le dépliant.
+- Header du bloc enrichi avec un statut visible:
+  - `Facultatif` (au repos),
+  - `En cours` (panneau ouvert),
+  - `Validé` (après confirmation).
+- Si l'utilisateur modifie ensuite contraintes/notes/photos, le statut repasse automatiquement à non-validé.
+
+**Impact** :
+- Feedback de complétude clair et actionnable pour ce bloc.
+- Aucun impact BO/Prisma/tracking.
+
+---
+
 ## 2026-02-13 — Step 3: appartement non validable sans choix explicite d'étage
 
 **Retour UX** :
