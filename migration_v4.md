@@ -1,5 +1,19 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix miniatures: passage de `blob:` à `data:` (ERR_FILE_NOT_FOUND)
+
+**Symptôme** :
+- miniatures cassées de manière intermittente (`net::ERR_FILE_NOT_FOUND` sur URLs de preview).
+
+**Correction** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- génération de previews en `data:` via `FileReader.readAsDataURL` au lieu de `URL.createObjectURL`.
+- suppression de la logique de `revokeObjectURL` devenue inutile.
+
+**Impact** :
+- miniatures stables dans le bloc import (plus de cassure liée au cycle de vie des `blob:`).
+
+---
+
 ## 2026-02-13 — Retour IA orienté "objets à attention" (contraintes spécifiques)
 
 **Demande** :

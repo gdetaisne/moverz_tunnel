@@ -364,6 +364,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     }
   };
 
+  const toDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Impossible de lire le fichier sélectionné."));
+      reader.readAsDataURL(file);
+    });
+
   const handlePhotoUploadAndAnalyze = async (files: File[]) => {
     const uploadLeadId = props.leadId ?? fallbackUploadLeadId;
     if (!uploadLeadId) {
@@ -380,7 +388,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         setPhotoPanelError(result.errors[0]?.reason ?? "Certaines photos n'ont pas pu être traitées.");
       }
 
-      const localPreviewQueue = files.map((file) => URL.createObjectURL(file));
+      const localPreviewQueue = await Promise.all(files.map((file) => toDataUrl(file)));
 
       const nextPhotos: UploadedPhoto[] = [];
       const seen = new Set<string>();
@@ -401,13 +409,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         }
         return next;
       });
-      localPreviewQueue.forEach((u) => {
-        try {
-          URL.revokeObjectURL(u);
-        } catch {
-          // ignore cleanup errors
-        }
-      });
       setUploadedPhotos(nextPhotos);
       await analyzePhotosLive(nextPhotos);
     } catch (error) {
@@ -424,14 +425,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
   const removeUploadedPhoto = async (photo: UploadedPhoto) => {
     const photoKey = photo.storageKey || photo.id;
-    const preview = photoPreviewUrls[photoKey];
-    if (preview) {
-      try {
-        URL.revokeObjectURL(preview);
-      } catch {
-        // ignore cleanup errors
-      }
-    }
     setPhotoPreviewUrls((prev) => {
       const next = { ...prev };
       delete next[photoKey];
