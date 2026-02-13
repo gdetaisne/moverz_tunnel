@@ -82,6 +82,16 @@ function DevisGratuitsV3Content() {
   const [aiPhotoInsights, setAiPhotoInsights] = useState<string[]>([]);
   const [densityAiNote, setDensityAiNote] = useState("");
   const [collapseStep3OnEnterToken, setCollapseStep3OnEnterToken] = useState(0);
+  const [lastImpactDetailId, setLastImpactDetailId] = useState<
+    | "distance"
+    | "date"
+    | "density"
+    | "kitchen"
+    | "access_housing"
+    | "access_constraints"
+    | "formule"
+    | null
+  >(null);
 
   // Formatter utilisé dans le rendu (sidebar Step 3, etc.)
   const fmtEur = (n: number) =>
@@ -1580,6 +1590,65 @@ function DevisGratuitsV3Content() {
     goToStep(3);
   };
 
+  const mapStep3FieldToImpactId = (
+    field: string
+  ):
+    | "distance"
+    | "date"
+    | "density"
+    | "kitchen"
+    | "access_housing"
+    | "access_constraints"
+    | null => {
+    if (
+      field === "originAddress" ||
+      field === "destinationAddress" ||
+      field === "originPostalCode" ||
+      field === "destinationPostalCode" ||
+      field === "originCity" ||
+      field === "destinationCity" ||
+      field === "originCountryCode" ||
+      field === "destinationCountryCode" ||
+      field === "originLat" ||
+      field === "originLon" ||
+      field === "destinationLat" ||
+      field === "destinationLon"
+    ) {
+      return "distance";
+    }
+    if (field === "movingDate" || field === "dateFlexible") return "date";
+    if (field === "density") return "density";
+    if (field === "kitchenIncluded" || field === "kitchenApplianceCount") return "kitchen";
+    if (
+      field === "originHousingType" ||
+      field === "originFloor" ||
+      field === "originElevator" ||
+      field === "destinationHousingType" ||
+      field === "destinationFloor" ||
+      field === "destinationElevator" ||
+      field === "destinationUnknown"
+    ) {
+      return "access_housing";
+    }
+    if (
+      field === "narrow_access" ||
+      field === "long_carry" ||
+      field === "difficult_parking" ||
+      field === "lift_required" ||
+      field === "access_type" ||
+      field === "access_details"
+    ) {
+      return "access_constraints";
+    }
+    return null;
+  };
+
+  const handleStep3FieldChange = (field: string, value: any) => {
+    updateField(field as any, value);
+    const mapped = mapStep3FieldToImpactId(field);
+    if (mapped) setLastImpactDetailId(mapped);
+  };
+
   const handleSubmitAccessV2 = async () => {
     // Validation adresses (requis) + complétude ville/CP/pays
     const isOriginAddrValid = state.originAddress.trim().length >= 5;
@@ -1981,7 +2050,7 @@ function DevisGratuitsV3Content() {
                 destinationLat={state.destinationLat}
                 destinationLon={state.destinationLon}
                 surfaceM2={state.surfaceM2}
-                onFieldChange={(field, value) => updateField(field as any, value)}
+                onFieldChange={handleStep3FieldChange}
                 onSubmit={handleSubmitQualificationV2}
                 isSubmitting={false}
                 showValidation={showValidationStep1}
@@ -2054,7 +2123,10 @@ function DevisGratuitsV3Content() {
                 lift_required={!!state.lift_required}
                 access_details={state.access_details ?? ""}
                 selectedFormule={state.formule as "ECONOMIQUE" | "STANDARD" | "PREMIUM"}
-                onFormuleChange={(v) => updateField("formule", v)}
+                onFormuleChange={(v) => {
+                  updateField("formule", v);
+                  setLastImpactDetailId("formule");
+                }}
                 pricingByFormule={
                   pricingByFormule
                     ? {
@@ -2107,6 +2179,7 @@ function DevisGratuitsV3Content() {
                   progressCompleted={step3Progress.completed}
                   progressTotal={step3Progress.total}
                   precisionScore={step3Progress.score}
+                  preferredImpactId={lastImpactDetailId}
                 />
               )}
             </div>

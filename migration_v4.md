@@ -1,5 +1,35 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Dock reward: impact aligné sur le dernier détail modifié par l’utilisateur
+
+**Problème** :
+- Le dock affichait parfois `Impact date` même après modification d’un autre détail (formule, densité, etc.).
+
+**Cause** :
+- Le "dernier impact" reposait principalement sur les deltas recalculés, sans source explicite du dernier détail utilisateur.
+
+**Correction** :
+
+`app/devis-gratuits-v3/page.tsx`
+- Ajout d’un état `lastImpactDetailId` mis à jour à chaque modification Step 3 via mapping champ → détail métier:
+  - `distance`, `date`, `density`, `kitchen`, `access_housing`, `access_constraints`, `formule`.
+- `onFieldChange` Step 3 passe par un handler dédié qui met à jour ce signal.
+- `onFormuleChange` met explicitement `lastImpactDetailId = "formule"`.
+- Passage de `preferredImpactId` au composant `SmartCart`.
+
+`components/tunnel-v4/SmartCart.tsx`
+- Ajout prop `preferredImpactId`.
+- Sélection de l’impact affiché:
+  - priorité au détail utilisateur (`preferredImpactId`) si sa ligne a un montant non nul,
+  - fallback sur l’historique interne sinon.
+- Historique impact amélioré: une ligne nouvellement apparue est bien détectée comme changement.
+
+**Impact** :
+- Le dock affiche le nom + montant du dernier détail réellement sélectionné/modifié par l’utilisateur.
+- Comportement cohérent avec l’objectif UX "voir l’impact de ses choix".
+
+---
+
 ## 2026-02-13 — Step 3: fermeture automatique du bloc précédent + ordre trajet/logement ajusté
 
 **Demandes UX** :

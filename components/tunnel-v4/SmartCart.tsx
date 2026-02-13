@@ -59,6 +59,7 @@ export interface SmartCartProps {
   progressCompleted?: number;
   progressTotal?: number;
   precisionScore?: number;
+  preferredImpactId?: string | null;
 }
 
 export function SmartCart({
@@ -74,6 +75,7 @@ export function SmartCart({
   progressCompleted,
   progressTotal,
   precisionScore,
+  preferredImpactId = null,
 }: SmartCartProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -134,7 +136,7 @@ export function SmartCart({
         const delta = prev == null ? item.amountEur : item.amountEur - prev;
         return { item, prev, delta };
       })
-      .filter(({ item, prev, delta }) => item.amountEur !== 0 && prev != null && delta !== 0);
+      .filter(({ item, delta }) => item.amountEur !== 0 && delta !== 0);
 
     if (changedWithDelta.length > 0) {
       // "Dernier impact calculé" = dernière ligne modifiée dans l'ordre de calcul du panier.
@@ -165,7 +167,13 @@ export function SmartCart({
     : 50;
 
   const itemsCount = items.length;
-  const latestImpact = impactHistory[0] ?? null;
+  const latestImpact = useMemo(() => {
+    if (preferredImpactId) {
+      const preferred = items.find((x) => x.id === preferredImpactId && x.amountEur !== 0);
+      if (preferred) return preferred;
+    }
+    return impactHistory[0] ?? null;
+  }, [preferredImpactId, items, impactHistory]);
   const computedProgressTotal = Math.max(progressTotal ?? 0, 1);
   const computedProgressCompleted = Math.max(
     0,
