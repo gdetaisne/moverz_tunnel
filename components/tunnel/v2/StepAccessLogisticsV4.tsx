@@ -157,9 +157,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [fallbackUploadLeadId, setFallbackUploadLeadId] = useState<string | null>(null);
   const [isDragOverPhotos, setIsDragOverPhotos] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const densityPhotoInputRef = useRef<HTMLInputElement | null>(null);
   const [photoAnalysisContext, setPhotoAnalysisContext] =
     useState<PhotoAnalysisContext>("specific_constraints");
-  const [openPhotoPickerRequested, setOpenPhotoPickerRequested] = useState(false);
   const [pipelineStatuses, setPipelineStatuses] = useState<Record<PipelineStepKey, PipelineStepStatus>>({
     normalize: "pending",
     compress: "pending",
@@ -174,13 +174,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       ),
     [uploadedPhotos, activePhotoKeys]
   );
-
-  useEffect(() => {
-    if (!openPhotoPickerRequested) return;
-    if (!missingInfoPanelOpen || activeMissingInfoTab !== "photos") return;
-    photoInputRef.current?.click();
-    setOpenPhotoPickerRequested(false);
-  }, [openPhotoPickerRequested, missingInfoPanelOpen, activeMissingInfoTab]);
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -475,9 +468,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
   const openDensityPhotoFlow = () => {
     setPhotoAnalysisContext("density");
-    setShowMissingInfoPanel(true);
-    setActiveMissingInfoTab("photos");
-    setOpenPhotoPickerRequested(true);
+    densityPhotoInputRef.current?.click();
   };
 
   const parseInsightsFromText = (text: string): string[] =>
@@ -632,6 +623,18 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
   return (
     <div className="space-y-6">
+      <input
+        ref={densityPhotoInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={async (e) => {
+          const files = Array.from(e.target.files || []);
+          await onPhotoFilesPicked(files);
+          e.currentTarget.value = "";
+        }}
+      />
       {/* Addresses */}
       <CardV4 padding="md">
         <div className="space-y-4">

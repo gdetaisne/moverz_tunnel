@@ -1,5 +1,24 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix: upload photo densité sans ouverture du bloc "Ajouter des précisions"
+
+**Bug constaté** :
+- En ajoutant une photo via le bouton densité, le bloc "Ajouter des précisions" s'ouvrait encore.
+
+**Cause racine** :
+- `openDensityPhotoFlow()` forçait `setShowMissingInfoPanel(true)` + tab `photos`.
+
+**Correction** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Suppression de l'ouverture forcée du panneau pour le flux densité.
+- Ajout d'un input file caché dédié au flux densité (monté hors du bloc).
+- Le bouton densité déclenche directement ce picker caché.
+
+**Impact** :
+- Ajouter une photo pour la densité n'ouvre plus le bloc "Ajouter des précisions".
+- Le client reste dans le parcours principal sans rupture visuelle.
+
+---
+
 ## 2026-02-13 — Ne plus ouvrir automatiquement "Ajouter des précisions" en Step 3
 
 **Demande** :
