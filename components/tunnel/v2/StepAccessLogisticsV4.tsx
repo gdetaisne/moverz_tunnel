@@ -727,6 +727,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       summary: props.firstName && props.email ? `${props.firstName} · ${props.email}` : "Coordonnées à finaliser",
     },
   };
+  const sectionLocked: Record<SectionKey, boolean> = {
+    trajet: false,
+    date: !sectionMeta.trajet.valid,
+    volume: !sectionMeta.date.valid,
+    formule: !sectionMeta.volume.valid,
+    contact: !sectionMeta.formule.valid,
+  };
+  const isMissingInfoLocked = !sectionMeta.volume.valid;
 
   const prevSectionValidityRef = useRef<Record<SectionKey, boolean>>({
     trajet: sectionMeta.trajet.valid,
@@ -780,12 +788,35 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     sectionMeta.contact.valid,
   ]);
 
+  useEffect(() => {
+    setOpenSections((state) => ({
+      ...state,
+      date: sectionLocked.date ? false : state.date,
+      volume: sectionLocked.volume ? false : state.volume,
+      formule: sectionLocked.formule ? false : state.formule,
+      contact: sectionLocked.contact ? false : state.contact,
+    }));
+    if (isMissingInfoLocked && missingInfoPanelOpen) {
+      setShowMissingInfoPanel(false);
+    }
+  }, [
+    sectionLocked.date,
+    sectionLocked.volume,
+    sectionLocked.formule,
+    sectionLocked.contact,
+    isMissingInfoLocked,
+    missingInfoPanelOpen,
+  ]);
+
   const renderSectionHeader = (key: SectionKey, title: string) => {
     const meta = sectionMeta[key];
     const isOpen = openSections[key];
-    const statusLabel = meta.valid ? "Validé" : isOpen ? "En cours" : "À compléter";
+    const isLocked = sectionLocked[key];
+    const statusLabel = isLocked ? "Verrouillé" : meta.valid ? "Validé" : isOpen ? "En cours" : "À compléter";
     const statusColor = meta.valid
       ? "var(--color-success)"
+      : isLocked
+      ? "var(--color-text-muted)"
       : isOpen
       ? "var(--color-accent)"
       : "var(--color-text-muted)";
@@ -793,19 +824,31 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       <button
         id={`v4-header-${key}`}
         type="button"
-        onClick={() => setOpenSections((state) => ({ ...state, [key]: !state[key] }))}
-        className="w-full rounded-xl border px-3 py-2 text-left flex items-center justify-between gap-3"
-        style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+        disabled={isLocked}
+        onClick={() => {
+          if (isLocked) return;
+          setOpenSections((state) => ({ ...state, [key]: !state[key] }));
+        }}
+        className="w-full rounded-xl border px-3 py-2 text-left flex items-center justify-between gap-3 disabled:cursor-not-allowed"
+        style={{
+          borderColor: "var(--color-border)",
+          background: "var(--color-surface)",
+          opacity: isLocked ? 0.62 : 1,
+        }}
       >
         <div className="min-w-0">
           <p className="text-sm font-semibold truncate" style={{ color: "var(--color-text)" }}>
             {title}
           </p>
-          {!isOpen && (
+          {isLocked ? (
+            <p className="text-xs truncate mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+              Terminez le bloc précédent pour débloquer
+            </p>
+          ) : !isOpen && (
             <p className="text-xs truncate mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
               {meta.summary}
             </p>
-          )}
+          ) : null}
         </div>
         <div className="shrink-0 flex items-center gap-2">
           <span className="text-xs font-semibold" style={{ color: statusColor }}>
@@ -813,6 +856,8 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </span>
           {meta.valid ? (
             <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
+          ) : isLocked ? (
+            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>•</span>
           ) : (
             <ChevronDown
               className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -1175,9 +1220,17 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         <div className="space-y-4">
           <button
             type="button"
-            onClick={() => setShowMissingInfoPanel((v) => !v)}
+            disabled={isMissingInfoLocked}
+            onClick={() => {
+              if (isMissingInfoLocked) return;
+              setShowMissingInfoPanel((v) => !v);
+            }}
             className="w-full flex items-center justify-between text-left rounded-xl px-3 py-2"
-            style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)" }}
+            style={{
+              background: "var(--color-bg)",
+              border: "1px solid var(--color-border)",
+              opacity: isMissingInfoLocked ? 0.62 : 1,
+            }}
             aria-expanded={missingInfoPanelOpen}
           >
             <span className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
@@ -1203,6 +1256,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               />
             </span>
           </button>
+          {isMissingInfoLocked && (
+            <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+              Terminez d'abord "Volume & densité" pour débloquer ce bloc.
+            </p>
+          )}
 
           {missingInfoPanelOpen && (
             <div className="space-y-4">

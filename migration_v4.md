@@ -1,5 +1,31 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3 mobile: mode soft de déverrouillage séquentiel des blocs
+
+**Décision UX** :
+- Activer un mode "soft" : les blocs suivants sont visibles mais compressés/verrouillés tant que le bloc précédent n'est pas validé.
+
+**Implémentation** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Ajout d'une logique `sectionLocked` basée sur la complétude séquentielle:
+  - `Date` verrouillé tant que `Trajet` n'est pas validé,
+  - `Volume` verrouillé tant que `Date` n'est pas validé,
+  - `Formule` verrouillé tant que `Volume` n'est pas validé,
+  - `Coordonnées` verrouillé tant que `Formule` n'est pas validé.
+- Les en-têtes verrouillés:
+  - apparaissent grisés,
+  - affichent `Verrouillé`,
+  - montrent le message `Terminez le bloc précédent pour débloquer`,
+  - ne sont pas cliquables.
+- Le bloc `Ajouter des précisions (facultatif)` est verrouillé tant que `Volume & densité` n'est pas validé.
+- Auto-collapse des sections verrouillées pour garder une page compacte.
+
+**Impact** :
+- Parcours plus guidé, charge cognitive réduite.
+- Le client voit la suite mais reste focalisé sur l'étape en cours.
+- Aucun changement backoffice/tracking/payload.
+
+---
+
 ## 2026-02-13 — Bloc "Ajouter des précisions": ajout bouton de validation explicite
 
 **Retour UX** :
