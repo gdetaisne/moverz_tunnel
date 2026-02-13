@@ -892,7 +892,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           }}
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
-            {props.isSubmitting ? "Enregistrement..." : "Finaliser mon estimation"}
+            {props.isSubmitting ? "Enregistrement..." : "Lancer ma demande de devis"}
             {!props.isSubmitting && (
               <svg
                 className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300"

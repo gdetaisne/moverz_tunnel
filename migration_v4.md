@@ -1,5 +1,25 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — CTA Step 3 renommé
+
+**Demande** : remplacer le libellé du CTA bas par `Lancer ma demande de devis`.
+
+**Modifications** :
+- CTA principal Step 3 :
+  - avant : `Finaliser mon estimation`
+  - après : `Lancer ma demande de devis`
+- CTA du SmartCart (drawer mobile) aligné :
+  - avant : `Valider mon devis`
+  - après : `Lancer ma demande de devis`
+
+**Fichiers** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+- `app/devis-gratuits-v3/page.tsx`
+
+**Impact** : wording UI uniquement, aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-12 — Wording badge transparence (SmartCart)
 
 **Demande** : préciser que l'estimation peut évoluer après visite.

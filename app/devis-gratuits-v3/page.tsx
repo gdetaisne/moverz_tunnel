@@ -1968,7 +1968,7 @@ function DevisGratuitsV3Content() {
                     surface: parseInt(state.surfaceM2) || undefined,
                     volume: activePricing?.volumeM3 || undefined,
                   }}
-                  ctaLabel="Valider mon devis"
+                  ctaLabel="Lancer ma demande de devis"
                   onSubmit={handleSubmitAccessV2}
                 />
               )}
