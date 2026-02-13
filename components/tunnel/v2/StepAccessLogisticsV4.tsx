@@ -1007,7 +1007,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                       style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)" }}
                     >
                       <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                        Retour IA
+                        Retour IA (contraintes spécifiques)
                       </p>
                       {moverInsights.length === 0 && !isAnalyzingPhotos && (
                         <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>

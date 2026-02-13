@@ -168,7 +168,10 @@ export async function POST(req: NextRequest) {
     })();
 
     // Pour compatibilité, on garde `rooms` = résultat du process 1
-    const moverInsights = process1.moverInsights ?? buildMoverInsightsFromRooms(process1.rooms);
+    const moverInsights =
+      process1.moverInsights && process1.moverInsights.length > 0
+        ? process1.moverInsights
+        : buildMoverInsightsFromRooms(process1.rooms);
     return NextResponse.json({
       rooms: process1.rooms,
       moverInsights,
@@ -265,12 +268,13 @@ async function callClaudeForRooms(
       return null;
     }
 
-    const moverInsights = Array.isArray(parsed.moverInsights)
+    const promptInsights = Array.isArray(parsed.moverInsights)
       ? parsed.moverInsights.filter(
           (v: unknown): v is string =>
             typeof v === "string" && v.trim().length > 0
         )
-      : buildMoverInsightsFromRooms(parsed.rooms);
+      : [];
+    const moverInsights = buildMoverInsightsFromRooms(parsed.rooms, promptInsights);
 
     const totalMs = Date.now() - startedAt;
     return { model, rooms: parsed.rooms, moverInsights, totalMs };
@@ -348,6 +352,7 @@ On te donne une liste de photos et les images associées. Tu dois :
 3) Pour chaque objet, si possible, estimer des dimensions (largeur/profondeur/hauteur en centimètres),
    calculer un volume approximatif en m3 et proposer une estimation de valeur en euros avec une courte justification.
 4) Produire une synthèse "vue déménageur" (points d'attention opérationnels) sous forme de puces courtes.
+5) Dans la synthèse, prioriser les OBJETS précis qui demandent de l'attention.
 
 Tu as accès aux images envoyées dans cette requête.
 
@@ -355,14 +360,15 @@ CONTRAINTES DE TON :
 - Jamais de jugement de valeur, jamais de formulation dépréciative sur le logement ou les affaires du client.
 - Si un espace semble très encombré, utiliser un vocabulaire neutre et factuel (ex: "densité élevée d'objets").
 - Rester très synthétique et concret.
+- Pas de phrase vague: chaque point doit citer un objet ou une contrainte concrète.
 
 IMPORTANT :
 - Réponds STRICTEMENT en JSON valide UTF-8, sans texte avant/après.
 - Le JSON doit respecter cette forme :
 {
   "moverInsights": [
-    "string (max 120 caractères, factuel)",
-    "string (max 120 caractères, factuel)"
+    "Objet/Contrainte + raison factuelle (max 120 caractères)",
+    "Objet/Contrainte + raison factuelle (max 120 caractères)"
   ],
   "rooms": [
     {
@@ -398,31 +404,56 @@ ${list}
 `.trim();
 }
 
-function buildMoverInsightsFromRooms(rooms: any[]): string[] {
+function buildMoverInsightsFromRooms(rooms: any[], promptInsights: string[] = []): string[] {
   const safeRooms = Array.isArray(rooms) ? rooms : [];
-  const itemsCount = safeRooms.reduce((acc, room) => {
-    const items = Array.isArray(room?.items) ? room.items.length : 0;
-    return acc + items;
-  }, 0);
-  const fragileCount = safeRooms.reduce((acc, room) => {
+  const objectInsights: string[] = [];
+  for (const room of safeRooms) {
     const items = Array.isArray(room?.items) ? room.items : [];
-    return (
-      acc +
-      items.filter((i: any) => i?.flags?.fragile === true || i?.flags?.highValue === true).length
-    );
-  }, 0);
-
-  const insights = [
-    `${safeRooms.length} zone(s) estimée(s) à traiter.`,
-    `${itemsCount} objet(s) potentiellement à déménager.`,
-  ];
-  if (fragileCount > 0) {
-    insights.push(`${fragileCount} objet(s) fragile(s) ou à forte valeur à sécuriser.`);
-  } else {
-    insights.push("Peu d'objets fragiles détectés sur cet échantillon.");
+    for (const item of items) {
+      const label = String(item?.label || "").trim();
+      if (!label) continue;
+      const reasons: string[] = [];
+      if (item?.flags?.fragile) reasons.push("fragile");
+      if (item?.flags?.highValue) reasons.push("valeur à protéger");
+      if (item?.flags?.requiresDisassembly) reasons.push("démontage/remontage");
+      if (typeof item?.volumeM3 === "number" && item.volumeM3 >= 1.2) {
+        reasons.push("volume élevé");
+      }
+      if (typeof item?.widthCm === "number" && item.widthCm >= 180) {
+        reasons.push("gabarit large");
+      }
+      if (reasons.length === 0) continue;
+      const line = `${label} : ${reasons.join(", ")}.`;
+      objectInsights.push(line);
+    }
   }
-  insights.push("Confirmer sur visite les accès et les charges lourdes avant chiffrage final.");
-  return insights;
+
+  const fallbackInsights = (() => {
+    if (objectInsights.length > 0) return objectInsights;
+    const itemsCount = safeRooms.reduce((acc, room) => {
+      const items = Array.isArray(room?.items) ? room.items.length : 0;
+      return acc + items;
+    }, 0);
+    return [
+      `${safeRooms.length} zone(s) à traiter.`,
+      `${itemsCount} objet(s) estimé(s).`,
+      "Densité d'objets à confirmer sur visite.",
+    ];
+  })();
+
+  const merged = [...objectInsights, ...promptInsights, ...fallbackInsights]
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const line of merged) {
+    const key = line.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(line);
+    if (unique.length >= 6) break;
+  }
+  return unique;
 }
 
 function createFallbackAnalysis(photos: AnalyzePhotoInput[]) {

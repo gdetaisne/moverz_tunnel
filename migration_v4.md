@@ -1,5 +1,30 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Retour IA orienté "objets à attention" (contraintes spécifiques)
+
+**Demande** :
+- Le retour IA doit identifier clairement les objets qui méritent l'attention du déménageur.
+- Contexte: zone "contraintes spécifiques".
+
+**Modifications** :
+- `app/api/ai/analyze-photos/route.ts`
+  - prompt renforcé: points obligatoirement concrets (`objet/contrainte + raison`), ton factuel.
+  - post-traitement serveur: génération/priorisation de lignes orientées objets à partir des `rooms.items` :
+    - fragile,
+    - valeur à protéger,
+    - démontage/remontage,
+    - volume élevé,
+    - gabarit large.
+  - déduplication + limite de points pour conserver une synthèse courte.
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - titre du bloc ajusté : `Retour IA (contraintes spécifiques)`.
+
+**Impact** :
+- Retour plus actionnable pour le déménageur et plus adapté au client final.
+- Aucun impact DB/schema.
+
+---
+
 ## 2026-02-13 — Fix miniatures photo Step 3 (`blob` invalidé)
 
 **Symptôme** :
