@@ -23,6 +23,7 @@ import {
   ArrowRight,
   ArrowDown,
   Check,
+  Loader2,
 } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
@@ -61,6 +62,7 @@ interface StepAccessLogisticsV4Props {
   routeDistanceProvider?: "osrm" | "fallback" | null;
   onFieldChange: (field: string, value: any) => void;
   onAiInsightsChange?: (insights: string[]) => void;
+  onDensityAiNoteChange?: (note: string) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
   showValidation?: boolean;
@@ -147,7 +149,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [isAnalyzingPhotos, setIsAnalyzingPhotos] = useState(false);
   const [photoPanelError, setPhotoPanelError] = useState<string | null>(null);
   const [moverInsights, setMoverInsights] = useState<string[]>([]);
-  const [returnIaText, setReturnIaText] = useState("");
+  const [constraintsReturnIaText, setConstraintsReturnIaText] = useState("");
+  const [densityReturnIaText, setDensityReturnIaText] = useState("");
+  const [densityAiNote, setDensityAiNote] = useState("");
+  const [densityPhotoStatus, setDensityPhotoStatus] =
+    useState<"idle" | "analyzing" | "done" | "error">("idle");
   const [fallbackUploadLeadId, setFallbackUploadLeadId] = useState<string | null>(null);
   const [isDragOverPhotos, setIsDragOverPhotos] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
@@ -355,13 +361,24 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   }, [props.leadId]);
 
   const analyzePhotosLive = async (photos: UploadedPhoto[]) => {
+    const isDensityFlow = photoAnalysisContext === "density";
     if (photos.length === 0) {
       setMoverInsights([]);
-      setReturnIaText("");
-      props.onAiInsightsChange?.([]);
+      if (isDensityFlow) {
+        setDensityReturnIaText("");
+        setDensityAiNote("");
+        setDensityPhotoStatus("idle");
+        props.onDensityAiNoteChange?.("");
+      } else {
+        setConstraintsReturnIaText("");
+        props.onAiInsightsChange?.([]);
+      }
       return;
     }
     setIsAnalyzingPhotos(true);
+    if (isDensityFlow) {
+      setDensityPhotoStatus("analyzing");
+    }
     setPhotoPanelError(null);
     try {
       const res = await fetch("/api/ai/analyze-photos", {
@@ -383,14 +400,37 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         throw new Error("L'analyse IA a échoué.");
       }
 
-      const data = (await res.json()) as { moverInsights?: string[]; rooms?: any[] };
+      const data = (await res.json()) as {
+        moverInsights?: string[];
+        rooms?: any[];
+        densitySuggestion?: "light" | "normal" | "dense";
+        densityRationale?: string;
+      };
       const explicitInsights = Array.isArray(data.moverInsights)
         ? data.moverInsights.filter((v): v is string => typeof v === "string" && v.trim().length > 0)
         : [];
       if (explicitInsights.length > 0) {
         setMoverInsights(explicitInsights);
-        setReturnIaText(explicitInsights.map((v) => `• ${v}`).join("\n"));
-        props.onAiInsightsChange?.(explicitInsights);
+        if (isDensityFlow) {
+          const densityText = formatInsightsToText(explicitInsights);
+          setDensityReturnIaText(densityText);
+          const suggestedDensity = data.densitySuggestion;
+          if (suggestedDensity) {
+            props.onFieldChange("density", suggestedDensity);
+          }
+          const rationale = (data.densityRationale || explicitInsights[0] || "").trim();
+          const note = rationale
+            ? `Analyse photo : ${rationale}`
+            : `Analyse photo : densité ${densityLabelFromId(
+                suggestedDensity || (props.density || "normal")
+              ).toLowerCase()} suggérée.`;
+          setDensityAiNote(note);
+          props.onDensityAiNoteChange?.(note);
+          setDensityPhotoStatus("done");
+        } else {
+          setConstraintsReturnIaText(formatInsightsToText(explicitInsights));
+          props.onAiInsightsChange?.(explicitInsights);
+        }
         return;
       }
 
@@ -401,9 +441,20 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         roomCount > 0 ? `${roomCount} zone(s) de chargement potentielle(s) détectée(s).` : "Peu de signal exploitable, ajouter d'autres photos pour affiner.",
       ];
       setMoverInsights(fallbackInsights);
-      setReturnIaText(fallbackInsights.map((v) => `• ${v}`).join("\n"));
-      props.onAiInsightsChange?.(fallbackInsights);
+      if (isDensityFlow) {
+        setDensityReturnIaText(formatInsightsToText(fallbackInsights));
+        const note = `Analyse photo : ${fallbackInsights[0]}`;
+        setDensityAiNote(note);
+        props.onDensityAiNoteChange?.(note);
+        setDensityPhotoStatus("done");
+      } else {
+        setConstraintsReturnIaText(formatInsightsToText(fallbackInsights));
+        props.onAiInsightsChange?.(fallbackInsights);
+      }
     } catch (error) {
+      if (isDensityFlow) {
+        setDensityPhotoStatus("error");
+      }
       setPhotoPanelError(error instanceof Error ? error.message : "Erreur IA.");
     } finally {
       setIsAnalyzingPhotos(false);
@@ -430,6 +481,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       .split(/\r?\n/)
       .map((line) => line.replace(/^[-•\s]+/, "").trim())
       .filter((line) => line.length > 0);
+
+  const formatInsightsToText = (insights: string[]) =>
+    insights.map((v) => `• ${v}`).join("\n");
+
+  const densityLabelFromId = (value: "light" | "normal" | "dense") =>
+    value === "light" ? "Léger" : value === "dense" ? "Dense" : "Normal";
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -725,6 +782,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             >
               Densité de meubles
             </label>
+            {densityAiNote && (
+              <p
+                className="mb-2 text-xs"
+                style={{ color: "var(--color-accent)" }}
+              >
+                {densityAiNote}
+              </p>
+            )}
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {[
                 { id: "light", label: "Léger" },
@@ -759,7 +824,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 title="Ajouter des photos pour aider l'estimation de densité"
                 aria-label="Ajouter des photos pour la densité de meubles"
               >
-                <Camera className="w-4 h-4" />
+                {densityPhotoStatus === "analyzing" ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : densityPhotoStatus === "done" ? (
+                  <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
+                ) : (
+                  <Camera className="w-4 h-4" />
+                )}
               </button>
             </div>
             {showValidation && !isDensityValid && (
@@ -1207,13 +1278,24 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                         </p>
                       )}
                       <textarea
-                        value={returnIaText}
+                        value={
+                          photoAnalysisContext === "density"
+                            ? densityReturnIaText
+                            : constraintsReturnIaText
+                        }
                         onChange={(e) => {
                           const nextText = e.target.value;
-                          setReturnIaText(nextText);
                           const parsed = parseInsightsFromText(nextText);
                           setMoverInsights(parsed);
-                          props.onAiInsightsChange?.(parsed);
+                          if (photoAnalysisContext === "density") {
+                            setDensityReturnIaText(nextText);
+                            const note = nextText.trim() ? `Analyse photo : ${nextText.trim()}` : "";
+                            setDensityAiNote(note);
+                            props.onDensityAiNoteChange?.(note);
+                          } else {
+                            setConstraintsReturnIaText(nextText);
+                            props.onAiInsightsChange?.(parsed);
+                          }
                         }}
                         rows={8}
                         className="w-full rounded-xl px-3 py-2 text-sm resize-y"
@@ -1222,7 +1304,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                           border: "1px solid var(--color-border)",
                           color: "var(--color-text)",
                         }}
-                        placeholder="Le retour IA apparaîtra ici. Vous pouvez l'ajuster avant envoi."
+                        placeholder={
+                          photoAnalysisContext === "density"
+                            ? "Retour IA densité : sélection suggérée + justification."
+                            : "Le retour IA apparaîtra ici. Vous pouvez l'ajuster avant envoi."
+                        }
                       />
                     </div>
                   </div>

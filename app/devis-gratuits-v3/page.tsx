@@ -80,6 +80,7 @@ function DevisGratuitsV3Content() {
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
   const [aiPhotoInsights, setAiPhotoInsights] = useState<string[]>([]);
+  const [densityAiNote, setDensityAiNote] = useState("");
 
   // Formatter utilisé dans le rendu (sidebar Step 3, etc.)
   const fmtEur = (n: number) =>
@@ -1772,7 +1773,8 @@ function DevisGratuitsV3Content() {
               .filter((v) => typeof v === "string" && v.trim().length > 0)
               .map((v) => `- ${v.trim()}`);
             const aiBlock = aiNotes.length > 0 ? `[Analyse IA photos]\n${aiNotes.join("\n")}` : "";
-            const merged = [userNotes, aiBlock].filter((v) => v.length > 0).join("\n\n");
+            const densityBlock = densityAiNote.trim().length > 0 ? `[Analyse IA densité]\n${densityAiNote.trim()}` : "";
+            const merged = [userNotes, aiBlock, densityBlock].filter((v) => v.length > 0).join("\n\n");
             return merged || undefined;
           })(),
           pricingSnapshot: pricingSnapshot,
@@ -1843,7 +1845,8 @@ function DevisGratuitsV3Content() {
               .filter((v) => typeof v === "string" && v.trim().length > 0)
               .map((v) => `- ${v.trim()}`);
             const aiBlock = aiNotes.length > 0 ? `[Analyse IA photos]\n${aiNotes.join("\n")}` : "";
-            const merged = [userNotes, aiBlock].filter((v) => v.length > 0).join("\n\n");
+            const densityBlock = densityAiNote.trim().length > 0 ? `[Analyse IA densité]\n${densityAiNote.trim()}` : "";
+            const merged = [userNotes, aiBlock, densityBlock].filter((v) => v.length > 0).join("\n\n");
             return merged || undefined;
           })(),
         },
@@ -1949,6 +1952,7 @@ function DevisGratuitsV3Content() {
                 dateFlexible={state.dateFlexible}
                 onFieldChange={(field, value) => updateField(field as any, value)}
                 onAiInsightsChange={setAiPhotoInsights}
+                onDensityAiNoteChange={setDensityAiNote}
                 onSubmit={handleSubmitAccessV2}
                 isSubmitting={false}
                 showValidation={showValidationStep3}

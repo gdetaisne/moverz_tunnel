@@ -1,5 +1,34 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Densité photo: symbole dynamique, auto-sélection et note justifiée
+
+**Demande** :
+- Sur densité, symbole dynamique pendant l'analyse photo.
+- À la fin, sélection auto de `Léger/Normal/Dense`.
+- Afficher une note au-dessus du champ: `Analyse photo : ...` avec justification IA.
+- Séparer densité de la partie contraintes et ajouter l'info dans le champ DB.
+
+**Modifications** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - Flux IA séparés: `specific_constraints` vs `density`.
+  - Bouton caméra densité avec état visuel dynamique (`camera` -> `loader` -> `check`).
+  - Auto-sélection du champ densité selon la réponse IA.
+  - Affichage de la note `Analyse photo : ...` au-dessus de "Densité de meubles".
+  - Le textarea `Retour IA` est géré par contexte (densité/contraintes) pour éviter les mélanges.
+- `app/api/ai/analyze-photos/route.ts`
+  - Réponse enrichie pour la densité: `densitySuggestion` + `densityRationale`.
+  - Prompt densité structuré pour imposer choix + justification.
+  - Prompt contraintes renforcé pour exclure explicitement le sujet densité.
+- `app/devis-gratuits-v3/page.tsx`
+  - Nouveau flux de persistance `densityAiNote`.
+  - `densityAiNote` ajouté dans `tunnelOptions.notes` sous bloc `[Analyse IA densité]`.
+
+**Impact** :
+- La densité est traitée dans son module dédié, sans pollution de la section contraintes.
+- Le BO reçoit désormais la note de justification densité dans le champ notes.
+
+---
+
 ## 2026-02-13 — Réorganisation onglets "Ajouter des précisions"
 
 **Demande** :

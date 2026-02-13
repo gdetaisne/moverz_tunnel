@@ -18,6 +18,8 @@ interface AnalysisProcessPayload {
   model: string;
   rooms: any[];
   moverInsights?: string[];
+  densitySuggestion?: "light" | "normal" | "dense";
+  densityRationale?: string;
   totalMs?: number;
 }
 
@@ -178,6 +180,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       rooms: process1.rooms,
       moverInsights,
+      densitySuggestion: process1.densitySuggestion,
+      densityRationale: process1.densityRationale,
       process1,
       process2,
     });
@@ -270,10 +274,27 @@ async function callClaudeForRooms(
           (v: unknown): v is string => typeof v === "string" && v.trim().length > 0
         )
       : [];
+    const densitySuggestion =
+      parsed?.densitySuggestion === "light" ||
+      parsed?.densitySuggestion === "normal" ||
+      parsed?.densitySuggestion === "dense"
+        ? parsed.densitySuggestion
+        : undefined;
+    const densityRationale =
+      typeof parsed?.densityRationale === "string" && parsed.densityRationale.trim().length > 0
+        ? parsed.densityRationale.trim()
+        : undefined;
     const moverInsights = buildMoverInsightsFromRooms(parsedRooms, promptInsights);
 
     const totalMs = Date.now() - startedAt;
-    return { model, rooms: parsedRooms, moverInsights, totalMs };
+    return {
+      model,
+      rooms: parsedRooms,
+      moverInsights,
+      densitySuggestion,
+      densityRationale,
+      totalMs,
+    };
   } catch (error) {
     console.error(`❌ Exception lors de l'appel Claude (${model}):`, error);
     return null;
@@ -364,6 +385,8 @@ IMPORTANT :
 - Réponds STRICTEMENT en JSON valide UTF-8, sans texte avant/après.
 - Le JSON doit respecter cette forme :
 {
+  "densitySuggestion": "light|normal|dense",
+  "densityRationale": "Justification courte et factuelle du choix",
   "moverInsights": [
     "Point 1",
     "Point 2"
@@ -386,6 +409,7 @@ Tu dois produire UNIQUEMENT une note opérationnelle "contraintes spécifiques" 
 - Regrouper les points par typologies pertinentes SI nécessaire (ex: fragilité, encombrement, accès), sans format imposé.
 - Être concret: objet + contrainte + impact opérationnel.
 - Ajouter dimensions/volume seulement si utile à la manutention (pas de détails inutiles).
+- Ne jamais traiter la densité globale des meubles ici (la densité est analysée dans un autre module dédié).
 
 Tu as accès aux images envoyées dans cette requête.
 
