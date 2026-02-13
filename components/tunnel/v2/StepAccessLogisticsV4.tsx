@@ -808,7 +808,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-44 sm:pb-24">
       <input
         ref={densityPhotoInputRef}
         type="file"

@@ -99,24 +99,10 @@ export function SmartCart({
       const viewportHeight = visualViewport?.height ?? window.innerHeight;
       const keyboardDelta = window.innerHeight - viewportHeight;
       const keyboardOpen = keyboardDelta > 120;
-      const baseBottom = keyboardOpen ? 16 : 88;
+      const baseBottom = keyboardOpen ? 16 : 8;
 
-      const submitCta = document.getElementById("v4-primary-submit-cta");
-      if (!submitCta) {
-        setMobileFabBottom(baseBottom);
-        return;
-      }
-
-      const rect = submitCta.getBoundingClientRect();
-      const ctaVisible = rect.top < viewportHeight && rect.bottom > 0;
-      if (!ctaVisible) {
-        setMobileFabBottom(baseBottom);
-        return;
-      }
-
-      // Keep the dock visible, but move it above the primary CTA when needed.
-      const ctaOffset = Math.max(0, viewportHeight - rect.top + 12);
-      setMobileFabBottom(Math.max(baseBottom, ctaOffset));
+      // Le dock reste ancré bas écran; en cas de clavier ouvert, on le remonte légèrement.
+      setMobileFabBottom(baseBottom);
     };
 
     updateFabPosition();
@@ -476,7 +462,7 @@ export function SmartCart({
         onClick={() => setDrawerOpen(true)}
         className="fixed z-[90] left-3 right-3 rounded-2xl shadow-lg px-4 py-3 transition-opacity text-left"
         style={{
-          bottom: `${mobileFabBottom}px`,
+          bottom: `calc(${mobileFabBottom}px + env(safe-area-inset-bottom, 0px))`,
           background: "var(--color-surface)",
           color: "var(--color-text)",
           boxShadow: "0 4px 16px rgba(14,165,166,0.3)",

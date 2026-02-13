@@ -1,5 +1,28 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3 mobile: dock reward ancré bas + marge formulaire augmentée
+
+**Retour UI** :
+- Le dock (`progression + budget affiné + dernier impact`) apparaissait trop haut.
+- Il pouvait masquer des éléments de fin de formulaire (email / CTA) en mobile.
+
+**Corrections** :
+
+`components/tunnel-v4/SmartCart.tsx`
+- Dock mobile repositionné tout en bas:
+  - base `bottom` abaissée (`8px`),
+  - prise en compte de la safe-area iOS via `env(safe-area-inset-bottom)`.
+- Conservation d'un léger rehaussement uniquement quand le clavier est ouvert.
+
+`components/tunnel/v2/StepAccessLogisticsV4.tsx`
+- Ajout de marge basse structurelle au formulaire (`pb-44`, `sm:pb-24`) pour éviter le masquage des champs/CTA finaux.
+
+**Impact** :
+- Dock visuellement collé en bas comme attendu.
+- Email et CTA restent accessibles/visibles en fin de parcours mobile.
+
+---
+
 ## 2026-02-13 — Step 3 mobile: auto-scroll bloc ajusté + formule standard non surlignée par défaut
 
 **Retours terrain** :
