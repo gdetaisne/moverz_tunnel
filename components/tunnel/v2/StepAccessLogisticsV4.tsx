@@ -779,6 +779,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           const isAlreadyWellPositioned = rect.top >= 16 && rect.top <= vh * 0.42;
           if (isAlreadyWellPositioned) return;
 
+          // UX guard: ne jamais auto-scroller vers le bas à la validation d'un bloc.
+          // Si la section suivante est plus bas, on laisse l'utilisateur poursuivre naturellement.
+          if (rect.top > 16) return;
+
           const now = Date.now();
           if (lastAutoScrollRef.current.key === following && now - lastAutoScrollRef.current.at < 900) {
             return;

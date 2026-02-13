@@ -1,5 +1,21 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix scroll Step 3 (itération 2): interdiction des auto-scrolls vers le bas
+
+**Retour utilisateur** :
+- Malgré le premier correctif, la validation de bloc pouvait encore renvoyer trop bas dans le formulaire.
+
+**Ajustement** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Durcissement de la logique d'auto-scroll post-validation:
+  - l'auto-scroll est désormais autorisé uniquement si la cible est au-dessus du viewport,
+  - aucun auto-scroll n'est effectué si la cible est plus bas (`no-scroll-down`).
+
+**Impact** :
+- Suppression des descentes automatiques non souhaitées.
+- L'utilisateur garde le contrôle de la progression vers le bas.
+
+---
+
 ## 2026-02-13 — Step 3: formule non pré-remplie côté UI (calcul inchangé)
 
 **Retour UX** :
