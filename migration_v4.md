@@ -1,5 +1,25 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix régression focus adresse Step 3 (perte de focus à la frappe)
+
+**Bug observé** :
+- Dans les champs adresse Step 3, chaque lettre pouvait sortir du champ.
+- Effet secondaire visible: relances de calcul perçues à chaque frappe.
+
+**Cause** :
+- Le composant `AnimatedSection` avait été défini **dans** `StepAccessLogisticsV4`.
+- À chaque render, son identité changeait => remontage des sous-arbres => perte de focus des inputs.
+
+**Correction** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- `AnimatedSection` déplacé en composant top-level (identité stable).
+- Le comportement d'animation (overflow transitionnel pour datepicker) est conservé.
+
+**Impact** :
+- La saisie adresse reste focusée pendant la frappe.
+- Plus de "sortie de champ" liée au remount UI.
+
+---
+
 ## 2026-02-13 — Step 3: ajout du choix ascenseur (3 options)
 
 **Demande** :
