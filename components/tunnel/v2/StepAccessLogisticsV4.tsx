@@ -139,6 +139,25 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const isKitchenValid =
     props.kitchenIncluded !== "appliances" ||
     (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
+  const [touched, setTouched] = useState({
+    originAddress: false,
+    destinationAddress: false,
+    movingDate: false,
+    density: false,
+    kitchenIncluded: false,
+    kitchenApplianceCount: false,
+    firstName: false,
+    email: false,
+  });
+  const markTouched = (...fields: Array<keyof typeof touched>) => {
+    setTouched((prev) => {
+      const next = { ...prev };
+      for (const field of fields) next[field] = true;
+      return next;
+    });
+  };
+  const shouldShowFieldError = (field: keyof typeof touched) =>
+    showValidation || touched[field];
   const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
   const missingInfoPanelOpen = showMissingInfoPanel;
   const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("photos");
@@ -623,6 +642,39 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
   return (
     <div className="space-y-6">
+      <div className="sm:hidden rounded-xl border px-3 py-3" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
+        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--color-text-muted)" }}>
+          Progression Step 3
+        </p>
+        <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {[
+            { id: "v4-section-trajet", label: "Trajet", done: isOriginAddressValid && isDestinationAddressValid },
+            { id: "v4-section-date", label: "Date", done: isMovingDateValid },
+            { id: "v4-section-volume", label: "Volume", done: isDensityValid && isKitchenSelectionValid && isKitchenValid },
+            { id: "v4-section-formule", label: "Formule", done: !!props.selectedFormule },
+            { id: "v4-section-contact", label: "Contact", done: isFirstNameValid && isEmailValid },
+          ].map((section) => (
+            <button
+              key={section.id}
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById(section.id)
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+              className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold border"
+              style={{
+                borderColor: section.done ? "var(--color-success)" : "var(--color-border)",
+                color: section.done ? "var(--color-success)" : "var(--color-text-secondary)",
+                background: section.done ? "rgba(16,185,129,0.08)" : "var(--color-bg)",
+              }}
+            >
+              {section.done ? "✓ " : ""}
+              {section.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <input
         ref={densityPhotoInputRef}
         type="file"
@@ -636,6 +688,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         }}
       />
       {/* Addresses */}
+      <div id="v4-section-trajet">
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -663,14 +716,16 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               contextCountryCode={(props.originCountryCode || "").trim() || undefined}
               validated={props.originLat != null && props.originLon != null}
               errorMessage={
-                showValidation && !isOriginAddressValid
+                shouldShowFieldError("originAddress") && !isOriginAddressValid
                   ? "Adresse de départ requise"
                   : null
               }
               onInputChange={(raw) => {
+                markTouched("originAddress");
                 props.onFieldChange("originAddress", raw);
               }}
               onSelect={(s) => {
+                markTouched("originAddress");
                 props.onFieldChange("originAddress", s.addressLine ?? s.label ?? "");
                 props.onFieldChange("originCity", s.city ?? "");
                 props.onFieldChange("originPostalCode", s.postalCode ?? "");
@@ -702,14 +757,16 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               contextCountryCode={(props.destinationCountryCode || "").trim() || undefined}
               validated={props.destinationLat != null && props.destinationLon != null}
               errorMessage={
-                showValidation && !isDestinationAddressValid
+                shouldShowFieldError("destinationAddress") && !isDestinationAddressValid
                   ? "Adresse d'arrivée requise"
                   : null
               }
               onInputChange={(raw) => {
+                markTouched("destinationAddress");
                 props.onFieldChange("destinationAddress", raw);
               }}
               onSelect={(s) => {
+                markTouched("destinationAddress");
                 props.onFieldChange("destinationAddress", s.addressLine ?? s.label ?? "");
                 props.onFieldChange("destinationCity", s.city ?? "");
                 props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
@@ -741,8 +798,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </div>
         </div>
       </CardV4>
+      </div>
 
       {/* Date */}
+      <div id="v4-section-date">
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -755,11 +814,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           <DatePickerFr
             id="v4-moving-date"
             value={props.movingDate}
-            onChange={(d) => props.onFieldChange("movingDate", d)}
+            onChange={(d) => {
+              markTouched("movingDate");
+              props.onFieldChange("movingDate", d);
+            }}
             min={minMovingDate}
-            error={showValidation && !isMovingDateValid}
+            error={shouldShowFieldError("movingDate") && !isMovingDateValid}
           />
-          {showValidation && !isMovingDateValid && (
+          {shouldShowFieldError("movingDate") && !isMovingDateValid && (
             <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
               Date requise (minimum 15 jours)
             </p>
@@ -779,8 +841,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </label>
         </div>
       </CardV4>
+      </div>
 
       {/* Volume */}
+      <div id="v4-section-volume">
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -814,7 +878,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 <button
                   key={d.id}
                   type="button"
-                  onClick={() => props.onFieldChange("density", d.id)}
+                  onClick={() => {
+                    markTouched("density");
+                    props.onFieldChange("density", d.id);
+                  }}
                   className="px-3 py-2 rounded-xl text-sm font-semibold transition-all"
                   style={{
                     background:
@@ -848,7 +915,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 )}
               </button>
             </div>
-            {showValidation && !isDensityValid && (
+            {shouldShowFieldError("density") && !isDensityValid && (
               <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
                 Densité requise
               </p>
@@ -871,7 +938,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 <button
                   key={k.id}
                   type="button"
-                  onClick={() => props.onFieldChange("kitchenIncluded", k.id)}
+                  onClick={() => {
+                    markTouched("kitchenIncluded");
+                    props.onFieldChange("kitchenIncluded", k.id);
+                  }}
                   className="px-3 py-2 rounded-xl text-sm font-semibold transition-all"
                   style={{
                     background:
@@ -890,7 +960,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 </button>
               ))}
             </div>
-            {showValidation && !isKitchenSelectionValid && (
+            {shouldShowFieldError("kitchenIncluded") && !isKitchenSelectionValid && (
               <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
                 Sélection cuisine requise
               </p>
@@ -915,11 +985,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 onChange={(e) =>
                   props.onFieldChange("kitchenApplianceCount", e.target.value)
                 }
+                onBlur={() => markTouched("kitchenApplianceCount")}
                 className="w-full rounded-xl px-4 py-3 text-sm"
                 style={{
                   background: "var(--color-bg)",
                   border: `2px solid ${
-                    showValidation && !isKitchenValid
+                    shouldShowFieldError("kitchenApplianceCount") && !isKitchenValid
                       ? "var(--color-danger)"
                       : "var(--color-border)"
                   }`,
@@ -927,7 +998,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 }}
                 placeholder="3"
               />
-              {showValidation && !isKitchenValid && (
+              {shouldShowFieldError("kitchenApplianceCount") && !isKitchenValid && (
                 <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
                   Nombre requis (min 1)
                 </p>
@@ -936,6 +1007,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           )}
         </div>
       </CardV4>
+      </div>
 
       {/* Informations complémentaires (dépliant) */}
       <CardV4 padding="md">
@@ -1334,6 +1406,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
       {/* Formule */}
       {props.pricingByFormule && (
+        <div id="v4-section-formule">
         <CardV4 padding="md">
           <div className="space-y-4">
             <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
@@ -1412,9 +1485,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             </div>
           </div>
         </CardV4>
+        </div>
       )}
 
       {/* Contact */}
+      <div id="v4-section-contact">
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -1443,11 +1518,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   type="text"
                   value={props.firstName}
                   onChange={(e) => props.onFieldChange("firstName", e.target.value)}
+                  onBlur={() => markTouched("firstName")}
                   className="w-full rounded-xl pl-10 pr-4 py-3 text-sm"
                   style={{
                     background: "var(--color-bg)",
                     border: `2px solid ${
-                      showValidation && !isFirstNameValid
+                      shouldShowFieldError("firstName") && !isFirstNameValid
                         ? "var(--color-danger)"
                         : "var(--color-border)"
                     }`,
@@ -1456,7 +1532,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   placeholder="Jean"
                 />
               </div>
-              {showValidation && !isFirstNameValid && (
+              {shouldShowFieldError("firstName") && !isFirstNameValid && (
                 <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
                   Prénom requis
                 </p>
@@ -1511,11 +1587,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 type="email"
                 value={props.email}
                 onChange={(e) => props.onFieldChange("email", e.target.value)}
+                  onBlur={() => markTouched("email")}
                 className="w-full rounded-xl pl-10 pr-4 py-3 text-sm"
                 style={{
                   background: "var(--color-bg)",
                   border: `2px solid ${
-                    showValidation && !isEmailValid
+                    shouldShowFieldError("email") && !isEmailValid
                       ? "var(--color-danger)"
                       : "var(--color-border)"
                   }`,
@@ -1524,7 +1601,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 placeholder="jean@exemple.fr"
               />
             </div>
-            {showValidation && !isEmailValid && (
+            {shouldShowFieldError("email") && !isEmailValid && (
               <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
                 Email valide requis
               </p>
@@ -1532,10 +1609,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </div>
         </div>
       </CardV4>
+      </div>
 
       {/* CTA */}
       <div className="space-y-3">
         <button
+          id="v4-primary-submit-cta"
           type="button"
           disabled={props.isSubmitting}
           onClick={props.onSubmit}

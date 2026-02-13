@@ -1,5 +1,43 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3 mobile: charge cognitive réduite + validation progressive + ergonomie FAB sécurisée
+
+**Objectif** :
+- Appliquer 3 priorités UX mobile Step 3 sans changer la logique métier ni le tracking.
+
+**Modifications** :
+
+1) **Réduction charge cognitive (P0)** — `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+- Ajout d'un bandeau mobile `Progression Step 3` avec 5 repères (`Trajet`, `Date`, `Volume`, `Formule`, `Contact`).
+- Chaque repère indique l'état (`✓`) selon la complétude du bloc.
+- Tap sur un repère => scroll vers la section concernée.
+- Ajout d'ancres de section: `v4-section-trajet`, `v4-section-date`, `v4-section-volume`, `v4-section-formule`, `v4-section-contact`.
+
+2) **Validation progressive au fil de l'eau (P0)** — `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+- Ajout d'un état `touched` par champ critique (adresses, date, densité, cuisine, électroménager, prénom, email).
+- Les erreurs n'attendent plus uniquement le submit global:
+  - affichage si `showValidation` (comportement existant),
+  - ou si le champ a été touché (`touched`).
+- Intégration de `markTouched(...)` sur les interactions clés (input/blur/click).
+
+3) **Ergonomie fixe bas d'écran sécurisée (P1)** — `components/tunnel-v4/SmartCart.tsx`
+- Ajout d'une gestion mobile via `visualViewport`:
+  - détection clavier ouvert,
+  - adaptation offset bas du FAB panier.
+- Quand le CTA principal Step 3 est visible (`#v4-primary-submit-cta`), le FAB panier est masqué (un seul CTA prioritaire).
+- Le FAB reste visible hors zone CTA, avec comportement drawer inchangé.
+
+**Correctif UX associé** — `app/devis-gratuits-v3/page.tsx`
+- Focus de validation cuisine corrigé: `v2-kitchen-appliance-count` -> `v4-kitchen-count`.
+
+**Impact** :
+- Parcours mobile plus lisible et orienté action.
+- Feedback erreur plus précoce, moins brutal au submit.
+- Moins de collisions visuelles CTA/FAB/clavier en bas d'écran.
+- Aucun changement payload BO, endpoints, `logicalStep`, `screenId` ou GA4.
+
+---
+
 ## 2026-02-13 — Renommage libellé bloc retour IA
 
 **Demande** :

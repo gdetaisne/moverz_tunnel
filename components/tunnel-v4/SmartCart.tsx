@@ -72,6 +72,8 @@ export function SmartCart({
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [prevPrice, setPrevPrice] = useState(currentPrice);
+  const [mobileFabBottom, setMobileFabBottom] = useState(88);
+  const [hideMobileFab, setHideMobileFab] = useState(false);
 
   // Detect mobile
   useEffect(() => {
@@ -80,6 +82,51 @@ export function SmartCart({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Mobile ergonomics: avoid overlap with main CTA and keyboard.
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const updateFabPosition = () => {
+      const visualViewport = window.visualViewport;
+      const viewportHeight = visualViewport?.height ?? window.innerHeight;
+      const keyboardDelta = window.innerHeight - viewportHeight;
+      const keyboardOpen = keyboardDelta > 120;
+      const baseBottom = keyboardOpen ? 16 : 88;
+
+      const submitCta = document.getElementById("v4-primary-submit-cta");
+      if (!submitCta) {
+        setMobileFabBottom(baseBottom);
+        setHideMobileFab(false);
+        return;
+      }
+
+      const rect = submitCta.getBoundingClientRect();
+      const ctaVisible = rect.top < viewportHeight && rect.bottom > 0;
+      if (!ctaVisible) {
+        setMobileFabBottom(baseBottom);
+        setHideMobileFab(false);
+        return;
+      }
+
+      // If the submit CTA is in view, hide floating cart to keep one clear action.
+      setHideMobileFab(true);
+      setMobileFabBottom(baseBottom);
+    };
+
+    updateFabPosition();
+    window.addEventListener("scroll", updateFabPosition, { passive: true });
+    window.addEventListener("resize", updateFabPosition);
+    window.visualViewport?.addEventListener("resize", updateFabPosition);
+    window.visualViewport?.addEventListener("scroll", updateFabPosition);
+
+    return () => {
+      window.removeEventListener("scroll", updateFabPosition);
+      window.removeEventListener("resize", updateFabPosition);
+      window.visualViewport?.removeEventListener("resize", updateFabPosition);
+      window.visualViewport?.removeEventListener("scroll", updateFabPosition);
+    };
+  }, [isMobile, drawerOpen]);
 
   // Track price changes for animation
   useEffect(() => {
@@ -391,13 +438,15 @@ export function SmartCart({
         animate={{ scale: 1 }}
         transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 20 }}
         onClick={() => setDrawerOpen(true)}
-        className="fixed z-[90] rounded-full shadow-lg flex items-center gap-2 px-4 py-3"
+        className="fixed z-[90] rounded-full shadow-lg flex items-center gap-2 px-4 py-3 transition-opacity"
         style={{
           right: "16px",
-          bottom: "88px", // ← OFFSET pour éviter collision avec CTA principal
+          bottom: `${mobileFabBottom}px`,
           background: "var(--color-accent)",
           color: "#FFFFFF",
           boxShadow: "0 4px 16px rgba(14,165,166,0.3)",
+          opacity: hideMobileFab || drawerOpen ? 0 : 1,
+          pointerEvents: hideMobileFab || drawerOpen ? "none" : "auto",
         }}
         aria-label="Voir le panier"
       >

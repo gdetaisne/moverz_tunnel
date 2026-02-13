@@ -1615,7 +1615,7 @@ function DevisGratuitsV3Content() {
     if (!isKitchenValid) {
       setShowValidationStep3(true);
       requestAnimationFrame(() => {
-        const focusId = "v2-kitchen-appliance-count";
+        const focusId = "v4-kitchen-count";
         document.getElementById(focusId)?.scrollIntoView({ behavior: "smooth", block: "center" });
         (document.getElementById(focusId) as any)?.focus?.();
       });
