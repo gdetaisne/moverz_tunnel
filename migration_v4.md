@@ -1,5 +1,29 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Retour IA restructuré par typologie (fragiles / encombrants / accès) + anti-doublons
+
+**Demande** :
+- La synthèse doit être orientée enjeux métier (pas liste de meubles).
+- Typologie attendue :
+  - `Objets fragiles`
+  - `Objets encombrants`
+  - `Accès`
+- Suppression impérative des doublons.
+
+**Modification** (`app/api/ai/analyze-photos/route.ts`) :
+- Post-traitement serveur refondu :
+  - regroupement par typologie,
+  - dimensions/format estimé affiché par objet (`~LxPxH` ou `~m³`),
+  - déduplication stricte (normalisation accents/casse/espaces),
+  - sortie compacte (max 3 objets par typologie).
+- La synthèse finale privilégie désormais les 3 lignes de typologie.
+
+**Impact** :
+- Retour IA plus actionnable pour un déménageur.
+- Moins de bruit, suppression des répétitions.
+
+---
+
 ## 2026-02-13 — Pipeline de traitement photo visible étape par étape
 
 **Demande** :

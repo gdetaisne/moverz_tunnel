@@ -268,13 +268,7 @@ async function callClaudeForRooms(
       return null;
     }
 
-    const promptInsights = Array.isArray(parsed.moverInsights)
-      ? parsed.moverInsights.filter(
-          (v: unknown): v is string =>
-            typeof v === "string" && v.trim().length > 0
-        )
-      : [];
-    const moverInsights = buildMoverInsightsFromRooms(parsed.rooms, promptInsights);
+    const moverInsights = buildMoverInsightsFromRooms(parsed.rooms);
 
     const totalMs = Date.now() - startedAt;
     return { model, rooms: parsed.rooms, moverInsights, totalMs };
@@ -404,56 +398,91 @@ ${list}
 `.trim();
 }
 
-function buildMoverInsightsFromRooms(rooms: any[], promptInsights: string[] = []): string[] {
+function buildMoverInsightsFromRooms(rooms: any[]): string[] {
   const safeRooms = Array.isArray(rooms) ? rooms : [];
-  const objectInsights: string[] = [];
+  const norm = (v: string) =>
+    v
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const fmtDims = (item: any) => {
+    const w = Number(item?.widthCm);
+    const d = Number(item?.depthCm);
+    const h = Number(item?.heightCm);
+    if ([w, d, h].every((x) => Number.isFinite(x) && x > 0)) {
+      return `~${Math.round(w)}x${Math.round(d)}x${Math.round(h)} cm`;
+    }
+    const vol = Number(item?.volumeM3);
+    if (Number.isFinite(vol) && vol > 0) {
+      return `~${vol.toFixed(1)} m³`;
+    }
+    return "format à confirmer";
+  };
+
+  const addUnique = (bucket: string[], seen: Set<string>, value: string) => {
+    const cleaned = value.trim();
+    if (!cleaned) return;
+    const key = norm(cleaned);
+    if (seen.has(key)) return;
+    seen.add(key);
+    bucket.push(cleaned);
+  };
+
+  const fragileEntries: string[] = [];
+  const bulkyEntries: string[] = [];
+  const accessFlags: string[] = [];
+  const seenFragile = new Set<string>();
+  const seenBulky = new Set<string>();
+  const seenAccess = new Set<string>();
+
   for (const room of safeRooms) {
     const items = Array.isArray(room?.items) ? room.items : [];
     for (const item of items) {
       const label = String(item?.label || "").trim();
       if (!label) continue;
-      const reasons: string[] = [];
-      if (item?.flags?.fragile) reasons.push("fragile");
-      if (item?.flags?.highValue) reasons.push("valeur à protéger");
-      if (item?.flags?.requiresDisassembly) reasons.push("démontage/remontage");
-      if (typeof item?.volumeM3 === "number" && item.volumeM3 >= 1.2) {
-        reasons.push("volume élevé");
+
+      const isFragile = item?.flags?.fragile === true || item?.flags?.highValue === true;
+      const isBulky =
+        item?.flags?.requiresDisassembly === true ||
+        (Number.isFinite(Number(item?.volumeM3)) && Number(item?.volumeM3) >= 1.2) ||
+        (Number.isFinite(Number(item?.widthCm)) && Number(item?.widthCm) >= 180);
+
+      if (isFragile) {
+        addUnique(fragileEntries, seenFragile, `${label} (${fmtDims(item)})`);
       }
-      if (typeof item?.widthCm === "number" && item.widthCm >= 180) {
-        reasons.push("gabarit large");
+      if (isBulky) {
+        addUnique(bulkyEntries, seenBulky, `${label} (${fmtDims(item)})`);
       }
-      if (reasons.length === 0) continue;
-      const line = `${label} : ${reasons.join(", ")}.`;
-      objectInsights.push(line);
+      if (item?.flags?.requiresDisassembly === true) {
+        addUnique(accessFlags, seenAccess, `${label}: démontage/remontage prévu`);
+      }
+      if (Number.isFinite(Number(item?.widthCm)) && Number(item?.widthCm) >= 180) {
+        addUnique(accessFlags, seenAccess, `${label}: gabarit large à passer`);
+      }
     }
   }
 
-  const fallbackInsights = (() => {
-    if (objectInsights.length > 0) return objectInsights;
-    const itemsCount = safeRooms.reduce((acc, room) => {
-      const items = Array.isArray(room?.items) ? room.items.length : 0;
-      return acc + items;
-    }, 0);
-    return [
-      `${safeRooms.length} zone(s) à traiter.`,
-      `${itemsCount} objet(s) estimé(s).`,
-      "Densité d'objets à confirmer sur visite.",
-    ];
-  })();
-
-  const merged = [...objectInsights, ...promptInsights, ...fallbackInsights]
-    .map((v) => v.trim())
-    .filter((v) => v.length > 0);
-  const unique: string[] = [];
-  const seen = new Set<string>();
-  for (const line of merged) {
-    const key = line.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    unique.push(line);
-    if (unique.length >= 6) break;
+  const insights: string[] = [];
+  if (fragileEntries.length > 0) {
+    insights.push(`Objets fragiles : ${fragileEntries.slice(0, 3).join(", ")}.`);
   }
-  return unique;
+  if (bulkyEntries.length > 0) {
+    insights.push(`Objets encombrants : ${bulkyEntries.slice(0, 3).join(", ")}.`);
+  }
+  if (accessFlags.length > 0) {
+    insights.push(`Accès : ${accessFlags.slice(0, 3).join(", ")}.`);
+  }
+
+  if (insights.length === 0) {
+    insights.push("Objets fragiles : aucun signal fort détecté sur cet échantillon.");
+    insights.push("Objets encombrants : format à confirmer sur visite.");
+    insights.push("Accès : contraintes à confirmer sur visite.");
+  }
+
+  return insights;
 }
 
 function createFallbackAnalysis(photos: AnalyzePhotoInput[]) {
