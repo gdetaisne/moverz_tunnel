@@ -1,5 +1,21 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix build TS: variable OSRM utilisée avant déclaration
+
+**Incident** :
+- Build cassé sur `app/devis-gratuits-v3/page.tsx` :
+  - `Block-scoped variable 'canUseOsrmDistance' used before its declaration`.
+
+**Correction** :
+- Réordonnancement des déclarations dans le calcul panier:
+  - calcul `isRouteDistanceValid` + `addressesFilled` + `canUseOsrmDistance`,
+  - puis calcul `refinedDistanceKm`.
+
+**Impact** :
+- Build TypeScript débloqué, sans changement fonctionnel métier.
+
+---
+
 ## 2026-02-13 — Refonte calcul dock: total et lignes sur un référentiel unique
 
 **Contexte** :

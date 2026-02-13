@@ -996,11 +996,7 @@ function DevisGratuitsV3Content() {
     })();
     const isMovingDateValid = !!state.movingDate && state.movingDate >= minMovingDate;
 
-    // Distance utilisée dans le montant final:
-    // - baseline tant que les adresses ne sont pas validées OSRM,
-    // - OSRM dès que disponible (cohérence avec la ligne "Distance").
-    const refinedDistanceKm = canUseOsrmDistance ? routeDistanceKm! : baseDistanceKm;
-    // Mais on conserve un delta "Distance" en détail dès que l'OSRM est valide.
+    // Distance disponible via OSRM (si adresses validées)
     const isRouteDistanceValid =
       routeDistanceKm != null &&
       Number.isFinite(routeDistanceKm) &&
@@ -1011,6 +1007,11 @@ function DevisGratuitsV3Content() {
       (state.originAddress || "").trim().length >= 5 &&
       (state.destinationAddress || "").trim().length >= 5;
     const canUseOsrmDistance = addressesFilled && isRouteDistanceValid;
+
+    // Distance utilisée dans le montant final:
+    // - baseline tant que les adresses ne sont pas validées OSRM,
+    // - OSRM dès que disponible (cohérence avec la ligne "Distance").
+    const refinedDistanceKm = canUseOsrmDistance ? routeDistanceKm! : baseDistanceKm;
 
     // 1) Distance:
     // - détail distance (info utilisateur) basé sur OSRM si disponible
