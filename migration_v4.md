@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: bloc "Ajouter des précisions" déplacé en bas (après Coordonnées)
+
+**Demande** :
+- Positionner `Ajouter des précisions (facultatif)` tout en bas du formulaire, après `Coordonnées`.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Passage du conteneur principal en layout `flex-col` avec `gap` pour piloter l'ordre visuel des sections.
+- Ajout d'ordres explicites:
+  - Trajet (10), Date (20), Volume (30), Formule (40), Coordonnées (50), `Ajouter des précisions` (60), CTA (70).
+- `isMissingInfoLocked` aligné sur la validation de `Coordonnées` (et non plus `Volume & densité`).
+- Message de verrouillage mis à jour: `Terminez d'abord "Coordonnées" pour débloquer ce bloc.`
+
+**Impact UX** :
+- Le bloc facultatif arrive bien en fin de parcours, conforme à la logique demandée.
+
+---
+
 ## 2026-02-13 — Règle interne ajoutée: Moverz_Fee_Provision (non affichée UI)
 
 **Demande métier** :
@@ -23,6 +40,17 @@
 - Champs archivés:
   - `step2CenterBeforeProvisionEur`
   - `moverzFeeProvisionEur`
+
+**Mise à jour (montants affichés)** :
+- La provision est intégrée aux montants baseline :
+  - Step 2,
+  - API `/api/estimate` (home moverz.fr),
+  - Budget initial Step 3.
+- Implémentation centralisée dans `lib/pricing/scenarios.ts` :
+  - `computeBaselineEstimate` applique la provision aux `prixMin/prixMax/prixFinal` baseline,
+  - métadonnées ajoutées: `step2CenterBeforeProvisionEur`, `step2CenterAfterProvisionEur`, `moverzFeeProvisionEur`.
+- Correction d'écart Step2 ↔ Step3:
+  - le Budget initial Step 3 priorise désormais la baseline figée (`rewardBaselineMinEur/rewardBaselineMaxEur`) au lieu d'une recomposition potentiellement divergente.
 
 ---
 

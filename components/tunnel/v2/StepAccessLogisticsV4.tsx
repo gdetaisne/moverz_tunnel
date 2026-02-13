@@ -747,7 +747,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     formule: !sectionMeta.volume.valid,
     contact: !sectionMeta.formule.valid,
   };
-  const isMissingInfoLocked = !sectionMeta.volume.valid;
+  const isMissingInfoLocked = !sectionMeta.contact.valid;
 
   const prevSectionValidityRef = useRef<Record<SectionKey, boolean>>({
     trajet: sectionMeta.trajet.valid,
@@ -1003,7 +1003,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   );
 
   return (
-    <div className="space-y-3 pb-44 sm:pb-24">
+    <div className="flex flex-col gap-3 pb-44 sm:pb-24">
       <input
         ref={densityPhotoInputRef}
         type="file"
@@ -1019,7 +1019,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {/* Addresses */}
       <div
         id="v4-section-trajet"
-        className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        className="order-10 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "trajet")}
       >
       {renderSectionHeader("trajet", "Trajet & logements")}
@@ -1148,7 +1148,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {/* Date */}
       <div
         id="v4-section-date"
-        className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        className="order-20 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "date")}
       >
       {renderSectionHeader("date", "Date de déménagement")}
@@ -1198,7 +1198,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {/* Volume */}
       <div
         id="v4-section-volume"
-        className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        className="order-30 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "volume")}
       >
       {renderSectionHeader("volume", "Volume & densité")}
@@ -1371,7 +1371,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
       {/* Informations complémentaires (dépliant) */}
       <div
-        className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        className="order-60 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "missingInfo")}
       >
           <button
@@ -1433,7 +1433,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </button>
           {isMissingInfoLocked && (
             <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-              Terminez d'abord "Volume & densité" pour débloquer ce bloc.
+              Terminez d'abord "Coordonnées" pour débloquer ce bloc.
             </p>
           )}
 
@@ -1834,7 +1834,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {props.pricingByFormule && (
         <div
           id="v4-section-formule"
-          className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+          className="order-40 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
           style={sectionFrameStyle(activeSection === "formule")}
         >
         {renderSectionHeader("formule", "Formule")}
@@ -1929,7 +1929,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {/* Contact */}
       <div
         id="v4-section-contact"
-        className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        className="order-50 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "contact")}
       >
       {renderSectionHeader("contact", "Coordonnées")}
@@ -2057,7 +2057,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       </div>
 
       {/* CTA */}
-      <div className="space-y-3">
+      <div className="order-70 space-y-3">
         <button
           id="v4-primary-submit-cta"
           type="button"
