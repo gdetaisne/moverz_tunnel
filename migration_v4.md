@@ -1,5 +1,18 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Renommage libellé bloc retour IA
+
+**Demande** :
+- Le bloc ne doit pas s'appeler "densité de meubles", mais "contraintes particulières".
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Libellé du bloc uniformisé en `Retour IA (contraintes particulières)`.
+
+**Impact** :
+- Intitulé aligné avec le wording métier demandé.
+
+---
+
 ## 2026-02-13 — Hotfix build: correction `lines` avant déclaration (Step 3 panier)
 
 **Incident** :
