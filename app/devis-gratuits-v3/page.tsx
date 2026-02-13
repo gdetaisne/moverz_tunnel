@@ -978,22 +978,13 @@ function DevisGratuitsV3Content() {
     })();
     const isMovingDateValid = !!state.movingDate && state.movingDate >= minMovingDate;
 
-    const isRouteDistanceValid =
-      routeDistanceKm != null &&
-      Number.isFinite(routeDistanceKm) &&
-      routeDistanceKm > 0 &&
-      routeDistanceProvider === "osrm";
-    const addressesFilled =
-      !state.destinationUnknown &&
-      (state.originAddress || "").trim().length >= 5 &&
-      (state.destinationAddress || "").trim().length >= 5;
-    const canUseOsrmDistance = addressesFilled && isRouteDistanceValid;
-    const refinedDistanceKm = canUseOsrmDistance ? routeDistanceKm! : baseDistanceKm;
+    // IMPORTANT: en Step 3, on fige la distance pour éviter les refresh pendant la saisie adresse.
+    // L'estimation ne doit bouger que sur les champs "Détails" (date, densité, cuisine, accès, formule).
+    const refinedDistanceKm = baseDistanceKm;
 
     // 1) Distance (recalcule prix de base, delta vs baseDistanceKm)
     const inputDistance = { ...baselineInput, distanceKm: refinedDistanceKm };
     const sDist = calculatePricing(inputDistance);
-    const deltaDistanceEur = canUseOsrmDistance ? formatDelta(sDist.prixBase - s0.prixBase) : 0;
 
     // 2) Densité (delta vs "Très meublé")
     const densityTouched = state.density !== "";
@@ -1183,15 +1174,6 @@ function DevisGratuitsV3Content() {
       confirmed: boolean;
     }> = [];
 
-    if (canUseOsrmDistance) {
-      lines.push({
-        key: "distance",
-        label: "Distance",
-        status: "adresses (OSRM)",
-        amountEur: deltaDistanceEur,
-        confirmed: true,
-      });
-    }
     if (isMovingDateValid) {
       lines.push({
         key: "date",
@@ -1257,8 +1239,6 @@ function DevisGratuitsV3Content() {
     };
   }, [
     cityOsrmDistanceKm,
-    routeDistanceKm,
-    routeDistanceProvider,
     state.rewardBaselineDistanceKm,
     state.surfaceM2,
     state.formule,

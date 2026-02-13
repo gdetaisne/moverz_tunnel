@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Panier Step 3: stop refresh pendant saisie adresse
+
+**Demande** :
+- L'estimation ne doit pas se rafraîchir à chaque lettre dans les adresses.
+- L'estimation doit bouger uniquement quand une valeur "Détails" change.
+
+**Modification** (`app/devis-gratuits-v3/page.tsx`) :
+- Dans `v2PricingCart`, suppression de l'usage de la distance OSRM live en Step 3.
+- Le calcul est désormais figé sur `rewardBaselineDistanceKm` (distance baseline capturée).
+- Le recalcul reste actif pour les champs Détails: date, densité, cuisine, accès, formule.
+
+**Impact** :
+- Plus de variation visuelle du montant pendant la frappe d'adresse.
+- Comportement aligné avec la logique métier demandée.
+
+---
+
 ## 2026-02-13 — Densité photo: symbole dynamique, auto-sélection et note justifiée
 
 **Demande** :
