@@ -79,6 +79,7 @@ function DevisGratuitsV3Content() {
 
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
+  const [aiPhotoInsights, setAiPhotoInsights] = useState<string[]>([]);
 
   // Formatter utilisé dans le rendu (sidebar Step 3, etc.)
   const fmtEur = (n: number) =>
@@ -1765,7 +1766,15 @@ function DevisGratuitsV3Content() {
             dismantling: state.serviceDismantling,
             piano: state.servicePiano !== "none" ? state.servicePiano : undefined,
           },
-          notes: state.specificNotes?.trim() || undefined,
+          notes: (() => {
+            const userNotes = (state.specificNotes || "").trim();
+            const aiNotes = aiPhotoInsights
+              .filter((v) => typeof v === "string" && v.trim().length > 0)
+              .map((v) => `- ${v.trim()}`);
+            const aiBlock = aiNotes.length > 0 ? `[Analyse IA photos]\n${aiNotes.join("\n")}` : "";
+            const merged = [userNotes, aiBlock].filter((v) => v.length > 0).join("\n\n");
+            return merged || undefined;
+          })(),
           pricingSnapshot: pricingSnapshot,
         },
       };
@@ -1828,6 +1837,15 @@ function DevisGratuitsV3Content() {
             lift_required: !!state.lift_required,
             access_details: state.access_details || undefined,
           },
+          notes: (() => {
+            const userNotes = (state.specificNotes || "").trim();
+            const aiNotes = aiPhotoInsights
+              .filter((v) => typeof v === "string" && v.trim().length > 0)
+              .map((v) => `- ${v.trim()}`);
+            const aiBlock = aiNotes.length > 0 ? `[Analyse IA photos]\n${aiNotes.join("\n")}` : "";
+            const merged = [userNotes, aiBlock].filter((v) => v.length > 0).join("\n\n");
+            return merged || undefined;
+          })(),
         },
       };
 
@@ -1930,6 +1948,7 @@ function DevisGratuitsV3Content() {
                 movingDate={state.movingDate}
                 dateFlexible={state.dateFlexible}
                 onFieldChange={(field, value) => updateField(field as any, value)}
+                onAiInsightsChange={setAiPhotoInsights}
                 onSubmit={handleSubmitAccessV2}
                 isSubmitting={false}
                 showValidation={showValidationStep3}

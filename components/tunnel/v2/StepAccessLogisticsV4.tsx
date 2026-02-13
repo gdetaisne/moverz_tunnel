@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { MapPin, Calendar, Home, Mail, User, Phone, ChevronDown } from "lucide-react";
+import { MapPin, Calendar, Home, Mail, User, Phone, ChevronDown, Camera } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 import { CardV4 } from "@/components/tunnel-v4";
@@ -47,6 +47,7 @@ interface StepAccessLogisticsV4Props {
   routeDistanceKm?: number | null;
   routeDistanceProvider?: "osrm" | "fallback" | null;
   onFieldChange: (field: string, value: any) => void;
+  onAiInsightsChange?: (insights: string[]) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
   showValidation?: boolean;
@@ -299,6 +300,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const analyzePhotosLive = async (photos: UploadedPhoto[]) => {
     if (photos.length === 0) {
       setMoverInsights([]);
+      props.onAiInsightsChange?.([]);
       return;
     }
     setIsAnalyzingPhotos(true);
@@ -328,15 +330,18 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         : [];
       if (explicitInsights.length > 0) {
         setMoverInsights(explicitInsights);
+        props.onAiInsightsChange?.(explicitInsights);
         return;
       }
 
       // Fallback visuel robuste si l'IA ne renvoie pas de synthèse textuelle.
       const roomCount = Array.isArray(data.rooms) ? data.rooms.length : 0;
-      setMoverInsights([
+      const fallbackInsights = [
         `${photos.length} photo(s) analysée(s).`,
         roomCount > 0 ? `${roomCount} zone(s) de chargement potentielle(s) détectée(s).` : "Peu de signal exploitable, ajouter d'autres photos pour affiner.",
-      ]);
+      ];
+      setMoverInsights(fallbackInsights);
+      props.onAiInsightsChange?.(fallbackInsights);
     } catch (error) {
       setPhotoPanelError(error instanceof Error ? error.message : "Erreur IA.");
     } finally {
@@ -679,7 +684,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 {[
                   { id: "constraints" as const, label: "Contraintes Usuelles" },
                   { id: "notes" as const, label: "champs libre" },
-                  { id: "photos" as const, label: "photo + IA" },
+                  { id: "photos" as const, label: "photo + IA", withCamera: true },
                 ].map((tab) => {
                   const selected = activeMissingInfoTab === tab.id;
                   return (
@@ -694,7 +699,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                         border: selected ? "none" : "2px solid var(--color-border)",
                       }}
                     >
-                      {tab.label}
+                      <span className="inline-flex items-center gap-1.5">
+                        {tab.withCamera ? <Camera className="w-3.5 h-3.5" /> : null}
+                        {tab.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -850,7 +858,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                     }}
                   />
                   <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                    Upload Cloudflare + analyse IA live.
+                    Ajouter des photos pour une estimation plus precise. Nous analysons vos photos pour enrichir votre dossier.
                   </p>
                   {(isUploadingPhotos || isAnalyzingPhotos) && (
                     <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>

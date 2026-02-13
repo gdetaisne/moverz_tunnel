@@ -1,5 +1,28 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Onglet photo+IA : icône + texte + stockage analyse IA dans `notes`
+
+**Demandes** :
+- Ajouter un signe appareil photo sur l'onglet `photo + IA`.
+- Ajouter le texte :
+  - `Ajouter des photos pour une estimation plus precise. Nous analysons vos photos pour enrichir votre dossier.`
+- Stocker l'analyse IA au même endroit DB que le champ libre.
+
+**Modifications** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - icône `Camera` affichée sur l'onglet `photo + IA`,
+  - texte explicatif ajouté dans l'onglet photo,
+  - remontée des insights IA via callback `onAiInsightsChange`.
+- `app/devis-gratuits-v3/page.tsx`
+  - état `aiPhotoInsights`,
+  - fusion `specificNotes + [Analyse IA photos]` dans `tunnelOptions.notes` (Step 3 et Step 4).
+
+**Impact** :
+- L'analyse IA est persistée dans le même champ BO que le champ libre (`tunnelOptions.notes`).
+- Aucun changement de schéma DB/Prisma.
+
+---
+
 ## 2026-02-13 — Renommage libellé dépliant Step 3
 
 **Demande** :
