@@ -58,6 +58,10 @@ export function StepEstimationV4({
       currency: "EUR",
       maximumFractionDigits: 0,
     }).format(n);
+  const singleEstimate =
+    priceMin != null && priceMax != null
+      ? Math.round((priceMin + priceMax) / 2)
+      : priceMin ?? priceMax;
   
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -103,10 +107,8 @@ export function StepEstimationV4({
               className="text-4xl sm:text-6xl font-bold tracking-tight whitespace-nowrap leading-none"
               style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
             >
-              {priceMin != null && priceMax != null ? (
-                <>
-                  {fmtEur(priceMin)} – {fmtEur(priceMax)}
-                </>
+              {singleEstimate != null ? (
+                <>{fmtEur(singleEstimate)}</>
               ) : (
                 <span style={{ color: "var(--color-text-muted)" }}>—</span>
               )}

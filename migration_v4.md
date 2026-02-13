@@ -5289,3 +5289,31 @@ Migration progressive : les hex inline seront remplacés par ces tokens au fil d
 - **Tracking** : aucun impact.
 - **Champs / Inputs** : aucun changement.
 - **Back Office payload** : aucun changement.
+
+---
+
+## 2026-02-13 — Step 2 UX : affichage d'un montant unique (médian)
+
+- **Objectif** : remplacer la fourchette (`min – max`) par un seul montant plus simple à lire.
+- **Fichier** : `components/tunnel/v2/StepEstimationV4.tsx`
+- **Changements UI** :
+  - Calcul d'un `singleEstimate` : moyenne arrondie de `priceMin` et `priceMax`.
+  - Affichage d'un seul prix formaté (`fmtEur(singleEstimate)`).
+  - Fallback robuste : si une seule borne existe, elle est affichée; sinon `—`.
+- **Tracking** : aucun impact.
+- **Champs / Inputs** : aucun changement.
+- **Back Office payload** : aucun changement.
+
+---
+
+## 2026-02-13 — IA photos : prompts densité + contraintes spécifiques renforcés
+
+- **Objectif** : fiabiliser la qualité métier des retours IA avec un format JSON plus structuré, sans casser l'affichage actuel.
+- **Fichier** : `app/api/ai/analyze-photos/route.ts`
+- **Changements** :
+  - Prompt `density` remplacé par une version orientée "densité opérationnelle" (niveau dominant, homogénéité, confiance, impact logistique).
+  - Prompt `specific_constraints` remplacé par une version catégorisée (fragile, volumineux, lourd, demontage, acces, protection, autre) + niveau d'impact.
+  - Compatibilité UI conservée : exigence explicite de renvoyer `moverInsights` dans les deux prompts.
+- **Tracking** : aucun impact.
+- **Champs / Inputs tunnel** : aucun changement.
+- **Back Office payload** : aucun changement.

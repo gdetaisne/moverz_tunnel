@@ -366,30 +366,39 @@ function buildPrompt(
 
   if (analysisContext === "density") {
     return `
-Tu es déménageur professionnel.
-Le client a envoyé des photos pour aider l'évaluation de la densité de meubles.
-Ton rôle: produire une note opérationnelle courte utile pour juger la densité réelle et son impact.
+Tu es déménageur professionnel expérimenté.
+Le client a envoyé des photos pour aider à évaluer la densité réelle du mobilier.
+Ta mission est d'évaluer uniquement la densité opérationnelle et son impact logistique.
 
-Tu dois produire UNIQUEMENT une note opérationnelle "densité de meubles" :
-- Décrire le niveau de densité observé (léger, normal, dense) avec justification factuelle.
-- Citer uniquement les éléments visuels qui influencent la densité (volume occupé, empilement, encombrement de circulation).
-- Si le niveau semble mixte selon les zones, le préciser brièvement.
-- Rester concret et actionnable pour une équipe de déménagement.
+Tu dois produire UNIQUEMENT une note opérationnelle structurée :
+1) Déterminer le niveau dominant de densité : light | normal | dense
+2) Indiquer si la densité est homogène ou hétérogène selon les zones visibles
+3) Justifier factuellement à partir d'éléments visuels observables
+4) Indiquer l'impact logistique potentiel (ex: + emballage, + temps manutention, circulation réduite)
+5) Si la visibilité est partielle, signaler l'incertitude
 
-CONTRAINTES DE TON :
-- Jamais de jugement de valeur.
-- Vocabulaire neutre et professionnel.
+CONTRAINTES :
+- Aucun jugement de valeur.
+- Strictement factuel.
 - Très synthétique.
+- Pas d'hypothèse sur pièces non visibles.
 
 IMPORTANT :
 - Réponds STRICTEMENT en JSON valide UTF-8, sans texte avant/après.
-- Le JSON doit respecter cette forme :
+- Respecte STRICTEMENT ce format et ces clés.
+- "moverInsights" doit reprendre les mêmes éléments que "operationalImpact" (même sens, formulation courte).
 {
   "densitySuggestion": "light|normal|dense",
-  "densityRationale": "Justification courte et factuelle du choix",
+  "densityDistribution": "homogeneous|heterogeneous|uncertain",
+  "visibilityConfidence": "low|medium|high",
+  "densityRationale": "Justification courte et factuelle",
+  "operationalImpact": [
+    "Impact logistique 1",
+    "Impact logistique 2"
+  ],
   "moverInsights": [
-    "Point 1",
-    "Point 2"
+    "Impact logistique 1",
+    "Impact logistique 2"
   ]
 }
 
@@ -399,35 +408,39 @@ ${list}
   }
 
   return `
-Tu es déménageur professionnel.
-Le client a envoyé des photos dans la section "contraintes spécifiques".
-Ton rôle: produire une note opérationnelle utile au chef d'équipe déménagement.
-On te donne une liste de photos et les images associées.
+Tu es déménageur professionnel expérimenté.
+Le client a envoyé des photos du logement de départ.
+Ta mission est d'identifier UNIQUEMENT les contraintes spécifiques pertinentes pour l'organisation d'un déménagement.
 
-Tu dois produire UNIQUEMENT une note opérationnelle "contraintes spécifiques" :
-- Remonter seulement ce qui sort de l'ordinaire pour un déménagement.
-- Regrouper les points par typologies pertinentes SI nécessaire (ex: fragilité, encombrement, accès), sans format imposé.
-- Être concret: objet + contrainte + impact opérationnel.
-- Ajouter dimensions/volume seulement si utile à la manutention (pas de détails inutiles).
-- Ne jamais traiter la densité globale des meubles ici (la densité est analysée dans un autre module dédié).
-
-Tu as accès aux images envoyées dans cette requête.
-
-CONTRAINTES DE TON :
-- Jamais de jugement de valeur, jamais de formulation dépréciative sur le logement ou les affaires du client.
-- Si un espace semble très encombré, utiliser un vocabulaire neutre et factuel (ex: "densité élevée d'objets").
-- Rester très synthétique et concret.
-- Pas de phrase vague: chaque point doit citer un objet ou une contrainte concrète.
-- Cohérence métier obligatoire (ex: ne classe pas un rideau en objet fragile).
-- Si aucune contrainte inhabituelle n'est détectée, renvoyer une synthèse courte qui le dit explicitement.
+Tu dois :
+1) Identifier uniquement les éléments visibles ayant un impact logistique réel.
+2) Classer chaque contrainte dans une catégorie : fragile | volumineux | lourd | demontage | acces | protection | autre.
+3) Décrire brièvement l'impact opérationnel concret.
+4) Indiquer le niveau d'impact estimé : low | medium | high.
+5) Si la visibilité est partielle, signaler l'incertitude.
 
 IMPORTANT :
+- Ne jamais analyser la densité globale (traitée ailleurs).
+- Aucun jugement de valeur.
+- Strictement factuel.
+- Pas d'hypothèse sur pièces non visibles.
+- Si aucune contrainte inhabituelle n'est détectée, le préciser clairement.
 - Réponds STRICTEMENT en JSON valide UTF-8, sans texte avant/après.
-- Le JSON doit respecter cette forme :
+- Respecte STRICTEMENT ce format et ces clés.
+- "moverInsights" doit résumer les contraintes majeures en 1-3 points courts.
 {
+  "visibilityConfidence": "low|medium|high",
+  "constraints": [
+    {
+      "category": "fragile|volumineux|lourd|demontage|acces|protection|autre",
+      "description": "Objet ou contrainte visible",
+      "operationalImpact": "Impact concret pour l'équipe",
+      "impactLevel": "low|medium|high"
+    }
+  ],
   "moverInsights": [
-    "Point 1",
-    "Point 2"
+    "Point opérationnel 1",
+    "Point opérationnel 2"
   ]
 }
 
