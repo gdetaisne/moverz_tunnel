@@ -1,5 +1,29 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Prompt IA recentré: note opérationnelle uniquement (sans pièces/inventaire)
+
+**Demande explicite** :
+- Refaire le prompt à partir des instructions du jour uniquement.
+- Ne pas parler de regroupement par pièces ni d'inventaire.
+- Produire uniquement une note opérationnelle.
+
+**Modification** (`app/api/ai/analyze-photos/route.ts`) :
+- Prompt simplifié et recadré :
+  - sortie attendue: `moverInsights` uniquement,
+  - focus sur signaux inhabituels et impact opérationnel,
+  - pas de structure imposée de catégories.
+- Parsing assoupli :
+  - `rooms` optionnel (toléré si présent),
+  - priorité à `moverInsights` renvoyé par l'IA.
+- Fallback post-traitement :
+  - points atypiques issus des objets détectés,
+  - sinon message neutre "aucune contrainte inhabituelle".
+
+**Impact** :
+- Réponse IA alignée sur le besoin métier actuel (note opérationnelle pure).
+
+---
+
 ## 2026-02-13 — IA contraintes: suppression des catégories forcées, focus "hors norme"
 
 **Correction demandée** :

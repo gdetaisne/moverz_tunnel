@@ -261,22 +261,16 @@ async function callClaudeForRooms(
       return null;
     }
 
-    if (!parsed || !Array.isArray(parsed.rooms)) {
-      console.error(
-        `❌ Réponse Claude JSON invalide (pas de rooms) pour le modèle ${model}`
-      );
-      return null;
-    }
-
+    const parsedRooms = Array.isArray(parsed?.rooms) ? parsed.rooms : [];
     const promptInsights = Array.isArray(parsed.moverInsights)
       ? parsed.moverInsights.filter(
           (v: unknown): v is string => typeof v === "string" && v.trim().length > 0
         )
       : [];
-    const moverInsights = buildMoverInsightsFromRooms(parsed.rooms, promptInsights);
+    const moverInsights = buildMoverInsightsFromRooms(parsedRooms, promptInsights);
 
     const totalMs = Date.now() - startedAt;
-    return { model, rooms: parsed.rooms, moverInsights, totalMs };
+    return { model, rooms: parsedRooms, moverInsights, totalMs };
   } catch (error) {
     console.error(`❌ Exception lors de l'appel Claude (${model}):`, error);
     return null;
@@ -346,15 +340,13 @@ function buildPrompt(photos: AnalyzePhotoInput[]): string {
 Tu es déménageur professionnel.
 Le client a envoyé des photos dans la section "contraintes spécifiques".
 Ton rôle: produire une note opérationnelle utile au chef d'équipe déménagement.
-On te donne une liste de photos et les images associées. Tu dois :
-1) Regrouper les photos par pièce logique (salon, cuisine, chambres, etc.).
-2) Pour chaque pièce, proposer un inventaire d'objets plausibles, sans doublons.
-3) Pour chaque objet, si possible, estimer des dimensions (largeur/profondeur/hauteur en centimètres),
-   calculer un volume approximatif en m3 et proposer une estimation de valeur en euros avec une courte justification.
-4) Produire une synthèse qui remonte UNIQUEMENT ce qui sort de l'ordinaire pour un déménagement.
-5) Regrouper ces points par typologies pertinentes (exemples: fragilité, encombrement, accès),
-   sans forcer des catégories vides.
-6) Dans chaque typologie, citer des objets concrets + format utile uniquement si pertinent.
+On te donne une liste de photos et les images associées.
+
+Tu dois produire UNIQUEMENT une note opérationnelle "contraintes spécifiques" :
+- Remonter seulement ce qui sort de l'ordinaire pour un déménagement.
+- Regrouper les points par typologies pertinentes SI nécessaire (ex: fragilité, encombrement, accès), sans format imposé.
+- Être concret: objet + contrainte + impact opérationnel.
+- Ajouter dimensions/volume seulement si utile à la manutention (pas de détails inutiles).
 
 Tu as accès aux images envoyées dans cette requête.
 
@@ -363,10 +355,7 @@ CONTRAINTES DE TON :
 - Si un espace semble très encombré, utiliser un vocabulaire neutre et factuel (ex: "densité élevée d'objets").
 - Rester très synthétique et concret.
 - Pas de phrase vague: chaque point doit citer un objet ou une contrainte concrète.
-- Cohérence métier obligatoire :
-  - ne classe pas un rideau en objet fragile,
-  - ne mets pas de dimensions inutiles (ex: épaisseur d'un tableau, objets qui entrent dans un carton),
-  - mets les dimensions/volume seulement pour les objets qui impactent vraiment la manutention.
+- Cohérence métier obligatoire (ex: ne classe pas un rideau en objet fragile).
 - Si aucune contrainte inhabituelle n'est détectée, renvoyer une synthèse courte qui le dit explicitement.
 
 IMPORTANT :
@@ -374,34 +363,8 @@ IMPORTANT :
 - Le JSON doit respecter cette forme :
 {
   "moverInsights": [
-    "Typologie pertinente : points concrets utiles au déménageur"
-  ],
-  "rooms": [
-    {
-      "roomId": "string",
-      "roomType": "SALON|CUISINE|CHAMBRE|SALLE_DE_BAIN|WC|COULOIR|BUREAU|BALCON|CAVE|GARAGE|AUTRE",
-      "label": "string lisible (ex: Salon, Chambre 1)",
-      "photoIds": ["photoId1", "photoId2"],
-      "items": [
-        {
-          "label": "string",
-          "category": "LIT|CANAPE|TABLE|CHAISE|ARMOIRE|ELECTROMENAGER|TV|BIBLIOTHEQUE|DECORATION|RANGEMENT|AUTRE",
-          "quantity": 1,
-          "confidence": 0.0,
-          "widthCm": 0,          // largeur approximative en cm (nombre)
-          "depthCm": 0,          // profondeur approximative en cm (nombre)
-          "heightCm": 0,         // hauteur approximative en cm (nombre)
-          "volumeM3": 0.0,       // volume approximatif en m3 (nombre)
-          "valueEstimateEur": 0, // estimation de valeur en euros (nombre)
-          "valueJustification": "courte phrase expliquant l'estimation (ex: canapé 3 places milieu de gamme, env. 800€ neuf)",
-          "flags": {
-            "fragile": boolean,
-            "highValue": boolean,
-            "requiresDisassembly": boolean
-          }
-        }
-      ]
-    }
+    "Point 1",
+    "Point 2"
   ]
 }
 
@@ -446,8 +409,24 @@ function buildMoverInsightsFromRooms(
     bucket.push(cleaned);
   };
 
-  const buckets: Record<string, string[]> = {};
-  const bucketSeen: Record<string, Set<string>> = {};
+  const dedupPromptInsights = (() => {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const raw of promptInsights) {
+      const cleaned = String(raw || "").trim();
+      if (!cleaned) continue;
+      const key = norm(cleaned);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(cleaned);
+      if (out.length >= 6) break;
+    }
+    return out;
+  })();
+  if (dedupPromptInsights.length > 0) return dedupPromptInsights;
+
+  const unusualEntries: string[] = [];
+  const seenUnusual = new Set<string>();
 
   const isIrrelevantForHandling = (label: string) => {
     const l = norm(label);
@@ -457,12 +436,6 @@ function buildMoverInsightsFromRooms(
       l.includes("coussin") ||
       l.includes("tapis fin")
     );
-  };
-
-  const addToBucket = (bucket: string, value: string) => {
-    if (!buckets[bucket]) buckets[bucket] = [];
-    if (!bucketSeen[bucket]) bucketSeen[bucket] = new Set<string>();
-    addUnique(buckets[bucket]!, bucketSeen[bucket]!, value);
   };
 
   for (const room of safeRooms) {
@@ -477,44 +450,26 @@ function buildMoverInsightsFromRooms(
         item?.flags?.requiresDisassembly === true ||
         (Number.isFinite(Number(item?.volumeM3)) && Number(item?.volumeM3) >= 1.2) ||
         (Number.isFinite(Number(item?.widthCm)) && Number(item?.widthCm) >= 180);
+      const hasAccessConstraint =
+        item?.flags?.requiresDisassembly === true ||
+        (Number.isFinite(Number(item?.widthCm)) && Number(item?.widthCm) >= 180);
 
-      if (isFragile) {
-        addToBucket("Fragilité / protection", `${label} (${fmtDims(item)})`);
-      }
-      if (isBulky) {
-        addToBucket("Manutention lourde / encombrement", `${label} (${fmtDims(item)})`);
-      }
-      if (item?.flags?.requiresDisassembly === true) {
-        addToBucket("Accès / manœuvre", `${label}: démontage/remontage prévu`);
-      }
-      if (Number.isFinite(Number(item?.widthCm)) && Number(item?.widthCm) >= 180) {
-        addToBucket("Accès / manœuvre", `${label}: gabarit large à passer`);
-      }
+      if (!(isFragile || isBulky || hasAccessConstraint)) continue;
+
+      const reasons: string[] = [];
+      if (isFragile) reasons.push("protection renforcée");
+      if (isBulky) reasons.push("manutention lourde");
+      if (hasAccessConstraint) reasons.push("passage à anticiper");
+      addUnique(
+        unusualEntries,
+        seenUnusual,
+        `${label} (${fmtDims(item)}) : ${reasons.join(", ")}`
+      );
     }
   }
 
-  const fallbackInsights: string[] = Object.entries(buckets)
-    .filter(([, items]) => Array.isArray(items) && items.length > 0)
-    .map(([bucket, items]) => `${bucket} : ${items.slice(0, 3).join(", ")}.`);
-
-  const merged = [...promptInsights, ...fallbackInsights]
-    .map((v) => v.trim())
-    .filter((v) => v.length > 0);
-  const insights: string[] = [];
-  const seen = new Set<string>();
-  for (const line of merged) {
-    const key = norm(line);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    insights.push(line);
-    if (insights.length >= 6) break;
-  }
-
-  if (insights.length === 0) {
-    insights.push("Aucune contrainte spécifique inhabituelle détectée sur ces photos.");
-  }
-
-  return insights;
+  if (unusualEntries.length > 0) return unusualEntries.slice(0, 6);
+  return ["Aucune contrainte spécifique inhabituelle détectée sur ces photos."];
 }
 
 function createFallbackAnalysis(photos: AnalyzePhotoInput[]) {
