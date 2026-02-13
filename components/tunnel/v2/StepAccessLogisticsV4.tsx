@@ -108,6 +108,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
   const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
   const missingInfoPanelOpen = showMissingInfoPanel;
+  const [optionalPhotoNames, setOptionalPhotoNames] = useState<string[]>([]);
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -686,6 +687,40 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                   Champ optionnel
                 </p>
+              </div>
+
+              <div className="space-y-3">
+                <label
+                  htmlFor="v4-optional-photos"
+                  className="block text-sm font-semibold"
+                  style={{ color: "var(--color-text)" }}
+                >
+                  Ajouter des photos (facultatif)
+                </label>
+                <input
+                  id="v4-optional-photos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="w-full rounded-xl px-4 py-3 text-sm"
+                  style={{
+                    background: "var(--color-bg)",
+                    border: "2px solid var(--color-border)",
+                    color: "var(--color-text)",
+                  }}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setOptionalPhotoNames(files.map((f) => f.name));
+                  }}
+                />
+                <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                  Prototype non connecté : ces photos ne sont pas encore envoyées au Back Office.
+                </p>
+                {optionalPhotoNames.length > 0 && (
+                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    {optionalPhotoNames.length} photo(s) sélectionnée(s)
+                  </p>
+                )}
               </div>
             </div>
           )}

@@ -1,5 +1,21 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Ajout UI "Ajouter des photos" dans le dépliant d'infos manquantes
+
+**Demande** : ajouter un champ `Ajouter des photos` (facultatif) dans `Il nous manque des informations ?`.
+
+**Implémentation** :
+- Ajout d'un input `type="file"` multi-fichiers dans `components/tunnel/v2/StepAccessLogisticsV4.tsx`.
+- Affichage du nombre de photos sélectionnées côté UI.
+
+**Important (règle repo)** :
+- Champ explicitement marqué **prototype non connecté**.
+- Les fichiers ne sont **pas envoyés** au Back Office / API.
+
+**Impact** : UI uniquement, aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-13 — "Il nous manque des informations ?" rendu non obligatoire
 
 **Demande** : les champs dans le dépliant ne doivent pas être obligatoires.
