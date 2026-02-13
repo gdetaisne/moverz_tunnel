@@ -125,6 +125,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const missingInfoPanelOpen = showMissingInfoPanel;
   const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("constraints");
   const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
+  const [photoPreviewUrls, setPhotoPreviewUrls] = useState<Record<string, string>>({});
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [isAnalyzingPhotos, setIsAnalyzingPhotos] = useState(false);
   const [photoPanelError, setPhotoPanelError] = useState<string | null>(null);
@@ -379,6 +380,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         setPhotoPanelError(result.errors[0]?.reason ?? "Certaines photos n'ont pas pu être traitées.");
       }
 
+      const localPreviewByFilename = files.reduce<Record<string, string[]>>((acc, file) => {
+        const list = acc[file.name] ?? [];
+        list.push(URL.createObjectURL(file));
+        acc[file.name] = list;
+        return acc;
+      }, {});
+
       const nextPhotos: UploadedPhoto[] = [];
       const seen = new Set<string>();
       for (const p of [...uploadedPhotos, ...result.success]) {
@@ -388,6 +396,26 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           nextPhotos.push(p);
         }
       }
+      setPhotoPreviewUrls((prev) => {
+        const next = { ...prev };
+        for (const photo of result.success) {
+          const photoKey = photo.storageKey || photo.id;
+          if (next[photoKey]) continue;
+          const bucket = localPreviewByFilename[photo.originalFilename];
+          const candidate = bucket && bucket.length > 0 ? bucket.shift()! : "";
+          if (candidate) next[photoKey] = candidate;
+        }
+        return next;
+      });
+      Object.values(localPreviewByFilename).forEach((urls) => {
+        urls.forEach((u) => {
+          try {
+            URL.revokeObjectURL(u);
+          } catch {
+            // ignore cleanup errors
+          }
+        });
+      });
       setUploadedPhotos(nextPhotos);
       await analyzePhotosLive(nextPhotos);
     } catch (error) {
@@ -400,6 +428,27 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const onPhotoFilesPicked = async (files: File[]) => {
     if (files.length === 0) return;
     await handlePhotoUploadAndAnalyze(files);
+  };
+
+  const removeUploadedPhoto = async (photo: UploadedPhoto) => {
+    const photoKey = photo.storageKey || photo.id;
+    const preview = photoPreviewUrls[photoKey];
+    if (preview) {
+      try {
+        URL.revokeObjectURL(preview);
+      } catch {
+        // ignore cleanup errors
+      }
+    }
+    setPhotoPreviewUrls((prev) => {
+      const next = { ...prev };
+      delete next[photoKey];
+      return next;
+    });
+    const remaining = uploadedPhotos.filter((p) => (p.storageKey || p.id) !== photoKey);
+    setUploadedPhotos(remaining);
+    setPhotoPanelError(null);
+    await analyzePhotosLive(remaining);
   };
 
   return (
@@ -908,6 +957,44 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                       >
                         Importer des photos
                       </button>
+                      {uploadedPhotos.length > 0 && (
+                        <div className="grid grid-cols-3 gap-2">
+                          {uploadedPhotos.map((photo) => {
+                            const key = photo.storageKey || photo.id;
+                            const previewSrc = photoPreviewUrls[key] || photo.url || "";
+                            return (
+                              <div
+                                key={key}
+                                className="relative rounded-lg overflow-hidden border"
+                                style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                              >
+                                {previewSrc ? (
+                                  <img
+                                    src={previewSrc}
+                                    alt={photo.originalFilename}
+                                    className="w-full h-20 object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-20 flex items-center justify-center">
+                                    <Camera className="w-4 h-4" style={{ color: "var(--color-text-muted)" }} />
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    await removeUploadedPhoto(photo);
+                                  }}
+                                  className="absolute top-1 right-1 rounded px-1.5 py-0.5 text-[10px] font-bold"
+                                  style={{ background: "rgba(0,0,0,0.65)", color: "#fff" }}
+                                  aria-label="Supprimer cette photo"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
                     <div className="hidden lg:flex items-center justify-center px-1">
@@ -935,6 +1022,21 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                           Ajoutez des photos pour obtenir un retour IA.
                         </p>
                       )}
+                      {(isUploadingPhotos || isAnalyzingPhotos) && (
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                          {isUploadingPhotos ? "Upload en cours..." : "Analyse IA en cours..."}
+                        </p>
+                      )}
+                      {photoPanelError && (
+                        <p className="text-xs" style={{ color: "var(--color-danger)" }}>
+                          {photoPanelError}
+                        </p>
+                      )}
+                      {uploadedPhotos.length > 0 && (
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                          {uploadedPhotos.length} photo(s) uploadée(s)
+                        </p>
+                      )}
                       {moverInsights.map((insight, idx) => (
                         <p key={`${idx}-${insight}`} className="text-sm" style={{ color: "var(--color-text)" }}>
                           • {insight}
@@ -942,21 +1044,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                       ))}
                     </div>
                   </div>
-                  {(isUploadingPhotos || isAnalyzingPhotos) && (
-                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                      {isUploadingPhotos ? "Upload en cours..." : "Analyse IA en cours..."}
-                    </p>
-                  )}
-                  {photoPanelError && (
-                    <p className="text-xs" style={{ color: "var(--color-danger)" }}>
-                      {photoPanelError}
-                    </p>
-                  )}
-                  {uploadedPhotos.length > 0 && (
-                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                      {uploadedPhotos.length} photo(s) uploadée(s)
-                    </p>
-                  )}
                 </div>
               )}
             </div>

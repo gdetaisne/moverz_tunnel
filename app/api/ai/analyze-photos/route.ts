@@ -351,13 +351,18 @@ On te donne une liste de photos et les images associées. Tu dois :
 
 Tu as accès aux images envoyées dans cette requête.
 
+CONTRAINTES DE TON :
+- Jamais de jugement de valeur, jamais de formulation dépréciative sur le logement ou les affaires du client.
+- Si un espace semble très encombré, utiliser un vocabulaire neutre et factuel (ex: "densité élevée d'objets").
+- Rester très synthétique et concret.
+
 IMPORTANT :
 - Réponds STRICTEMENT en JSON valide UTF-8, sans texte avant/après.
 - Le JSON doit respecter cette forme :
 {
   "moverInsights": [
-    "string",
-    "string"
+    "string (max 120 caractères, factuel)",
+    "string (max 120 caractères, factuel)"
   ],
   "rooms": [
     {

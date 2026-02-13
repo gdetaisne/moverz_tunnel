@@ -1,5 +1,31 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Photo+IA: miniatures persistantes + suppression liée + retour IA centralisé
+
+**Demandes** :
+- Les informations de traitement photo doivent être visibles dans `Retour IA`.
+- Les photos doivent rester en miniatures dans la zone drag&drop.
+- Si une photo est supprimée, le retour IA lié doit disparaître.
+- Contraintes IA: ton factuel, synthétique, sans jugement de valeur.
+
+**Modifications** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - miniatures conservées dans la zone import (gauche),
+  - bouton suppression par miniature,
+  - à la suppression: re-analyse automatique sur les photos restantes (donc retour IA recalculé),
+  - déplacement des statuts/errors upload/analyse dans le bloc `Retour IA`.
+- `app/api/ai/analyze-photos/route.ts`
+  - prompt renforcé:
+    - jamais de jugement,
+    - formulation neutre (ex: `densité élevée d'objets`),
+    - réponse courte et factuelle.
+
+**Impact** :
+- UX plus lisible et plus cohérente entre photos et synthèse IA.
+- Aucun changement de schéma DB.
+
+---
+
 ## 2026-02-13 — Onglet `photo + IA` : layout gauche→droite (drag&drop/import → IA → retour)
 
 **Demande** :
