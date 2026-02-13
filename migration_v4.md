@@ -1,5 +1,27 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: ordre des détails aligné avec la logique écran
+
+**Demande UX** :
+- Ordonner les lignes du bloc `Détails` selon la même logique que le formulaire.
+- Renommer `Accès · Logement` en `Acces - étages`.
+
+**Modification** (`app/devis-gratuits-v3/page.tsx`) :
+- Réordonnancement des `lines.push(...)` dans le panier Step 3:
+  1. `Distance`
+  2. `Acces - étages`
+  3. `Accès · Contraintes`
+  4. `Date`
+  5. `Densité`
+  6. `Cuisine`
+  7. `Formule`
+- Renommage du libellé `access_housing` en `Acces - étages`.
+
+**Impact** :
+- Bloc `Détails` plus cohérent avec le parcours utilisateur (trajet/access avant date/volume).
+
+---
+
 ## 2026-02-13 — Fix régression: datepicker visible après animation de blocs
 
 **Régression** :

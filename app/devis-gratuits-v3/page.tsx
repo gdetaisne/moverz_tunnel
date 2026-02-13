@@ -93,6 +93,43 @@ function DevisGratuitsV3Content() {
     | null
   >(null);
 
+  const formatInputDateLocal = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const getMinMovingDateIso = (): string => {
+    const d = new Date();
+    // Midi local: évite les effets de bord UTC/DST autour de minuit.
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() + 15);
+    return formatInputDateLocal(d);
+  };
+
+  const parseInputDateLocal = (raw: string | null | undefined): Date | null => {
+    if (!raw) return null;
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+
+    // Cas principal du tunnel: "YYYY-MM-DD"
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed);
+    if (m) {
+      const y = Number(m[1]);
+      const mo = Number(m[2]);
+      const d = Number(m[3]);
+      if (Number.isFinite(y) && Number.isFinite(mo) && Number.isFinite(d)) {
+        const dt = new Date(y, mo - 1, d, 12, 0, 0, 0);
+        return Number.isNaN(dt.getTime()) ? null : dt;
+      }
+    }
+
+    const fallback = new Date(trimmed);
+    if (Number.isNaN(fallback.getTime())) return null;
+    return fallback;
+  };
+
   // Formatter utilisé dans le rendu (sidebar Step 3, etc.)
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -115,10 +152,9 @@ function DevisGratuitsV3Content() {
   }, [state.currentStep]);
 
   const toInputDate = (raw: string | null | undefined): string | undefined => {
-    if (!raw) return undefined;
-    const d = new Date(raw);
-    if (!Number.isFinite(d.getTime())) return undefined;
-    return d.toISOString().split("T")[0];
+    const d = parseInputDateLocal(raw);
+    if (!d) return undefined;
+    return formatInputDateLocal(d);
   };
 
   const mapDensityFromBo = (d: string | null | undefined): "light" | "normal" | "dense" | undefined => {
@@ -625,9 +661,8 @@ function DevisGratuitsV3Content() {
   }, [state.currentStep, routeDistanceKm, routeDistanceProvider]);
 
   const getSeasonFactor = (dateStr: string | null | undefined): number => {
-    if (!dateStr) return 1;
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return 1;
+    const d = parseInputDateLocal(dateStr);
+    if (!d) return 1;
     const month = d.getMonth() + 1;
     if ((month >= 6 && month <= 9) || month === 12) return 1.3;
     if (month === 1 || month === 2 || month === 11) return 0.85;
@@ -635,9 +670,8 @@ function DevisGratuitsV3Content() {
   };
 
   const getUrgencyFactor = (dateStr: string | null | undefined): number => {
-    if (!dateStr) return 1;
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return 1;
+    const d = parseInputDateLocal(dateStr);
+    if (!d) return 1;
 
     const now = new Date();
     const diffMs = d.getTime() - now.getTime();
@@ -989,11 +1023,7 @@ function DevisGratuitsV3Content() {
     const s0 = calculatePricing(baselineInput);
     const firstEstimateCenterEur = centerEur(s0.prixMin, s0.prixMax);
 
-    const minMovingDate = (() => {
-      const d = new Date();
-      d.setDate(d.getDate() + 15);
-      return d.toISOString().split("T")[0]!;
-    })();
+    const minMovingDate = getMinMovingDateIso();
     const isMovingDateValid = !!state.movingDate && state.movingDate >= minMovingDate;
 
     // Distance disponible via OSRM (si adresses validées)
@@ -1240,6 +1270,24 @@ function DevisGratuitsV3Content() {
         confirmed: true,
       });
     }
+    if (accessHousingConfirmed) {
+      lines.push({
+        key: "access_housing",
+        label: "Acces - étages",
+        status: accessHousingLabel,
+        amountEur: deltaAccessHousingEur,
+        confirmed: true,
+      });
+    }
+    if (accessConstraintsConfirmed) {
+      lines.push({
+        key: "access_constraints",
+        label: "Accès · Contraintes",
+        status: accessConstraintsLabel,
+        amountEur: deltaAccessConstraintsEur,
+        confirmed: true,
+      });
+    }
     if (isMovingDateValid) {
       lines.push({
         key: "date",
@@ -1264,24 +1312,6 @@ function DevisGratuitsV3Content() {
         label: "Cuisine",
         status: kitchenLabel,
         amountEur: deltaKitchenEur,
-        confirmed: true,
-      });
-    }
-    if (accessHousingConfirmed) {
-      lines.push({
-        key: "access_housing",
-        label: "Accès · Logement",
-        status: accessHousingLabel,
-        amountEur: deltaAccessHousingEur,
-        confirmed: true,
-      });
-    }
-    if (accessConstraintsConfirmed) {
-      lines.push({
-        key: "access_constraints",
-        label: "Accès · Contraintes",
-        status: accessConstraintsLabel,
-        amountEur: deltaAccessConstraintsEur,
         confirmed: true,
       });
     }
@@ -1373,11 +1403,7 @@ function DevisGratuitsV3Content() {
     const isRouteDistanceValid = routeDistanceKm != null && routeDistanceProvider === "osrm";
     const blocTrajet = isOriginAddrValid && isDestinationAddrValid && isOriginMetaValid && isDestMetaValid && isRouteDistanceValid;
 
-    const minMovingDateV2 = (() => {
-      const d = new Date();
-      d.setDate(d.getDate() + 15);
-      return d.toISOString().split("T")[0]!;
-    })();
+    const minMovingDateV2 = getMinMovingDateIso();
     const blocDate = typeof state.movingDate === "string" && state.movingDate.length > 0 && state.movingDate >= minMovingDateV2;
 
     const blocVolume =
@@ -1693,11 +1719,7 @@ function DevisGratuitsV3Content() {
     }
 
     // Validation date: bloquer historique + 15 prochains jours
-    const minMovingDateV2 = (() => {
-      const d = new Date();
-      d.setDate(d.getDate() + 15);
-      return d.toISOString().split("T")[0]!;
-    })();
+    const minMovingDateV2 = getMinMovingDateIso();
     const isMovingDateValid =
       typeof state.movingDate === "string" &&
       state.movingDate.length > 0 &&
