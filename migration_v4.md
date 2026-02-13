@@ -1,5 +1,30 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3 mobile: blocs resserrés + encadrement visuel du bloc actif
+
+**Retour UX** :
+- Les blocs validés paraissaient trop espacés.
+- Le bloc actif n'était pas assez identifiable.
+
+**Ajustements** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Réduction de l'espacement vertical global entre sections (`space-y` resserré).
+- Encadrement explicite du bloc actif (titre + contenu) :
+  - wrapper de section avec bordure/teinte accent quand le bloc est ouvert,
+  - wrapper neutre (transparent) quand le bloc est replié.
+- Application uniforme aux sections:
+  - `Trajet & logements`,
+  - `Date de déménagement`,
+  - `Volume & densité`,
+  - `Ajouter des précisions`,
+  - `Formule`,
+  - `Coordonnées`.
+
+**Impact** :
+- Dernier écran plus compact.
+- Bloc en cours beaucoup plus lisible au premier coup d'œil.
+
+---
+
 ## 2026-02-13 — Fix scroll Step 3 (itération 2): interdiction des auto-scrolls vers le bas
 
 **Retour utilisateur** :

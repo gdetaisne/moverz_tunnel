@@ -893,8 +893,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     );
   };
 
+  const sectionFrameStyle = (isOpen: boolean): React.CSSProperties => ({
+    borderColor: isOpen ? "var(--color-accent)" : "transparent",
+    background: isOpen ? "var(--color-accent-light)" : "transparent",
+  });
+
   return (
-    <div className="space-y-6 pb-44 sm:pb-24">
+    <div className="space-y-3 pb-44 sm:pb-24">
       <input
         ref={densityPhotoInputRef}
         type="file"
@@ -908,7 +913,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         }}
       />
       {/* Addresses */}
-      <div id="v4-section-trajet" className="space-y-2">
+      <div
+        id="v4-section-trajet"
+        className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        style={sectionFrameStyle(openSections.trajet)}
+      >
       {renderSectionHeader("trajet", "Trajet & logements")}
       {openSections.trajet && (
       <CardV4 padding="md">
@@ -1024,7 +1033,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       </div>
 
       {/* Date */}
-      <div id="v4-section-date" className="space-y-2">
+      <div
+        id="v4-section-date"
+        className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        style={sectionFrameStyle(openSections.date)}
+      >
       {renderSectionHeader("date", "Date de déménagement")}
       {openSections.date && (
       <CardV4 padding="md">
@@ -1070,7 +1083,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       </div>
 
       {/* Volume */}
-      <div id="v4-section-volume" className="space-y-2">
+      <div
+        id="v4-section-volume"
+        className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        style={sectionFrameStyle(openSections.volume)}
+      >
       {renderSectionHeader("volume", "Volume & densité")}
       {openSections.volume && (
       <CardV4 padding="md">
@@ -1240,7 +1257,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       </div>
 
       {/* Informations complémentaires (dépliant) */}
-      <div className="space-y-2">
+      <div
+        className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        style={sectionFrameStyle(missingInfoPanelOpen)}
+      >
           <button
             type="button"
             disabled={isMissingInfoLocked}
@@ -1694,7 +1714,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
       {/* Formule */}
       {props.pricingByFormule && (
-        <div id="v4-section-formule" className="space-y-2">
+        <div
+          id="v4-section-formule"
+          className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+          style={sectionFrameStyle(openSections.formule)}
+        >
         {renderSectionHeader("formule", "Formule")}
         {openSections.formule && (
         <CardV4 padding="md">
@@ -1785,7 +1809,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       )}
 
       {/* Contact */}
-      <div id="v4-section-contact" className="space-y-2">
+      <div
+        id="v4-section-contact"
+        className="space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
+        style={sectionFrameStyle(openSections.contact)}
+      >
       {renderSectionHeader("contact", "Coordonnées")}
       {openSections.contact && (
       <CardV4 padding="md">
