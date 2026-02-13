@@ -1,5 +1,19 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Ne plus ouvrir automatiquement "Ajouter des précisions" en Step 3
+
+**Demande** :
+- Ne pas ouvrir automatiquement le bloc "Ajouter des précisions" sur cette étape, même après analyse photo contraintes, pour éviter de perdre le client.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- État initial `showMissingInfoPanel` remis à `false` (bloc fermé par défaut).
+
+**Impact** :
+- Le bloc ne s'ouvre plus automatiquement à l'arrivée sur l'étape.
+- Il reste accessible uniquement par action explicite utilisateur.
+
+---
+
 ## 2026-02-13 — Chaînage densité -> contraintes (prompts dédiés, non mélangés)
 
 **Demande** :

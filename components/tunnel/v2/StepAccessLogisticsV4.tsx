@@ -139,7 +139,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const isKitchenValid =
     props.kitchenIncluded !== "appliances" ||
     (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
-  const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(true);
+  const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
   const missingInfoPanelOpen = showMissingInfoPanel;
   const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("photos");
   const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
