@@ -678,6 +678,88 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         </div>
       </CardV4>
 
+      {/* Formule */}
+      {props.pricingByFormule && (
+        <CardV4 padding="md">
+          <div className="space-y-4">
+            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+              Votre formule
+            </p>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {([
+                {
+                  id: "ECONOMIQUE" as const,
+                  label: "Éco",
+                  recommended: false,
+                  bullets: ["Transport uniquement", "Vous emballez"],
+                },
+                {
+                  id: "STANDARD" as const,
+                  label: "Standard",
+                  recommended: true,
+                  bullets: ["Transport + aide", "Emballage basique"],
+                },
+                {
+                  id: "PREMIUM" as const,
+                  label: "Premium",
+                  recommended: false,
+                  bullets: ["Tout inclus", "Emballage complet"],
+                },
+              ] as const).map((f) => {
+                const price = props.pricingByFormule![f.id];
+                const selected = props.selectedFormule === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => props.onFormuleChange(f.id)}
+                    className="relative rounded-xl p-4 text-left transition-all"
+                    style={{
+                      background: selected
+                        ? "var(--color-accent-light)"
+                        : "var(--color-surface)",
+                      border: `2px solid ${
+                        selected ? "var(--color-accent)" : "var(--color-border)"
+                      }`,
+                    }}
+                  >
+                    {f.recommended && (
+                      <div
+                        className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold"
+                        style={{
+                          background: "var(--color-accent)",
+                          color: "#FFFFFF",
+                        }}
+                      >
+                        + Top
+                      </div>
+                    )}
+                    <p
+                      className="text-lg font-bold mb-2"
+                      style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
+                    >
+                      {f.label}
+                    </p>
+                    <p
+                      className="text-sm font-bold mb-3"
+                      style={{ color: "var(--color-accent)" }}
+                    >
+                      {fmtEur(price?.priceMin ?? 0)} – {fmtEur(price?.priceMax ?? 0)}
+                    </p>
+                    <ul className="space-y-1 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                      {f.bullets.map((b, i) => (
+                        <li key={i}>• {b}</li>
+                      ))}
+                    </ul>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </CardV4>
+      )}
+
       {/* Contact */}
       <CardV4 padding="md">
         <div className="space-y-4">
@@ -796,88 +878,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </div>
         </div>
       </CardV4>
-
-      {/* Formule */}
-      {props.pricingByFormule && (
-        <CardV4 padding="md">
-          <div className="space-y-4">
-            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-              Votre formule
-            </p>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {([
-                {
-                  id: "ECONOMIQUE" as const,
-                  label: "Éco",
-                  recommended: false,
-                  bullets: ["Transport uniquement", "Vous emballez"],
-                },
-                {
-                  id: "STANDARD" as const,
-                  label: "Standard",
-                  recommended: true,
-                  bullets: ["Transport + aide", "Emballage basique"],
-                },
-                {
-                  id: "PREMIUM" as const,
-                  label: "Premium",
-                  recommended: false,
-                  bullets: ["Tout inclus", "Emballage complet"],
-                },
-              ] as const).map((f) => {
-                const price = props.pricingByFormule![f.id];
-                const selected = props.selectedFormule === f.id;
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => props.onFormuleChange(f.id)}
-                    className="relative rounded-xl p-4 text-left transition-all"
-                    style={{
-                      background: selected
-                        ? "var(--color-accent-light)"
-                        : "var(--color-surface)",
-                      border: `2px solid ${
-                        selected ? "var(--color-accent)" : "var(--color-border)"
-                      }`,
-                    }}
-                  >
-                    {f.recommended && (
-                      <div
-                        className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold"
-                        style={{
-                          background: "var(--color-accent)",
-                          color: "#FFFFFF",
-                        }}
-                      >
-                        + Top
-                      </div>
-                    )}
-                    <p
-                      className="text-lg font-bold mb-2"
-                      style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
-                    >
-                      {f.label}
-                    </p>
-                    <p
-                      className="text-sm font-bold mb-3"
-                      style={{ color: "var(--color-accent)" }}
-                    >
-                      {fmtEur(price?.priceMin ?? 0)} – {fmtEur(price?.priceMax ?? 0)}
-                    </p>
-                    <ul className="space-y-1 text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                      {f.bullets.map((b, i) => (
-                        <li key={i}>• {b}</li>
-                      ))}
-                    </ul>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </CardV4>
-      )}
 
       {/* CTA */}
       <div className="space-y-3">

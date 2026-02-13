@@ -1,5 +1,18 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Step 3: ordre des blocs (Formule avant Coordonnées)
+
+**Demande** : afficher le bloc `Votre formule` au-dessus du bloc `Vos coordonnées`.
+
+**Modification** :
+- Réordonnancement des sections dans `StepAccessLogisticsV4.tsx` :
+  - avant : `Vos coordonnées` puis `Votre formule`
+  - après : `Votre formule` puis `Vos coordonnées`
+
+**Impact** : UI uniquement (ordre de lecture), aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-12 — CTA Step 3 renommé
 
 **Demande** : remplacer le libellé du CTA bas par `Lancer ma demande de devis`.
