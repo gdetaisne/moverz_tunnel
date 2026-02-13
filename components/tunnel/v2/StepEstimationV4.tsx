@@ -100,7 +100,7 @@ export function StepEstimationV4({
           {/* Prix fourchette */}
           <div className="text-center py-6 space-y-4">
             <p
-              className="text-5xl sm:text-6xl font-bold tracking-tight"
+              className="text-4xl sm:text-6xl font-bold tracking-tight whitespace-nowrap leading-none"
               style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
             >
               {priceMin != null && priceMax != null ? (
