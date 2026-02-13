@@ -87,6 +87,7 @@ interface StepAccessLogisticsV4Props {
     STANDARD: { priceMin: number; priceMax: number };
     PREMIUM: { priceMin: number; priceMax: number };
   } | null;
+  collapseAllOnEnterToken?: number;
 }
 
 const questions: Array<{ key: QuestionKey; label: string }> = [
@@ -827,6 +828,18 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     isMissingInfoLocked,
     missingInfoPanelOpen,
   ]);
+
+  useEffect(() => {
+    if (!props.collapseAllOnEnterToken || props.collapseAllOnEnterToken <= 0) return;
+    setOpenSections({
+      trajet: false,
+      date: false,
+      volume: false,
+      formule: false,
+      contact: false,
+    });
+    setShowMissingInfoPanel(false);
+  }, [props.collapseAllOnEnterToken]);
 
   const renderSectionHeader = (key: SectionKey, title: string) => {
     const meta = sectionMeta[key];

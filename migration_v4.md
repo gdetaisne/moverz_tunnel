@@ -1,5 +1,26 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Retour Step 4 → Step 3: fermeture forcée de tous les blocs
+
+**Retour UX** :
+- En revenant de la step 4 vers la step 3, tous les blocs apparaissaient ouverts.
+
+**Correction** :
+
+`app/devis-gratuits-v3/page.tsx`
+- Ajout d'un token `collapseStep3OnEnterToken`.
+- Lors du clic retour depuis step 4 (`← Modifier`), incrément du token avant `goToStep(3)`.
+- Passage du token au composant `StepAccessLogisticsV4`.
+
+`components/tunnel/v2/StepAccessLogisticsV4.tsx`
+- Nouvelle prop `collapseAllOnEnterToken`.
+- `useEffect` dédié: quand le token change (>0), fermeture de toutes les sections (`trajet/date/volume/formule/contact`) + fermeture du panneau "Ajouter des précisions".
+
+**Impact** :
+- Comportement conforme: retour en step 3 avec blocs repliés.
+
+---
+
 ## 2026-02-13 — Step 4: arrivée en haut + refonte contenu confirmation
 
 **Demandes** :

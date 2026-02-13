@@ -81,6 +81,7 @@ function DevisGratuitsV3Content() {
   const [showValidationStep3, setShowValidationStep3] = useState(false);
   const [aiPhotoInsights, setAiPhotoInsights] = useState<string[]>([]);
   const [densityAiNote, setDensityAiNote] = useState("");
+  const [collapseStep3OnEnterToken, setCollapseStep3OnEnterToken] = useState(0);
 
   // Formatter utilisé dans le rendu (sidebar Step 3, etc.)
   const fmtEur = (n: number) =>
@@ -1954,7 +1955,12 @@ function DevisGratuitsV3Content() {
           {/* Top back/edit */}
           {state.currentStep > 1 && (
             <button
-              onClick={() => goToStep((state.currentStep - 1) as 1 | 2 | 3 | 4)}
+              onClick={() => {
+                if (state.currentStep === 4) {
+                  setCollapseStep3OnEnterToken((v) => v + 1);
+                }
+                goToStep((state.currentStep - 1) as 1 | 2 | 3 | 4);
+              }}
               className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors duration-fast"
             >
               ← Modifier
@@ -2071,6 +2077,7 @@ function DevisGratuitsV3Content() {
                 email={state.email}
                 phone={state.phone}
                 specificNotes={state.specificNotes}
+                collapseAllOnEnterToken={collapseStep3OnEnterToken}
               />
               </div>
 
