@@ -1,5 +1,25 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Panier Step 3: ajout du détail `Formule` (delta vs STANDARD)
+
+**Demande** :
+- Le calcul de base doit être en formule `STANDARD`.
+- Le bloc `DÉTAILS` doit inclure une ligne `Formule` avec le delta si la formule choisie n'est pas STANDARD.
+
+**Modification** (`app/devis-gratuits-v3/page.tsx`) :
+- Baseline du panier fixée sur `STANDARD` pour `firstEstimate*`.
+- Calcul final séparé :
+  - `sAccessStandard` (sans effet formule explicite),
+  - `sFinal` (formule sélectionnée).
+- Nouvelle ligne `Formule` ajoutée dans les détails avec `amountEur = sFinal - sAccessStandard`.
+- La ligne est ensuite automatiquement masquée si delta à 0€ (règle déjà en place).
+
+**Impact** :
+- Détails plus cohérents métier (base STANDARD + delta formule explicite).
+- Aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-12 — SmartCart: masquer les lignes de détails à 0 €
 
 **Demande** : ne pas afficher les lignes de détail dont l'impact prix est nul (ex: `Date` à 0 €).

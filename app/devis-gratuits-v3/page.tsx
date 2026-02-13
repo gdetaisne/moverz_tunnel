@@ -815,7 +815,8 @@ function DevisGratuitsV3Content() {
     if (cityOsrmDistanceKm == null) return null;
 
     const surface = parseInt(state.surfaceM2) || 60;
-    const formule = state.formule as PricingFormuleType;
+    const selectedFormule = state.formule as PricingFormuleType;
+    const baselineFormule: PricingFormuleType = "STANDARD";
     const distanceKm = cityOsrmDistanceKm + 15;
     const extraVolumeM3 = 3 * 0.6; // debug Step 2: cuisine=3 équipements
     const baseVolumeM3 = calculateVolume(surface, "t2", "dense");
@@ -945,7 +946,7 @@ function DevisGratuitsV3Content() {
     if (cityOsrmDistanceKm == null) return null; // attend l'OSRM
     const baseDistanceKm = cityOsrmDistanceKm + 15;
 
-    // Baseline = formule sélectionnée (cohérent avec Step 2 et API /api/estimate)
+    // Baseline fixe = STANDARD (source de vérité du "Budget initial")
     const baselineInput: Parameters<typeof calculatePricing>[0] = {
       surfaceM2: surface,
       housingType: "t2" as const,
@@ -957,7 +958,7 @@ function DevisGratuitsV3Content() {
       destinationFloor: 0,
       destinationElevator: "yes" as const,
       services: { monteMeuble: false, piano: null as null, debarras: false },
-      formule,
+      formule: baselineFormule,
       extraVolumeM3: 3 * 0.6, // cuisine = 3 équipements
     };
 
@@ -1107,13 +1108,25 @@ function DevisGratuitsV3Content() {
         },
       };
     })();
-    const sAccess = calculatePricing(inputAccessConstraints);
+    const sAccessStandard = calculatePricing(inputAccessConstraints);
     const deltaAccessConstraintsEur = accessConstraintsConfirmed
-      ? formatDelta(sAccess.prixFinal - sAccessHousing.prixFinal)
+      ? formatDelta(sAccessStandard.prixFinal - sAccessHousing.prixFinal)
       : 0;
 
-    // La formule est déjà intégrée au baseline → pas de delta séparé.
-    const refinedCenterEur = centerEur(sAccess.prixMin, sAccess.prixMax);
+    const inputSelectedFormule = {
+      ...inputAccessConstraints,
+      formule: selectedFormule,
+    };
+    const sFinal =
+      selectedFormule === baselineFormule
+        ? sAccessStandard
+        : calculatePricing(inputSelectedFormule);
+    const deltaFormuleEur =
+      selectedFormule === baselineFormule
+        ? 0
+        : formatDelta(sFinal.prixFinal - sAccessStandard.prixFinal);
+
+    const refinedCenterEur = centerEur(sFinal.prixMin, sFinal.prixMax);
 
     const densityLabel =
       !densityTouched
@@ -1143,7 +1156,11 @@ function DevisGratuitsV3Content() {
       : "confirmées";
 
     const formuleLabel =
-      formule === "ECONOMIQUE" ? "Éco" : formule === "PREMIUM" ? "Premium" : "Standard";
+      selectedFormule === "ECONOMIQUE"
+        ? "Éco"
+        : selectedFormule === "PREMIUM"
+        ? "Premium"
+        : "Standard";
 
     const lines: Array<{
       key:
@@ -1152,7 +1169,8 @@ function DevisGratuitsV3Content() {
         | "kitchen"
         | "date"
         | "access_housing"
-        | "access_constraints";
+        | "access_constraints"
+        | "formule";
       label: string;
       status: string;
       amountEur: number;
@@ -1213,13 +1231,20 @@ function DevisGratuitsV3Content() {
         confirmed: true,
       });
     }
+    lines.push({
+      key: "formule",
+      label: "Formule",
+      status: formuleLabel,
+      amountEur: deltaFormuleEur,
+      confirmed: true,
+    });
 
     return {
       firstEstimateMinEur: s0.prixMin,
       firstEstimateMaxEur: s0.prixMax,
       firstEstimateCenterEur,
-      refinedMinEur: sAccess.prixMin,
-      refinedMaxEur: sAccess.prixMax,
+      refinedMinEur: sFinal.prixMin,
+      refinedMaxEur: sFinal.prixMax,
       refinedCenterEur,
       lines,
       formuleLabel,
