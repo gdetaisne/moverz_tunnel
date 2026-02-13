@@ -79,9 +79,13 @@ export function SmartCart({
 }: SmartCartProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [prevPrice, setPrevPrice] = useState(currentPrice);
   const [mobileFabBottom, setMobileFabBottom] = useState(88);
   const [impactHistory, setImpactHistory] = useState<CartItem[]>([]);
+  const [displayedEstimate, setDisplayedEstimate] = useState({
+    current: currentPrice,
+    min: minPrice,
+    max: maxPrice,
+  });
   const previousItemsRef = useRef<Map<string, number>>(new Map());
 
   // Detect mobile
@@ -121,12 +125,17 @@ export function SmartCart({
     };
   }, [isMobile]);
 
-  // Track price changes for animation
+  // Le bloc estimation (montant + min/max + barre) ne se met à jour
+  // que quand le montant central change réellement.
   useEffect(() => {
-    if (currentPrice !== prevPrice) {
-      setPrevPrice(currentPrice);
+    if (currentPrice !== displayedEstimate.current) {
+      setDisplayedEstimate({
+        current: currentPrice,
+        min: minPrice,
+        max: maxPrice,
+      });
     }
-  }, [currentPrice, prevPrice]);
+  }, [currentPrice, minPrice, maxPrice, displayedEstimate.current]);
 
   useEffect(() => {
     const nextMap = new Map(items.map((item) => [item.id, item.amountEur]));
@@ -161,9 +170,12 @@ export function SmartCart({
       maximumFractionDigits: 0,
     }).format(n);
 
-  const priceInRange = Math.max(minPrice, Math.min(maxPrice, currentPrice));
-  const rangePercent = maxPrice > minPrice
-    ? ((priceInRange - minPrice) / (maxPrice - minPrice)) * 100
+  const priceInRange = Math.max(
+    displayedEstimate.min,
+    Math.min(displayedEstimate.max, displayedEstimate.current)
+  );
+  const rangePercent = displayedEstimate.max > displayedEstimate.min
+    ? ((priceInRange - displayedEstimate.min) / (displayedEstimate.max - displayedEstimate.min)) * 100
     : 50;
 
   const itemsCount = items.filter((item) => item.amountEur !== 0).length;
@@ -210,7 +222,7 @@ export function SmartCart({
         {/* Prix principal animé */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentPrice}
+            key={displayedEstimate.current}
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -10, opacity: 0 }}
@@ -218,7 +230,7 @@ export function SmartCart({
             className={isMobile && drawerOpen ? "text-5xl font-bold tabular-nums" : "text-4xl font-bold tabular-nums"}
             style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
           >
-            {fmtEur(currentPrice)}
+            {fmtEur(displayedEstimate.current)}
           </motion.div>
         </AnimatePresence>
 
@@ -238,10 +250,10 @@ export function SmartCart({
           </div>
           <div className={`flex items-center justify-between ${isMobile && drawerOpen ? "text-sm" : "text-xs"}`}>
             <span style={{ color: "var(--color-text-muted)" }}>
-              Min {fmtEur(minPrice)}
+              Min {fmtEur(displayedEstimate.min)}
             </span>
             <span style={{ color: "var(--color-text-muted)" }}>
-              Max {fmtEur(maxPrice)}
+              Max {fmtEur(displayedEstimate.max)}
             </span>
           </div>
         </div>
@@ -309,9 +321,9 @@ export function SmartCart({
               >
                 {fmtEur(initialPrice)}
               </span>
-              {initialPrice !== currentPrice && (
+              {initialPrice !== displayedEstimate.current && (
                 <div className="flex items-center gap-1 mt-0.5">
-                  {currentPrice > initialPrice ? (
+                  {displayedEstimate.current > initialPrice ? (
                     <TrendingUp className="w-3 h-3" style={{ color: "var(--color-danger)" }} />
                   ) : (
                     <TrendingDown className="w-3 h-3" style={{ color: "var(--color-success)" }} />
@@ -319,11 +331,14 @@ export function SmartCart({
                   <span
                     className="text-[10px] font-bold tabular-nums"
                     style={{
-                      color: currentPrice > initialPrice ? "var(--color-danger)" : "var(--color-success)",
+                      color:
+                        displayedEstimate.current > initialPrice
+                          ? "var(--color-danger)"
+                          : "var(--color-success)",
                     }}
                   >
-                    {currentPrice > initialPrice ? "+" : ""}
-                    {fmtEur(currentPrice - initialPrice)}
+                    {displayedEstimate.current > initialPrice ? "+" : ""}
+                    {fmtEur(displayedEstimate.current - initialPrice)}
                   </span>
                 </div>
               )}

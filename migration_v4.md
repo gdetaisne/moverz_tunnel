@@ -1,5 +1,43 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix UX: bloc estimation stable pendant saisie adresse
+
+**Problème** :
+- Le bloc "Votre estimation" (montant + jauge min/max) bougeait pendant la saisie d'une rue,
+  même quand le montant estimé n'évoluait pas.
+
+**Correction** :
+- `components/tunnel-v4/SmartCart.tsx`
+  - ajout d'un état d'affichage verrouillé (`displayedEstimate`),
+  - mise à jour de `displayedEstimate` uniquement si `currentPrice` change,
+  - la carte estimation (montant, min, max, barre, delta vs Step 2) lit cet état figé.
+
+**Effet attendu** :
+- Plus de variation visuelle parasite du bloc estimation lors de la frappe adresse.
+- Le bloc estimation ne bouge que quand le montant central change réellement.
+
+---
+
+## 2026-02-13 — Correctif chiffres/date: min J+15 et parsing local (sans décalage UTC)
+
+**Bug identifié** :
+- Les dates utilisées pour les règles chiffrées (`J+15`, saisonnalité, urgence) passaient par `toISOString()`.
+- Selon fuseau horaire / DST, la date pouvait glisser d’un jour (validation trop stricte ou calcul de facteur saison/urgence erroné).
+
+**Corrections** :
+- `app/devis-gratuits-v3/page.tsx`
+  - ajout de helpers date en **local** (`formatInputDateLocal`, `parseInputDateLocal`, `getMinMovingDateIso`),
+  - remplacement des `toISOString().split("T")[0]` pour les règles min date,
+  - calcul des facteurs saison/urgence basé sur le parsing local (source `YYYY-MM-DD` du tunnel).
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - alignement du `minMovingDate` sur le même helper local `J+15`.
+
+**Impact** :
+- Validation date stable (plus de faux blocage à J+14/J+15 selon fuseau).
+- Cohérence des calculs de prix liés à la date (saison/urgence).
+
+---
+
 ## 2026-02-13 — Fix build TS: variable OSRM utilisée avant déclaration
 
 **Incident** :
