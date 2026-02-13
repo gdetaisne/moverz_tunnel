@@ -1,5 +1,18 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Retrait du mini-bloc "Upload des photos..." dans Retour IA
+
+**Demande** :
+- Supprimer le petit bloc d'état "Upload des photos..." dans la zone `Retour IA`.
+
+**Modification** :
+- Suppression du bloc visuel intermédiaire.
+- Le pipeline d'étapes reste l'indicateur unique de progression.
+
+**Fichier** : `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+
+---
+
 ## 2026-02-13 — Fix ré-analyse cumulée: inclure toutes les photos actives (pas seulement les nouvelles)
 
 **Problème observé** :
