@@ -846,7 +846,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             <p className="text-xs truncate mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
               Terminez le bloc précédent pour débloquer
             </p>
-          ) : !isOpen && (
+          ) : !isOpen ? (
             <p className="text-xs truncate mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
               {meta.summary}
             </p>

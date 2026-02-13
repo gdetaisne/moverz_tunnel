@@ -1,5 +1,24 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix build prod: ternaire JSX invalide dans Step 3
+
+**Incident** :
+- Le build prod échouait sur `components/tunnel/v2/StepAccessLogisticsV4.tsx` avec erreur de parse Turbopack:
+  - `Expected '</', got ':'` autour de la ligne du résumé de header de bloc.
+
+**Cause** :
+- Expression JSX invalide (`: !isOpen && (...) : null`) introduite dans un ternaire.
+
+**Correction** :
+- Remplacement par un ternaire valide:
+  - `: !isOpen ? (...) : null`
+
+**Impact** :
+- Compilation TypeScript/Next débloquée.
+- Aucun impact fonctionnel hors correction de syntaxe.
+
+---
+
 ## 2026-02-13 — Step 3: statut validé affiché en icône uniquement
 
 **Demande UI** :
