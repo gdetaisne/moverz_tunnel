@@ -1,5 +1,25 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3 mobile: blocs validés resserrés + bloc précisions aligné au même format
+
+**Demande UX** :
+- Resserer visuellement les blocs terminés pour alléger l'écran final.
+- Mettre `Ajouter des précisions` au même format que les autres blocs.
+
+**Modifications** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Headers des blocs validés/repliés compacts (`py` réduit) pour diminuer la hauteur totale.
+- Refonte du bloc `Ajouter des précisions` :
+  - header de même pattern que les autres blocs (titre + sous-texte + statut à droite),
+  - statuts harmonisés (`Verrouillé`, `Facultatif`, `En cours`, `Validé`),
+  - contenu affiché dans une card dédiée uniquement quand le bloc est ouvert.
+
+**Impact** :
+- Écran final plus lisible, plus compact.
+- Cohérence visuelle des blocs Step 3 renforcée.
+- Aucun impact BO/Prisma/tracking/payload.
+
+---
+
 ## 2026-02-13 — Step 3 mobile: mode soft de déverrouillage séquentiel des blocs
 
 **Décision UX** :

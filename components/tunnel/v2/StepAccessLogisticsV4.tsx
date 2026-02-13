@@ -829,7 +829,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           if (isLocked) return;
           setOpenSections((state) => ({ ...state, [key]: !state[key] }));
         }}
-        className="w-full rounded-xl border px-3 py-2 text-left flex items-center justify-between gap-3 disabled:cursor-not-allowed"
+        className={`w-full rounded-xl border px-3 text-left flex items-center justify-between gap-3 disabled:cursor-not-allowed ${
+          meta.valid && !isOpen ? "py-1.5" : "py-2"
+        }`}
         style={{
           borderColor: "var(--color-border)",
           background: "var(--color-surface)",
@@ -1216,8 +1218,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       </div>
 
       {/* Informations complémentaires (dépliant) */}
-      <CardV4 padding="md">
-        <div className="space-y-4">
+      <div className="space-y-2">
           <button
             type="button"
             disabled={isMissingInfoLocked}
@@ -1225,36 +1226,56 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               if (isMissingInfoLocked) return;
               setShowMissingInfoPanel((v) => !v);
             }}
-            className="w-full flex items-center justify-between text-left rounded-xl px-3 py-2"
+            className={`w-full rounded-xl border px-3 text-left flex items-center justify-between gap-3 disabled:cursor-not-allowed ${
+              missingInfoValidated && !missingInfoPanelOpen ? "py-1.5" : "py-2"
+            }`}
             style={{
-              background: "var(--color-bg)",
-              border: "1px solid var(--color-border)",
+              background: "var(--color-surface)",
+              borderColor: "var(--color-border)",
               opacity: isMissingInfoLocked ? 0.62 : 1,
             }}
             aria-expanded={missingInfoPanelOpen}
           >
-            <span className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-              Ajouter des précisions (facultatif)
-            </span>
-            <span className="flex items-center gap-2" aria-hidden>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold truncate" style={{ color: "var(--color-text)" }}>
+                Ajouter des précisions (facultatif)
+              </p>
+              {!missingInfoPanelOpen && (
+                <p className="text-xs truncate mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+                  {missingInfoValidated ? "Précisions validées" : "Photos / contraintes / notes"}
+                </p>
+              )}
+            </div>
+            <div className="shrink-0 flex items-center gap-2" aria-hidden>
               <span
                 className="text-xs font-semibold"
                 style={{
-                  color: missingInfoValidated
+                  color: isMissingInfoLocked
+                    ? "var(--color-text-muted)"
+                    : missingInfoValidated
                     ? "var(--color-success)"
                     : missingInfoPanelOpen
                     ? "var(--color-accent)"
                     : "var(--color-text-muted)",
                 }}
               >
-                {missingInfoValidated ? "Validé" : missingInfoPanelOpen ? "En cours" : "Facultatif"}
+                {isMissingInfoLocked
+                  ? "Verrouillé"
+                  : missingInfoValidated
+                  ? "Validé"
+                  : missingInfoPanelOpen
+                  ? "En cours"
+                  : "Facultatif"}
               </span>
-              <Camera className="w-3.5 h-3.5" style={{ color: "var(--color-text-muted)" }} />
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
-                style={{ color: "var(--color-text-muted)" }}
-              />
-            </span>
+              {missingInfoValidated ? (
+                <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
+              ) : (
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
+                  style={{ color: "var(--color-text-muted)" }}
+                />
+              )}
+            </div>
           </button>
           {isMissingInfoLocked && (
             <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
@@ -1263,6 +1284,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           )}
 
           {missingInfoPanelOpen && (
+            <CardV4 padding="md">
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {[
@@ -1650,9 +1672,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 Valider ces précisions
               </button>
             </div>
+            </CardV4>
           )}
-        </div>
-      </CardV4>
+      </div>
 
       {/* Formule */}
       {props.pricingByFormule && (
