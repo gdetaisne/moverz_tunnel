@@ -9,8 +9,20 @@
  * ❌ Services additionnels facultatifs RETIRÉS
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { MapPin, Calendar, Home, Mail, User, Phone, ChevronDown, Camera } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  MapPin,
+  Calendar,
+  Home,
+  Mail,
+  User,
+  Phone,
+  ChevronDown,
+  Camera,
+  Upload,
+  ArrowRight,
+  ArrowDown,
+} from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 import { CardV4 } from "@/components/tunnel-v4";
@@ -118,6 +130,8 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [photoPanelError, setPhotoPanelError] = useState<string | null>(null);
   const [moverInsights, setMoverInsights] = useState<string[]>([]);
   const [fallbackUploadLeadId, setFallbackUploadLeadId] = useState<string | null>(null);
+  const [isDragOverPhotos, setIsDragOverPhotos] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -381,6 +395,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     } finally {
       setIsUploadingPhotos(false);
     }
+  };
+
+  const onPhotoFilesPicked = async (files: File[]) => {
+    if (files.length === 0) return;
+    await handlePhotoUploadAndAnalyze(files);
   };
 
   return (
@@ -834,32 +853,95 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
               {activeMissingInfoTab === "photos" && (
                 <div className="space-y-3">
-                  <label
-                    htmlFor="v4-optional-photos"
-                    className="block text-sm font-semibold"
-                    style={{ color: "var(--color-text)" }}
-                  >
-                    Ajouter des photos (facultatif)
-                  </label>
-                  <input
-                    id="v4-optional-photos"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="w-full rounded-xl px-4 py-3 text-sm"
-                    style={{
-                      background: "var(--color-bg)",
-                      border: "2px solid var(--color-border)",
-                      color: "var(--color-text)",
-                    }}
-                    onChange={async (e) => {
-                      const files = Array.from(e.target.files || []);
-                      await handlePhotoUploadAndAnalyze(files);
-                    }}
-                  />
                   <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                     Ajouter des photos pour une estimation plus precise. Nous analysons vos photos pour enrichir votre dossier.
                   </p>
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-3 items-stretch">
+                    <div
+                      className="rounded-xl p-3 space-y-3"
+                      style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)" }}
+                    >
+                      <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                        Import / Drag and drop
+                      </p>
+                      <div
+                        className="rounded-xl p-4 text-center border-2 border-dashed transition-colors"
+                        style={{
+                          borderColor: isDragOverPhotos ? "var(--color-accent)" : "var(--color-border)",
+                          background: isDragOverPhotos ? "var(--color-accent-light)" : "var(--color-surface)",
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsDragOverPhotos(true);
+                        }}
+                        onDragLeave={() => setIsDragOverPhotos(false)}
+                        onDrop={async (e) => {
+                          e.preventDefault();
+                          setIsDragOverPhotos(false);
+                          const files = Array.from(e.dataTransfer.files || []);
+                          await onPhotoFilesPicked(files);
+                        }}
+                      >
+                        <Upload className="w-5 h-5 mx-auto mb-2" style={{ color: "var(--color-accent)" }} />
+                        <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                          Deposez vos photos ici
+                        </p>
+                      </div>
+                      <input
+                        ref={photoInputRef}
+                        id="v4-optional-photos"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={async (e) => {
+                          const files = Array.from(e.target.files || []);
+                          await onPhotoFilesPicked(files);
+                          e.currentTarget.value = "";
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => photoInputRef.current?.click()}
+                        className="w-full rounded-xl px-3 py-2 text-sm font-semibold"
+                        style={{ background: "var(--color-surface)", border: "2px solid var(--color-border)", color: "var(--color-text)" }}
+                      >
+                        Importer des photos
+                      </button>
+                    </div>
+
+                    <div className="hidden lg:flex items-center justify-center px-1">
+                      <div className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: "var(--color-accent)" }}>
+                        <span>IA</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div className="flex lg:hidden items-center justify-center">
+                      <div className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: "var(--color-accent)" }}>
+                        <span>IA</span>
+                        <ArrowDown className="w-4 h-4" />
+                      </div>
+                    </div>
+
+                    <div
+                      className="rounded-xl p-3 space-y-2"
+                      style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)" }}
+                    >
+                      <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                        Retour IA
+                      </p>
+                      {moverInsights.length === 0 && !isAnalyzingPhotos && (
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                          Ajoutez des photos pour obtenir un retour IA.
+                        </p>
+                      )}
+                      {moverInsights.map((insight, idx) => (
+                        <p key={`${idx}-${insight}`} className="text-sm" style={{ color: "var(--color-text)" }}>
+                          • {insight}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
                   {(isUploadingPhotos || isAnalyzingPhotos) && (
                     <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                       {isUploadingPhotos ? "Upload en cours..." : "Analyse IA en cours..."}
@@ -874,21 +956,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                     <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                       {uploadedPhotos.length} photo(s) uploadée(s)
                     </p>
-                  )}
-                  {moverInsights.length > 0 && (
-                    <div
-                      className="rounded-xl p-3 space-y-1"
-                      style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)" }}
-                    >
-                      <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
-                        Analyse IA (vue déménageur)
-                      </p>
-                      {moverInsights.map((insight, idx) => (
-                        <p key={`${idx}-${insight}`} className="text-sm" style={{ color: "var(--color-text)" }}>
-                          • {insight}
-                        </p>
-                      ))}
-                    </div>
                   )}
                 </div>
               )}

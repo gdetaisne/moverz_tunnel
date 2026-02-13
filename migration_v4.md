@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Onglet `photo + IA` : layout gauche→droite (drag&drop/import → IA → retour)
+
+**Demande** :
+- Ajouter un champ drag and drop / import à gauche.
+- Ajouter une flèche IA vers le champ retour IA.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Refonte de l'onglet `photo + IA` en 3 zones :
+  - gauche : bloc `Import / Drag and drop` (dropzone + bouton import),
+  - centre : indicateur IA avec flèche (`ArrowRight` desktop, `ArrowDown` mobile),
+  - droite : bloc `Retour IA`.
+- Ajout gestion drag&drop native (`onDragOver/onDrop`) + input file caché.
+
+**Impact** : UI/UX uniquement (analyse IA et stockage inchangés).
+
+---
+
 ## 2026-02-13 — Onglet photo+IA : icône + texte + stockage analyse IA dans `notes`
 
 **Demandes** :
