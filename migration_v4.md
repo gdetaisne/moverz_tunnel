@@ -1,5 +1,23 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: formule non pré-remplie côté UI (calcul inchangé)
+
+**Retour UX** :
+- Des champs paraissaient encore pré-sélectionnés visuellement alors qu'ils servent seulement de base de calcul.
+
+**Correction ciblée** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Découplage explicite pour la formule:
+  - le calcul panier peut rester basé sur `STANDARD` par défaut,
+  - mais côté UI la formule n'est plus considérée `validée` tant qu'il n'y a pas de choix explicite utilisateur.
+- Résumé du bloc formule ajusté:
+  - avant choix explicite: `À choisir` (au lieu de `Standard (par défaut)`).
+
+**Impact** :
+- Plus de pré-saisie perçue côté UI.
+- Cohérence avec la règle: défauts de calcul invisibles tant que non confirmés par l'utilisateur.
+
+---
+
 ## 2026-02-13 — Fix scroll auto Step 3: suppression des sauts trop bas
 
 **Retour utilisateur** :

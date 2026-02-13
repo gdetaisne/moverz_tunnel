@@ -680,9 +680,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       ((props.destinationFloorTouched ?? false) ||
         (props.destinationFloor || "").trim() !== "0"));
   const isFormuleValid =
-    props.selectedFormule === "ECONOMIQUE" ||
-    props.selectedFormule === "STANDARD" ||
-    props.selectedFormule === "PREMIUM";
+    formuleExplicitChoice &&
+    (props.selectedFormule === "ECONOMIQUE" ||
+      props.selectedFormule === "STANDARD" ||
+      props.selectedFormule === "PREMIUM");
 
   const sectionMeta: Record<SectionKey, { valid: boolean; summary: string }> = {
     trajet: {
@@ -714,8 +715,8 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     formule: {
       valid: isFormuleValid,
       summary:
-        !formuleExplicitChoice && props.selectedFormule === "STANDARD"
-          ? "Standard (par défaut)"
+        !formuleExplicitChoice
+          ? "À choisir"
           : props.selectedFormule === "ECONOMIQUE"
           ? "Éco"
           : props.selectedFormule === "PREMIUM"
