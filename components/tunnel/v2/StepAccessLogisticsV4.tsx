@@ -360,8 +360,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     setFallbackUploadLeadId(generated);
   }, [props.leadId]);
 
-  const analyzePhotosLive = async (photos: UploadedPhoto[]) => {
-    const isDensityFlow = photoAnalysisContext === "density";
+  const analyzePhotosLive = async (
+    photos: UploadedPhoto[],
+    forcedContext?: PhotoAnalysisContext
+  ) => {
+    const analysisContext = forcedContext ?? photoAnalysisContext;
+    const isDensityFlow = analysisContext === "density";
     if (photos.length === 0) {
       setMoverInsights([]);
       if (isDensityFlow) {
@@ -386,7 +390,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           leadId: props.leadId ?? undefined,
-          analysisContext: photoAnalysisContext,
+          analysisContext,
           photos: photos.map((p) => ({
             id: p.id,
             storageKey: p.storageKey,
@@ -581,6 +585,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       setPipelineStepStatus("temp_save", "done");
       setPipelineStepStatus("ai_analysis", "in_progress");
       await analyzePhotosLive(photosForAnalysis);
+      // En flux densité: une fois la densité sélectionnée/justifiée, on enchaîne
+      // automatiquement une analyse "contraintes spécifiques" dédiée (sans densité).
+      if (photoAnalysisContext === "density") {
+        await analyzePhotosLive(photosForAnalysis, "specific_constraints");
+      }
       setPipelineStepStatus("ai_analysis", "done");
     } catch (error) {
       setPhotoPanelError(error instanceof Error ? error.message : "Erreur upload.");
@@ -616,6 +625,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     );
     setPhotoPanelError(null);
     await analyzePhotosLive(remainingActive);
+    if (photoAnalysisContext === "density") {
+      await analyzePhotosLive(remainingActive, "specific_constraints");
+    }
   };
 
   return (

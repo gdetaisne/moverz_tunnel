@@ -1,5 +1,26 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Chaînage densité -> contraintes (prompts dédiés, non mélangés)
+
+**Demande** :
+- Si photo ajoutée en partie contraintes: utiliser le prompt contraintes dédié.
+- En flux densité: après retour densité (sélection + justification), lancer aussi l'analyse contraintes dédiée.
+- Ne jamais mélanger les retours densité et contraintes.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- `analyzePhotosLive` accepte désormais un contexte forcé (`density` ou `specific_constraints`).
+- Upload en contexte contraintes => appel du prompt contraintes uniquement.
+- Upload en contexte densité => appel densité, puis second appel automatique contraintes sur les mêmes photos.
+- Suppression photo en contexte densité => même chaînage (densité puis contraintes) pour garder les 2 retours synchronisés.
+
+**Impact** :
+- Séparation claire des retours:
+  - densité -> commentaire densité,
+  - contraintes -> retour IA contraintes.
+- Plus de confusion entre les deux analyses.
+
+---
+
 ## 2026-02-13 — Panier Step 3: stop refresh pendant saisie adresse
 
 **Demande** :
