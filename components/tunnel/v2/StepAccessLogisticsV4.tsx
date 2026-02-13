@@ -812,7 +812,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     const meta = sectionMeta[key];
     const isOpen = openSections[key];
     const isLocked = sectionLocked[key];
-    const statusLabel = isLocked ? "Verrouillé" : meta.valid ? "Validé" : isOpen ? "En cours" : "À compléter";
+    const statusLabel = isLocked ? "Verrouillé" : isOpen ? "En cours" : "À compléter";
     const statusColor = meta.valid
       ? "var(--color-success)"
       : isLocked
@@ -853,9 +853,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           ) : null}
         </div>
         <div className="shrink-0 flex items-center gap-2">
-          <span className="text-xs font-semibold" style={{ color: statusColor }}>
-            {statusLabel}
-          </span>
+          {!meta.valid && (
+            <span className="text-xs font-semibold" style={{ color: statusColor }}>
+              {statusLabel}
+            </span>
+          )}
           {meta.valid ? (
             <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
           ) : isLocked ? (
@@ -1247,26 +1249,20 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               )}
             </div>
             <div className="shrink-0 flex items-center gap-2" aria-hidden>
-              <span
-                className="text-xs font-semibold"
-                style={{
-                  color: isMissingInfoLocked
-                    ? "var(--color-text-muted)"
-                    : missingInfoValidated
-                    ? "var(--color-success)"
-                    : missingInfoPanelOpen
-                    ? "var(--color-accent)"
-                    : "var(--color-text-muted)",
-                }}
-              >
-                {isMissingInfoLocked
-                  ? "Verrouillé"
-                  : missingInfoValidated
-                  ? "Validé"
-                  : missingInfoPanelOpen
-                  ? "En cours"
-                  : "Facultatif"}
-              </span>
+              {(!missingInfoValidated || isMissingInfoLocked) && (
+                <span
+                  className="text-xs font-semibold"
+                  style={{
+                    color: isMissingInfoLocked
+                      ? "var(--color-text-muted)"
+                      : missingInfoPanelOpen
+                      ? "var(--color-accent)"
+                      : "var(--color-text-muted)",
+                  }}
+                >
+                  {isMissingInfoLocked ? "Verrouillé" : missingInfoPanelOpen ? "En cours" : "Facultatif"}
+                </span>
+              )}
               {missingInfoValidated ? (
                 <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
               ) : (

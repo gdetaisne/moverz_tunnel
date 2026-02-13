@@ -1,5 +1,19 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: statut validé affiché en icône uniquement
+
+**Demande UI** :
+- Remplacer le texte vert `Validé` par le petit symbole de validation déjà utilisé.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Headers de blocs: quand un bloc est validé, le libellé texte est masqué et seule l'icône `check` est affichée.
+- Bloc `Ajouter des précisions`: même logique (icône seule quand validé).
+
+**Impact** :
+- Interface plus compacte et plus homogène visuellement.
+
+---
+
 ## 2026-02-13 — Step 3 mobile: blocs validés resserrés + bloc précisions aligné au même format
 
 **Demande UX** :
