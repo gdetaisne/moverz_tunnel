@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   MapPin,
   Calendar,
@@ -105,6 +106,17 @@ const FLOOR_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "4", label: "4e ou +" },
 ];
 
+const getMinMovingDateIso = (): string => {
+  const d = new Date();
+  // Midi local: évite un décalage de date sur les fuseaux non-UTC.
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() + 15);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
 export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   type SectionKey = "trajet" | "date" | "volume" | "formule" | "contact";
   type PipelineStepKey =
@@ -123,9 +135,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   ];
 
   const minMovingDate = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 15);
-    return d.toISOString().split("T")[0]!;
+    return getMinMovingDateIso();
   }, []);
 
   const isApartment = (t: string) => {
@@ -935,6 +945,27 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     background: isActive ? "var(--color-accent-light)" : "transparent",
   });
 
+  const renderAnimatedSection = (
+    contentKey: string,
+    isOpen: boolean,
+    children: React.ReactNode
+  ) => (
+    <AnimatePresence initial={false}>
+      {isOpen ? (
+        <motion.div
+          key={contentKey}
+          initial={{ height: 0, opacity: 0, y: -4 }}
+          animate={{ height: "auto", opacity: 1, y: 0 }}
+          exit={{ height: 0, opacity: 0, y: -4 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          style={{ overflow: "hidden" }}
+        >
+          <div className="pt-1">{children}</div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+
   const renderSubBlock = (
     title: string,
     complete: boolean,
@@ -983,7 +1014,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         style={sectionFrameStyle(activeSection === "trajet")}
       >
       {renderSectionHeader("trajet", "Trajet & logements")}
-      {openSections.trajet && (
+      {renderAnimatedSection("trajet", openSections.trajet, (
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -1102,7 +1133,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </div>
         </div>
       </CardV4>
-      )}
+      ))}
       </div>
 
       {/* Date */}
@@ -1112,7 +1143,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         style={sectionFrameStyle(activeSection === "date")}
       >
       {renderSectionHeader("date", "Date de déménagement")}
-      {openSections.date && (
+      {renderAnimatedSection("date", openSections.date, (
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -1152,7 +1183,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </label>
         </div>
       </CardV4>
-      )}
+      ))}
       </div>
 
       {/* Volume */}
@@ -1162,7 +1193,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         style={sectionFrameStyle(activeSection === "volume")}
       >
       {renderSectionHeader("volume", "Volume & densité")}
-      {openSections.volume && (
+      {renderAnimatedSection("volume", openSections.volume, (
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -1326,7 +1357,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           )}
         </div>
       </CardV4>
-      )}
+      ))}
       </div>
 
       {/* Informations complémentaires (dépliant) */}
@@ -1397,7 +1428,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             </p>
           )}
 
-          {missingInfoPanelOpen && (
+          {renderAnimatedSection("missingInfo", missingInfoPanelOpen, (
             <CardV4 padding="md">
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -1787,7 +1818,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               </button>
             </div>
             </CardV4>
-          )}
+          ))}
       </div>
 
       {/* Formule */}
@@ -1798,7 +1829,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           style={sectionFrameStyle(activeSection === "formule")}
         >
         {renderSectionHeader("formule", "Formule")}
-        {openSections.formule && (
+        {renderAnimatedSection("formule", openSections.formule, (
         <CardV4 padding="md">
           <div className="space-y-4">
             <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
@@ -1882,7 +1913,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             </div>
           </div>
         </CardV4>
-        )}
+        ))}
         </div>
       )}
 
@@ -1893,7 +1924,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         style={sectionFrameStyle(activeSection === "contact")}
       >
       {renderSectionHeader("contact", "Coordonnées")}
-      {openSections.contact && (
+      {renderAnimatedSection("contact", openSections.contact, (
       <CardV4 padding="md">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -2013,7 +2044,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </div>
         </div>
       </CardV4>
-      )}
+      ))}
       </div>
 
       {/* CTA */}

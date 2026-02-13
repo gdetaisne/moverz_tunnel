@@ -1,5 +1,28 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — UX: fermeture douce des blocs validés (Step 3 mobile)
+
+**Demande** :
+- Lorsqu'un bloc se valide (dernier clic), la fermeture était trop brusque.
+
+**Modification** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - ajout d'un wrapper animé `renderAnimatedSection` (Framer Motion),
+  - animation d'ouverture/fermeture sur:
+    - `Trajet & logements`
+    - `Date de déménagement`
+    - `Volume & densité`
+    - `Ajouter des précisions`
+    - `Formule`
+    - `Coordonnées`
+  - transitions: hauteur + opacité + léger décalage vertical pour un rendu plus premium.
+
+**Impact UX** :
+- Fermeture des blocs plus naturelle et moins "cassante".
+- Meilleure continuité visuelle pendant la progression séquentielle.
+
+---
+
 ## 2026-02-13 — Fix UX: bloc estimation stable pendant saisie adresse
 
 **Problème** :
