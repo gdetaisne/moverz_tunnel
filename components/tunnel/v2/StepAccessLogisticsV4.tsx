@@ -860,7 +860,20 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         disabled={isLocked}
         onClick={() => {
           if (isLocked) return;
-          setOpenSections((state) => ({ ...state, [key]: !state[key] }));
+          setOpenSections((state) => {
+            const willOpen = !state[key];
+            if (!willOpen) return { ...state, [key]: false };
+
+            const currentIndex = sectionOrder.indexOf(key);
+            const previousKey = currentIndex > 0 ? sectionOrder[currentIndex - 1] : null;
+            const shouldClosePrevious = previousKey ? sectionMeta[previousKey].valid : false;
+
+            return {
+              ...state,
+              [key]: true,
+              ...(previousKey && shouldClosePrevious ? { [previousKey]: false } : {}),
+            };
+          });
         }}
         className={`w-full rounded-xl border px-3 text-left flex items-center justify-between gap-3 disabled:cursor-not-allowed ${
           meta.valid && !isOpen ? "py-1.5" : "py-2"
@@ -942,7 +955,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-4">
             <AddressAutocomplete
               label={
                 props.originCity
@@ -981,6 +994,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 props.onFieldChange("originLon", s.lon ?? null);
               }}
             />
+            {renderLogementPicker(
+              "origin",
+              props.originHousingType,
+              props.originFloor,
+              (v) => props.onFieldChange("originHousingType", v),
+              (v) => props.onFieldChange("originFloor", v)
+            )}
 
             <AddressAutocomplete
               label={
@@ -1022,16 +1042,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 props.onFieldChange("destinationLon", s.lon ?? null);
               }}
             />
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {renderLogementPicker(
-              "origin",
-              props.originHousingType,
-              props.originFloor,
-              (v) => props.onFieldChange("originHousingType", v),
-              (v) => props.onFieldChange("originFloor", v)
-            )}
             {renderLogementPicker(
               "destination",
               props.destinationHousingType,

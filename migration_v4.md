@@ -1,5 +1,28 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: fermeture automatique du bloc précédent + ordre trajet/logement ajusté
+
+**Demandes UX** :
+- Quand on ouvre un bloc suivant, le bloc précédent validé doit se refermer.
+- Réordonner le bloc trajet:
+  1) Adresse départ
+  2) Type logement départ
+  3) Adresse arrivée
+  4) Type logement arrivée
+
+**Modifications** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Header des sections:
+  - à l'ouverture d'un bloc, fermeture automatique du bloc juste précédent s'il est validé.
+- Bloc `Trajet & logements`:
+  - suppression de la grille "2 colonnes adresses + 2 colonnes logements",
+  - rendu séquentiel vertical conforme à l'ordre demandé.
+
+**Impact** :
+- Parcours plus fluide et lisible.
+- Enchaînement des informations trajet/logement plus naturel côté mobile.
+
+---
+
 ## 2026-02-13 — Retour Step 4 → Step 3: fermeture forcée de tous les blocs
 
 **Retour UX** :
