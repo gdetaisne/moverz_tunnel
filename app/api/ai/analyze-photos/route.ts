@@ -351,11 +351,10 @@ On te donne une liste de photos et les images associées. Tu dois :
 2) Pour chaque pièce, proposer un inventaire d'objets plausibles, sans doublons.
 3) Pour chaque objet, si possible, estimer des dimensions (largeur/profondeur/hauteur en centimètres),
    calculer un volume approximatif en m3 et proposer une estimation de valeur en euros avec une courte justification.
-4) Produire une synthèse structurée PAR TYPOLOGIE DE CONTRAINTES (et non par pièce):
-   - Objets fragiles
-   - Objets encombrants
-   - Spécificités accès
-5) Dans chaque typologie, citer des objets concrets + format utile uniquement si pertinent.
+4) Produire une synthèse qui remonte UNIQUEMENT ce qui sort de l'ordinaire pour un déménagement.
+5) Regrouper ces points par typologies pertinentes (exemples: fragilité, encombrement, accès),
+   sans forcer des catégories vides.
+6) Dans chaque typologie, citer des objets concrets + format utile uniquement si pertinent.
 
 Tu as accès aux images envoyées dans cette requête.
 
@@ -368,15 +367,14 @@ CONTRAINTES DE TON :
   - ne classe pas un rideau en objet fragile,
   - ne mets pas de dimensions inutiles (ex: épaisseur d'un tableau, objets qui entrent dans un carton),
   - mets les dimensions/volume seulement pour les objets qui impactent vraiment la manutention.
+- Si aucune contrainte inhabituelle n'est détectée, renvoyer une synthèse courte qui le dit explicitement.
 
 IMPORTANT :
 - Réponds STRICTEMENT en JSON valide UTF-8, sans texte avant/après.
 - Le JSON doit respecter cette forme :
 {
   "moverInsights": [
-    "Objets fragiles : ...",
-    "Objets encombrants : ...",
-    "Spécificités accès : ..."
+    "Typologie pertinente : points concrets utiles au déménageur"
   ],
   "rooms": [
     {
@@ -448,12 +446,8 @@ function buildMoverInsightsFromRooms(
     bucket.push(cleaned);
   };
 
-  const fragileEntries: string[] = [];
-  const bulkyEntries: string[] = [];
-  const accessFlags: string[] = [];
-  const seenFragile = new Set<string>();
-  const seenBulky = new Set<string>();
-  const seenAccess = new Set<string>();
+  const buckets: Record<string, string[]> = {};
+  const bucketSeen: Record<string, Set<string>> = {};
 
   const isIrrelevantForHandling = (label: string) => {
     const l = norm(label);
@@ -465,16 +459,11 @@ function buildMoverInsightsFromRooms(
     );
   };
 
-  const startsWithTypology = (line: string, typology: "fragile" | "bulky" | "access") => {
-    const l = norm(line);
-    if (typology === "fragile") return l.startsWith("objets fragiles");
-    if (typology === "bulky") return l.startsWith("objets encombrants");
-    return l.startsWith("specificites acces") || l.startsWith("acces");
+  const addToBucket = (bucket: string, value: string) => {
+    if (!buckets[bucket]) buckets[bucket] = [];
+    if (!bucketSeen[bucket]) bucketSeen[bucket] = new Set<string>();
+    addUnique(buckets[bucket]!, bucketSeen[bucket]!, value);
   };
-
-  const promptFragile = promptInsights.filter((l) => startsWithTypology(l, "fragile"));
-  const promptBulky = promptInsights.filter((l) => startsWithTypology(l, "bulky"));
-  const promptAccess = promptInsights.filter((l) => startsWithTypology(l, "access"));
 
   for (const room of safeRooms) {
     const items = Array.isArray(room?.items) ? room.items : [];
@@ -490,41 +479,39 @@ function buildMoverInsightsFromRooms(
         (Number.isFinite(Number(item?.widthCm)) && Number(item?.widthCm) >= 180);
 
       if (isFragile) {
-        addUnique(fragileEntries, seenFragile, `${label} (${fmtDims(item)})`);
+        addToBucket("Fragilité / protection", `${label} (${fmtDims(item)})`);
       }
       if (isBulky) {
-        addUnique(bulkyEntries, seenBulky, `${label} (${fmtDims(item)})`);
+        addToBucket("Manutention lourde / encombrement", `${label} (${fmtDims(item)})`);
       }
       if (item?.flags?.requiresDisassembly === true) {
-        addUnique(accessFlags, seenAccess, `${label}: démontage/remontage prévu`);
+        addToBucket("Accès / manœuvre", `${label}: démontage/remontage prévu`);
       }
       if (Number.isFinite(Number(item?.widthCm)) && Number(item?.widthCm) >= 180) {
-        addUnique(accessFlags, seenAccess, `${label}: gabarit large à passer`);
+        addToBucket("Accès / manœuvre", `${label}: gabarit large à passer`);
       }
     }
   }
 
+  const fallbackInsights: string[] = Object.entries(buckets)
+    .filter(([, items]) => Array.isArray(items) && items.length > 0)
+    .map(([bucket, items]) => `${bucket} : ${items.slice(0, 3).join(", ")}.`);
+
+  const merged = [...promptInsights, ...fallbackInsights]
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
   const insights: string[] = [];
-  if (promptFragile.length > 0) {
-    insights.push(promptFragile[0]!);
-  } else if (fragileEntries.length > 0) {
-    insights.push(`Objets fragiles : ${fragileEntries.slice(0, 3).join(", ")}.`);
-  }
-  if (promptBulky.length > 0) {
-    insights.push(promptBulky[0]!);
-  } else if (bulkyEntries.length > 0) {
-    insights.push(`Objets encombrants : ${bulkyEntries.slice(0, 3).join(", ")}.`);
-  }
-  if (promptAccess.length > 0) {
-    insights.push(promptAccess[0]!);
-  } else if (accessFlags.length > 0) {
-    insights.push(`Accès : ${accessFlags.slice(0, 3).join(", ")}.`);
+  const seen = new Set<string>();
+  for (const line of merged) {
+    const key = norm(line);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    insights.push(line);
+    if (insights.length >= 6) break;
   }
 
   if (insights.length === 0) {
-    insights.push("Objets fragiles : aucun signal fort détecté sur cet échantillon.");
-    insights.push("Objets encombrants : format à confirmer sur visite.");
-    insights.push("Accès : contraintes à confirmer sur visite.");
+    insights.push("Aucune contrainte spécifique inhabituelle détectée sur ces photos.");
   }
 
   return insights;

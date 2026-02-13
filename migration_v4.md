@@ -1,5 +1,26 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — IA contraintes: suppression des catégories forcées, focus "hors norme"
+
+**Correction demandée** :
+- Les 3 catégories précédentes étaient des exemples, pas un format imposé.
+- Le retour IA ne doit remonter que les points qui sortent de l'ordinaire.
+
+**Modification** (`app/api/ai/analyze-photos/route.ts`) :
+- Prompt revu :
+  - synthèse uniquement sur signaux inhabituels,
+  - typologies pertinentes si utile, sans forcer des catégories vides,
+  - cohérence métier et dimensions seulement quand nécessaires.
+- Post-traitement revu :
+  - plus de structure figée `fragiles/encombrants/accès`,
+  - déduplication stricte conservée,
+  - fallback neutre si aucun signal inhabituel.
+
+**Impact** :
+- Retour IA plus naturel, moins "template", centré sur les vraies contraintes.
+
+---
+
 ## 2026-02-13 — Ajustement UX pipeline + prompt IA métier "contraintes spécifiques"
 
 **Demandes** :
