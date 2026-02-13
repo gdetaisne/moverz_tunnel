@@ -935,6 +935,33 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     background: isActive ? "var(--color-accent-light)" : "transparent",
   });
 
+  const renderSubBlock = (
+    title: string,
+    complete: boolean,
+    children: React.ReactNode
+  ) => (
+    <div
+      className="rounded-xl border p-3 space-y-3"
+      style={{
+        borderColor: complete ? "var(--color-success)" : "var(--color-border)",
+        background: "var(--color-surface)",
+      }}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+          {title}
+        </p>
+        <span
+          className="text-xs font-semibold"
+          style={{ color: complete ? "var(--color-success)" : "var(--color-text-muted)" }}
+        >
+          {complete ? "Complet" : "À compléter"}
+        </span>
+      </div>
+      {children}
+    </div>
+  );
+
   return (
     <div className="space-y-3 pb-44 sm:pb-24">
       <input
@@ -967,7 +994,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           </div>
 
           <div className="space-y-4">
-            <AddressAutocomplete
+            {renderSubBlock(
+              "Départ",
+              isOriginAddressValid && isOriginHousingValid && isOriginFloorValid,
+              <>
+                <AddressAutocomplete
               label={
                 props.originCity
                   ? `Départ · ${props.originCity}${
@@ -1005,15 +1036,21 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 props.onFieldChange("originLon", s.lon ?? null);
               }}
             />
-            {renderLogementPicker(
-              "origin",
-              props.originHousingType,
-              props.originFloor,
-              (v) => props.onFieldChange("originHousingType", v),
-              (v) => props.onFieldChange("originFloor", v)
+                {renderLogementPicker(
+                  "origin",
+                  props.originHousingType,
+                  props.originFloor,
+                  (v) => props.onFieldChange("originHousingType", v),
+                  (v) => props.onFieldChange("originFloor", v)
+                )}
+              </>
             )}
 
-            <AddressAutocomplete
+            {renderSubBlock(
+              "Arrivée",
+              isDestinationAddressValid && isDestinationHousingValid && isDestinationFloorValid,
+              <>
+                <AddressAutocomplete
               label={
                 props.destinationCity
                   ? `Arrivée · ${props.destinationCity}${
@@ -1053,12 +1090,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 props.onFieldChange("destinationLon", s.lon ?? null);
               }}
             />
-            {renderLogementPicker(
-              "destination",
-              props.destinationHousingType,
-              props.destinationFloor,
-              (v) => props.onFieldChange("destinationHousingType", v),
-              (v) => props.onFieldChange("destinationFloor", v)
+                {renderLogementPicker(
+                  "destination",
+                  props.destinationHousingType,
+                  props.destinationFloor,
+                  (v) => props.onFieldChange("destinationHousingType", v),
+                  (v) => props.onFieldChange("destinationFloor", v)
+                )}
+              </>
             )}
           </div>
         </div>

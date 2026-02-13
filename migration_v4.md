@@ -1,5 +1,27 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: séparation visuelle des sous-blocs Départ / Arrivée
+
+**Demande UX** :
+- Mieux distinguer `Départ` et `Arrivée` pour rendre explicite ce qui bloque (maison/appartement/étage).
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Dans `Trajet & logements`, création de 2 sous-blocs visuels:
+  - `Départ`
+  - `Arrivée`
+- Chaque sous-bloc contient:
+  - l’adresse,
+  - puis le type de logement/étage correspondant.
+- Ajout d’un statut explicite par sous-bloc:
+  - `Complet` (vert) si adresse + logement + étage requis sont valides,
+  - `À compléter` sinon.
+
+**Impact** :
+- Compréhension immédiate de ce qui est encore bloquant pour chaque côté du trajet.
+- Meilleure lisibilité mobile/desktop sur un formulaire dense.
+
+---
+
 ## 2026-02-13 — Step 3: un seul bloc "actif" (encadré) à la fois
 
 **Demande UX** :
