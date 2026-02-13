@@ -22,6 +22,7 @@ import {
   Upload,
   ArrowRight,
   ArrowDown,
+  Loader2,
 } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
@@ -1008,9 +1009,34 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                         </p>
                       )}
                       {(isUploadingPhotos || isAnalyzingPhotos) && (
-                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                          {isUploadingPhotos ? "Upload en cours..." : "Analyse IA en cours..."}
-                        </p>
+                        <div
+                          className="rounded-lg px-2.5 py-2 flex items-center justify-between gap-3"
+                          style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)" }}
+                        >
+                          <div className="flex items-center gap-2">
+                            {isUploadingPhotos ? (
+                              <Upload className="w-3.5 h-3.5" style={{ color: "var(--color-accent)" }} />
+                            ) : (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--color-accent)" }} />
+                            )}
+                            <p className="text-xs font-medium" style={{ color: "var(--color-text)" }}>
+                              {isUploadingPhotos ? "Upload des photos..." : "Analyse IA en cours..."}
+                            </p>
+                          </div>
+                          {isAnalyzingPhotos && (
+                            <div className="flex items-center gap-1.5" aria-hidden>
+                              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--color-accent)" }} />
+                              <span
+                                className="w-1.5 h-1.5 rounded-full animate-pulse"
+                                style={{ background: "var(--color-accent)", animationDelay: "120ms" }}
+                              />
+                              <span
+                                className="w-1.5 h-1.5 rounded-full animate-pulse"
+                                style={{ background: "var(--color-accent)", animationDelay: "240ms" }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       )}
                       {photoPanelError && (
                         <p className="text-xs" style={{ color: "var(--color-danger)" }}>

@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Indicateur d'analyse IA en cours (retour IA)
+
+**Demande** :
+- Afficher clairement que l'analyse IA est en cours, avec un signe dynamique sobre/stylisé.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Ajout d'un état visuel dédié dans le bloc `Retour IA (contraintes spécifiques)` :
+  - icône animée (`Loader2` spin) pendant l'analyse,
+  - micro-indicateur de progression (3 points pulsés),
+  - style discret (`surface + border`) pour rester sobre.
+
+**Impact** : UX uniquement.
+
+---
+
 ## 2026-02-13 — Fix miniatures: passage de `blob:` à `data:` (ERR_FILE_NOT_FOUND)
 
 **Symptôme** :
