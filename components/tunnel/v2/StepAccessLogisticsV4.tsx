@@ -642,39 +642,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
   return (
     <div className="space-y-6">
-      <div className="sm:hidden rounded-xl border px-3 py-3" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
-        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--color-text-muted)" }}>
-          Progression Step 3
-        </p>
-        <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {[
-            { id: "v4-section-trajet", label: "Trajet", done: isOriginAddressValid && isDestinationAddressValid },
-            { id: "v4-section-date", label: "Date", done: isMovingDateValid },
-            { id: "v4-section-volume", label: "Volume", done: isDensityValid && isKitchenSelectionValid && isKitchenValid },
-            { id: "v4-section-formule", label: "Formule", done: !!props.selectedFormule },
-            { id: "v4-section-contact", label: "Contact", done: isFirstNameValid && isEmailValid },
-          ].map((section) => (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() =>
-                document
-                  .getElementById(section.id)
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }
-              className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold border"
-              style={{
-                borderColor: section.done ? "var(--color-success)" : "var(--color-border)",
-                color: section.done ? "var(--color-success)" : "var(--color-text-secondary)",
-                background: section.done ? "rgba(16,185,129,0.08)" : "var(--color-bg)",
-              }}
-            >
-              {section.done ? "✓ " : ""}
-              {section.label}
-            </button>
-          ))}
-        </div>
-      </div>
       <input
         ref={densityPhotoInputRef}
         type="file"
@@ -897,7 +864,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               <button
                 type="button"
                 onClick={openDensityPhotoFlow}
-                className="hidden sm:flex items-center justify-center px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                className="col-span-3 sm:col-span-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
                 style={{
                   background: "var(--color-surface)",
                   color: "var(--color-text)",
@@ -913,6 +880,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 ) : (
                   <Camera className="w-4 h-4" />
                 )}
+                <span className="sm:hidden">Photo densité</span>
               </button>
             </div>
             {shouldShowFieldError("density") && !isDensityValid && (

@@ -1,5 +1,35 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3 mobile: retrait du bandeau "Progression Step 3"
+
+**Demande** :
+- Retirer le bandeau de progression mobile ajouté en haut de la Step 3.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Suppression complète du bloc UI `Progression Step 3` (pills Trajet/Date/Volume/Formule/Contact).
+
+**Impact** :
+- Interface Step 3 mobile allégée, sans ce bandeau.
+- Le reste des améliorations récentes est conservé (validation progressive, ergonomie panier mobile, bouton photo densité).
+
+---
+
+## 2026-02-13 — Step 3 mobile: bouton photo densité visible
+
+**Demande** :
+- Ajouter le bouton photo densité aussi en mobile dans le bloc `Volume & densité`.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Le bouton qui ouvrait le flux photo densité (caché en mobile avec `hidden sm:flex`) est désormais visible sur tous les écrans.
+- En mobile: bouton sur une ligne dédiée (`col-span-3`) avec libellé `Photo densité`.
+- En desktop: conserve un rendu compact sur une colonne (`sm:col-span-1`) avec icône.
+
+**Impact** :
+- Le flux photo densité est accessible immédiatement sur mobile, sans détour.
+- Aucun changement logique backoffice/tracking/payload.
+
+---
+
 ## 2026-02-13 — Step 3 mobile: charge cognitive réduite + validation progressive + ergonomie FAB sécurisée
 
 **Objectif** :
