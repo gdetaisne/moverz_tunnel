@@ -831,10 +831,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             <span className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
               Ajouter des précisions (facultatif)
             </span>
-            <ChevronDown
-              className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
-              style={{ color: "var(--color-text-muted)" }}
-            />
+            <span className="flex items-center gap-2" aria-hidden>
+              <Camera className="w-3.5 h-3.5" style={{ color: "var(--color-text-muted)" }} />
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
+                style={{ color: "var(--color-text-muted)" }}
+              />
+            </span>
           </button>
 
           {missingInfoPanelOpen && (

@@ -1,5 +1,18 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Icône photo dans l’entête "Ajouter des précisions"
+
+**Demande** :
+- Ajouter une petite icône photo à droite du bouton de section pour indiquer qu'on peut compléter avec des photos.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Ajout d'une icône `Camera` dans la zone droite de l'entête, à côté du chevron d'ouverture.
+
+**Impact** :
+- Signal visuel immédiat de la capacité "photo + IA" dès l’état replié.
+
+---
+
 ## 2026-02-13 — Retour IA éditable par le client
 
 **Demande** :
