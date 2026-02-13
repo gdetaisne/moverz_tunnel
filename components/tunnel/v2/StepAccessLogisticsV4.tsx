@@ -146,6 +146,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [isAnalyzingPhotos, setIsAnalyzingPhotos] = useState(false);
   const [photoPanelError, setPhotoPanelError] = useState<string | null>(null);
   const [moverInsights, setMoverInsights] = useState<string[]>([]);
+  const [returnIaText, setReturnIaText] = useState("");
   const [fallbackUploadLeadId, setFallbackUploadLeadId] = useState<string | null>(null);
   const [isDragOverPhotos, setIsDragOverPhotos] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
@@ -345,6 +346,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const analyzePhotosLive = async (photos: UploadedPhoto[]) => {
     if (photos.length === 0) {
       setMoverInsights([]);
+      setReturnIaText("");
       props.onAiInsightsChange?.([]);
       return;
     }
@@ -375,6 +377,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         : [];
       if (explicitInsights.length > 0) {
         setMoverInsights(explicitInsights);
+        setReturnIaText(explicitInsights.map((v) => `• ${v}`).join("\n"));
         props.onAiInsightsChange?.(explicitInsights);
         return;
       }
@@ -386,6 +389,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         roomCount > 0 ? `${roomCount} zone(s) de chargement potentielle(s) détectée(s).` : "Peu de signal exploitable, ajouter d'autres photos pour affiner.",
       ];
       setMoverInsights(fallbackInsights);
+      setReturnIaText(fallbackInsights.map((v) => `• ${v}`).join("\n"));
       props.onAiInsightsChange?.(fallbackInsights);
     } catch (error) {
       setPhotoPanelError(error instanceof Error ? error.message : "Erreur IA.");
@@ -401,6 +405,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       reader.onerror = () => reject(new Error("Impossible de lire le fichier sélectionné."));
       reader.readAsDataURL(file);
     });
+
+  const parseInsightsFromText = (text: string): string[] =>
+    text
+      .split(/\r?\n/)
+      .map((line) => line.replace(/^[-•\s]+/, "").trim())
+      .filter((line) => line.length > 0);
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -1153,11 +1163,24 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                           {uploadedPhotos.length - activeUploadedPhotos.length} photo(s) masquée(s) (conservées en historique).
                         </p>
                       )}
-                      {moverInsights.map((insight, idx) => (
-                        <p key={`${idx}-${insight}`} className="text-sm" style={{ color: "var(--color-text)" }}>
-                          • {insight}
-                        </p>
-                      ))}
+                      <textarea
+                        value={returnIaText}
+                        onChange={(e) => {
+                          const nextText = e.target.value;
+                          setReturnIaText(nextText);
+                          const parsed = parseInsightsFromText(nextText);
+                          setMoverInsights(parsed);
+                          props.onAiInsightsChange?.(parsed);
+                        }}
+                        rows={8}
+                        className="w-full rounded-xl px-3 py-2 text-sm resize-y"
+                        style={{
+                          background: "var(--color-surface)",
+                          border: "1px solid var(--color-border)",
+                          color: "var(--color-text)",
+                        }}
+                        placeholder="Le retour IA apparaîtra ici. Vous pouvez l'ajuster avant envoi."
+                      />
                     </div>
                   </div>
                 </div>

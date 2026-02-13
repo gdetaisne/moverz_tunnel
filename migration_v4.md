@@ -1,5 +1,21 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Retour IA éditable par le client
+
+**Demande** :
+- Le champ `Retour IA` doit être modifiable par le client.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Remplacement de la liste en lecture seule par un `textarea` éditable.
+- Le texte est prérempli avec la synthèse IA.
+- Les modifications client sont immédiatement propagées au parent (`onAiInsightsChange`) pour stockage dans les notes BO.
+
+**Impact** :
+- Le client peut ajuster le retour IA avant soumission.
+- Même emplacement de persistance DB qu'avant (`tunnelOptions.notes`).
+
+---
+
 ## 2026-02-13 — Retrait du mini-bloc "Upload des photos..." dans Retour IA
 
 **Demande** :
