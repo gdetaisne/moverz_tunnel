@@ -940,10 +940,15 @@ function DevisGratuitsV3Content() {
     const selectedFormule = state.formule as PricingFormuleType;
     const baselineFormule: PricingFormuleType = "STANDARD";
 
-    // Première estimation: distance OSRM ville-à-ville + 15 km (buffer),
-    // densité=Très meublé, cuisine=3 équipements, date sans saison, accès RAS.
-    if (cityOsrmDistanceKm == null) return null; // attend l'OSRM
-    const baseDistanceKm = cityOsrmDistanceKm + 15;
+    // Première estimation figée (Step 2): distance baseline + hypothèses fixes
+    // pour éviter un panier qui "bouge" pendant la saisie libre des adresses.
+    const baseDistanceKm =
+      state.rewardBaselineDistanceKm != null && Number.isFinite(state.rewardBaselineDistanceKm)
+        ? state.rewardBaselineDistanceKm
+        : cityOsrmDistanceKm != null
+        ? cityOsrmDistanceKm + 15
+        : null;
+    if (baseDistanceKm == null) return null;
 
     // Baseline fixe = STANDARD (source de vérité du "Budget initial")
     const baselineInput: Parameters<typeof calculatePricing>[0] = {
@@ -1252,6 +1257,7 @@ function DevisGratuitsV3Content() {
     cityOsrmDistanceKm,
     routeDistanceKm,
     routeDistanceProvider,
+    state.rewardBaselineDistanceKm,
     state.surfaceM2,
     state.formule,
     state.density,

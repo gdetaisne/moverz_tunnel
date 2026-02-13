@@ -1,5 +1,24 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Stabilisation visuelle du haut de panier pendant saisie d'adresse
+
+**Demande** : le haut du panier bouge trop pendant la frappe dans les adresses, même quand les détails affichés ne changent pas.
+
+**Cause identifiée** :
+- Le calcul Step 3 repartait de `cityOsrmDistanceKm + 15` en live, valeur qui peut fluctuer pendant la saisie/normalisation d'adresse.
+
+**Correction** (`app/devis-gratuits-v3/page.tsx`) :
+- Baseline distance du panier priorisée sur la valeur figée de fin Step 2 :
+  - `state.rewardBaselineDistanceKm` (si disponible),
+  - fallback `cityOsrmDistanceKm + 15` sinon.
+- Ajout de `state.rewardBaselineDistanceKm` dans les dépendances du `useMemo` panier.
+
+**Impact** :
+- Panier visuellement plus stable pendant la saisie.
+- Aucun impact API/tracking/payload.
+
+---
+
 ## 2026-02-13 — Hotfix build TS (Step 3 panier)
 
 **Contexte** : échec de build prod sur `app/devis-gratuits-v3/page.tsx` avec `Cannot find name 'baselineFormule'`.
