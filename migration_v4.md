@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix ré-analyse cumulée: inclure toutes les photos actives (pas seulement les nouvelles)
+
+**Problème observé** :
+- L'ajout d'une nouvelle photo pouvait écraser le retour IA précédent.
+
+**Cause** :
+- Construction du lot d'analyse basée sur un état `activePhotoKeys` potentiellement stale au moment de l'upload/suppression.
+
+**Correction** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- À l'upload: lot d'analyse construit avec `activeUploadedPhotos + result.success` (dédupliqué).
+- À la suppression: ré-analyse basée sur `activeUploadedPhotos` courant (moins la photo supprimée).
+
+**Impact** :
+- L'analyse IA cumule correctement toutes les photos actives visibles.
+
+---
+
 ## 2026-02-13 — Prompt IA recentré: note opérationnelle uniquement (sans pièces/inventaire)
 
 **Demande explicite** :

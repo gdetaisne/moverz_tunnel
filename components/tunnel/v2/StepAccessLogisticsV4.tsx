@@ -481,13 +481,18 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         }
         return merged;
       });
-      const activeSetAfterUpload = new Set(activePhotoKeys);
-      for (const p of result.success) {
-        activeSetAfterUpload.add(p.storageKey || p.id);
-      }
-      const photosForAnalysis = nextPhotos.filter((p) =>
-        activeSetAfterUpload.has(p.storageKey || p.id)
-      );
+      // IMPORTANT: toujours analyser toutes les photos actives (déjà visibles) + nouvelles.
+      const photosForAnalysis: UploadedPhoto[] = (() => {
+        const merged: UploadedPhoto[] = [];
+        const mergedSeen = new Set<string>();
+        for (const p of [...activeUploadedPhotos, ...result.success]) {
+          const key = p.storageKey || p.id;
+          if (mergedSeen.has(key)) continue;
+          mergedSeen.add(key);
+          merged.push(p);
+        }
+        return merged;
+      })();
       setPipelineStepStatus("temp_save", "done");
       setPipelineStepStatus("ai_analysis", "in_progress");
       await analyzePhotosLive(photosForAnalysis);
@@ -521,10 +526,8 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       return next;
     });
     setActivePhotoKeys((prev) => prev.filter((k) => k !== photoKey));
-    const remainingActive = uploadedPhotos.filter(
-      (p) =>
-        (p.storageKey || p.id) !== photoKey &&
-        activePhotoKeys.includes(p.storageKey || p.id)
+    const remainingActive = activeUploadedPhotos.filter(
+      (p) => (p.storageKey || p.id) !== photoKey
     );
     setPhotoPanelError(null);
     await analyzePhotosLive(remainingActive);
