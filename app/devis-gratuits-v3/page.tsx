@@ -1025,22 +1025,32 @@ function DevisGratuitsV3Content() {
     const sDate = calculatePricing(inputDate);
     const deltaDateEur = formatDelta(sDate.prixFinal - sKitchen.prixFinal);
 
-    // 5) Accès (logement/étage/ascenseur)
+    // 5) Accès (2 groupes): logement/étage ET contraintes d'accès
     const originIsHouse = isHouseType(state.originHousingType);
     const destIsHouse = isHouseType(state.destinationHousingType);
-    const accessExtrasConfirmed =
-      !!state.narrow_access || !!state.long_carry || !!state.difficult_parking || !!state.lift_required;
-    const accessConfirmed =
-      accessExtrasConfirmed ||
-      !!state.originHousingTypeTouched ||
-      !!state.destinationHousingTypeTouched ||
-      !!state.originFloorTouched ||
-      !!state.destinationFloorTouched ||
-      !!state.originElevatorTouched ||
-      !!state.destinationElevatorTouched;
+    const originHousingComplete = (state.originHousingType || "").trim().length > 0;
+    const destinationHousingComplete = state.destinationUnknown
+      ? true
+      : (state.destinationHousingType || "").trim().length > 0;
+    const originFloorComplete = originIsHouse ? true : (state.originFloor || "").trim().length > 0;
+    const destinationFloorComplete = state.destinationUnknown
+      ? true
+      : destIsHouse
+      ? true
+      : (state.destinationFloor || "").trim().length > 0;
+    const accessHousingConfirmed =
+      originHousingComplete &&
+      destinationHousingComplete &&
+      originFloorComplete &&
+      destinationFloorComplete;
+
+    const accessConstraintsConfirmed =
+      !!state.narrow_access ||
+      !!state.long_carry ||
+      !!state.difficult_parking ||
+      !!state.lift_required;
 
     const accessMeta = (() => {
-      if (!accessConfirmed) return null;
       const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
       const destinationFloor = state.destinationUnknown
         ? 0
@@ -1049,41 +1059,58 @@ function DevisGratuitsV3Content() {
         : parseInt(state.destinationFloor || "0", 10) || 0;
       const originElevator = toPricingElevator(state.originElevator);
       const destinationElevator = toPricingElevator(state.destinationElevator);
-      const needsMonteMeuble =
-        !!state.lift_required ||
+      const inferredMonteMeuble =
         (originElevator === "no" && originFloor >= 4) ||
         (destinationElevator === "no" && destinationFloor >= 4);
+      const needsMonteMeuble = inferredMonteMeuble || !!state.lift_required;
       return {
         originFloor,
         destinationFloor,
         originElevator,
         destinationElevator,
+        inferredMonteMeuble,
         needsMonteMeuble,
       };
     })();
 
-    const inputAccess = (() => {
-      // Tant que l'accès n'est pas "touché", on reste sur l'hypothèse baseline (RAS).
-      if (!accessConfirmed) return inputDate;
-
+    const inputAccessHousing = (() => {
+      if (!accessHousingConfirmed) return inputDate;
       return {
         ...inputDate,
-        originFloor: accessMeta!.originFloor,
-        originElevator: accessMeta!.originElevator,
-        destinationFloor: accessMeta!.destinationFloor,
-        destinationElevator: accessMeta!.destinationElevator,
-        // Accès difficiles (V2)
+        originFloor: accessMeta.originFloor,
+        originElevator: accessMeta.originElevator,
+        destinationFloor: accessMeta.destinationFloor,
+        destinationElevator: accessMeta.destinationElevator,
+        services: {
+          ...inputDate.services,
+          // Monte-meuble implicite lié aux étages/ascenseurs
+          monteMeuble: accessMeta.inferredMonteMeuble,
+        },
+      };
+    })();
+    const sAccessHousing = calculatePricing(inputAccessHousing);
+    const deltaAccessHousingEur = accessHousingConfirmed
+      ? formatDelta(sAccessHousing.prixFinal - sDate.prixFinal)
+      : 0;
+
+    const inputAccessConstraints = (() => {
+      if (!accessConstraintsConfirmed) return inputAccessHousing;
+      return {
+        ...inputAccessHousing,
         longCarry: !!state.long_carry,
         tightAccess: !!state.narrow_access,
         difficultParking: !!state.difficult_parking,
         services: {
-          ...inputDate.services,
-          monteMeuble: !!state.lift_required,
+          ...inputAccessHousing.services,
+          // Monte-meuble explicite via la question contraintes
+          monteMeuble: accessMeta.needsMonteMeuble,
         },
       };
     })();
-    const sAccess = calculatePricing(inputAccess);
-    const deltaAccessEur = accessConfirmed ? formatDelta(sAccess.prixFinal - sDate.prixFinal) : 0;
+    const sAccess = calculatePricing(inputAccessConstraints);
+    const deltaAccessConstraintsEur = accessConstraintsConfirmed
+      ? formatDelta(sAccess.prixFinal - sAccessHousing.prixFinal)
+      : 0;
 
     // La formule est déjà intégrée au baseline → pas de delta séparé.
     const refinedCenterEur = centerEur(sAccess.prixMin, sAccess.prixMax);
@@ -1104,58 +1131,88 @@ function DevisGratuitsV3Content() {
         : state.kitchenIncluded === "appliances"
         ? `${Math.max(0, kitchenApplianceCount)} équipement(s)`
         : "rien";
-    const accessLabel = !accessConfirmed
-      ? "RAS"
-      : accessMeta?.needsMonteMeuble
+    const accessHousingLabel = `${originIsHouse ? "maison" : `étage ${accessMeta.originFloor}`} → ${
+      state.destinationUnknown
+        ? "destination inconnue"
+        : destIsHouse
+        ? "maison"
+        : `étage ${accessMeta.destinationFloor}`
+    }`;
+    const accessConstraintsLabel = accessMeta.needsMonteMeuble
       ? "≥4 sans ascenseur (monte-meuble)"
-      : "confirmé";
+      : "confirmées";
 
     const formuleLabel =
       formule === "ECONOMIQUE" ? "Éco" : formule === "PREMIUM" ? "Premium" : "Standard";
 
     const lines: Array<{
-      key: "distance" | "density" | "kitchen" | "date" | "access";
+      key:
+        | "distance"
+        | "density"
+        | "kitchen"
+        | "date"
+        | "access_housing"
+        | "access_constraints";
       label: string;
       status: string;
       amountEur: number;
       confirmed: boolean;
-    }> = [
-      {
+    }> = [];
+
+    if (canUseOsrmDistance) {
+      lines.push({
         key: "distance",
         label: "Distance",
-        status: canUseOsrmDistance ? "adresses (OSRM)" : "villes +15 km",
+        status: "adresses (OSRM)",
         amountEur: deltaDistanceEur,
-        confirmed: canUseOsrmDistance,
-      },
-      {
+        confirmed: true,
+      });
+    }
+    if (densityTouched) {
+      lines.push({
         key: "density",
         label: "Densité",
         status: densityLabel,
         amountEur: deltaDensityEur,
-        confirmed: densityTouched,
-      },
-      {
+        confirmed: true,
+      });
+    }
+    if (kitchenTouched) {
+      lines.push({
         key: "kitchen",
         label: "Cuisine",
         status: kitchenLabel,
         amountEur: deltaKitchenEur,
-        confirmed: kitchenTouched,
-      },
-      {
+        confirmed: true,
+      });
+    }
+    if (isMovingDateValid) {
+      lines.push({
         key: "date",
         label: "Date",
-        status: isMovingDateValid ? "confirmée" : "pas de coef saison",
+        status: "confirmée",
         amountEur: deltaDateEur,
-        confirmed: isMovingDateValid,
-      },
-      {
-        key: "access",
-        label: "Accès",
-        status: accessLabel,
-        amountEur: deltaAccessEur,
-        confirmed: accessConfirmed,
-      },
-    ];
+        confirmed: true,
+      });
+    }
+    if (accessHousingConfirmed) {
+      lines.push({
+        key: "access_housing",
+        label: "Accès · Logement",
+        status: accessHousingLabel,
+        amountEur: deltaAccessHousingEur,
+        confirmed: true,
+      });
+    }
+    if (accessConstraintsConfirmed) {
+      lines.push({
+        key: "access_constraints",
+        label: "Accès · Contraintes",
+        status: accessConstraintsLabel,
+        amountEur: deltaAccessConstraintsEur,
+        confirmed: true,
+      });
+    }
 
     return {
       firstEstimateMinEur: s0.prixMin,
@@ -1190,6 +1247,10 @@ function DevisGratuitsV3Content() {
     state.originElevatorTouched,
     state.destinationElevatorTouched,
     state.destinationUnknown,
+    state.narrow_access,
+    state.long_carry,
+    state.difficult_parking,
+    state.lift_required,
   ]);
 
   const estimateRange = useMemo(() => {

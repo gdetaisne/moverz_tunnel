@@ -1,5 +1,31 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Panier Step 3: détails progressifs + split accès
+
+**Demande** :
+- Les lignes du bloc "DÉTAILS" (SmartCart) ne doivent apparaître qu'au fur et à mesure que les données associées sont complétées.
+- Le poste "Accès" doit être séparé en 2 sous-détails :
+  1) `Accès · Logement` (maison/appartement + étages),
+  2) `Accès · Contraintes` (portage, passages étroits, stationnement, monte-meuble).
+
+**Implémentation** :
+- Dans `app/devis-gratuits-v3/page.tsx`, génération des lignes du panier rendue conditionnelle :
+  - `Distance` affichée seulement si adresses OSRM confirmées,
+  - `Densité` seulement si choix fait,
+  - `Cuisine` seulement si choix fait,
+  - `Date` seulement si date valide confirmée,
+  - `Accès · Logement` seulement si données logement/étages complètes,
+  - `Accès · Contraintes` seulement si au moins une contrainte est activée.
+- Split du calcul accès en 2 étapes pour des deltas distincts :
+  - delta logement d'abord,
+  - delta contraintes ensuite.
+
+**Impact** :
+- UX panier plus progressive et lisible.
+- Aucun changement tracking/API/payload.
+
+---
+
 ## 2026-02-12 — Step 3: validation obligatoire + retour champ libre
 
 **Objectif** : aligner la validation Step 3 avec la règle métier "tout obligatoire", sauf :
