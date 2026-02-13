@@ -16,6 +16,7 @@ interface AnalyzeRequestBody {
 interface AnalysisProcessPayload {
   model: string;
   rooms: any[];
+  moverInsights?: string[];
   totalMs?: number;
 }
 
@@ -53,10 +54,12 @@ export async function POST(req: NextRequest) {
         "[AI] CLAUDE_API_KEY non défini – utilisation du fallback local d'inventaire."
       );
       const fallbackRooms = createFallbackAnalysis(json.photos);
+      const fallbackInsights = buildMoverInsightsFromRooms(fallbackRooms);
       return NextResponse.json({
         rooms: fallbackRooms,
-        process1: { model: "fallback", rooms: fallbackRooms },
-        process2: { model: "fallback", rooms: fallbackRooms },
+        moverInsights: fallbackInsights,
+        process1: { model: "fallback", rooms: fallbackRooms, moverInsights: fallbackInsights },
+        process2: { model: "fallback", rooms: fallbackRooms, moverInsights: fallbackInsights },
       });
     }
 
@@ -92,10 +95,12 @@ export async function POST(req: NextRequest) {
         "[AI] Aucune image exploitable pour l'analyse – fallback local utilisé."
       );
       const fallbackRooms = createFallbackAnalysis(json.photos);
+      const fallbackInsights = buildMoverInsightsFromRooms(fallbackRooms);
       return NextResponse.json({
         rooms: fallbackRooms,
-        process1: { model: "fallback", rooms: fallbackRooms },
-        process2: { model: "fallback", rooms: fallbackRooms },
+        moverInsights: fallbackInsights,
+        process1: { model: "fallback", rooms: fallbackRooms, moverInsights: fallbackInsights },
+        process2: { model: "fallback", rooms: fallbackRooms, moverInsights: fallbackInsights },
       });
     }
 
@@ -163,18 +168,22 @@ export async function POST(req: NextRequest) {
     })();
 
     // Pour compatibilité, on garde `rooms` = résultat du process 1
+    const moverInsights = process1.moverInsights ?? buildMoverInsightsFromRooms(process1.rooms);
     return NextResponse.json({
       rooms: process1.rooms,
+      moverInsights,
       process1,
       process2,
     });
   } catch (error) {
     console.error("❌ Erreur POST /api/ai/analyze-photos:", error);
     const fallbackRooms = createFallbackAnalysis([]);
+    const fallbackInsights = buildMoverInsightsFromRooms(fallbackRooms);
     return NextResponse.json({
       rooms: fallbackRooms,
-      process1: { model: CLAUDE_MODEL_PRIMARY, rooms: fallbackRooms },
-      process2: { model: CLAUDE_MODEL_CHUNKED, rooms: fallbackRooms },
+      moverInsights: fallbackInsights,
+      process1: { model: CLAUDE_MODEL_PRIMARY, rooms: fallbackRooms, moverInsights: fallbackInsights },
+      process2: { model: CLAUDE_MODEL_CHUNKED, rooms: fallbackRooms, moverInsights: fallbackInsights },
       error: "Erreur interne lors de l'analyse.",
     });
   }
@@ -256,8 +265,15 @@ async function callClaudeForRooms(
       return null;
     }
 
+    const moverInsights = Array.isArray(parsed.moverInsights)
+      ? parsed.moverInsights.filter(
+          (v: unknown): v is string =>
+            typeof v === "string" && v.trim().length > 0
+        )
+      : buildMoverInsightsFromRooms(parsed.rooms);
+
     const totalMs = Date.now() - startedAt;
-    return { model, rooms: parsed.rooms, totalMs };
+    return { model, rooms: parsed.rooms, moverInsights, totalMs };
   } catch (error) {
     console.error(`❌ Exception lors de l'appel Claude (${model}):`, error);
     return null;
@@ -324,20 +340,25 @@ function buildPrompt(photos: AnalyzePhotoInput[]): string {
     .join("\n");
 
   return `
-Tu es un assistant qui aide à préparer un inventaire de déménagement.
-On te donne une liste de photos (sans le contenu visuel, uniquement les noms de fichiers) et tu dois :
+Tu es déménageur professionnel.
+Le client a envoyé un dossier et l'a complété de ces photos. Tu dois en tirer des informations utiles au déménagement.
+On te donne une liste de photos et les images associées. Tu dois :
 1) Regrouper les photos par pièce logique (salon, cuisine, chambres, etc.).
 2) Pour chaque pièce, proposer un inventaire d'objets plausibles, sans doublons.
 3) Pour chaque objet, si possible, estimer des dimensions (largeur/profondeur/hauteur en centimètres),
    calculer un volume approximatif en m3 et proposer une estimation de valeur en euros avec une courte justification.
+4) Produire une synthèse "vue déménageur" (points d'attention opérationnels) sous forme de puces courtes.
 
-Tu n'as PAS accès aux images, uniquement aux noms de fichiers. Fais de ton mieux pour proposer
-un inventaire raisonnable à partir de cette info minimale.
+Tu as accès aux images envoyées dans cette requête.
 
 IMPORTANT :
 - Réponds STRICTEMENT en JSON valide UTF-8, sans texte avant/après.
 - Le JSON doit respecter cette forme :
 {
+  "moverInsights": [
+    "string",
+    "string"
+  ],
   "rooms": [
     {
       "roomId": "string",
@@ -370,6 +391,33 @@ IMPORTANT :
 Voici la liste des photos :
 ${list}
 `.trim();
+}
+
+function buildMoverInsightsFromRooms(rooms: any[]): string[] {
+  const safeRooms = Array.isArray(rooms) ? rooms : [];
+  const itemsCount = safeRooms.reduce((acc, room) => {
+    const items = Array.isArray(room?.items) ? room.items.length : 0;
+    return acc + items;
+  }, 0);
+  const fragileCount = safeRooms.reduce((acc, room) => {
+    const items = Array.isArray(room?.items) ? room.items : [];
+    return (
+      acc +
+      items.filter((i: any) => i?.flags?.fragile === true || i?.flags?.highValue === true).length
+    );
+  }, 0);
+
+  const insights = [
+    `${safeRooms.length} zone(s) estimée(s) à traiter.`,
+    `${itemsCount} objet(s) potentiellement à déménager.`,
+  ];
+  if (fragileCount > 0) {
+    insights.push(`${fragileCount} objet(s) fragile(s) ou à forte valeur à sécuriser.`);
+  } else {
+    insights.push("Peu d'objets fragiles détectés sur cet échantillon.");
+  }
+  insights.push("Confirmer sur visite les accès et les charges lourdes avant chiffrage final.");
+  return insights;
 }
 
 function createFallbackAnalysis(photos: AnalyzePhotoInput[]) {

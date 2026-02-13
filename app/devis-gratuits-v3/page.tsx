@@ -1906,6 +1906,7 @@ function DevisGratuitsV3Content() {
               {/* Formulaire (colonne gauche) */}
               <div>
                 <StepAccessLogisticsV4
+                leadId={state.leadId}
                 originAddress={state.originAddress}
                 originCity={state.originCity}
                 originPostalCode={state.originPostalCode}

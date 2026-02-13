@@ -1,5 +1,41 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Dépliant infos manquantes: 3 onglets + upload Cloudflare + IA live
+
+**Demande validée** :
+- Remplacer le bloc dépliant par un panneau à 3 onglets :
+  - `Contraintes Usuelles`
+  - `champs libre`
+  - `photo + IA`
+- En `photo + IA` :
+  - upload des photos sur Cloudflare (R2),
+  - lancement automatique d'une analyse IA dès ajout de photos.
+
+**Modifications** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - ajout des 3 onglets dans `Il nous manque des informations ?`,
+  - upload live via `uploadLeadPhotos(...)`,
+  - auto-analyse live via `POST /api/ai/analyze-photos`,
+  - affichage d'un bloc `Analyse IA (vue déménageur)` avec synthèse.
+- `app/devis-gratuits-v3/page.tsx`
+  - passage de `leadId` vers `StepAccessLogisticsV4` pour permettre l'upload dès Step 3.
+- `app/api/uploads/photos/route.ts`
+  - ajout upload Cloudflare R2 (si variables `R2_*` présentes),
+  - conservation du fallback local (`uploads/`) pour robustesse.
+- `app/api/ai/analyze-photos/route.ts`
+  - prompt IA orienté déménageur,
+  - retour `moverInsights` (synthèse textuelle),
+  - fallback de synthèse si l'IA ne renvoie pas de points exploitables.
+- `package.json` / `package-lock.json`
+  - ajout dépendance `@aws-sdk/client-s3` (R2 S3-compatible).
+
+**Impact** :
+- UX enrichie en Step 3 avec feedback IA immédiat après upload.
+- Tracking/payload métier inchangés.
+- Upload Cloudflare activé dès que les variables R2 sont configurées.
+
+---
+
 ## 2026-02-13 — Ajout UI "Ajouter des photos" dans le dépliant d'infos manquantes
 
 **Demande** : ajouter un champ `Ajouter des photos` (facultatif) dans `Il nous manque des informations ?`.
@@ -4732,3 +4768,17 @@ Migration progressive : les hex inline seront remplacés par ces tokens au fil d
 **Total** : **-890 lignes** de simplification ! 🎉
 
 **Design** : Alignement complet sur le style moverz.fr (clean, moderne, mobile-first, CardV4 partout).
+
+---
+
+## 2026-02-13 — Step 2 UX mobile : montants sur une seule ligne
+
+- **Objectif** : garder la fourchette de prix lisible sur mobile en une ligne (`min – max`), sans retour à la ligne.
+- **Fichier** : `components/tunnel/v2/StepEstimationV4.tsx`
+- **Changements UI** :
+  - Ajustement typo prix mobile : `text-4xl` sur mobile (conserve `sm:text-6xl` sur écrans plus larges).
+  - Ajout `whitespace-nowrap` pour empêcher le retour à la ligne entre les deux montants.
+  - Ajout `leading-none` pour compacter la hauteur de ligne et garder le bloc stable.
+- **Tracking** : aucun impact.
+- **Champs / Inputs** : aucun changement.
+- **Back Office payload** : aucun changement.

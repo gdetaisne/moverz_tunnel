@@ -14,10 +14,12 @@ import { MapPin, Calendar, Home, Mail, User, Phone, ChevronDown } from "lucide-r
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 import { CardV4 } from "@/components/tunnel-v4";
+import { uploadLeadPhotos, type UploadedPhoto } from "@/lib/api/client";
 
 type QuestionKey = "narrow_access" | "long_carry" | "difficult_parking" | "lift_required";
 
 interface StepAccessLogisticsV4Props {
+  leadId?: string | null;
   // Addresses
   originAddress: string;
   originPostalCode: string;
@@ -108,7 +110,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
   const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
   const missingInfoPanelOpen = showMissingInfoPanel;
-  const [optionalPhotoNames, setOptionalPhotoNames] = useState<string[]>([]);
+  const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("constraints");
+  const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
+  const [isAnalyzingPhotos, setIsAnalyzingPhotos] = useState(false);
+  const [photoPanelError, setPhotoPanelError] = useState<string | null>(null);
+  const [moverInsights, setMoverInsights] = useState<string[]>([]);
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -271,6 +278,87 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   );
 
   const destinationUnknown = !!props.destinationUnknown;
+
+  const analyzePhotosLive = async (photos: UploadedPhoto[]) => {
+    if (photos.length === 0) {
+      setMoverInsights([]);
+      return;
+    }
+    setIsAnalyzingPhotos(true);
+    setPhotoPanelError(null);
+    try {
+      const res = await fetch("/api/ai/analyze-photos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: props.leadId ?? undefined,
+          photos: photos.map((p) => ({
+            id: p.id,
+            storageKey: p.storageKey,
+            originalFilename: p.originalFilename,
+            url: p.url ?? undefined,
+          })),
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("L'analyse IA a échoué.");
+      }
+
+      const data = (await res.json()) as { moverInsights?: string[]; rooms?: any[] };
+      const explicitInsights = Array.isArray(data.moverInsights)
+        ? data.moverInsights.filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+        : [];
+      if (explicitInsights.length > 0) {
+        setMoverInsights(explicitInsights);
+        return;
+      }
+
+      // Fallback visuel robuste si l'IA ne renvoie pas de synthèse textuelle.
+      const roomCount = Array.isArray(data.rooms) ? data.rooms.length : 0;
+      setMoverInsights([
+        `${photos.length} photo(s) analysée(s).`,
+        roomCount > 0 ? `${roomCount} zone(s) de chargement potentielle(s) détectée(s).` : "Peu de signal exploitable, ajouter d'autres photos pour affiner.",
+      ]);
+    } catch (error) {
+      setPhotoPanelError(error instanceof Error ? error.message : "Erreur IA.");
+    } finally {
+      setIsAnalyzingPhotos(false);
+    }
+  };
+
+  const handlePhotoUploadAndAnalyze = async (files: File[]) => {
+    if (!props.leadId) {
+      setPhotoPanelError("Lead manquant: impossible d'uploader les photos pour l'instant.");
+      return;
+    }
+    if (files.length === 0) return;
+
+    setIsUploadingPhotos(true);
+    setPhotoPanelError(null);
+    try {
+      const result = await uploadLeadPhotos(props.leadId, files);
+      if (result.errors.length > 0) {
+        setPhotoPanelError(result.errors[0]?.reason ?? "Certaines photos n'ont pas pu être traitées.");
+      }
+
+      const nextPhotos: UploadedPhoto[] = [];
+      const seen = new Set<string>();
+      for (const p of [...uploadedPhotos, ...result.success]) {
+        const key = p.storageKey || p.id;
+        if (!seen.has(key)) {
+          seen.add(key);
+          nextPhotos.push(p);
+        }
+      }
+      setUploadedPhotos(nextPhotos);
+      await analyzePhotosLive(nextPhotos);
+    } catch (error) {
+      setPhotoPanelError(error instanceof Error ? error.message : "Erreur upload.");
+    } finally {
+      setIsUploadingPhotos(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -569,159 +657,215 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
           {missingInfoPanelOpen && (
             <div className="space-y-4">
-              <div className="space-y-3">
-                <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                  Contraintes usuelles. à préciser
-                </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[
+                  { id: "constraints" as const, label: "Contraintes Usuelles" },
+                  { id: "notes" as const, label: "champs libre" },
+                  { id: "photos" as const, label: "photo + IA" },
+                ].map((tab) => {
+                  const selected = activeMissingInfoTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveMissingInfoTab(tab.id)}
+                      className="px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                      style={{
+                        background: selected ? "var(--color-accent)" : "var(--color-surface)",
+                        color: selected ? "#FFFFFF" : "var(--color-text)",
+                        border: selected ? "none" : "2px solid var(--color-border)",
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
 
-                <div className="hidden sm:block">
-                  <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="grid grid-cols-[1fr,120px,120px] border-b" style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}>
-                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
-                        Contrainte
+              {activeMissingInfoTab === "constraints" && (
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                    Contraintes usuelles. à préciser
+                  </p>
+
+                  <div className="hidden sm:block">
+                    <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-border)" }}>
+                      <div className="grid grid-cols-[1fr,120px,120px] border-b" style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}>
+                        <div className="px-3 py-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
+                          Contrainte
+                        </div>
+                        <div className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
+                          Départ
+                        </div>
+                        <div className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
+                          Arrivée
+                        </div>
                       </div>
-                      <div className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
-                        Départ
-                      </div>
-                      <div className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
-                        Arrivée
-                      </div>
+                      {questions.map((q) => {
+                        const sides = parseAccessSides()[q.key];
+                        const destDisabled = destinationUnknown;
+                        return (
+                          <div
+                            key={q.key}
+                            className="grid grid-cols-[1fr,120px,120px] items-center border-t"
+                            style={{ borderColor: "var(--color-border)" }}
+                          >
+                            <div className="px-3 py-3 text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                              {q.label}
+                            </div>
+                            <div className="px-3 py-2 flex justify-center">
+                              <ToggleYes
+                                active={Boolean(sides?.origin)}
+                                onToggle={() => toggleSide(q.key, "origin")}
+                                ariaLabel={`Départ: ${q.label}`}
+                              />
+                            </div>
+                            <div className="px-3 py-2 flex justify-center">
+                              <ToggleYes
+                                active={Boolean(sides?.destination)}
+                                disabled={destDisabled}
+                                onToggle={() => toggleSide(q.key, "destination")}
+                                ariaLabel={`Arrivée: ${q.label}`}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
+                  </div>
+
+                  <div className="sm:hidden space-y-2">
                     {questions.map((q) => {
                       const sides = parseAccessSides()[q.key];
                       const destDisabled = destinationUnknown;
                       return (
                         <div
                           key={q.key}
-                          className="grid grid-cols-[1fr,120px,120px] items-center border-t"
-                          style={{ borderColor: "var(--color-border)" }}
+                          className="rounded-xl border p-3 space-y-2"
+                          style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
                         >
-                          <div className="px-3 py-3 text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                          <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
                             {q.label}
-                          </div>
-                          <div className="px-3 py-2 flex justify-center">
-                            <ToggleYes
-                              active={Boolean(sides?.origin)}
-                              onToggle={() => toggleSide(q.key, "origin")}
-                              ariaLabel={`Départ: ${q.label}`}
-                            />
-                          </div>
-                          <div className="px-3 py-2 flex justify-center">
-                            <ToggleYes
-                              active={Boolean(sides?.destination)}
-                              disabled={destDisabled}
-                              onToggle={() => toggleSide(q.key, "destination")}
-                              ariaLabel={`Arrivée: ${q.label}`}
-                            />
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 flex items-center justify-between">
+                              <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+                                Départ
+                              </span>
+                              <ToggleYes
+                                active={Boolean(sides?.origin)}
+                                onToggle={() => toggleSide(q.key, "origin")}
+                                ariaLabel={`Départ: ${q.label}`}
+                              />
+                            </div>
+                            <div className="w-px h-8" style={{ background: "var(--color-border)" }} />
+                            <div className="flex-1 flex items-center justify-between">
+                              <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+                                Arrivée
+                              </span>
+                              <ToggleYes
+                                active={Boolean(sides?.destination)}
+                                disabled={destDisabled}
+                                onToggle={() => toggleSide(q.key, "destination")}
+                                ariaLabel={`Arrivée: ${q.label}`}
+                              />
+                            </div>
                           </div>
                         </div>
                       );
                     })}
                   </div>
                 </div>
+              )}
 
-                <div className="sm:hidden space-y-2">
-                  {questions.map((q) => {
-                    const sides = parseAccessSides()[q.key];
-                    const destDisabled = destinationUnknown;
-                    return (
-                      <div
-                        key={q.key}
-                        className="rounded-xl border p-3 space-y-2"
-                        style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-                      >
-                        <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-                          {q.label}
-                        </p>
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 flex items-center justify-between">
-                            <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
-                              Départ
-                            </span>
-                            <ToggleYes
-                              active={Boolean(sides?.origin)}
-                              onToggle={() => toggleSide(q.key, "origin")}
-                              ariaLabel={`Départ: ${q.label}`}
-                            />
-                          </div>
-                          <div className="w-px h-8" style={{ background: "var(--color-border)" }} />
-                          <div className="flex-1 flex items-center justify-between">
-                            <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
-                              Arrivée
-                            </span>
-                            <ToggleYes
-                              active={Boolean(sides?.destination)}
-                              disabled={destDisabled}
-                              onToggle={() => toggleSide(q.key, "destination")}
-                              ariaLabel={`Arrivée: ${q.label}`}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <label
-                  htmlFor="v4-specific-notes"
-                  className="block text-sm font-semibold"
-                  style={{ color: "var(--color-text)" }}
-                >
-                  D'autre spécificitées à prendre en compte
-                </label>
-                <textarea
-                  id="v4-specific-notes"
-                  value={props.specificNotes}
-                  onChange={(e) => props.onFieldChange("specificNotes", e.target.value)}
-                  rows={4}
-                  className="w-full rounded-xl px-4 py-3 text-sm resize-y"
-                  style={{
-                    background: "var(--color-bg)",
-                    border: "2px solid var(--color-border)",
-                    color: "var(--color-text)",
-                  }}
-                  placeholder={`Exemple :\nJ'ai un Piano droit, et une armoire très lourde et indémontable\nj'aimerais si possible que vous fassiez le menage dans le logement de départ :-)`}
-                />
-                <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                  Champ optionnel
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <label
-                  htmlFor="v4-optional-photos"
-                  className="block text-sm font-semibold"
-                  style={{ color: "var(--color-text)" }}
-                >
-                  Ajouter des photos (facultatif)
-                </label>
-                <input
-                  id="v4-optional-photos"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="w-full rounded-xl px-4 py-3 text-sm"
-                  style={{
-                    background: "var(--color-bg)",
-                    border: "2px solid var(--color-border)",
-                    color: "var(--color-text)",
-                  }}
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    setOptionalPhotoNames(files.map((f) => f.name));
-                  }}
-                />
-                <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                  Prototype non connecté : ces photos ne sont pas encore envoyées au Back Office.
-                </p>
-                {optionalPhotoNames.length > 0 && (
+              {activeMissingInfoTab === "notes" && (
+                <div className="space-y-3">
+                  <label
+                    htmlFor="v4-specific-notes"
+                    className="block text-sm font-semibold"
+                    style={{ color: "var(--color-text)" }}
+                  >
+                    D'autre spécificitées à prendre en compte
+                  </label>
+                  <textarea
+                    id="v4-specific-notes"
+                    value={props.specificNotes}
+                    onChange={(e) => props.onFieldChange("specificNotes", e.target.value)}
+                    rows={4}
+                    className="w-full rounded-xl px-4 py-3 text-sm resize-y"
+                    style={{
+                      background: "var(--color-bg)",
+                      border: "2px solid var(--color-border)",
+                      color: "var(--color-text)",
+                    }}
+                    placeholder={`Exemple :\nJ'ai un Piano droit, et une armoire très lourde et indémontable\nj'aimerais si possible que vous fassiez le menage dans le logement de départ :-)`}
+                  />
                   <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                    {optionalPhotoNames.length} photo(s) sélectionnée(s)
+                    Champ optionnel
                   </p>
-                )}
-              </div>
+                </div>
+              )}
+
+              {activeMissingInfoTab === "photos" && (
+                <div className="space-y-3">
+                  <label
+                    htmlFor="v4-optional-photos"
+                    className="block text-sm font-semibold"
+                    style={{ color: "var(--color-text)" }}
+                  >
+                    Ajouter des photos (facultatif)
+                  </label>
+                  <input
+                    id="v4-optional-photos"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="w-full rounded-xl px-4 py-3 text-sm"
+                    style={{
+                      background: "var(--color-bg)",
+                      border: "2px solid var(--color-border)",
+                      color: "var(--color-text)",
+                    }}
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      await handlePhotoUploadAndAnalyze(files);
+                    }}
+                  />
+                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    Upload Cloudflare + analyse IA live.
+                  </p>
+                  {(isUploadingPhotos || isAnalyzingPhotos) && (
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                      {isUploadingPhotos ? "Upload en cours..." : "Analyse IA en cours..."}
+                    </p>
+                  )}
+                  {photoPanelError && (
+                    <p className="text-xs" style={{ color: "var(--color-danger)" }}>
+                      {photoPanelError}
+                    </p>
+                  )}
+                  {uploadedPhotos.length > 0 && (
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                      {uploadedPhotos.length} photo(s) uploadée(s)
+                    </p>
+                  )}
+                  {moverInsights.length > 0 && (
+                    <div
+                      className="rounded-xl p-3 space-y-1"
+                      style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)" }}
+                    >
+                      <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
+                        Analyse IA (vue déménageur)
+                      </p>
+                      {moverInsights.map((insight, idx) => (
+                        <p key={`${idx}-${insight}`} className="text-sm" style={{ color: "var(--color-text)" }}>
+                          • {insight}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

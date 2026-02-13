@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import sharp from "sharp";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 // Images uniquement (plus de vidéos)
 const ALLOWED_MIME_TYPES = [
@@ -19,6 +20,30 @@ const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 Mo
 
 // Dossier local pour les images normalisées
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
+const R2_ENDPOINT = process.env.R2_ENDPOINT;
+const R2_BUCKET = process.env.R2_BUCKET;
+const R2_PUBLIC_BASE_URL = process.env.R2_PUBLIC_BASE_URL;
+
+const hasR2Config =
+  !!R2_ACCESS_KEY_ID &&
+  !!R2_SECRET_ACCESS_KEY &&
+  !!R2_ENDPOINT &&
+  !!R2_BUCKET;
+
+const r2Client = hasR2Config
+  ? new S3Client({
+      region: "auto",
+      endpoint: R2_ENDPOINT,
+      credentials: {
+        accessKeyId: R2_ACCESS_KEY_ID!,
+        secretAccessKey: R2_SECRET_ACCESS_KEY!,
+      },
+      forcePathStyle: true,
+    })
+  : null;
 
 function randomId() {
   // Pas de dépendance externe: on utilise crypto.randomUUID quand dispo.
@@ -106,10 +131,24 @@ export async function POST(req: NextRequest) {
 
         await fs.writeFile(diskPath, normalized);
 
+        if (r2Client && R2_BUCKET) {
+          await r2Client.send(
+            new PutObjectCommand({
+              Bucket: R2_BUCKET,
+              Key: key,
+              Body: normalized,
+              ContentType: "image/jpeg",
+            })
+          );
+        }
+
         success.push({
           // Identifiant technique local (non stocké en base pour l’instant)
           id: randomId(),
-          url: null,
+          url:
+            R2_PUBLIC_BASE_URL && r2Client
+              ? `${R2_PUBLIC_BASE_URL.replace(/\/+$/, "")}/${key}`
+              : null,
           storageKey: key,
           originalFilename,
           mimeType: "image/jpeg",
