@@ -978,13 +978,44 @@ function DevisGratuitsV3Content() {
     })();
     const isMovingDateValid = !!state.movingDate && state.movingDate >= minMovingDate;
 
-    // IMPORTANT: en Step 3, on fige la distance pour éviter les refresh pendant la saisie adresse.
-    // L'estimation ne doit bouger que sur les champs "Détails" (date, densité, cuisine, accès, formule).
+    // IMPORTANT: en Step 3, on fige la distance utilisée pour le montant final,
+    // afin d'éviter les refresh pendant la saisie adresse.
     const refinedDistanceKm = baseDistanceKm;
+    // Mais on conserve un delta "Distance" en détail dès que l'OSRM est valide.
+    const isRouteDistanceValid =
+      routeDistanceKm != null &&
+      Number.isFinite(routeDistanceKm) &&
+      routeDistanceKm > 0 &&
+      routeDistanceProvider === "osrm";
+    const addressesFilled =
+      !state.destinationUnknown &&
+      (state.originAddress || "").trim().length >= 5 &&
+      (state.destinationAddress || "").trim().length >= 5;
+    const canUseOsrmDistance = addressesFilled && isRouteDistanceValid;
 
-    // 1) Distance (recalcule prix de base, delta vs baseDistanceKm)
+    // 1) Distance:
+    // - détail distance (info utilisateur) basé sur OSRM si disponible
+    // - montant global reste basé sur la baseline figée
+    const inputDistanceForDetails = {
+      ...baselineInput,
+      distanceKm: canUseOsrmDistance ? routeDistanceKm! : baseDistanceKm,
+    };
+    const sDistForDetails = calculatePricing(inputDistanceForDetails);
+    const deltaDistanceEur = canUseOsrmDistance
+      ? formatDelta(sDistForDetails.prixBase - s0.prixBase)
+      : 0;
+
     const inputDistance = { ...baselineInput, distanceKm: refinedDistanceKm };
     const sDist = calculatePricing(inputDistance);
+    if (canUseOsrmDistance) {
+      lines.push({
+        key: "distance",
+        label: "Distance",
+        status: "adresses validées",
+        amountEur: deltaDistanceEur,
+        confirmed: true,
+      });
+    }
 
     // 2) Densité (delta vs "Très meublé")
     const densityTouched = state.density !== "";
@@ -1239,7 +1270,11 @@ function DevisGratuitsV3Content() {
     };
   }, [
     cityOsrmDistanceKm,
+    routeDistanceKm,
+    routeDistanceProvider,
     state.rewardBaselineDistanceKm,
+    state.originAddress,
+    state.destinationAddress,
     state.surfaceM2,
     state.formule,
     state.density,

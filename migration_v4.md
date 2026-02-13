@@ -1,5 +1,21 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Panier Step 3: rétablissement du détail Distance sans refaire bouger le montant
+
+**Constat** :
+- Après le gel anti-refresh de l'estimation, la ligne de détail distance n'apparaissait plus après saisie des adresses.
+
+**Correction** (`app/devis-gratuits-v3/page.tsx`) :
+- Le montant global reste figé sur la distance baseline (pas de refresh sur chaque lettre).
+- La ligne `Distance` est de nouveau calculée à partir de l'OSRM quand les adresses sont valides.
+- Cette ligne redevient visible dans les détails, sans réintroduire l'instabilité du prix principal.
+
+**Impact** :
+- UX stable sur le prix.
+- Détails cohérents dès que les adresses sont correctement renseignées.
+
+---
+
 ## 2026-02-13 — Fix: upload photo densité sans ouverture du bloc "Ajouter des précisions"
 
 **Bug constaté** :
@@ -5316,4 +5332,17 @@ Migration progressive : les hex inline seront remplacés par ces tokens au fil d
   - Compatibilité UI conservée : exigence explicite de renvoyer `moverInsights` dans les deux prompts.
 - **Tracking** : aucun impact.
 - **Champs / Inputs tunnel** : aucun changement.
+- **Back Office payload** : aucun changement.
+
+---
+
+## 2026-02-13 — Step 1 : cohérence du temps restant (copy)
+
+- **Objectif** : supprimer l'incohérence entre la barre de progression (`~30 sec`) et le texte marketing affiché sur l'écran.
+- **Fichier** : `components/tunnel/v2/StepQualificationV4.tsx`
+- **Changements UI copy** :
+  - Titre : `en 2 minutes` → `en ~30 sec`.
+  - Badge de réassurance : `2 minutes` → `~30 sec`.
+- **Tracking** : aucun impact.
+- **Champs / Inputs** : aucun changement.
 - **Back Office payload** : aucun changement.
