@@ -380,12 +380,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         setPhotoPanelError(result.errors[0]?.reason ?? "Certaines photos n'ont pas pu être traitées.");
       }
 
-      const localPreviewByFilename = files.reduce<Record<string, string[]>>((acc, file) => {
-        const list = acc[file.name] ?? [];
-        list.push(URL.createObjectURL(file));
-        acc[file.name] = list;
-        return acc;
-      }, {});
+      const localPreviewQueue = files.map((file) => URL.createObjectURL(file));
 
       const nextPhotos: UploadedPhoto[] = [];
       const seen = new Set<string>();
@@ -401,20 +396,17 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         for (const photo of result.success) {
           const photoKey = photo.storageKey || photo.id;
           if (next[photoKey]) continue;
-          const bucket = localPreviewByFilename[photo.originalFilename];
-          const candidate = bucket && bucket.length > 0 ? bucket.shift()! : "";
+          const candidate = localPreviewQueue.length > 0 ? localPreviewQueue.shift()! : "";
           if (candidate) next[photoKey] = candidate;
         }
         return next;
       });
-      Object.values(localPreviewByFilename).forEach((urls) => {
-        urls.forEach((u) => {
-          try {
-            URL.revokeObjectURL(u);
-          } catch {
-            // ignore cleanup errors
-          }
-        });
+      localPreviewQueue.forEach((u) => {
+        try {
+          URL.revokeObjectURL(u);
+        } catch {
+          // ignore cleanup errors
+        }
       });
       setUploadedPhotos(nextPhotos);
       await analyzePhotosLive(nextPhotos);

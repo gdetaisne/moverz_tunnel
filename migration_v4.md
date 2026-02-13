@@ -1,5 +1,21 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix miniatures photo Step 3 (`blob` invalidé)
+
+**Symptôme** :
+- Miniatures en erreur (`ERR_FILE_NOT_FOUND` sur URL `blob:`) après import.
+
+**Cause** :
+- Attribution de previews basée sur le nom de fichier + nettoyage anticipé de certaines URLs `blob`.
+
+**Correction** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Attribution des previews par **queue ordonnée** des fichiers sélectionnés (ordre stable upload → miniature).
+- Révocation uniquement des URLs `blob` **non utilisées** (restes de queue).
+
+**Impact** : miniatures stables dans la zone drag&drop.
+
+---
+
 ## 2026-02-13 — Photo+IA: miniatures persistantes + suppression liée + retour IA centralisé
 
 **Demandes** :
