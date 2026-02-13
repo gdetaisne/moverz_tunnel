@@ -1,5 +1,23 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Step 3: `ÉTAGE` affiché uniquement après clic sur `Appartement`
+
+**Demande** : au chargement Step 3, ne pas afficher `ÉTAGE`. L'afficher seulement si l'utilisateur choisit `Appartement`.
+
+**Cause** :
+- La logique UI traitait implicitement les valeurs vides comme "appartement", ce qui affichait `ÉTAGE` dès l'arrivée.
+
+**Correction** :
+- `isApartment()` ne renvoie `true` que pour des types explicites (`t1..t5`).
+- La sélection visuelle du bouton `Maison` est désormais explicite (`housingType === "house"`).
+- Résultat : pas de bloc `ÉTAGE` au chargement; il apparaît après clic sur `Appartement`.
+
+**Fichier** : `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+
+**Impact** : UI uniquement, aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-12 — SmartCart détails: sans sous-texte + ordre stable + info au survol
 
 **Demandes** :

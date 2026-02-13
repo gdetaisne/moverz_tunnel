@@ -91,7 +91,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     return d.toISOString().split("T")[0]!;
   }, []);
 
-  const isApartment = (t: string) => (t || "").trim() !== "house";
+  const isApartment = (t: string) => {
+    const normalized = (t || "").trim().toLowerCase();
+    return normalized === "t1" || normalized === "t2" || normalized === "t3" || normalized === "t4" || normalized === "t5";
+  };
   const showValidation = !!props.showValidation;
   const isOriginAddressValid = (props.originAddress || "").trim().length >= 5;
   const isDestinationAddressValid = (props.destinationAddress || "").trim().length >= 5;
@@ -170,11 +173,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               onClick={() => setHousingType("house")}
               className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
               style={{
-                background: !isApartment(housingType)
+                background: housingType === "house"
                   ? "var(--color-accent)"
                   : "var(--color-surface)",
-                color: !isApartment(housingType) ? "#FFFFFF" : "var(--color-text)",
-                border: !isApartment(housingType)
+                color: housingType === "house" ? "#FFFFFF" : "var(--color-text)",
+                border: housingType === "house"
                   ? "none"
                   : "2px solid var(--color-border)",
               }}
