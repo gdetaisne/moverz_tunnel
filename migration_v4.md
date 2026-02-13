@@ -1,5 +1,34 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Ajustement UX pipeline + prompt IA métier "contraintes spécifiques"
+
+**Demandes** :
+- Pipeline: remplacer `v validé` par un vrai symbole check.
+- Masquer le pipeline une fois le traitement terminé (visible uniquement pendant l'attente).
+- Revoir le prompt IA selon logique métier:
+  - note déménageur par typologie de contraintes,
+  - cohérence métier (pas de rideaux classés fragiles),
+  - dimensions uniquement si utiles à la manutention.
+
+**Modifications** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - statut `done` affiché avec icône check,
+  - pipeline affiché uniquement pendant upload/analyse.
+- `app/api/ai/analyze-photos/route.ts`
+  - prompt renforcé sur la logique métier "contraintes spécifiques",
+  - typologies demandées explicitement :
+    - `Objets fragiles`
+    - `Objets encombrants`
+    - `Spécificités accès`
+  - priorité aux lignes typologiques renvoyées par l'IA,
+  - garde-fou de cohérence côté fallback (exclusion rideaux/voilages/coussins) + déduplication.
+
+**Impact** :
+- Attente plus lisible en UI.
+- Retour IA plus métier, plus cohérent, moins de doublons.
+
+---
+
 ## 2026-02-13 — Retour IA restructuré par typologie (fragiles / encombrants / accès) + anti-doublons
 
 **Demande** :

@@ -268,7 +268,12 @@ async function callClaudeForRooms(
       return null;
     }
 
-    const moverInsights = buildMoverInsightsFromRooms(parsed.rooms);
+    const promptInsights = Array.isArray(parsed.moverInsights)
+      ? parsed.moverInsights.filter(
+          (v: unknown): v is string => typeof v === "string" && v.trim().length > 0
+        )
+      : [];
+    const moverInsights = buildMoverInsightsFromRooms(parsed.rooms, promptInsights);
 
     const totalMs = Date.now() - startedAt;
     return { model, rooms: parsed.rooms, moverInsights, totalMs };
@@ -339,14 +344,18 @@ function buildPrompt(photos: AnalyzePhotoInput[]): string {
 
   return `
 Tu es déménageur professionnel.
-Le client a envoyé un dossier et l'a complété de ces photos. Tu dois en tirer des informations utiles au déménagement.
+Le client a envoyé des photos dans la section "contraintes spécifiques".
+Ton rôle: produire une note opérationnelle utile au chef d'équipe déménagement.
 On te donne une liste de photos et les images associées. Tu dois :
 1) Regrouper les photos par pièce logique (salon, cuisine, chambres, etc.).
 2) Pour chaque pièce, proposer un inventaire d'objets plausibles, sans doublons.
 3) Pour chaque objet, si possible, estimer des dimensions (largeur/profondeur/hauteur en centimètres),
    calculer un volume approximatif en m3 et proposer une estimation de valeur en euros avec une courte justification.
-4) Produire une synthèse "vue déménageur" (points d'attention opérationnels) sous forme de puces courtes.
-5) Dans la synthèse, prioriser les OBJETS précis qui demandent de l'attention.
+4) Produire une synthèse structurée PAR TYPOLOGIE DE CONTRAINTES (et non par pièce):
+   - Objets fragiles
+   - Objets encombrants
+   - Spécificités accès
+5) Dans chaque typologie, citer des objets concrets + format utile uniquement si pertinent.
 
 Tu as accès aux images envoyées dans cette requête.
 
@@ -355,14 +364,19 @@ CONTRAINTES DE TON :
 - Si un espace semble très encombré, utiliser un vocabulaire neutre et factuel (ex: "densité élevée d'objets").
 - Rester très synthétique et concret.
 - Pas de phrase vague: chaque point doit citer un objet ou une contrainte concrète.
+- Cohérence métier obligatoire :
+  - ne classe pas un rideau en objet fragile,
+  - ne mets pas de dimensions inutiles (ex: épaisseur d'un tableau, objets qui entrent dans un carton),
+  - mets les dimensions/volume seulement pour les objets qui impactent vraiment la manutention.
 
 IMPORTANT :
 - Réponds STRICTEMENT en JSON valide UTF-8, sans texte avant/après.
 - Le JSON doit respecter cette forme :
 {
   "moverInsights": [
-    "Objet/Contrainte + raison factuelle (max 120 caractères)",
-    "Objet/Contrainte + raison factuelle (max 120 caractères)"
+    "Objets fragiles : ...",
+    "Objets encombrants : ...",
+    "Spécificités accès : ..."
   ],
   "rooms": [
     {
@@ -398,7 +412,10 @@ ${list}
 `.trim();
 }
 
-function buildMoverInsightsFromRooms(rooms: any[]): string[] {
+function buildMoverInsightsFromRooms(
+  rooms: any[],
+  promptInsights: string[] = []
+): string[] {
   const safeRooms = Array.isArray(rooms) ? rooms : [];
   const norm = (v: string) =>
     v
@@ -438,11 +455,33 @@ function buildMoverInsightsFromRooms(rooms: any[]): string[] {
   const seenBulky = new Set<string>();
   const seenAccess = new Set<string>();
 
+  const isIrrelevantForHandling = (label: string) => {
+    const l = norm(label);
+    return (
+      l.includes("rideau") ||
+      l.includes("voilage") ||
+      l.includes("coussin") ||
+      l.includes("tapis fin")
+    );
+  };
+
+  const startsWithTypology = (line: string, typology: "fragile" | "bulky" | "access") => {
+    const l = norm(line);
+    if (typology === "fragile") return l.startsWith("objets fragiles");
+    if (typology === "bulky") return l.startsWith("objets encombrants");
+    return l.startsWith("specificites acces") || l.startsWith("acces");
+  };
+
+  const promptFragile = promptInsights.filter((l) => startsWithTypology(l, "fragile"));
+  const promptBulky = promptInsights.filter((l) => startsWithTypology(l, "bulky"));
+  const promptAccess = promptInsights.filter((l) => startsWithTypology(l, "access"));
+
   for (const room of safeRooms) {
     const items = Array.isArray(room?.items) ? room.items : [];
     for (const item of items) {
       const label = String(item?.label || "").trim();
       if (!label) continue;
+      if (isIrrelevantForHandling(label)) continue;
 
       const isFragile = item?.flags?.fragile === true || item?.flags?.highValue === true;
       const isBulky =
@@ -466,13 +505,19 @@ function buildMoverInsightsFromRooms(rooms: any[]): string[] {
   }
 
   const insights: string[] = [];
-  if (fragileEntries.length > 0) {
+  if (promptFragile.length > 0) {
+    insights.push(promptFragile[0]!);
+  } else if (fragileEntries.length > 0) {
     insights.push(`Objets fragiles : ${fragileEntries.slice(0, 3).join(", ")}.`);
   }
-  if (bulkyEntries.length > 0) {
+  if (promptBulky.length > 0) {
+    insights.push(promptBulky[0]!);
+  } else if (bulkyEntries.length > 0) {
     insights.push(`Objets encombrants : ${bulkyEntries.slice(0, 3).join(", ")}.`);
   }
-  if (accessFlags.length > 0) {
+  if (promptAccess.length > 0) {
+    insights.push(promptAccess[0]!);
+  } else if (accessFlags.length > 0) {
     insights.push(`Accès : ${accessFlags.slice(0, 3).join(", ")}.`);
   }
 

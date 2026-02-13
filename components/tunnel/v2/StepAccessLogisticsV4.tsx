@@ -23,6 +23,7 @@ import {
   ArrowRight,
   ArrowDown,
   Loader2,
+  Check,
 } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
@@ -1100,36 +1101,36 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                           Ajoutez des photos pour obtenir un retour IA.
                         </p>
                       )}
-                      {pipelineVisibleSteps.length > 0 && (
+                      {(isUploadingPhotos || isAnalyzingPhotos) && pipelineVisibleSteps.length > 0 && (
                         <div className="space-y-1.5">
                           {PIPELINE_STEPS.filter((s) => pipelineVisibleSteps.includes(s.key)).map((step) => {
                             const status = pipelineStatuses[step.key];
-                            const statusLabel =
-                              status === "done"
-                                ? "v validé"
-                                : status === "in_progress"
-                                ? "en cours"
-                                : status === "error"
-                                ? "erreur"
-                                : "";
                             return (
                               <div key={step.key} className="flex items-center justify-between gap-2">
                                 <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
                                   {step.label}
                                 </span>
-                                <span
-                                  className="text-[10px] font-semibold uppercase"
-                                  style={{
-                                    color:
-                                      status === "done"
-                                        ? "var(--color-success)"
-                                        : status === "error"
-                                        ? "var(--color-danger)"
-                                        : "var(--color-accent)",
-                                  }}
-                                >
-                                  {statusLabel}
-                                </span>
+                                {status === "done" ? (
+                                  <span
+                                    className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase"
+                                    style={{ color: "var(--color-success)" }}
+                                  >
+                                    <Check className="w-3 h-3" />
+                                    validé
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="text-[10px] font-semibold uppercase"
+                                    style={{
+                                      color:
+                                        status === "error"
+                                          ? "var(--color-danger)"
+                                          : "var(--color-accent)",
+                                    }}
+                                  >
+                                    {status === "error" ? "erreur" : "en cours"}
+                                  </span>
+                                )}
                               </div>
                             );
                           })}
