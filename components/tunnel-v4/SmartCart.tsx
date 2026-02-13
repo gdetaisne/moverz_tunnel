@@ -181,7 +181,8 @@ export function SmartCart({
   const itemsCount = items.filter((item) => item.amountEur !== 0).length;
   const latestImpact = useMemo(() => {
     if (preferredImpactId) {
-      const preferred = items.find((x) => x.id === preferredImpactId && x.amountEur !== 0);
+      // Si l'utilisateur vient de cliquer un détail sans impact, on l'affiche quand même (0€).
+      const preferred = items.find((x) => x.id === preferredImpactId);
       if (preferred) return preferred;
     }
     return impactHistory[0] ?? null;

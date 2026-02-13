@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Dock impact: afficher `0€` sur clic sans impact
+
+**Demande** :
+- Si l'utilisateur clique un détail qui n'a pas d'impact prix, afficher explicitement `0€` dans le dock bas.
+
+**Cause** :
+- Le choix prioritaire (`preferredImpactId`) ignorait les lignes à `0€` et retombait sur le dernier impact non nul.
+
+**Correction** (`components/tunnel-v4/SmartCart.tsx`) :
+- `latestImpact` accepte désormais le `preferredImpactId` même quand `amountEur === 0`.
+- Le rendu existant affiche alors correctement `0€`.
+
+**Impact** :
+- Le feedback "dernier clic" reste fidèle à l'action utilisateur, y compris sans variation de prix.
+
+---
+
 ## 2026-02-13 — Fix impact dock: mapping du dernier input Step 3 réactivé
 
 **Problème** :
