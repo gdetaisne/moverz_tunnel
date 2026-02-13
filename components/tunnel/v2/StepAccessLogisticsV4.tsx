@@ -101,6 +101,20 @@ const FLOOR_OPTIONS: Array<{ value: string; label: string }> = [
 ];
 
 export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
+  type PipelineStepKey =
+    | "normalize"
+    | "compress"
+    | "temp_save"
+    | "ai_analysis";
+  type PipelineStepStatus = "pending" | "in_progress" | "done" | "error";
+
+  const PIPELINE_STEPS: Array<{ key: PipelineStepKey; label: string }> = [
+    { key: "normalize", label: "Normalisation de l'image" },
+    { key: "compress", label: "Compression" },
+    { key: "temp_save", label: "Sauvegarde temporaire" },
+    { key: "ai_analysis", label: "Analyse IA" },
+  ];
+
   const minMovingDate = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + 15);
@@ -135,6 +149,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [fallbackUploadLeadId, setFallbackUploadLeadId] = useState<string | null>(null);
   const [isDragOverPhotos, setIsDragOverPhotos] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const [pipelineStatuses, setPipelineStatuses] = useState<Record<PipelineStepKey, PipelineStepStatus>>({
+    normalize: "pending",
+    compress: "pending",
+    temp_save: "pending",
+    ai_analysis: "pending",
+  });
+  const [pipelineVisibleSteps, setPipelineVisibleSteps] = useState<PipelineStepKey[]>([]);
   const activeUploadedPhotos = useMemo(
     () =>
       uploadedPhotos.filter((p) =>
@@ -381,7 +402,19 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       reader.readAsDataURL(file);
     });
 
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const showPipelineStep = (step: PipelineStepKey) => {
+    setPipelineVisibleSteps((prev) => (prev.includes(step) ? prev : [...prev, step]));
+  };
+
+  const setPipelineStepStatus = (step: PipelineStepKey, status: PipelineStepStatus) => {
+    showPipelineStep(step);
+    setPipelineStatuses((prev) => ({ ...prev, [step]: status }));
+  };
+
   const handlePhotoUploadAndAnalyze = async (files: File[]) => {
+    if (isUploadingPhotos || isAnalyzingPhotos) return;
     const uploadLeadId = props.leadId ?? fallbackUploadLeadId;
     if (!uploadLeadId) {
       setPhotoPanelError("Initialisation en cours, réessayez dans un instant.");
@@ -391,7 +424,23 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
     setIsUploadingPhotos(true);
     setPhotoPanelError(null);
+    setPipelineVisibleSteps([]);
+    setPipelineStatuses({
+      normalize: "pending",
+      compress: "pending",
+      temp_save: "pending",
+      ai_analysis: "pending",
+    });
     try {
+      setPipelineStepStatus("normalize", "in_progress");
+      await sleep(200);
+      setPipelineStepStatus("normalize", "done");
+
+      setPipelineStepStatus("compress", "in_progress");
+      await sleep(200);
+      setPipelineStepStatus("compress", "done");
+
+      setPipelineStepStatus("temp_save", "in_progress");
       const result = await uploadLeadPhotos(uploadLeadId, files);
       if (result.errors.length > 0) {
         setPhotoPanelError(result.errors[0]?.reason ?? "Certaines photos n'ont pas pu être traitées.");
@@ -438,9 +487,21 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       const photosForAnalysis = nextPhotos.filter((p) =>
         activeSetAfterUpload.has(p.storageKey || p.id)
       );
+      setPipelineStepStatus("temp_save", "done");
+      setPipelineStepStatus("ai_analysis", "in_progress");
       await analyzePhotosLive(photosForAnalysis);
+      setPipelineStepStatus("ai_analysis", "done");
     } catch (error) {
       setPhotoPanelError(error instanceof Error ? error.message : "Erreur upload.");
+      const currentStep =
+        pipelineStatuses.ai_analysis === "in_progress"
+          ? "ai_analysis"
+          : pipelineStatuses.temp_save === "in_progress"
+          ? "temp_save"
+          : pipelineStatuses.compress === "in_progress"
+          ? "compress"
+          : "normalize";
+      setPipelineStepStatus(currentStep, "error");
     } finally {
       setIsUploadingPhotos(false);
     }
@@ -1038,6 +1099,41 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                         <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                           Ajoutez des photos pour obtenir un retour IA.
                         </p>
+                      )}
+                      {pipelineVisibleSteps.length > 0 && (
+                        <div className="space-y-1.5">
+                          {PIPELINE_STEPS.filter((s) => pipelineVisibleSteps.includes(s.key)).map((step) => {
+                            const status = pipelineStatuses[step.key];
+                            const statusLabel =
+                              status === "done"
+                                ? "v validé"
+                                : status === "in_progress"
+                                ? "en cours"
+                                : status === "error"
+                                ? "erreur"
+                                : "";
+                            return (
+                              <div key={step.key} className="flex items-center justify-between gap-2">
+                                <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                                  {step.label}
+                                </span>
+                                <span
+                                  className="text-[10px] font-semibold uppercase"
+                                  style={{
+                                    color:
+                                      status === "done"
+                                        ? "var(--color-success)"
+                                        : status === "error"
+                                        ? "var(--color-danger)"
+                                        : "var(--color-accent)",
+                                  }}
+                                >
+                                  {statusLabel}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                       {(isUploadingPhotos || isAnalyzingPhotos) && (
                         <div

@@ -1,5 +1,27 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Pipeline de traitement photo visible étape par étape
+
+**Demande** :
+- Afficher explicitement les étapes de traitement, dans l'ordre :
+  1. Normalisation de l'image
+  2. Compression
+  3. Sauvegarde temporaire
+  4. Analyse IA
+- Chaque étape apparaît à son tour.
+- Quand une étape est terminée, elle passe en `v validé`.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Ajout d'un pipeline UI séquentiel dans `Retour IA` avec statuts :
+  - `en cours`,
+  - `v validé`,
+  - `erreur` (si incident).
+- Ordre strict respecté et rendu progressif par étape.
+
+**Impact** : UI/feedback utilisateur uniquement.
+
+---
+
 ## 2026-02-13 — Soft delete photo: analyse IA limitée aux photos actives à l'écran
 
 **Problème** :
