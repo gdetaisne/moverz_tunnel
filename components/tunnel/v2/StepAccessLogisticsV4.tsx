@@ -743,6 +743,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     formule: sectionMeta.formule.valid,
     contact: sectionMeta.contact.valid,
   });
+  const lastAutoScrollRef = useRef<{ key: SectionKey | null; at: number }>({
+    key: null,
+    at: 0,
+  });
 
   useEffect(() => {
     const prev = prevSectionValidityRef.current;
@@ -764,17 +768,28 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         ...(following ? { [following]: true } : {}),
       }));
       if (following) {
-        // Laisse le layout se stabiliser après collapse, puis ne scrolle que si nécessaire.
+        // Laisse le layout se stabiliser après collapse, puis scrolle de façon contrôlée
+        // (alignement haut) pour éviter les "sauts" trop bas en mobile.
         window.setTimeout(() => {
           const target = document.getElementById(`v4-header-${following}`);
           if (!target) return;
           const rect = target.getBoundingClientRect();
           const vh = window.innerHeight || document.documentElement.clientHeight;
-          const isComfortablyVisible = rect.top >= 80 && rect.bottom <= vh - 120;
-          if (isComfortablyVisible) return;
-          target.scrollIntoView({
+          const isAlreadyWellPositioned = rect.top >= 16 && rect.top <= vh * 0.42;
+          if (isAlreadyWellPositioned) return;
+
+          const now = Date.now();
+          if (lastAutoScrollRef.current.key === following && now - lastAutoScrollRef.current.at < 900) {
+            return;
+          }
+
+          const desiredTop = Math.max(0, window.scrollY + rect.top - 16);
+          if (Math.abs(desiredTop - window.scrollY) < 24) return;
+
+          lastAutoScrollRef.current = { key: following, at: now };
+          window.scrollTo({
+            top: desiredTop,
             behavior: "smooth",
-            block: "center",
           });
         }, 140);
       }

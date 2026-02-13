@@ -1,5 +1,27 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix scroll auto Step 3: suppression des sauts trop bas
+
+**Retour utilisateur** :
+- Après validation d'un champ/bloc, le viewport descendait trop bas dans le formulaire.
+
+**Analyse** :
+- Le scroll auto post-validation utilisait un centrage (`block: "center"`), trop agressif sur mobile après collapse des cards.
+- Des déclenchements rapprochés pouvaient amplifier l'effet de saut.
+
+**Correction** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Remplacement du `scrollIntoView(..., block: "center")` par un `window.scrollTo` contrôlé:
+  - alignement sur le haut du header cible (offset ~16px),
+  - skip si la cible est déjà bien positionnée dans le viewport.
+- Ajout d'une garde anti-scroll répété (anti double-trigger court) pour éviter les enchaînements de sauts.
+- Skip des micro-déplacements (<24px) pour éviter les animations inutiles.
+
+**Impact** :
+- Navigation plus stable à la validation.
+- Réduction nette des "descendes trop basses" sur mobile.
+
+---
+
 ## 2026-02-13 — Fix build prod: ternaire JSX invalide dans Step 3
 
 **Incident** :
