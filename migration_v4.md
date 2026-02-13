@@ -1,5 +1,33 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Step 3: validation obligatoire + retour champ libre
+
+**Objectif** : aligner la validation Step 3 avec la règle métier "tout obligatoire", sauf :
+- `Mes dates sont flexibles`
+- `Contraintes d'accès`
+- `Téléphone`
+
+**Modifications appliquées** :
+- Validation bloquante ajoutée sur :
+  - `density` (Densité de meubles)
+  - `kitchenIncluded` (Cuisine équipée ?)
+  - `specificNotes` (champ libre, min 5 caractères)
+- Correction des IDs de focus de validation côté page :
+  - `v4-origin-address`, `v4-destination-address`, `v4-moving-date`, `v4-firstName`, `v4-email`
+- Réintroduction d'un champ libre en UI Step 3 :
+  - section "Précisions complémentaires"
+  - connectée à `specificNotes` (déjà présent dans state/payload)
+
+**Fichiers** :
+- `app/devis-gratuits-v3/page.tsx`
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+
+**Impact** :
+- Aucun changement DB/API.
+- Validation front renforcée, cohérente avec le besoin métier.
+
+---
+
 ## 2026-02-12 — Force palette light sur le tunnel live
 
 **Contexte** : Après le fix des aliases tokens, certains devices restaient en rendu sombre (OS/browser en dark mode), alors que la direction UX du tunnel V4 est light.

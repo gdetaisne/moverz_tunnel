@@ -58,6 +58,7 @@ interface StepAccessLogisticsV4Props {
   firstName: string;
   email: string;
   phone: string;
+  specificNotes: string;
   // Formule
   selectedFormule: "ECONOMIQUE" | "STANDARD" | "PREMIUM";
   onFormuleChange: (v: "ECONOMIQUE" | "STANDARD" | "PREMIUM") => void;
@@ -97,9 +98,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const isFirstNameValid = (props.firstName || "").trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((props.email || "").trim());
   const isMovingDateValid = !!props.movingDate && props.movingDate >= minMovingDate;
+  const isDensityValid = props.density !== "";
+  const isKitchenSelectionValid = props.kitchenIncluded !== "";
   const isKitchenValid =
     props.kitchenIncluded !== "appliances" ||
     (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
+  const isSpecificNotesValid = (props.specificNotes || "").trim().length >= 5;
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -420,7 +424,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             </p>
           </div>
 
-          <div>
+          <div id="v4-density-section">
             <label
               className="block text-sm font-medium mb-2"
               style={{ color: "var(--color-text)" }}
@@ -450,9 +454,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 </button>
               ))}
             </div>
+            {showValidation && !isDensityValid && (
+              <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
+                Densité requise
+              </p>
+            )}
           </div>
 
-          <div>
+          <div id="v4-kitchen-section">
             <label
               className="block text-sm font-medium mb-2"
               style={{ color: "var(--color-text)" }}
@@ -487,6 +496,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 </button>
               ))}
             </div>
+            {showValidation && !isKitchenSelectionValid && (
+              <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
+                Sélection cuisine requise
+              </p>
+            )}
           </div>
 
           {props.kitchenIncluded === "appliances" && (
@@ -623,6 +637,44 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               );
             })}
           </div>
+        </div>
+      </CardV4>
+
+      {/* Champ libre */}
+      <CardV4 padding="md">
+        <div className="space-y-3">
+          <label
+            htmlFor="v4-specific-notes"
+            className="block text-sm font-semibold"
+            style={{ color: "var(--color-text)" }}
+          >
+            Précisions complémentaires
+          </label>
+          <textarea
+            id="v4-specific-notes"
+            value={props.specificNotes}
+            onChange={(e) => props.onFieldChange("specificNotes", e.target.value)}
+            rows={3}
+            className="w-full rounded-xl px-4 py-3 text-sm resize-y"
+            style={{
+              background: "var(--color-bg)",
+              border: `2px solid ${
+                showValidation && !isSpecificNotesValid
+                  ? "var(--color-danger)"
+                  : "var(--color-border)"
+              }`,
+              color: "var(--color-text)",
+            }}
+            placeholder="Ex: code d'entrée, contraintes particulières, disponibilité..."
+          />
+          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            Champ obligatoire (minimum 5 caractères)
+          </p>
+          {showValidation && !isSpecificNotesValid && (
+            <p className="text-xs" style={{ color: "var(--color-danger)" }}>
+              Merci de renseigner au moins 5 caractères
+            </p>
+          )}
         </div>
       </CardV4>
 

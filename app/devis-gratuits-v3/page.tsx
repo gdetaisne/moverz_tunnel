@@ -1423,7 +1423,7 @@ function DevisGratuitsV3Content() {
     if (!isOriginAddrValid || !isDestinationAddrValid || !isOriginMetaValid || !isDestMetaValid || !isRouteDistanceValid) {
       setShowValidationStep3(true);
       requestAnimationFrame(() => {
-        const focusId = !isOriginAddrValid ? "v2-origin-address" : "v2-destination-address";
+        const focusId = !isOriginAddrValid ? "v4-origin-address" : "v4-destination-address";
         document.getElementById(focusId)?.scrollIntoView({ behavior: "smooth", block: "center" });
         (document.getElementById(focusId) as any)?.focus?.();
       });
@@ -1444,13 +1444,35 @@ function DevisGratuitsV3Content() {
     if (!isMovingDateValid) {
       setShowValidationStep3(true);
       requestAnimationFrame(() => {
-        document.getElementById("v2-moving-date")?.scrollIntoView({
+        document.getElementById("v4-moving-date")?.scrollIntoView({
           behavior: "smooth",
           block: "center",
         });
-        (document.getElementById("v2-moving-date") as any)?.focus?.();
+        (document.getElementById("v4-moving-date") as any)?.focus?.();
       });
       trackError("VALIDATION_ERROR", "Invalid moving date", 3, "PROJECT", "acces_v2");
+      return;
+    }
+
+    // Validation champs Step 3 obligatoires (hors exceptions explicites)
+    const isDensityValid = state.density === "light" || state.density === "normal" || state.density === "dense";
+    const isKitchenSelectionValid =
+      state.kitchenIncluded === "none" ||
+      state.kitchenIncluded === "appliances" ||
+      state.kitchenIncluded === "full";
+    if (!isDensityValid || !isKitchenSelectionValid) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        const focusId = !isDensityValid ? "v4-density-section" : "v4-kitchen-section";
+        document.getElementById(focusId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      trackError(
+        "VALIDATION_ERROR",
+        !isDensityValid ? "Missing density" : "Missing kitchen selection",
+        3,
+        "PROJECT",
+        "acces_v2"
+      );
       return;
     }
 
@@ -1460,7 +1482,7 @@ function DevisGratuitsV3Content() {
     if (!isFirstNameValid || !isEmailValid) {
       setShowValidationStep3(true);
       requestAnimationFrame(() => {
-        const focusId = !isFirstNameValid ? "v2-contact-firstName" : "v2-contact-email";
+        const focusId = !isFirstNameValid ? "v4-firstName" : "v4-email";
         document.getElementById(focusId)?.scrollIntoView({
           behavior: "smooth",
           block: "center",
@@ -1490,6 +1512,18 @@ function DevisGratuitsV3Content() {
         (document.getElementById(focusId) as any)?.focus?.();
       });
       trackError("VALIDATION_ERROR", "Invalid kitchen appliances count", 3, "PROJECT", "acces_v2");
+      return;
+    }
+
+    // Champ libre requis (min 5 caractères)
+    const isSpecificNotesValid = (state.specificNotes || "").trim().length >= 5;
+    if (!isSpecificNotesValid) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        document.getElementById("v4-specific-notes")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById("v4-specific-notes") as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Missing specific notes", 3, "PROJECT", "acces_v2");
       return;
     }
 
@@ -1850,6 +1884,7 @@ function DevisGratuitsV3Content() {
                 firstName={state.firstName}
                 email={state.email}
                 phone={state.phone}
+                specificNotes={state.specificNotes}
               />
               </div>
 
