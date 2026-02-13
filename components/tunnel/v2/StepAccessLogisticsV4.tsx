@@ -665,7 +665,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             aria-expanded={missingInfoPanelOpen}
           >
             <span className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-              Il nous manque des informations ?
+              Ajouter des précisions (facultatif)
             </span>
             <ChevronDown
               className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}

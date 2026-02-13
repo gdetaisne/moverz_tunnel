@@ -1,5 +1,17 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Renommage libellé dépliant Step 3
+
+**Demande** :
+- Renommer le bloc `Il nous manque des informations ?` en `Ajouter des précisions (facultatif)`.
+
+**Modification** :
+- Libellé du bouton dépliant mis à jour dans `components/tunnel/v2/StepAccessLogisticsV4.tsx`.
+
+**Impact** : wording UI uniquement.
+
+---
+
 ## 2026-02-13 — Fix upload Step 3 quand `leadId` est absent
 
 **Problème** :
