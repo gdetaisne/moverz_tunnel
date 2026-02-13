@@ -2169,7 +2169,7 @@ function DevisGratuitsV3Content() {
                 kitchenApplianceCount={state.kitchenApplianceCount}
                 movingDate={state.movingDate}
                 dateFlexible={state.dateFlexible}
-                onFieldChange={(field, value) => updateField(field as any, value)}
+                onFieldChange={handleStep3FieldChange}
                 onAiInsightsChange={setAiPhotoInsights}
                 onDensityAiNoteChange={setDensityAiNote}
                 onSubmit={handleSubmitAccessV2}

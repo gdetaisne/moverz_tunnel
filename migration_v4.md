@@ -1,5 +1,23 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix impact dock: mapping du dernier input Step 3 réactivé
+
+**Problème** :
+- Le dock mobile affichait un `Impact ...` incohérent avec le dernier clic/input en Step 3.
+
+**Cause** :
+- `StepAccessLogisticsV4` appelait `onFieldChange` avec un handler direct (`updateField`) et bypassait le mapping `field -> impactId`.
+- Résultat: `lastImpactDetailId` n'était plus mis à jour pour la majorité des champs Step 3 (sauf `formule`).
+
+**Correction** (`app/devis-gratuits-v3/page.tsx`) :
+- Rebranchement de `onFieldChange` sur `handleStep3FieldChange` pour Step 3.
+- Ce handler met à jour le state + le `lastImpactDetailId` via `mapStep3FieldToImpactId`.
+
+**Impact** :
+- Le bloc bas “Impact ...” suit de nouveau le dernier input/clic pertinent de Step 3.
+
+---
+
 ## 2026-02-13 — Fix régression focus adresse Step 3 (perte de focus à la frappe)
 
 **Bug observé** :
