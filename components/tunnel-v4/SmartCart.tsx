@@ -166,7 +166,7 @@ export function SmartCart({
     ? ((priceInRange - minPrice) / (maxPrice - minPrice)) * 100
     : 50;
 
-  const itemsCount = items.length;
+  const itemsCount = items.filter((item) => item.amountEur !== 0).length;
   const latestImpact = useMemo(() => {
     if (preferredImpactId) {
       const preferred = items.find((x) => x.id === preferredImpactId && x.amountEur !== 0);

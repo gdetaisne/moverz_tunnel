@@ -1,5 +1,28 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Dock reward: conservation des lignes à 0€ pour fiabiliser le "dernier détail"
+
+**Problème remonté** :
+- Après modification de la date, le dock pouvait encore afficher `Impact distance`.
+
+**Cause racine** :
+- Les lignes panier à `0€` étaient filtrées avant envoi au `SmartCart`.
+- Si le dernier détail modifié avait un impact nul (ou recalcul transitoire nul), la ligne disparaissait et un autre impact restait affiché.
+
+**Correction** :
+
+`app/devis-gratuits-v3/page.tsx`
+- Suppression du filtre `.filter((line) => line.amountEur !== 0)` lors du passage des lignes au `SmartCart`.
+- Le dock reçoit désormais toutes les lignes calculées (y compris `0€`) pour pouvoir afficher le vrai dernier détail modifié.
+
+`components/tunnel-v4/SmartCart.tsx`
+- Le badge compteur du dock compte désormais uniquement les lignes non nulles, pour conserver le même signal visuel d'impacts actifs.
+
+**Impact** :
+- Le libellé `Impact ...` reste aligné avec le dernier détail modifié, même quand son montant est `0€`.
+
+---
+
 ## 2026-02-13 — Dock reward: impact aligné sur le dernier détail modifié par l’utilisateur
 
 **Problème** :

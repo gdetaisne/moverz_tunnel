@@ -2160,9 +2160,7 @@ function DevisGratuitsV3Content() {
                   minPrice={v2PricingCart.refinedMinEur ?? 0}
                   maxPrice={v2PricingCart.refinedMaxEur ?? 0}
                   initialPrice={v2PricingCart.firstEstimateCenterEur ?? undefined}
-                  items={(v2PricingCart.lines ?? [])
-                    .filter((line) => line.amountEur !== 0)
-                    .map((line) => ({
+                  items={(v2PricingCart.lines ?? []).map((line) => ({
                       id: line.key,
                       label: line.label,
                       amountEur: line.amountEur,
