@@ -1,5 +1,26 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix régression: datepicker visible après animation de blocs
+
+**Régression** :
+- Après ajout de l'animation de fermeture, le sélecteur de date pouvait être tronqué/invisible.
+
+**Cause** :
+- Le conteneur animé utilisait `overflow: hidden` en permanence.
+- Le popup du datepicker dépassant du bloc était donc coupé.
+
+**Correction** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - remplacement du helper par un composant `AnimatedSection`,
+  - `overflow: hidden` uniquement pendant la transition (open/close),
+  - `overflow: visible` une fois le bloc ouvert.
+
+**Impact** :
+- Les dates sont à nouveau visibles et sélectionnables.
+- Animation conservée, mais sans casser les popups internes.
+
+---
+
 ## 2026-02-13 — UX: fermeture douce des blocs validés (Step 3 mobile)
 
 **Demande** :
