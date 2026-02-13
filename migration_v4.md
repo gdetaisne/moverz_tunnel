@@ -1,5 +1,27 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: fusion "Contraintes + champ libre" dans un dépliant unique
+
+**Demande** :
+- Fusionner les 2 blocs en un seul.
+- Afficher une ligne dépliante : `Il nous manque des informations ?`
+- Afficher le contenu seulement après ouverture :
+  - `Contraintes usuelles. à préciser`
+  - champ libre renommé en `D'autre spécificitées à prendre en compte`
+  - placeholder avec les 2 exemples fournis.
+
+**Modification** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Ajout d'un état local `showMissingInfoPanel` + ouverture conditionnelle.
+- Déplacement des contraintes et du textarea dans le contenu du dépliant.
+- Ouverture automatique si validation active et champ libre invalide.
+- Renommage des libellés et nouveau placeholder multi-lignes.
+
+**Impact** :
+- UX plus compacte et moins chargée visuellement.
+- Aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-13 — Stabilisation visuelle du haut de panier pendant saisie d'adresse
 
 **Demande** : le haut du panier bouge trop pendant la frappe dans les adresses, même quand les détails affichés ne changent pas.

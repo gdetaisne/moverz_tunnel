@@ -9,8 +9,8 @@
  * ❌ Services additionnels facultatifs RETIRÉS
  */
 
-import { useMemo } from "react";
-import { MapPin, Calendar, Home, Mail, User, Phone } from "lucide-react";
+import { useMemo, useState } from "react";
+import { MapPin, Calendar, Home, Mail, User, Phone, ChevronDown } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 import { CardV4 } from "@/components/tunnel-v4";
@@ -107,6 +107,8 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     props.kitchenIncluded !== "appliances" ||
     (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
   const isSpecificNotesValid = (props.specificNotes || "").trim().length >= 5;
+  const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
+  const missingInfoPanelOpen = showMissingInfoPanel || (showValidation && !isSpecificNotesValid);
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -546,137 +548,156 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         </div>
       </CardV4>
 
-      {/* Access constraints */}
+      {/* Informations complémentaires (dépliant) */}
       <CardV4 padding="md">
         <div className="space-y-4">
-          <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-            Contraintes d'accès
-          </p>
+          <button
+            type="button"
+            onClick={() => setShowMissingInfoPanel((v) => !v)}
+            className="w-full flex items-center justify-between text-left rounded-xl px-3 py-2"
+            style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)" }}
+            aria-expanded={missingInfoPanelOpen}
+          >
+            <span className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+              Il nous manque des informations ?
+            </span>
+            <ChevronDown
+              className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
+              style={{ color: "var(--color-text-muted)" }}
+            />
+          </button>
 
-          <div className="hidden sm:block">
-            <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-border)" }}>
-              <div className="grid grid-cols-[1fr,120px,120px] border-b" style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}>
-                <div className="px-3 py-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
-                  Contrainte
+          {missingInfoPanelOpen && (
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                  Contraintes usuelles. à préciser
+                </p>
+
+                <div className="hidden sm:block">
+                  <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="grid grid-cols-[1fr,120px,120px] border-b" style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}>
+                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
+                        Contrainte
+                      </div>
+                      <div className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
+                        Départ
+                      </div>
+                      <div className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
+                        Arrivée
+                      </div>
+                    </div>
+                    {questions.map((q) => {
+                      const sides = parseAccessSides()[q.key];
+                      const destDisabled = destinationUnknown;
+                      return (
+                        <div
+                          key={q.key}
+                          className="grid grid-cols-[1fr,120px,120px] items-center border-t"
+                          style={{ borderColor: "var(--color-border)" }}
+                        >
+                          <div className="px-3 py-3 text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                            {q.label}
+                          </div>
+                          <div className="px-3 py-2 flex justify-center">
+                            <ToggleYes
+                              active={Boolean(sides?.origin)}
+                              onToggle={() => toggleSide(q.key, "origin")}
+                              ariaLabel={`Départ: ${q.label}`}
+                            />
+                          </div>
+                          <div className="px-3 py-2 flex justify-center">
+                            <ToggleYes
+                              active={Boolean(sides?.destination)}
+                              disabled={destDisabled}
+                              onToggle={() => toggleSide(q.key, "destination")}
+                              ariaLabel={`Arrivée: ${q.label}`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
-                  Départ
-                </div>
-                <div className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
-                  Arrivée
+
+                <div className="sm:hidden space-y-2">
+                  {questions.map((q) => {
+                    const sides = parseAccessSides()[q.key];
+                    const destDisabled = destinationUnknown;
+                    return (
+                      <div
+                        key={q.key}
+                        className="rounded-xl border p-3 space-y-2"
+                        style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                      >
+                        <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                          {q.label}
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 flex items-center justify-between">
+                            <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+                              Départ
+                            </span>
+                            <ToggleYes
+                              active={Boolean(sides?.origin)}
+                              onToggle={() => toggleSide(q.key, "origin")}
+                              ariaLabel={`Départ: ${q.label}`}
+                            />
+                          </div>
+                          <div className="w-px h-8" style={{ background: "var(--color-border)" }} />
+                          <div className="flex-1 flex items-center justify-between">
+                            <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+                              Arrivée
+                            </span>
+                            <ToggleYes
+                              active={Boolean(sides?.destination)}
+                              disabled={destDisabled}
+                              onToggle={() => toggleSide(q.key, "destination")}
+                              ariaLabel={`Arrivée: ${q.label}`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              {questions.map((q) => {
-                const sides = parseAccessSides()[q.key];
-                const destDisabled = destinationUnknown;
-                return (
-                  <div
-                    key={q.key}
-                    className="grid grid-cols-[1fr,120px,120px] items-center border-t"
-                    style={{ borderColor: "var(--color-border)" }}
-                  >
-                    <div className="px-3 py-3 text-sm font-medium" style={{ color: "var(--color-text)" }}>
-                      {q.label}
-                    </div>
-                    <div className="px-3 py-2 flex justify-center">
-                      <ToggleYes
-                        active={Boolean(sides?.origin)}
-                        onToggle={() => toggleSide(q.key, "origin")}
-                        ariaLabel={`Départ: ${q.label}`}
-                      />
-                    </div>
-                    <div className="px-3 py-2 flex justify-center">
-                      <ToggleYes
-                        active={Boolean(sides?.destination)}
-                        disabled={destDisabled}
-                        onToggle={() => toggleSide(q.key, "destination")}
-                        ariaLabel={`Arrivée: ${q.label}`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
-          <div className="sm:hidden space-y-2">
-            {questions.map((q) => {
-              const sides = parseAccessSides()[q.key];
-              const destDisabled = destinationUnknown;
-              return (
-                <div
-                  key={q.key}
-                  className="rounded-xl border p-3 space-y-2"
-                  style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+              <div className="space-y-3">
+                <label
+                  htmlFor="v4-specific-notes"
+                  className="block text-sm font-semibold"
+                  style={{ color: "var(--color-text)" }}
                 >
-                  <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-                    {q.label}
+                  D'autre spécificitées à prendre en compte
+                </label>
+                <textarea
+                  id="v4-specific-notes"
+                  value={props.specificNotes}
+                  onChange={(e) => props.onFieldChange("specificNotes", e.target.value)}
+                  rows={4}
+                  className="w-full rounded-xl px-4 py-3 text-sm resize-y"
+                  style={{
+                    background: "var(--color-bg)",
+                    border: `2px solid ${
+                      showValidation && !isSpecificNotesValid
+                        ? "var(--color-danger)"
+                        : "var(--color-border)"
+                    }`,
+                    color: "var(--color-text)",
+                  }}
+                  placeholder={`Exemple :\nJ'ai un Piano droit, et une armoire très lourde et indémontable\nj'aimerais si possible que vous fassiez le menage dans le logement de départ :-)`}
+                />
+                <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                  Champ obligatoire (minimum 5 caractères)
+                </p>
+                {showValidation && !isSpecificNotesValid && (
+                  <p className="text-xs" style={{ color: "var(--color-danger)" }}>
+                    Merci de renseigner au moins 5 caractères
                   </p>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 flex items-center justify-between">
-                      <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
-                        Départ
-                      </span>
-                      <ToggleYes
-                        active={Boolean(sides?.origin)}
-                        onToggle={() => toggleSide(q.key, "origin")}
-                        ariaLabel={`Départ: ${q.label}`}
-                      />
-                    </div>
-                    <div className="w-px h-8" style={{ background: "var(--color-border)" }} />
-                    <div className="flex-1 flex items-center justify-between">
-                      <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
-                        Arrivée
-                      </span>
-                      <ToggleYes
-                        active={Boolean(sides?.destination)}
-                        disabled={destDisabled}
-                        onToggle={() => toggleSide(q.key, "destination")}
-                        ariaLabel={`Arrivée: ${q.label}`}
-                      />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </CardV4>
-
-      {/* Champ libre */}
-      <CardV4 padding="md">
-        <div className="space-y-3">
-          <label
-            htmlFor="v4-specific-notes"
-            className="block text-sm font-semibold"
-            style={{ color: "var(--color-text)" }}
-          >
-            Précisions complémentaires
-          </label>
-          <textarea
-            id="v4-specific-notes"
-            value={props.specificNotes}
-            onChange={(e) => props.onFieldChange("specificNotes", e.target.value)}
-            rows={3}
-            className="w-full rounded-xl px-4 py-3 text-sm resize-y"
-            style={{
-              background: "var(--color-bg)",
-              border: `2px solid ${
-                showValidation && !isSpecificNotesValid
-                  ? "var(--color-danger)"
-                  : "var(--color-border)"
-              }`,
-              color: "var(--color-text)",
-            }}
-            placeholder="Ex: code d'entrée, contraintes particulières, disponibilité..."
-          />
-          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-            Champ obligatoire (minimum 5 caractères)
-          </p>
-          {showValidation && !isSpecificNotesValid && (
-            <p className="text-xs" style={{ color: "var(--color-danger)" }}>
-              Merci de renseigner au moins 5 caractères
-            </p>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </CardV4>
