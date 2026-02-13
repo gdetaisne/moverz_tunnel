@@ -33,6 +33,43 @@ export interface AddressAutocompleteProps {
 
 // --- Providers ---
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isRetriableStatus = (status: number) => status === 429 || (status >= 500 && status < 600);
+
+const extractPostalCode = (raw?: string): string | undefined => {
+  const text = (raw || "").trim();
+  if (!text) return undefined;
+  const m = text.match(/\b(\d{5})\b/);
+  return m?.[1];
+};
+
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit & { signal?: AbortSignal },
+  retryCount = 2
+): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retryCount; attempt += 1) {
+    try {
+      const res = await fetch(url, options);
+      if (!res.ok && isRetriableStatus(res.status) && attempt < retryCount) {
+        await sleep(250 * Math.pow(2, attempt));
+        continue;
+      }
+      return res;
+    } catch (error) {
+      if (options.signal?.aborted) throw error;
+      lastError = error;
+      if (attempt < retryCount) {
+        await sleep(250 * Math.pow(2, attempt));
+        continue;
+      }
+    }
+  }
+  throw lastError ?? new Error("Network error");
+}
+
 // FR (BAN api-adresse.data.gouv.fr)
 async function fetchBanSuggestions(
   query: string,
@@ -63,7 +100,7 @@ async function fetchBanSuggestions(
   const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
     effectiveQuery
   )}&limit=5${postalCode ? `&postcode=${encodeURIComponent(postalCode)}` : ""}${typeParam}`;
-  const res = await fetch(url, { signal });
+  const res = await fetchWithRetry(url, { signal }, 2);
   if (!res.ok) return [];
   const data = (await res.json()) as {
     features: {
@@ -83,7 +120,12 @@ async function fetchBanSuggestions(
   };
   return (data.features ?? []).map((f) => {
     const city = f.properties.city ?? undefined;
-    const postalCode = f.properties.postcode ?? undefined;
+    const inferredPostalCode =
+      f.properties.postcode ??
+      extractPostalCode(f.properties.label) ??
+      extractPostalCode(city) ??
+      extractPostalCode(effectiveQuery);
+    const postalCode = inferredPostalCode ?? undefined;
     const baseLabel = f.properties.label;
     const label = kind === "city" ? formatCityLabel(city ?? baseLabel, postalCode) : baseLabel;
     return {
@@ -174,7 +216,11 @@ async function fetchNominatimSuggestions(
       label,
       addressLine: kind === "city" ? undefined : item.addressLine ?? item.label,
       city: item.city,
-      postalCode: item.postalCode,
+      postalCode:
+        item.postalCode ??
+        extractPostalCode(item.label) ??
+        extractPostalCode(item.city) ??
+        extractPostalCode(effectiveQuery),
       countryCode: cc,
       lat: item.lat,
       lon: item.lon,

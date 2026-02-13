@@ -1521,10 +1521,12 @@ function DevisGratuitsV3Content() {
     e.preventDefault();
     const isOriginValid =
       state.originCity.trim().length >= 2 &&
+      state.originPostalCode.trim().length >= 2 &&
       state.originLat != null &&
       state.originLon != null;
     const isDestinationValid =
       state.destinationCity.trim().length >= 2 &&
+      state.destinationPostalCode.trim().length >= 2 &&
       state.destinationLat != null &&
       state.destinationLon != null;
     const isSurfaceValid = (() => {
@@ -1536,10 +1538,10 @@ function DevisGratuitsV3Content() {
       setShowValidationStep1(true);
       requestAnimationFrame(() => {
         const focusId = !isOriginValid
-          ? "v2-origin-city"
+          ? "v4-origin-city"
           : !isDestinationValid
-          ? "v2-destination-city"
-          : "v2-surface-m2";
+          ? "v4-destination-city"
+          : "v4-surface-m2";
         document
           .getElementById(focusId)
           ?.scrollIntoView({ behavior: "smooth", block: "center" });

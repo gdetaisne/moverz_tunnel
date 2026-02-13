@@ -37,8 +37,14 @@ export function StepQualificationV4({
 }: StepQualificationV4Props) {
   const isOriginCoordsOk = originLat != null && originLon != null;
   const isDestinationCoordsOk = destinationLat != null && destinationLon != null;
-  const isOriginValid = originCity.trim().length >= 2 && isOriginCoordsOk;
-  const isDestinationValid = destinationCity.trim().length >= 2 && isDestinationCoordsOk;
+  const isOriginValid =
+    originCity.trim().length >= 2 &&
+    originPostalCode.trim().length >= 2 &&
+    isOriginCoordsOk;
+  const isDestinationValid =
+    destinationCity.trim().length >= 2 &&
+    destinationPostalCode.trim().length >= 2 &&
+    isDestinationCoordsOk;
   const isSurfaceValid = (() => {
     const n = Number.parseInt(String(surfaceM2 || "").trim(), 10);
     return Number.isFinite(n) && n >= 10 && n <= 500;
@@ -88,7 +94,7 @@ export function StepQualificationV4({
               required
               errorMessage={
                 showValidation && !isOriginValid
-                  ? "Sélectionnez une ville dans la liste"
+                  ? "Sélectionnez une ville dans la liste (code postal requis)"
                   : null
               }
               onInputChange={(raw) => {
@@ -118,7 +124,7 @@ export function StepQualificationV4({
               required
               errorMessage={
                 showValidation && !isDestinationValid
-                  ? "Sélectionnez une ville dans la liste"
+                  ? "Sélectionnez une ville dans la liste (code postal requis)"
                   : null
               }
               onInputChange={(raw) => {

@@ -1,5 +1,32 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 1 villes: retry API BAN + CP requis
+
+**Incident** :
+- Échecs intermittents `504 (Gateway Timeout)` sur `api-adresse.data.gouv.fr` en Step 1.
+- Dans certains cas, la ville pouvait être sélectionnée sans CP exploitable.
+
+**Corrections** :
+
+`components/tunnel/AddressAutocomplete.tsx`
+- Ajout d'un `fetchWithRetry` avec backoff exponentiel léger pour les erreurs réseau/`429`/`5xx` côté BAN.
+- Fallback d'extraction du code postal (`\d{5}`) depuis le libellé/résultat/requête si le provider n'en renvoie pas explicitement.
+
+`components/tunnel/v2/StepQualificationV4.tsx`
+- Validation renforcée: ville **et code postal** requis (en plus des coords).
+- Message d'erreur explicite: `code postal requis`.
+
+`app/devis-gratuits-v3/page.tsx`
+- `handleSubmitQualificationV2` exige maintenant aussi `originPostalCode` et `destinationPostalCode`.
+- Correction des IDs de focus (V4): `v4-origin-city`, `v4-destination-city`, `v4-surface-m2`.
+
+**Impact** :
+- Meilleure résilience aux timeouts BAN.
+- Le tunnel ne laisse plus passer une étape 1 sans code postal.
+- Aucun changement BO/Prisma/tracking.
+
+---
+
 ## 2026-02-13 — Step 3 mobile: B + D (blocs auto-réductibles + dock reward fixe)
 
 **Contexte UX** :
