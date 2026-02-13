@@ -1606,18 +1606,6 @@ function DevisGratuitsV3Content() {
       return;
     }
 
-    // Champ libre requis (min 5 caractères)
-    const isSpecificNotesValid = (state.specificNotes || "").trim().length >= 5;
-    if (!isSpecificNotesValid) {
-      setShowValidationStep3(true);
-      requestAnimationFrame(() => {
-        document.getElementById("v4-specific-notes")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        (document.getElementById("v4-specific-notes") as any)?.focus?.();
-      });
-      trackError("VALIDATION_ERROR", "Missing specific notes", 3, "PROJECT", "acces_v2");
-      return;
-    }
-
     // Normalise accès simple
     if (state.access_type === "simple") {
       updateFields({

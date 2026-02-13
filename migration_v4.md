@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — "Il nous manque des informations ?" rendu non obligatoire
+
+**Demande** : les champs dans le dépliant ne doivent pas être obligatoires.
+
+**Modification** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - suppression de la logique d'erreur sur `specificNotes`,
+  - suppression du style d'erreur associé,
+  - texte d'aide passé à `Champ optionnel`,
+  - ouverture du dépliant uniquement via clic utilisateur.
+- `app/devis-gratuits-v3/page.tsx`
+  - suppression du bloc de validation bloquante `specificNotes` dans `handleSubmitAccessV2`.
+
+**Impact** : UX plus fluide, aucun blocage de soumission sur ce panneau, aucun impact API/tracking/payload.
+
+---
+
 ## 2026-02-13 — Step 3: fusion "Contraintes + champ libre" dans un dépliant unique
 
 **Demande** :

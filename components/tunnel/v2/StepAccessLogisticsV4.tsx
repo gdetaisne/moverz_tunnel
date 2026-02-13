@@ -106,9 +106,8 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const isKitchenValid =
     props.kitchenIncluded !== "appliances" ||
     (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
-  const isSpecificNotesValid = (props.specificNotes || "").trim().length >= 5;
   const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
-  const missingInfoPanelOpen = showMissingInfoPanel || (showValidation && !isSpecificNotesValid);
+  const missingInfoPanelOpen = showMissingInfoPanel;
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -679,23 +678,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   className="w-full rounded-xl px-4 py-3 text-sm resize-y"
                   style={{
                     background: "var(--color-bg)",
-                    border: `2px solid ${
-                      showValidation && !isSpecificNotesValid
-                        ? "var(--color-danger)"
-                        : "var(--color-border)"
-                    }`,
+                    border: "2px solid var(--color-border)",
                     color: "var(--color-text)",
                   }}
                   placeholder={`Exemple :\nJ'ai un Piano droit, et une armoire très lourde et indémontable\nj'aimerais si possible que vous fassiez le menage dans le logement de départ :-)`}
                 />
                 <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                  Champ obligatoire (minimum 5 caractères)
+                  Champ optionnel
                 </p>
-                {showValidation && !isSpecificNotesValid && (
-                  <p className="text-xs" style={{ color: "var(--color-danger)" }}>
-                    Merci de renseigner au moins 5 caractères
-                  </p>
-                )}
               </div>
             </div>
           )}
