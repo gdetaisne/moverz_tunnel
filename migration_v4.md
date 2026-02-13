@@ -1,5 +1,19 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — SmartCart: masquer les lignes de détails à 0 €
+
+**Demande** : ne pas afficher les lignes de détail dont l'impact prix est nul (ex: `Date` à 0 €).
+
+**Modification** :
+- Filtre UI ajouté au passage des `items` vers `SmartCart` :
+  - `line.amountEur !== 0`
+
+**Fichier** : `app/devis-gratuits-v3/page.tsx`
+
+**Impact** : affichage panier plus lisible (pas de lignes neutres), aucun impact tracking/API/payload.
+
+---
+
 ## 2026-02-12 — Step 3: `ÉTAGE` affiché uniquement après clic sur `Appartement`
 
 **Demande** : au chargement Step 3, ne pas afficher `ÉTAGE`. L'afficher seulement si l'utilisateur choisit `Appartement`.
