@@ -38,6 +38,13 @@ import {
   getDistanceBand,
   LA_POSTE_RATES_EUR_PER_M3,
 } from "@/lib/pricing/constants";
+import {
+  computeBaselineEstimate,
+  computeBaselineEstimateByFormule,
+  computeMoverzFeeProvision,
+  getBaselineDistanceKm,
+  getDisplayedCenter,
+} from "@/lib/pricing/scenarios";
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import { StepQualificationV4 } from "@/components/tunnel/v2/StepQualificationV4";
@@ -813,35 +820,16 @@ function DevisGratuitsV3Content() {
   // - accès RAS
   const v2PricingByFormuleStep2 = useMemo(() => {
     if (state.currentStep !== 2) return null;
-    if (cityOsrmDistanceKm == null) return null; // attend l'OSRM
+    const baselineDistanceKm = getBaselineDistanceKm(cityOsrmDistanceKm);
+    if (baselineDistanceKm == null) return null; // attend l'OSRM
 
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const distanceKm = cityOsrmDistanceKm + 15;
-
-    const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
+    return computeBaselineEstimateByFormule({
       surfaceM2: surface,
-      housingType: "t2" as const,
-      density: "dense" as const,
-      distanceKm,
-      seasonFactor: 1,
-      originFloor: 0,
-      originElevator: "yes" as const,
-      destinationFloor: 0,
-      destinationElevator: "yes" as const,
-      services: { monteMeuble: false, piano: null, debarras: false },
-      extraVolumeM3: 3 * 0.6,
-    };
-
-    const formules: PricingFormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
-    return formules.reduce<Record<PricingFormuleType, ReturnType<typeof calculatePricing>>>(
-      (acc, formule) => {
-        acc[formule] = calculatePricing({ ...baseInput, formule });
-        return acc;
-      },
-      {} as any
-    );
+      distanceKm: baselineDistanceKm,
+    });
   }, [
     state.currentStep,
     state.surfaceM2,
@@ -856,8 +844,7 @@ function DevisGratuitsV3Content() {
 
   const v2FirstEstimateDistanceKm = useMemo(() => {
     if (state.destinationUnknown) return null;
-    if (cityOsrmDistanceKm == null) return null;
-    return cityOsrmDistanceKm + 15;
+    return getBaselineDistanceKm(cityOsrmDistanceKm);
   }, [
     state.destinationUnknown,
     cityOsrmDistanceKm,
@@ -866,11 +853,12 @@ function DevisGratuitsV3Content() {
   const v2DebugRowsStep2 = useMemo(() => {
     if (!debugMode) return null;
     if (state.currentStep !== 2) return null;
-    if (cityOsrmDistanceKm == null) return null;
+    const baselineDistanceKm = getBaselineDistanceKm(cityOsrmDistanceKm);
+    if (baselineDistanceKm == null) return null;
 
     const surface = parseInt(state.surfaceM2) || 60;
     const selectedFormule = state.formule as PricingFormuleType;
-    const distanceKm = cityOsrmDistanceKm + 15;
+    const distanceKm = baselineDistanceKm;
     const extraVolumeM3 = 3 * 0.6; // debug Step 2: cuisine=3 équipements
     const baseVolumeM3 = calculateVolume(surface, "t2", "dense");
     const volumeM3 = Math.round((baseVolumeM3 + extraVolumeM3) * 10) / 10;
@@ -942,32 +930,21 @@ function DevisGratuitsV3Content() {
   useEffect(() => {
     if (state.currentStep < 3) return;
     if (state.rewardBaselineMinEur != null && state.rewardBaselineMaxEur != null) return;
-    if (cityOsrmDistanceKm == null) return; // attend l'OSRM
+    const baselineDistanceKm = getBaselineDistanceKm(cityOsrmDistanceKm);
+    if (baselineDistanceKm == null) return; // attend l'OSRM
 
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return;
 
-    const distanceKm = cityOsrmDistanceKm + 15;
-
-    const baseInput: Omit<Parameters<typeof calculatePricing>[0], "formule"> = {
+    const baseline = computeBaselineEstimate({
       surfaceM2: surface,
-      housingType: "t2" as const,
-      density: "dense" as const,
-      distanceKm,
-      seasonFactor: 1,
-      originFloor: 0,
-      originElevator: "yes" as const,
-      destinationFloor: 0,
-      destinationElevator: "yes" as const,
-      services: { monteMeuble: false, piano: null, debarras: false },
-      extraVolumeM3: 3 * 0.6,
-    };
-
-    const baseline = calculatePricing({ ...baseInput, formule: state.formule as PricingFormuleType });
+      distanceKm: baselineDistanceKm,
+      formule: state.formule as PricingFormuleType,
+    });
     updateFields({
       rewardBaselineMinEur: baseline.prixMin ?? null,
       rewardBaselineMaxEur: baseline.prixMax ?? null,
-      rewardBaselineDistanceKm: distanceKm,
+      rewardBaselineDistanceKm: baselineDistanceKm,
       rewardBaselineFormule: state.formule,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -982,10 +959,8 @@ function DevisGratuitsV3Content() {
 
   // Panier (Step 3): Première estimation (hypothèses fixes) → deltas → Budget affiné
   const v2PricingCart = useMemo(() => {
-
-    const CENTER_BIAS = 0.6;
     const centerEur = (minEur: number, maxEur: number): number =>
-      Math.round(minEur + (maxEur - minEur) * CENTER_BIAS);
+      getDisplayedCenter(minEur, maxEur);
     const formatDelta = (delta: number) => Math.round(delta);
 
     const surface = parseInt(state.surfaceM2) || 60;
@@ -999,9 +974,7 @@ function DevisGratuitsV3Content() {
     const baseDistanceKm =
       state.rewardBaselineDistanceKm != null && Number.isFinite(state.rewardBaselineDistanceKm)
         ? state.rewardBaselineDistanceKm
-        : cityOsrmDistanceKm != null
-        ? cityOsrmDistanceKm + 15
-        : null;
+        : getBaselineDistanceKm(cityOsrmDistanceKm);
     if (baseDistanceKm == null) return null;
 
     // Baseline fixe = STANDARD (source de vérité du "Budget initial")
@@ -1020,7 +993,11 @@ function DevisGratuitsV3Content() {
       extraVolumeM3: 3 * 0.6, // cuisine = 3 équipements
     };
 
-    const s0 = calculatePricing(baselineInput);
+    const s0 = computeBaselineEstimate({
+      surfaceM2: surface,
+      distanceKm: baseDistanceKm,
+      formule: baselineFormule,
+    });
     const firstEstimateCenterEur = centerEur(s0.prixMin, s0.prixMax);
 
     const minMovingDate = getMinMovingDateIso();
@@ -1621,7 +1598,7 @@ function DevisGratuitsV3Content() {
     e.preventDefault();
     // Reward: figer la valeur Step 2 (avec buffers) au passage vers Step 3
     if (v2PricingByFormuleStep2 && activePricingStep2) {
-      const baselineDistanceKm = cityOsrmDistanceKm != null ? cityOsrmDistanceKm + 15 : null;
+      const baselineDistanceKm = getBaselineDistanceKm(cityOsrmDistanceKm);
       updateFields({
         rewardBaselineMinEur: activePricingStep2.prixMin ?? null,
         rewardBaselineMaxEur: activePricingStep2.prixMax ?? null,
@@ -1845,6 +1822,15 @@ function DevisGratuitsV3Content() {
       const originIsHouse = isHouseType(state.originHousingType);
       const destIsHouse = isHouseType(state.destinationHousingType);
 
+      const frozenStep2CenterEur =
+        state.rewardBaselineMinEur != null && state.rewardBaselineMaxEur != null
+          ? getDisplayedCenter(state.rewardBaselineMinEur, state.rewardBaselineMaxEur)
+          : null;
+      const moverzFeeProvisionFromStep2Eur =
+        frozenStep2CenterEur != null
+          ? computeMoverzFeeProvision(frozenStep2CenterEur)
+          : undefined;
+
       // Snapshot complet du panier ("Votre panier") pour archivage BO
       const pricingSnapshot = (() => {
         if (!v2PricingCart || !pricingByFormule || !activePricing) return undefined;
@@ -1855,6 +1841,9 @@ function DevisGratuitsV3Content() {
           refinedMinEur: v2PricingCart.refinedMinEur,
           refinedMaxEur: v2PricingCart.refinedMaxEur,
           refinedCenterEur: v2PricingCart.refinedCenterEur,
+          step2CenterBeforeProvisionEur: frozenStep2CenterEur ?? undefined,
+          moverzFeeProvisionEur: moverzFeeProvisionFromStep2Eur,
+          moverzFeeProvisionRule: "MAX(100;10% du montant estimé)",
           // Première estimation (baseline)
           firstEstimateMinEur: v2PricingCart.firstEstimateMinEur,
           firstEstimateMaxEur: v2PricingCart.firstEstimateMaxEur,
@@ -1930,6 +1919,8 @@ function DevisGratuitsV3Content() {
           pricing: {
             distanceKm: routeDistanceKm ?? undefined,
             distanceProvider: routeDistanceProvider ?? undefined,
+            step2CenterBeforeProvisionEur: frozenStep2CenterEur ?? undefined,
+            moverzFeeProvisionEur: moverzFeeProvisionFromStep2Eur,
           },
           accessV2: {
             access_type: state.access_type ?? "simple",

@@ -1,5 +1,65 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Règle interne ajoutée: Moverz_Fee_Provision (non affichée UI)
+
+**Demande métier** :
+- Ajouter un montant interne `Moverz_Fee_Provision = MAX(100€; 10% du montant estimé)`.
+- Ne jamais l'afficher à l'utilisateur.
+
+**Implémentation** :
+- `lib/pricing/scenarios.ts`
+  - ajout helper central `computeMoverzFeeProvision(estimatedAmountEur)`.
+- `app/devis-gratuits-v3/page.tsx`
+  - ajout de `moverzFeeProvisionEur` dans `pricingSnapshot` (archive BO),
+  - ajout de `moverzFeeProvisionEur` dans `tunnelOptions.pricing`.
+
+**Affichage** :
+- Aucun composant UI modifié.
+- Valeur uniquement transmise côté Back Office (payload interne).
+
+**Mise à jour (figeage métier)** :
+- `Moverz_Fee_Provision` est désormais calculée sur le **montant Step 2 figé** (avant provision), pas sur le budget affiné Step 3.
+- Référence utilisée: centre de baseline capturé (`rewardBaselineMinEur` + `rewardBaselineMaxEur`).
+- Champs archivés:
+  - `step2CenterBeforeProvisionEur`
+  - `moverzFeeProvisionEur`
+
+---
+
+## 2026-02-13 — Option A: centralisation des scénarios baseline (Home / Step 2 / Step 3)
+
+**Objectif** :
+- Aligner le calcul de base entre `moverz.fr` (API estimate), Step 2 et Step 3 avant modifications utilisateur.
+- Rendre la règle de projection centrale facilement modifiable en un seul endroit.
+
+**Modification** :
+- Ajout d'un module unique `lib/pricing/scenarios.ts` avec :
+  - `computeBaselineEstimate(...)`
+  - `computeBaselineEstimateByFormule(...)`
+  - `getBaselineDistanceKm(...)` (buffer distance centralisé)
+  - `getDisplayedCenter(...)`
+  - constantes : `BASELINE_DISTANCE_BUFFER_KM`, `DISPLAY_CENTER_BIAS`.
+
+- Raccordement de `app/api/estimate/route.ts` :
+  - calcul baseline via `computeBaselineEstimate`,
+  - centre renvoyé via `getDisplayedCenter`,
+  - buffer distance via constante partagée.
+
+- Raccordement de `app/devis-gratuits-v3/page.tsx` :
+  - Step 2 baseline via `computeBaselineEstimateByFormule`,
+  - Step 3 baseline (`rewardBaseline*`) via `computeBaselineEstimate`,
+  - distance baseline via `getBaselineDistanceKm`,
+  - centre affiché du panier via `getDisplayedCenter`.
+
+**Paramètre métier unique** :
+- `DISPLAY_CENTER_BIAS = 0.5` (modifiable en 1 ligne pour faire évoluer la projection centrale partout).
+
+**Impact** :
+- Même logique baseline partagée sur Home/API + Step 2 + Step 3 initial.
+- Maintenance simplifiée (moins de duplication et de divergence future).
+
+---
+
 ## 2026-02-13 — Step 3: ordre des détails aligné avec la logique écran
 
 **Demande UX** :

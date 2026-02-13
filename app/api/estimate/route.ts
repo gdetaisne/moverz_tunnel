@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { calculatePricing } from "@/lib/pricing/calculate";
+import {
+  computeBaselineEstimate,
+  getDisplayedCenter,
+  BASELINE_DISTANCE_BUFFER_KM,
+} from "@/lib/pricing/scenarios";
 
 /**
  * GET /api/estimate?originPostalCode=75011&destinationPostalCode=13001&surface=60&formule=STANDARD
@@ -41,8 +45,6 @@ const EstimateQuerySchema = z.object({
   destinationLat: z.coerce.number().finite().min(-90).max(90).optional(),
   destinationLon: z.coerce.number().finite().min(-180).max(180).optional(),
 });
-
-const BUFFER_KM = 15;
 
 // ─── Helpers ────────────────────────────────────────────
 
@@ -176,37 +178,32 @@ export async function GET(req: NextRequest) {
     if (oLat != null && oLon != null && dLat != null && dLon != null) {
       const osrmKm = await osrmDistanceKm(oLat, oLon, dLat, dLon);
       if (osrmKm != null) {
-        distanceKm = osrmKm + BUFFER_KM;
+        distanceKm = osrmKm + BASELINE_DISTANCE_BUFFER_KM;
         distanceProvider = "osrm";
       } else {
-        distanceKm = heuristicDistanceKm(originPostalCode, destinationPostalCode) + BUFFER_KM;
+        distanceKm =
+          heuristicDistanceKm(originPostalCode, destinationPostalCode) +
+          BASELINE_DISTANCE_BUFFER_KM;
         distanceProvider = "heuristic";
       }
     } else {
-      distanceKm = heuristicDistanceKm(originPostalCode, destinationPostalCode) + BUFFER_KM;
+      distanceKm =
+        heuristicDistanceKm(originPostalCode, destinationPostalCode) +
+        BASELINE_DISTANCE_BUFFER_KM;
       distanceProvider = "heuristic";
     }
 
     // 3. Calcul du prix (mêmes hypothèses conservatrices que Step 2)
-    const result = calculatePricing({
+    const result = computeBaselineEstimate({
       surfaceM2: surface,
-      housingType: "t2",
-      density: "dense",
       distanceKm,
-      seasonFactor: 1,
-      originFloor: 0,
-      originElevator: "yes",
-      destinationFloor: 0,
-      destinationElevator: "yes",
       formule,
-      services: { monteMeuble: false, piano: null, debarras: false },
-      extraVolumeM3: 3 * 0.6, // ~cuisine (3 appareils)
     });
 
     return NextResponse.json({
       prixMin: result.prixMin,
       prixMax: result.prixMax,
-      prixCentre: Math.round((result.prixMin + result.prixMax) / 2),
+      prixCentre: getDisplayedCenter(result.prixMin, result.prixMax),
       volumeM3: result.volumeM3,
       distanceKm,
       distanceProvider,
