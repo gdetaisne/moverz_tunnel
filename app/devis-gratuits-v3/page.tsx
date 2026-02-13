@@ -937,11 +937,11 @@ function DevisGratuitsV3Content() {
     const surface = parseInt(state.surfaceM2) || 60;
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const formule = state.formule as PricingFormuleType;
+    const selectedFormule = state.formule as PricingFormuleType;
+    const baselineFormule: PricingFormuleType = "STANDARD";
 
     // Première estimation: distance OSRM ville-à-ville + 15 km (buffer),
-    // densité=Très meublé, cuisine=3 équipements, date sans saison, accès RAS,
-    // formule = celle sélectionnée (STANDARD par défaut).
+    // densité=Très meublé, cuisine=3 équipements, date sans saison, accès RAS.
     if (cityOsrmDistanceKm == null) return null; // attend l'OSRM
     const baseDistanceKm = cityOsrmDistanceKm + 15;
 

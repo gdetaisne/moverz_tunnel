@@ -1,5 +1,19 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Hotfix build TS (Step 3 panier)
+
+**Contexte** : échec de build prod sur `app/devis-gratuits-v3/page.tsx` avec `Cannot find name 'baselineFormule'`.
+
+**Correction** :
+- Déclaration explicite des constantes dans `v2PricingCart` :
+  - `selectedFormule = state.formule as PricingFormuleType`
+  - `baselineFormule = "STANDARD"`
+- Alignement commentaire "Première estimation" (sans ambiguïté sur la formule).
+
+**Impact** : correction compilation TypeScript uniquement, pas de changement fonctionnel métier.
+
+---
+
 ## 2026-02-12 — SmartCart détails: symbole visuel devant montants
 
 **Demande** : remplacer les signes textuels devant les montants de détails par des symboles visuels.
