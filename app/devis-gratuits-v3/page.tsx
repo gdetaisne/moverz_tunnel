@@ -96,6 +96,13 @@ function DevisGratuitsV3Content() {
     return "max-w-3xl px-4 py-8 space-y-6 mx-auto";
   }, [state.currentStep]);
 
+  useEffect(() => {
+    if (state.currentStep !== 4) return;
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }, [state.currentStep]);
+
   const toInputDate = (raw: string | null | undefined): string | undefined => {
     if (!raw) return undefined;
     const d = new Date(raw);
@@ -2107,15 +2114,6 @@ function DevisGratuitsV3Content() {
                 estimateMaxEur={activePricing?.prixMax ?? null}
                 estimateIsIndicative={estimateIsIndicative}
                 email={state.email}
-                recap={{
-                  originCity: state.originCity,
-                  originPostalCode: state.originPostalCode,
-                  destinationCity: state.destinationCity,
-                  destinationPostalCode: state.destinationPostalCode,
-                  movingDate: state.movingDate,
-                  formule: state.formule,
-                  surfaceM2: state.surfaceM2,
-                }}
               />
             </div>
           )}

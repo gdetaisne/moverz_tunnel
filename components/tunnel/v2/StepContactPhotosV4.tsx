@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Mail, Clock } from "lucide-react";
 import { CardV4 } from "@/components/tunnel-v4";
 
@@ -32,11 +32,7 @@ interface StepContactPhotosV4Props {
 
 export function StepContactPhotosV4({
   leadId,
-  estimateMinEur = null,
-  estimateMaxEur = null,
-  estimateIsIndicative = false,
   email = null,
-  recap,
 }: StepContactPhotosV4Props) {
   const [mounted, setMounted] = useState(false);
   const requestOnceRef = useRef(false);
@@ -57,46 +53,6 @@ export function StepContactPhotosV4({
   }, [mounted, leadId]);
 
   const normalizedEmail = (email || "").trim().toLowerCase();
-
-  const hasEstimate =
-    typeof estimateMinEur === "number" &&
-    typeof estimateMaxEur === "number" &&
-    Number.isFinite(estimateMinEur) &&
-    Number.isFinite(estimateMaxEur) &&
-    estimateMaxEur > 0;
-
-  const euro = (n: number) =>
-    new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-      maximumFractionDigits: 0,
-    }).format(Math.round(n));
-
-  const recapRows = useMemo(() => {
-    const rows: { label: string; value: string }[] = [];
-
-    const origin = [recap?.originCity, recap?.originPostalCode].filter(Boolean).join(" ").trim();
-    const dest = [recap?.destinationCity, recap?.destinationPostalCode]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-
-    if (origin) rows.push({ label: "Départ", value: origin });
-    if (dest) rows.push({ label: "Arrivée", value: dest });
-    if (recap?.movingDate) rows.push({ label: "Date", value: String(recap.movingDate) });
-    if (recap?.formule) rows.push({ label: "Formule", value: String(recap.formule) });
-    if (recap?.surfaceM2) rows.push({ label: "Surface", value: `${String(recap.surfaceM2)} m²` });
-
-    return rows;
-  }, [
-    recap?.originCity,
-    recap?.originPostalCode,
-    recap?.destinationCity,
-    recap?.destinationPostalCode,
-    recap?.movingDate,
-    recap?.formule,
-    recap?.surfaceM2,
-  ]);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -128,117 +84,6 @@ export function StepContactPhotosV4({
         </div>
       </CardV4>
 
-      {/* Récap (déplacé ici, AVANT timeline) */}
-      {recapRows.length > 0 && (
-        <CardV4 padding="md">
-          <div className="space-y-3">
-            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-              Récapitulatif de votre demande
-            </p>
-
-            {recapRows.map((r) => (
-              <div
-                key={r.label}
-                className="flex items-center justify-between gap-4 py-2"
-                style={{ borderBottom: "1px solid var(--color-border)" }}
-              >
-                <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                  {r.label}
-                </p>
-                <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-                  {r.value}
-                </p>
-              </div>
-            ))}
-
-            {hasEstimate && (
-              <div
-                className="mt-4 p-4 rounded-xl"
-                style={{
-                  background: "var(--color-accent-light)",
-                  border: "1px solid var(--color-accent)",
-                }}
-              >
-                <p
-                  className="text-xs font-semibold uppercase tracking-wide mb-2"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
-                  Estimation
-                </p>
-                <p
-                  className="text-2xl font-bold tabular-nums"
-                  style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
-                >
-                  {euro(estimateMinEur!)} – {euro(estimateMaxEur!)}
-                </p>
-                {estimateIsIndicative && (
-                  <p className="text-xs mt-2" style={{ color: "var(--color-text-muted)" }}>
-                    Estimation indicative
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        </CardV4>
-      )}
-
-      {/* Timeline (déplacé après récap) */}
-      <CardV4 padding="md">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5" style={{ color: "var(--color-accent)" }} />
-            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-              Ce qui se passe maintenant
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: "var(--color-accent)" }}
-              >
-                <CheckCircle2 className="w-4 h-4 text-white" strokeWidth={3} />
-              </div>
-              <p className="text-sm" style={{ color: "var(--color-text)" }}>
-                Votre demande est reçue et analysée
-              </p>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{
-                  background: "var(--color-accent-light)",
-                  border: "2px solid var(--color-accent)",
-                }}
-              >
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ background: "var(--color-accent)" }}
-                />
-              </div>
-              <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-                Sélection des meilleurs pros de votre région (24-48h)
-              </p>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div
-                className="w-6 h-6 rounded-full flex-shrink-0"
-                style={{
-                  background: "var(--color-border-light)",
-                  border: "2px solid var(--color-border)",
-                }}
-              />
-              <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                Vous recevez jusqu'à 3 devis gratuits par email
-              </p>
-            </div>
-          </div>
-        </div>
-      </CardV4>
-
       {/* Email confirmation */}
       <CardV4 padding="md">
         <div className="flex items-start gap-4">
@@ -261,7 +106,7 @@ export function StepContactPhotosV4({
               )}
             </p>
             <p className="text-sm mb-3" style={{ color: "var(--color-text-secondary)" }}>
-              Un email de confirmation vous a été envoyé. Pensez à vérifier vos spams.
+              Un email de confirmation vous a été envoyé. Cliquez sur le lien reçu pour valider votre adresse.
             </p>
 
             {confirmationState.status === "sent" && (
@@ -276,6 +121,49 @@ export function StepContactPhotosV4({
                 {confirmationState.message || "Email de confirmation envoyé"}
               </div>
             )}
+          </div>
+        </div>
+      </CardV4>
+
+      {/* Timeline */}
+      <CardV4 padding="md">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5" style={{ color: "var(--color-accent)" }} />
+            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+              Ce qui se passe maintenant
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              "1. Vous validez votre mail",
+              "2. Nous contactons les meilleurs déménageurs",
+              "3. Nous centralisons toutes les réponses / devis",
+              "4. On vous fait un récap dans 5 à 7 jours",
+            ].map((text, idx) => (
+              <div key={text} className="flex items-start gap-3">
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+                  style={{
+                    background: idx === 0 ? "var(--color-accent)" : "var(--color-accent-light)",
+                    color: idx === 0 ? "#fff" : "var(--color-accent)",
+                    border: idx === 0 ? "none" : "1px solid var(--color-accent)",
+                  }}
+                >
+                  {idx + 1}
+                </div>
+                <p
+                  className="text-sm"
+                  style={{
+                    color: idx === 0 ? "var(--color-text)" : "var(--color-text-secondary)",
+                    fontWeight: idx === 0 ? 600 : 400,
+                  }}
+                >
+                  {text}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </CardV4>

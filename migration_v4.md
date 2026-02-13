@@ -1,5 +1,37 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 4: arrivée en haut + refonte contenu confirmation
+
+**Demandes** :
+- En arrivant en Step 4, afficher le haut de page (pas une position intermédiaire).
+- Conserver `Bravo`.
+- Afficher ensuite un bloc `Confirmez votre mail`.
+- Mettre à jour le bloc `Ce qui se passe maintenant` avec la promesse métier:
+  1. Vous validez votre mail
+  2. Nous contactons les meilleurs déménageurs
+  3. Nous centralisons toutes les réponses / devis
+  4. On vous fait un récap dans 5 à 7 jours
+- Supprimer complètement le `Récapitulatif de votre demande`.
+
+**Modifications** :
+
+`app/devis-gratuits-v3/page.tsx`
+- Ajout d'un `useEffect` sur `currentStep === 4` avec `window.scrollTo({ top: 0 })`.
+- Suppression du passage des props `recap` au composant Step 4.
+
+`components/tunnel/v2/StepContactPhotosV4.tsx`
+- Suppression totale du bloc récapitulatif (et de l’estimation associée).
+- Ordre final du contenu:
+  1) Hero `Bravo !`
+  2) Bloc `Confirmez votre email`
+  3) Bloc `Ce qui se passe maintenant` (4 étapes mises à jour)
+- Message email ajusté pour insister sur la validation via lien reçu.
+
+**Impact** :
+- Expérience Step 4 plus claire, orientée action et cohérente avec la promesse commerciale.
+
+---
+
 ## 2026-02-13 — Dock reward: "Impact" basé sur le dernier calcul (ordre métier)
 
 **Retour UX** :
