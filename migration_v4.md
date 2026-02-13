@@ -1,5 +1,29 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Refonte calcul dock: total et lignes sur un référentiel unique
+
+**Contexte** :
+- Incohérences perçues entre le delta global (`Budget initial -> Budget affiné`) et la somme des lignes détail.
+- Exemple type: `505 - 16 != 525`.
+
+**Cause** :
+- Mélange de référentiels:
+  - delta global basé sur le **centre de fourchette** affiché,
+  - lignes détail calculées en partie sur `prixBase` / `prixFinal`,
+  - distance affichée en détail sans toujours être appliquée au montant final.
+
+**Refonte** (`app/devis-gratuits-v3/page.tsx`) :
+- Référentiel unique pour les lignes: **centre de fourchette** (`centerEur`), identique au budget affiché.
+- Chaque delta de ligne est recalculé séquentiellement via différence de centres entre étape N et N+1:
+  - Distance, Densité, Cuisine, Date, Accès Logement, Accès Contraintes, Formule.
+- Distance réintégrée dans le montant final dès que l’OSRM est valide (cohérence total vs ligne).
+
+**Impact** :
+- Décomposition des impacts beaucoup plus compréhensible et cohérente avec le total affiché.
+- Réduction forte des écarts visuels "la somme ne tombe pas".
+
+---
+
 ## 2026-02-13 — Step 3: séparation visuelle des sous-blocs Départ / Arrivée
 
 **Demande UX** :

@@ -996,9 +996,10 @@ function DevisGratuitsV3Content() {
     })();
     const isMovingDateValid = !!state.movingDate && state.movingDate >= minMovingDate;
 
-    // IMPORTANT: en Step 3, on fige la distance utilisée pour le montant final,
-    // afin d'éviter les refresh pendant la saisie adresse.
-    const refinedDistanceKm = baseDistanceKm;
+    // Distance utilisée dans le montant final:
+    // - baseline tant que les adresses ne sont pas validées OSRM,
+    // - OSRM dès que disponible (cohérence avec la ligne "Distance").
+    const refinedDistanceKm = canUseOsrmDistance ? routeDistanceKm! : baseDistanceKm;
     // Mais on conserve un delta "Distance" en détail dès que l'OSRM est valide.
     const isRouteDistanceValid =
       routeDistanceKm != null &&
@@ -1014,17 +1015,11 @@ function DevisGratuitsV3Content() {
     // 1) Distance:
     // - détail distance (info utilisateur) basé sur OSRM si disponible
     // - montant global reste basé sur la baseline figée
-    const inputDistanceForDetails = {
-      ...baselineInput,
-      distanceKm: canUseOsrmDistance ? routeDistanceKm! : baseDistanceKm,
-    };
-    const sDistForDetails = calculatePricing(inputDistanceForDetails);
-    const deltaDistanceEur = canUseOsrmDistance
-      ? formatDelta(sDistForDetails.prixBase - s0.prixBase)
-      : 0;
-
     const inputDistance = { ...baselineInput, distanceKm: refinedDistanceKm };
     const sDist = calculatePricing(inputDistance);
+    const deltaDistanceEur = canUseOsrmDistance
+      ? formatDelta(centerEur(sDist.prixMin, sDist.prixMax) - firstEstimateCenterEur)
+      : 0;
 
     // 2) Densité (delta vs "Très meublé")
     const densityTouched = state.density !== "";
@@ -1034,7 +1029,12 @@ function DevisGratuitsV3Content() {
       density: effectiveDensity,
     };
     const sDensity = calculatePricing(inputDensity);
-    const deltaDensityEur = densityTouched ? formatDelta(sDensity.prixBase - sDist.prixBase) : 0;
+    const deltaDensityEur = densityTouched
+      ? formatDelta(
+          centerEur(sDensity.prixMin, sDensity.prixMax) -
+            centerEur(sDist.prixMin, sDist.prixMax)
+        )
+      : 0;
 
     // 3) Cuisine (delta vs "3 équipements")
     const kitchenApplianceCount =
@@ -1053,7 +1053,12 @@ function DevisGratuitsV3Content() {
     })();
     const inputKitchen = { ...inputDensity, extraVolumeM3: kitchenExtraVolumeM3 };
     const sKitchen = calculatePricing(inputKitchen);
-    const deltaKitchenEur = kitchenTouched ? formatDelta(sKitchen.prixBase - sDensity.prixBase) : 0;
+    const deltaKitchenEur = kitchenTouched
+      ? formatDelta(
+          centerEur(sKitchen.prixMin, sKitchen.prixMax) -
+            centerEur(sDensity.prixMin, sDensity.prixMax)
+        )
+      : 0;
 
     // 4) Date (saison/urgence) — appliqué uniquement sur la valeur de base (avant accès)
     const seasonFactor = isMovingDateValid
@@ -1061,7 +1066,9 @@ function DevisGratuitsV3Content() {
       : 1;
     const inputDate = { ...inputKitchen, seasonFactor };
     const sDate = calculatePricing(inputDate);
-    const deltaDateEur = formatDelta(sDate.prixFinal - sKitchen.prixFinal);
+    const deltaDateEur = formatDelta(
+      centerEur(sDate.prixMin, sDate.prixMax) - centerEur(sKitchen.prixMin, sKitchen.prixMax)
+    );
 
     // 5) Accès (2 groupes): logement/étage ET contraintes d'accès
     const originIsHouse = isHouseType(state.originHousingType);
@@ -1128,7 +1135,10 @@ function DevisGratuitsV3Content() {
     })();
     const sAccessHousing = calculatePricing(inputAccessHousing);
     const deltaAccessHousingEur = accessHousingConfirmed
-      ? formatDelta(sAccessHousing.prixFinal - sDate.prixFinal)
+      ? formatDelta(
+          centerEur(sAccessHousing.prixMin, sAccessHousing.prixMax) -
+            centerEur(sDate.prixMin, sDate.prixMax)
+        )
       : 0;
 
     const inputAccessConstraints = (() => {
@@ -1147,7 +1157,10 @@ function DevisGratuitsV3Content() {
     })();
     const sAccessStandard = calculatePricing(inputAccessConstraints);
     const deltaAccessConstraintsEur = accessConstraintsConfirmed
-      ? formatDelta(sAccessStandard.prixFinal - sAccessHousing.prixFinal)
+      ? formatDelta(
+          centerEur(sAccessStandard.prixMin, sAccessStandard.prixMax) -
+            centerEur(sAccessHousing.prixMin, sAccessHousing.prixMax)
+        )
       : 0;
 
     const inputSelectedFormule = {
@@ -1161,7 +1174,10 @@ function DevisGratuitsV3Content() {
     const deltaFormuleEur =
       selectedFormule === baselineFormule
         ? 0
-        : formatDelta(sFinal.prixFinal - sAccessStandard.prixFinal);
+        : formatDelta(
+            centerEur(sFinal.prixMin, sFinal.prixMax) -
+              centerEur(sAccessStandard.prixMin, sAccessStandard.prixMax)
+          );
 
     const refinedCenterEur = centerEur(sFinal.prixMin, sFinal.prixMax);
 
