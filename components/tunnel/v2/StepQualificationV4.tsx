@@ -74,7 +74,7 @@ export function StepQualificationV4({
             >
               Obtenez votre estimation
               <br />
-              en ~30 sec
+              en 2 minutes
             </h1>
             <p className="text-sm sm:text-base" style={{ color: "var(--color-text-secondary)" }}>
               Comparez jusqu'à 3 devis gratuits de déménageurs professionnels
@@ -208,7 +208,7 @@ export function StepQualificationV4({
 
           {/* Trust badges */}
           <div className="flex items-center justify-center gap-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
-            <span>~30 sec</span>
+            <span>~2 min</span>
             <span>•</span>
             <span>Gratuit</span>
             <span>•</span>

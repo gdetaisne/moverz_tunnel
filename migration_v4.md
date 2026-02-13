@@ -1,5 +1,26 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Copy temps restant harmonisé avant Step 3
+
+**Demande** :
+- Avant Step 3, afficher `2 minutes` sur tous les indicateurs de temps restant.
+- Mettre à jour le texte `Pourquoi affiner en 60 secondes ?` en `2 minutes`.
+
+**Modifications** :
+- `components/tunnel/v2/V2ProgressBar.tsx`
+  - `step 1`: `~30 sec` → `~2 min`
+  - `step 2`: `~1 min` → `~2 min`
+- `components/tunnel/v2/StepQualificationV4.tsx`
+  - titre: `en ~30 sec` → `en 2 minutes`
+  - trust badge: `~30 sec` → `~2 min`
+- `components/tunnel/v2/StepEstimationV4.tsx`
+  - bloc rassurance: `Pourquoi affiner en 60 secondes ?` → `Pourquoi affiner en 2 minutes ?`
+
+**Impact** :
+- Message temps cohérent sur le pré-parcours (Step 1 + Step 2) avant l'entrée en Step 3.
+
+---
+
 ## 2026-02-13 — Step 3: bloc "Ajouter des précisions" déplacé en bas (après Coordonnées)
 
 **Demande** :

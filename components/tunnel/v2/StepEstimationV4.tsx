@@ -165,7 +165,7 @@ export function StepEstimationV4({
             className="text-sm font-semibold"
             style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
           >
-            Pourquoi affiner en 60 secondes ?
+            Pourquoi affiner en 2 minutes ?
           </p>
           <ul className="space-y-1.5 text-sm" style={{ color: "var(--color-text-secondary)" }}>
             <li className="flex items-start gap-2">
