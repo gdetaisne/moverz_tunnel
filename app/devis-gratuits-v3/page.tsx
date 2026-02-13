@@ -816,7 +816,6 @@ function DevisGratuitsV3Content() {
 
     const surface = parseInt(state.surfaceM2) || 60;
     const selectedFormule = state.formule as PricingFormuleType;
-    const baselineFormule: PricingFormuleType = "STANDARD";
     const distanceKm = cityOsrmDistanceKm + 15;
     const extraVolumeM3 = 3 * 0.6; // debug Step 2: cuisine=3 équipements
     const baseVolumeM3 = calculateVolume(surface, "t2", "dense");
@@ -824,7 +823,7 @@ function DevisGratuitsV3Content() {
 
     const band = getDistanceBand(distanceKm);
     const decoteFactor = 1 + DECOTE;
-    const rateRaw = LA_POSTE_RATES_EUR_PER_M3[band][formule];
+    const rateRaw = LA_POSTE_RATES_EUR_PER_M3[band][selectedFormule];
     const rateApplied = rateRaw * decoteFactor;
     const volumeScale = getVolumeEconomyScale(volumeM3);
     const volumeCost = volumeM3 * rateApplied * volumeScale;
@@ -847,7 +846,7 @@ function DevisGratuitsV3Content() {
       originElevator: "yes",
       destinationFloor: 0,
       destinationElevator: "yes",
-      formule,
+      formule: selectedFormule,
       services: { monteMeuble: false, piano: null, debarras: false },
       extraVolumeM3,
     });

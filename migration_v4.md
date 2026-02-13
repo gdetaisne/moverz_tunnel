@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-12 — Fix build TS (debug Step 2)
+
+**Contexte** : échec de build prod sur `page.tsx` (`TS`), variable `formule` non définie dans `v2DebugRowsStep2`.
+
+**Correction** :
+- Remplacement des références `formule` par `selectedFormule` dans le bloc debug Step 2 :
+  - indexation `LA_POSTE_RATES_EUR_PER_M3[band][selectedFormule]`
+  - payload `calculatePricing({ formule: selectedFormule, ... })`
+
+**Fichier** : `app/devis-gratuits-v3/page.tsx`
+
+**Impact** : correction compilation uniquement (debug), aucun impact logique tunnel en runtime hors mode debug.
+
+---
+
 ## 2026-02-12 — Panier Step 3: ajout du détail `Formule` (delta vs STANDARD)
 
 **Demande** :
