@@ -1,5 +1,29 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Step 3: ajout du choix ascenseur (3 options)
+
+**Demande** :
+- Ajouter le champ ascenseur manquant dans `Trajet & logements`.
+- Options attendues : `Oui`, `Oui mais petit`, `Non`.
+
+**Modifications** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - ajout d’une ligne `Ascenseur` dans chaque sous-bloc appartement (départ/arrivée),
+  - options branchées sur l’état existant (`originElevator` / `destinationElevator`) :
+    - `yes` (Oui),
+    - `partial` (Oui mais petit),
+    - `none` (Non),
+  - validation trajet renforcée : pour appartement, étage + ascenseur doivent être choisis explicitement.
+- `app/devis-gratuits-v3/page.tsx`
+  - passage des props `originElevator`, `originElevatorTouched`,
+    `destinationElevator`, `destinationElevatorTouched` vers le composant Step 3.
+
+**Impact** :
+- Donnée ascenseur désormais saisissable explicitement en Step 3.
+- La validation du bloc `Trajet & logements` couvre aussi le choix ascenseur pour les appartements.
+
+---
+
 ## 2026-02-13 — Step 3: harmonisation référentiel calcul (budget + détails)
 
 **Objectif** :

@@ -45,6 +45,8 @@ interface StepAccessLogisticsV4Props {
   originHousingType: string;
   originFloor: string;
   originFloorTouched?: boolean;
+  originElevator: string;
+  originElevatorTouched?: boolean;
   destinationAddress: string;
   destinationPostalCode: string;
   destinationCity: string;
@@ -55,6 +57,8 @@ interface StepAccessLogisticsV4Props {
   destinationHousingType: string;
   destinationFloor: string;
   destinationFloorTouched?: boolean;
+  destinationElevator: string;
+  destinationElevatorTouched?: boolean;
   // Volume
   density: "" | "light" | "normal" | "dense";
   kitchenIncluded: "" | "none" | "appliances" | "full";
@@ -116,6 +120,36 @@ const getMinMovingDateIso = (): string => {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 };
+
+function AnimatedSection({
+  contentKey,
+  isOpen,
+  children,
+}: {
+  contentKey: string;
+  isOpen: boolean;
+  children: React.ReactNode;
+}) {
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  return (
+    <AnimatePresence initial={false}>
+      {isOpen ? (
+        <motion.div
+          key={contentKey}
+          initial={{ height: 0, opacity: 0, y: -4 }}
+          animate={{ height: "auto", opacity: 1, y: 0 }}
+          exit={{ height: 0, opacity: 0, y: -4 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          onAnimationStart={() => setIsTransitioning(true)}
+          onAnimationComplete={() => setIsTransitioning(false)}
+          style={{ overflow: isTransitioning ? "hidden" : "visible" }}
+        >
+          <div className="pt-1">{children}</div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
 
 export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   type SectionKey = "trajet" | "date" | "volume" | "formule" | "contact";
@@ -276,8 +310,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     prefix: "origin" | "destination",
     housingType: string,
     floor: string,
+    elevator: string,
     setHousingType: (v: string) => void,
-    setFloor: (v: string) => void
+    setFloor: (v: string) => void,
+    setElevator: (v: string) => void
   ) => {
     const locationLabel = prefix === "origin" ? "Départ" : "Arrivée";
     return (
@@ -310,6 +346,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 // Appartement: on force un choix explicite d'étage (RDC inclus).
                 setFloor("");
                 props.onFieldChange(`${prefix}FloorTouched`, false);
+                // Et un choix explicite d'ascenseur.
+                setElevator("");
+                props.onFieldChange(`${prefix}ElevatorTouched`, false);
               }}
               className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
               style={{
@@ -328,33 +367,68 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         </div>
 
         {isApartment(housingType) && (
-          <div className="flex items-center justify-between gap-3">
-            <span
-              className="text-xs font-semibold uppercase tracking-wide"
-              style={{ color: "var(--color-text-muted)" }}
-            >
-              Étage
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              {FLOOR_OPTIONS.map((o) => (
-                <button
-                  key={o.value}
-                  type="button"
-                  onClick={() => setFloor(o.value)}
-                  className="px-2.5 py-2 rounded-xl text-xs font-semibold transition-all"
-                  style={{
-                    background:
-                      floor === o.value ? "var(--color-accent)" : "var(--color-surface)",
-                    color: floor === o.value ? "#FFFFFF" : "var(--color-text)",
-                    border:
-                      floor === o.value
-                        ? "none"
-                        : "2px solid var(--color-border)",
-                  }}
-                >
-                  {o.label}
-                </button>
-              ))}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <span
+                className="text-xs font-semibold uppercase tracking-wide"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                Étage
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                {FLOOR_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setFloor(o.value)}
+                    className="px-2.5 py-2 rounded-xl text-xs font-semibold transition-all"
+                    style={{
+                      background:
+                        floor === o.value ? "var(--color-accent)" : "var(--color-surface)",
+                      color: floor === o.value ? "#FFFFFF" : "var(--color-text)",
+                      border:
+                        floor === o.value
+                          ? "none"
+                          : "2px solid var(--color-border)",
+                    }}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span
+                className="text-xs font-semibold uppercase tracking-wide"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                Ascenseur
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { value: "yes", label: "Oui" },
+                  { value: "partial", label: "Oui mais petit" },
+                  { value: "none", label: "Non" },
+                ].map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setElevator(o.value)}
+                    className="px-2.5 py-2 rounded-xl text-xs font-semibold transition-all"
+                    style={{
+                      background:
+                        elevator === o.value ? "var(--color-accent)" : "var(--color-surface)",
+                      color: elevator === o.value ? "#FFFFFF" : "var(--color-text)",
+                      border:
+                        elevator === o.value
+                          ? "none"
+                          : "2px solid var(--color-border)",
+                    }}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -686,11 +760,20 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     !isApartment(props.originHousingType) ||
     (!!(props.originFloor || "").trim() &&
       ((props.originFloorTouched ?? false) || (props.originFloor || "").trim() !== "0"));
+  const isOriginElevatorValid =
+    !isApartment(props.originHousingType) ||
+    (!!(props.originElevator || "").trim() &&
+      ((props.originElevatorTouched ?? false) || (props.originElevator || "").trim() !== "none"));
   const isDestinationFloorValid =
     !isApartment(props.destinationHousingType) ||
     (!!(props.destinationFloor || "").trim() &&
       ((props.destinationFloorTouched ?? false) ||
         (props.destinationFloor || "").trim() !== "0"));
+  const isDestinationElevatorValid =
+    !isApartment(props.destinationHousingType) ||
+    (!!(props.destinationElevator || "").trim() &&
+      ((props.destinationElevatorTouched ?? false) ||
+        (props.destinationElevator || "").trim() !== "none"));
   const isFormuleValid =
     formuleExplicitChoice &&
     (props.selectedFormule === "ECONOMIQUE" ||
@@ -705,7 +788,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         isOriginHousingValid &&
         isDestinationHousingValid &&
         isOriginFloorValid &&
-        isDestinationFloorValid,
+        isDestinationFloorValid &&
+        isOriginElevatorValid &&
+        isDestinationElevatorValid,
       summary: `${props.originCity || "Départ"} → ${props.destinationCity || "Arrivée"}`,
     },
     date: {
@@ -945,36 +1030,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     background: isActive ? "var(--color-accent-light)" : "transparent",
   });
 
-  const AnimatedSection = ({
-    contentKey,
-    isOpen,
-    children,
-  }: {
-    contentKey: string;
-    isOpen: boolean;
-    children: React.ReactNode;
-  }) => {
-    const [isTransitioning, setIsTransitioning] = useState(false);
-    return (
-      <AnimatePresence initial={false}>
-        {isOpen ? (
-          <motion.div
-            key={contentKey}
-            initial={{ height: 0, opacity: 0, y: -4 }}
-            animate={{ height: "auto", opacity: 1, y: 0 }}
-            exit={{ height: 0, opacity: 0, y: -4 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            onAnimationStart={() => setIsTransitioning(true)}
-            onAnimationComplete={() => setIsTransitioning(false)}
-            style={{ overflow: isTransitioning ? "hidden" : "visible" }}
-          >
-            <div className="pt-1">{children}</div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    );
-  };
-
   const renderSubBlock = (
     title: string,
     complete: boolean,
@@ -1036,7 +1091,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           <div className="space-y-4">
             {renderSubBlock(
               "Départ",
-              isOriginAddressValid && isOriginHousingValid && isOriginFloorValid,
+              isOriginAddressValid &&
+                isOriginHousingValid &&
+                isOriginFloorValid &&
+                isOriginElevatorValid,
               <>
                 <AddressAutocomplete
               label={
@@ -1080,15 +1138,20 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   "origin",
                   props.originHousingType,
                   props.originFloor,
+                  props.originElevator,
                   (v) => props.onFieldChange("originHousingType", v),
-                  (v) => props.onFieldChange("originFloor", v)
+                  (v) => props.onFieldChange("originFloor", v),
+                  (v) => props.onFieldChange("originElevator", v)
                 )}
               </>
             )}
 
             {renderSubBlock(
               "Arrivée",
-              isDestinationAddressValid && isDestinationHousingValid && isDestinationFloorValid,
+              isDestinationAddressValid &&
+                isDestinationHousingValid &&
+                isDestinationFloorValid &&
+                isDestinationElevatorValid,
               <>
                 <AddressAutocomplete
               label={
@@ -1134,8 +1197,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   "destination",
                   props.destinationHousingType,
                   props.destinationFloor,
+                  props.destinationElevator,
                   (v) => props.onFieldChange("destinationHousingType", v),
-                  (v) => props.onFieldChange("destinationFloor", v)
+                  (v) => props.onFieldChange("destinationFloor", v),
+                  (v) => props.onFieldChange("destinationElevator", v)
                 )}
               </>
             )}

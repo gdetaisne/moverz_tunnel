@@ -2157,9 +2157,13 @@ function DevisGratuitsV3Content() {
                 originHousingType={state.originHousingType}
                 originFloor={state.originFloor}
                 originFloorTouched={state.originFloorTouched}
+                originElevator={state.originElevator}
+                originElevatorTouched={state.originElevatorTouched}
                 destinationHousingType={state.destinationHousingType}
                 destinationFloor={state.destinationFloor}
                 destinationFloorTouched={state.destinationFloorTouched}
+                destinationElevator={state.destinationElevator}
+                destinationElevatorTouched={state.destinationElevatorTouched}
                 density={state.density}
                 kitchenIncluded={state.kitchenIncluded}
                 kitchenApplianceCount={state.kitchenApplianceCount}
