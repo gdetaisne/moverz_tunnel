@@ -9,7 +9,7 @@
  * ❌ Services additionnels facultatifs RETIRÉS
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapPin, Calendar, Home, Mail, User, Phone, ChevronDown } from "lucide-react";
 import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
@@ -116,6 +116,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [isAnalyzingPhotos, setIsAnalyzingPhotos] = useState(false);
   const [photoPanelError, setPhotoPanelError] = useState<string | null>(null);
   const [moverInsights, setMoverInsights] = useState<string[]>([]);
+  const [fallbackUploadLeadId, setFallbackUploadLeadId] = useState<string | null>(null);
 
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -279,6 +280,22 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
   const destinationUnknown = !!props.destinationUnknown;
 
+  useEffect(() => {
+    if (props.leadId) return;
+    const key = "moverz_photo_upload_lead_id";
+    const existing =
+      typeof window !== "undefined" ? window.localStorage.getItem(key) : null;
+    if (existing) {
+      setFallbackUploadLeadId(existing);
+      return;
+    }
+    const generated = `session-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(key, generated);
+    }
+    setFallbackUploadLeadId(generated);
+  }, [props.leadId]);
+
   const analyzePhotosLive = async (photos: UploadedPhoto[]) => {
     if (photos.length === 0) {
       setMoverInsights([]);
@@ -328,8 +345,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   };
 
   const handlePhotoUploadAndAnalyze = async (files: File[]) => {
-    if (!props.leadId) {
-      setPhotoPanelError("Lead manquant: impossible d'uploader les photos pour l'instant.");
+    const uploadLeadId = props.leadId ?? fallbackUploadLeadId;
+    if (!uploadLeadId) {
+      setPhotoPanelError("Initialisation en cours, réessayez dans un instant.");
       return;
     }
     if (files.length === 0) return;
@@ -337,7 +355,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     setIsUploadingPhotos(true);
     setPhotoPanelError(null);
     try {
-      const result = await uploadLeadPhotos(props.leadId, files);
+      const result = await uploadLeadPhotos(uploadLeadId, files);
       if (result.errors.length > 0) {
         setPhotoPanelError(result.errors[0]?.reason ?? "Certaines photos n'ont pas pu être traitées.");
       }

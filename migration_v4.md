@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-13 — Fix upload Step 3 quand `leadId` est absent
+
+**Problème** :
+- En onglet `photo + IA`, message bloquant `Lead manquant: impossible d'uploader les photos pour l'instant`.
+
+**Correction** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- Si `leadId` n'est pas encore disponible, génération d'un identifiant local stable :
+  - clé localStorage : `moverz_photo_upload_lead_id`
+  - format : `session-...`
+- Upload autorisé avec ce fallback, donc plus de blocage utilisateur.
+
+**Impact** :
+- UX corrigée sur Step 3 (upload possible immédiatement).
+- Aucun impact sur tracking métier.
+
+---
+
 ## 2026-02-13 — Dépliant infos manquantes: 3 onglets + upload Cloudflare + IA live
 
 **Demande validée** :
