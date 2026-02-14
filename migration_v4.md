@@ -1,5 +1,35 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-15 — Step 3: validation explicite du bloc Coordonnées + check email silencieux
+
+**Demande** :
+- Le bloc `Nom / Tel / Mail` allait trop vite en auto-validation.
+- Demande d'une validation explicite par bouton.
+- Ajouter un test silencieux de l'adresse email.
+
+**Correction** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - ajout d'un bouton `Valider les coordonnées` dans le bloc contact,
+  - la validité du bloc `Coordonnées` dépend maintenant de:
+    - prénom valide,
+    - email format valide,
+    - clic explicite sur le bouton de validation.
+  - si l'utilisateur modifie prénom/email après validation, le bloc repasse en non-validé.
+  - ajout d'un libellé explicite sous le champ `Email` pour l'identifier clairement.
+- `app/api/email/validate/route.ts` (nouvelle route)
+  - check silencieux best-effort:
+    - validation de format (Zod),
+    - rejet de domaines de test/temporaires courants,
+    - vérification DNS (MX/A/AAAA) pour détecter un domaine joignable.
+  - renvoie un verdict JSON sans bloquer le process en cas d'indisponibilité.
+
+**Impact** :
+- Le bloc coordonnées ne se valide plus automatiquement.
+- L'utilisateur confirme explicitement ses infos de contact.
+- Vérification email plus robuste, sans friction excessive.
+
+---
+
 ## 2026-02-13 — Dock impact: afficher `0€` sur clic sans impact
 
 **Demande** :

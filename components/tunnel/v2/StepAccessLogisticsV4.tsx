@@ -218,6 +218,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [formuleExplicitChoice, setFormuleExplicitChoice] = useState(
     props.selectedFormule !== "STANDARD"
   );
+  const [contactValidated, setContactValidated] = useState(false);
+  const [emailCheckState, setEmailCheckState] = useState<"idle" | "checking" | "valid" | "invalid" | "error">("idle");
+  const [emailCheckMessage, setEmailCheckMessage] = useState<string | null>(null);
   useEffect(() => {
     if (props.selectedFormule !== "STANDARD") {
       setFormuleExplicitChoice(true);
@@ -821,7 +824,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           : "Standard",
     },
     contact: {
-      valid: isFirstNameValid && isEmailValid,
+      valid: isFirstNameValid && isEmailValid && contactValidated,
       summary: props.firstName && props.email ? `${props.firstName} · ${props.email}` : "Coordonnées à finaliser",
     },
   };
@@ -1056,6 +1059,30 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       {children}
     </div>
   );
+
+  const runSilentEmailCheck = async (email: string): Promise<{ ok: boolean; message: string }> => {
+    try {
+      const res = await fetch("/api/email/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        return { ok: true, message: "Vérification indisponible, vous pouvez continuer." };
+      }
+      const data = (await res.json()) as {
+        ok?: boolean;
+        verdict?: "valid" | "invalid" | "unknown";
+        reason?: string;
+      };
+      if (data.verdict === "invalid") {
+        return { ok: false, message: data.reason || "Adresse email non recevable." };
+      }
+      return { ok: true, message: data.reason || "Email vérifié." };
+    } catch {
+      return { ok: true, message: "Vérification indisponible, vous pouvez continuer." };
+    }
+  };
 
   return (
     <div className="flex flex-col gap-3 pb-44 sm:pb-24">
@@ -2026,7 +2053,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   id="v4-firstName"
                   type="text"
                   value={props.firstName}
-                  onChange={(e) => props.onFieldChange("firstName", e.target.value)}
+                onChange={(e) => {
+                  setContactValidated(false);
+                  setEmailCheckState("idle");
+                  setEmailCheckMessage(null);
+                  props.onFieldChange("firstName", e.target.value);
+                }}
                   onBlur={() => markTouched("firstName")}
                   className="w-full rounded-xl pl-10 pr-4 py-3 text-sm"
                   style={{
@@ -2095,8 +2127,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                 id="v4-email"
                 type="email"
                 value={props.email}
-                onChange={(e) => props.onFieldChange("email", e.target.value)}
-                  onBlur={() => markTouched("email")}
+                onChange={(e) => {
+                  setContactValidated(false);
+                  setEmailCheckState("idle");
+                  setEmailCheckMessage(null);
+                  props.onFieldChange("email", e.target.value);
+                }}
+                onBlur={() => markTouched("email")}
                 className="w-full rounded-xl pl-10 pr-4 py-3 text-sm"
                 style={{
                   background: "var(--color-bg)",
@@ -2113,6 +2150,52 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             {shouldShowFieldError("email") && !isEmailValid && (
               <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
                 Email valide requis
+              </p>
+            )}
+            <p className="mt-1 text-xs" style={{ color: "var(--color-text-muted)" }}>
+              Adresse email de contact (obligatoire)
+            </p>
+          </div>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={async () => {
+                markTouched("firstName", "email");
+                if (!isFirstNameValid || !isEmailValid) return;
+                setEmailCheckState("checking");
+                setEmailCheckMessage("Vérification silencieuse de l'email...");
+                const check = await runSilentEmailCheck((props.email || "").trim());
+                if (check.ok) {
+                  setContactValidated(true);
+                  setEmailCheckState("valid");
+                  setEmailCheckMessage(check.message);
+                } else {
+                  setContactValidated(false);
+                  setEmailCheckState("invalid");
+                  setEmailCheckMessage(check.message);
+                }
+              }}
+              className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold"
+              style={{
+                background: "var(--color-accent)",
+                color: "#FFFFFF",
+              }}
+            >
+              {emailCheckState === "checking" ? "Validation..." : "Valider les coordonnées"}
+            </button>
+            {emailCheckMessage && (
+              <p
+                className="text-xs"
+                style={{
+                  color:
+                    emailCheckState === "invalid"
+                      ? "var(--color-danger)"
+                      : emailCheckState === "valid"
+                      ? "var(--color-success)"
+                      : "var(--color-text-muted)",
+                }}
+              >
+                {emailCheckMessage}
               </p>
             )}
           </div>
