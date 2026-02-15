@@ -1,5 +1,24 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-15 — Durcissement test silencieux email (typos domaine)
+
+**Problème observé** :
+- Certaines adresses manifestement fautives passaient le check (ex: `gmail.cm`).
+
+**Cause** :
+- Le contrôle acceptait un domaine joignable DNS de manière large.
+
+**Correction** (`app/api/email/validate/route.ts`) :
+- vérification centrée sur la présence d'un enregistrement MX (signal email plus fiable),
+- ajout d'une détection de typo sur domaines majeurs (distance de Levenshtein <= 1),
+- en cas de suspicion de faute, rejet avec suggestion explicite (ex: `...@gmail.com`).
+
+**Impact** :
+- Moins de faux positifs sur adresses mal saisies.
+- Feedback plus utile pour corriger l'email avant validation.
+
+---
+
 ## 2026-02-15 — Step 3: validation explicite du bloc Coordonnées + check email silencieux
 
 **Demande** :
