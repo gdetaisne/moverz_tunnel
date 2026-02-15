@@ -863,12 +863,16 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     if (newlyValidated) {
       const currentIndex = sectionOrder.indexOf(newlyValidated);
       const following = sectionOrder.find((k, idx) => idx > currentIndex && !next[k]);
+      const shouldOpenMissingInfo = newlyValidated === "contact" && !isMissingInfoLocked;
       setOpenSections((state) => ({
         ...state,
         [newlyValidated]: false,
         ...(following ? { [following]: true } : {}),
       }));
-      if (following) {
+      if (shouldOpenMissingInfo) {
+        setShowMissingInfoPanel(true);
+        setActiveSection("missingInfo");
+      } else if (following) {
         setActiveSection(following);
       }
       if (following) {
@@ -899,6 +903,12 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             top: desiredTop,
             behavior: "smooth",
           });
+        }, 140);
+      }
+      if (shouldOpenMissingInfo) {
+        window.setTimeout(() => {
+          const target = document.getElementById("v4-header-missingInfo");
+          target?.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }, 140);
       }
     }
@@ -1467,6 +1477,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         style={sectionFrameStyle(activeSection === "missingInfo")}
       >
           <button
+            id="v4-header-missingInfo"
             type="button"
             disabled={isMissingInfoLocked}
             onClick={() => {

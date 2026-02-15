@@ -1,5 +1,21 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-15 — Step 3: ouverture auto de "Ajouter des précisions" après validation coordonnées
+
+**Demande** :
+- Une fois les coordonnées validées, ouvrir automatiquement le bloc `Ajouter des précisions`.
+
+**Correction** (`components/tunnel/v2/StepAccessLogisticsV4.tsx`) :
+- à la détection du passage en validé du bloc `contact`, ouverture automatique de `Ajouter des précisions`,
+- activation visuelle du bloc (`activeSection = "missingInfo"`),
+- ajout de l'id `v4-header-missingInfo` pour le scroll doux d'accompagnement.
+
+**Impact** :
+- Enchaînement plus fluide après validation des coordonnées.
+- Le client arrive directement sur le bloc facultatif suivant.
+
+---
+
 ## 2026-02-15 — Durcissement test silencieux email (typos domaine)
 
 **Problème observé** :
