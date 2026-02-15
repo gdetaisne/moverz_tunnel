@@ -1,5 +1,30 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-15 — Pricing accès: `oui mais petit` moins pénalisant que `non`
+
+**Bug métier** :
+- `Ascenseur = oui mais petit` pouvait coûter plus cher que `Ascenseur = non`.
+
+**Cause** :
+- Double pénalisation sur `partial` :
+  - coefficient étage quasi identique à `no`,
+  - +5% `tightAccess` implicite appliqué automatiquement.
+
+**Correction** :
+- `lib/pricing/calculate.ts`
+  - `getEtageCoefficient(partial)` ajusté avec un palier intermédiaire :
+    - 1er: `1.02`, 2e: `1.06`, ≥3: `1.10`.
+  - suppression de l'implicite `partial => tightAccess`.
+  - `tightAccess` n'est plus appliqué que si explicitement sélectionné.
+- `app/devis-gratuits-v3/page.tsx`
+  - recomposition debug alignée (`hasTightAccess = tightAccess`).
+
+**Impact** :
+- `partial` reste plus cher que `yes`, mais moins cher que `no` à contexte égal.
+- Plus de double comptage ascenseur petit + accès serré implicite.
+
+---
+
 ## 2026-02-15 — Step 3: ouverture auto de "Ajouter des précisions" après validation coordonnées
 
 **Demande** :

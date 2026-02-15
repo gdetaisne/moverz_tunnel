@@ -1511,7 +1511,7 @@ function DevisGratuitsV3Content() {
     const longCarry = !!state.long_carry;
     const difficultParking = !!state.difficult_parking;
     const tightAccess = !!state.narrow_access;
-    const hasTightAccess = tightAccess || originElevator === "partial" || destinationElevator === "partial";
+    const hasTightAccess = tightAccess;
     const coeffAccess =
       (longCarry ? 1.05 : 1) *
       (hasTightAccess ? 1.05 : 1) *

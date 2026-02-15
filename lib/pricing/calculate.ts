@@ -102,10 +102,11 @@ export function getEtageCoefficient(
     return 1.15; // floor >= 3
   }
 
-  // "partial" : comportement conservateur (proche "sans ascenseur", mais capé)
-  if (floor === 1) return 1.05;
-  if (floor === 2) return 1.1;
-  return 1.15;
+  // "partial" (petit ascenseur) : pénalité intermédiaire, moins forte que "sans ascenseur".
+  // Important: on évite le double comptage avec le malus "tightAccess" (géré séparément).
+  if (floor === 1) return 1.02;
+  if (floor === 2) return 1.06;
+  return 1.1;
 }
 
 export function requiresMonteMeuble(
@@ -153,10 +154,7 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   const coeffEtage = Math.max(coeffOrigin, coeffDest);
 
   // 3b. Majorations accès (sur le total hors services)
-  const hasTightAccess =
-    Boolean(input.tightAccess) ||
-    input.originElevator === "partial" ||
-    input.destinationElevator === "partial";
+  const hasTightAccess = Boolean(input.tightAccess);
   const coeffAccess =
     (input.longCarry ? 1.05 : 1) *
     (hasTightAccess ? 1.05 : 1) *
