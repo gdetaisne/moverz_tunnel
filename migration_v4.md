@@ -6446,3 +6446,60 @@ Migration progressive : les hex inline seront remplacés par ces tokens au fil d
 - **Tracking** : aucun impact.
 - **Champs / Inputs** : aucun changement.
 - **Back Office payload** : aucun changement.
+
+---
+
+## 2026-02-16 — Analytics Layer (Neon Postgres)
+
+### Objectif
+Couche analytics complète : enregistrer **tous** les événements du tunnel enrichis au maximum + dashboard dédié.
+
+### Architecture
+- **Stockage** : Neon Postgres via `@neondatabase/serverless` (driver HTTP serverless). Pas de modif Prisma SQLite.
+- **Tables** : `tunnel_events` + `tunnel_sessions` (upsert auto). Schéma SQL : `lib/analytics/schema.sql`.
+- **Env vars** : `ANALYTICS_DATABASE_URL` (Neon), `ANALYTICS_PASSWORD` (dashboard).
+- **Dual-send** : chaque event → BO existant (inchangé) + Neon (nouveau). Fail-safe.
+
+### Fichiers créés
+| Fichier | Rôle |
+|---------|------|
+| `lib/analytics/schema.sql` | DDL Postgres (CREATE TABLE + INDEX) |
+| `lib/analytics/neon.ts` | Client Neon + write/read + test users |
+| `lib/analytics/collector.ts` | Collecteur client (browser, UTMs, device) |
+| `app/api/analytics/events/route.ts` | POST: reçoit + enrichit geo + écrit Neon |
+| `app/api/analytics/dashboard/route.ts` | GET: données dashboard |
+| `app/analytics/page.tsx` | Dashboard UI protégé par mot de passe |
+
+### Fichiers modifiés
+| Fichier | Modification |
+|---------|-------------|
+| `hooks/useTunnelTracking.ts` | Dual-send + `updateFormSnapshot`, `updatePricingSnapshot`, `trackFieldInteraction`, `trackValidationError`, `trackPricingViewed`, `trackCustomEvent` |
+| `app/devis-gratuits-v3/page.tsx` | Destructure nouvelles méthodes + formSnapshot useEffect |
+| `package.json` | `@neondatabase/serverless` |
+
+### Données collectées
+- **Acquisition** : source, UTMs (source/medium/campaign/content/term), gclid, fbclid, referrer, landing_url
+- **Device** : type, userAgent, screen width/height, language, timezone, connection
+- **Geo** : country, region, city (Vercel/CF headers, enrichi server-side)
+- **Snapshots** : formSnapshot partiel + pricingSnapshot à chaque transition
+- **Test user** : détection auto par email → flag `is_test_user`
+
+### Events
+| Event | Destination | Description |
+|-------|-------------|-------------|
+| `TUNNEL_STEP_VIEWED` | BO + Neon | Vue d'une étape |
+| `TUNNEL_STEP_CHANGED` | BO + Neon | Transition (avec durée) |
+| `TUNNEL_COMPLETED` | BO + Neon | Tunnel terminé |
+| `TUNNEL_ERROR` | BO + Neon | Erreur bloquante |
+| `FIELD_INTERACTION` | Neon only | Focus/blur/change champ |
+| `VALIDATION_ERROR` | Neon only | Erreurs de validation |
+| `PRICING_VIEWED` | Neon only | Prix affiché |
+
+### Dashboard `/analytics`
+KPIs, tendance quotidienne, funnel + drop-off, sources, temps/étape, device, pays. Filtres : période + tests.
+
+### Tracking stable
+- `logicalStep` / `screenId` : inchangé.
+- Payload Back Office : strictement identique.
+- **Champs / Inputs tunnel** : aucun changement.
+- **Back Office payload** : aucun changement.

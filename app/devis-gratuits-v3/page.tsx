@@ -507,10 +507,21 @@ function DevisGratuitsV3Content() {
     }
   }, [state.originHousingType, state.currentStep]);
   
-  const { trackStep, trackStepChange, trackCompletion, trackError } = useTunnelTracking({
+  const {
+    trackStep,
+    trackStepChange,
+    trackCompletion,
+    trackError,
+    updateFormSnapshot,
+    updatePricingSnapshot,
+    trackValidationError,
+    trackPricingViewed,
+    trackCustomEvent,
+  } = useTunnelTracking({
     source,
     from,
     leadId: state.leadId,
+    email: state.email || null,
   });
 
   // Track initial entry
@@ -539,6 +550,31 @@ function DevisGratuitsV3Content() {
         trackStep(state.currentStep, current.logical, current.screen);
       }
   }, [state.currentStep]);
+
+  // ✅ Analytics: update form snapshot on every step change (for enriched Neon events)
+  useEffect(() => {
+    updateFormSnapshot({
+      currentStep: state.currentStep,
+      originCity: state.originCity,
+      originPostalCode: state.originPostalCode,
+      originCountryCode: state.originCountryCode,
+      destinationCity: state.destinationCity,
+      destinationPostalCode: state.destinationPostalCode,
+      destinationCountryCode: state.destinationCountryCode,
+      surfaceM2: state.surfaceM2,
+      density: state.density,
+      formule: state.formule,
+      movingDate: state.movingDate,
+      originHousingType: state.originHousingType,
+      destinationHousingType: state.destinationHousingType,
+      originFloor: state.originFloor,
+      destinationFloor: state.destinationFloor,
+      kitchenIncluded: state.kitchenIncluded,
+      hasEmail: !!state.email,
+      hasPhone: !!state.phone,
+      hasFirstName: !!state.firstName,
+    });
+  }, [state.currentStep, state.originCity, state.destinationCity, state.surfaceM2, state.formule, state.density, state.email, updateFormSnapshot]);
 
   const toIsoDate = (raw: string | null | undefined): string | undefined => {
     if (!raw) return undefined;
