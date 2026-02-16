@@ -441,3 +441,171 @@ export async function getDashboardData(
     periodEnd: new Date().toISOString(),
   };
 }
+
+// ============================================================
+// Read: Journal — raw events list (paginated, filterable)
+// ============================================================
+
+export interface JournalEvent {
+  id: string;
+  created_at: string;
+  session_id: string;
+  event_type: string;
+  logical_step: string | null;
+  screen_id: string | null;
+  source: string | null;
+  country: string | null;
+  device: string | null;
+  email: string | null;
+  url_path: string;
+  is_test_user: boolean;
+  extra: Record<string, unknown> | null;
+  form_snapshot: Record<string, unknown> | null;
+  pricing_snapshot: Record<string, unknown> | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  referrer: string | null;
+  user_agent: string | null;
+  screen_width: number | null;
+  screen_height: number | null;
+  language: string | null;
+  timezone: string | null;
+  region: string | null;
+  city_geo: string | null;
+}
+
+export interface JournalFilters {
+  sessionId?: string;
+  email?: string;
+  eventType?: string;
+  excludeTests?: boolean;
+  daysBack?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface JournalResult {
+  events: JournalEvent[];
+  total: number;
+  limit: number;
+  offset: number;
+  /** Distinct sessions found (for sidebar) */
+  sessions?: { session_id: string; email: string | null; events_count: number; first_seen: string; last_step: string | null; device: string | null; country: string | null; completed: boolean }[];
+}
+
+export async function getJournalEvents(filters: JournalFilters): Promise<JournalResult> {
+  const sql = getSQL();
+  const limit = Math.min(filters.limit || 100, 500);
+  const offset = filters.offset || 0;
+  const daysBack = filters.daysBack || 30;
+  const excludeTests = filters.excludeTests ?? true;
+
+  const periodStart = new Date();
+  periodStart.setDate(periodStart.getDate() - daysBack);
+  const periodStartIso = periodStart.toISOString();
+
+  // Build WHERE conditions dynamically
+  // We use a single query with optional filters
+  const hasSessionFilter = !!filters.sessionId;
+  const hasEmailFilter = !!filters.email;
+  const hasEventTypeFilter = !!filters.eventType;
+
+  // Main events query
+  const eventsRows = await sql`
+    SELECT 
+      id, created_at, session_id, event_type, logical_step, screen_id,
+      source, country, device, email, url_path, is_test_user,
+      extra, form_snapshot, pricing_snapshot,
+      utm_source, utm_medium, utm_campaign, utm_content,
+      referrer, user_agent, screen_width, screen_height,
+      language, timezone, region, city_geo
+    FROM tunnel_events
+    WHERE created_at >= ${periodStartIso}
+      AND (${!excludeTests} OR is_test_user = false)
+      AND (${!hasSessionFilter} OR session_id = ${filters.sessionId || ''})
+      AND (${!hasEmailFilter} OR email ILIKE ${'%' + (filters.email || '') + '%'})
+      AND (${!hasEventTypeFilter} OR event_type = ${filters.eventType || ''})
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+    OFFSET ${offset}
+  ` as unknown as any[];
+
+  // Count total
+  const countRows = await sql`
+    SELECT COUNT(*) as total
+    FROM tunnel_events
+    WHERE created_at >= ${periodStartIso}
+      AND (${!excludeTests} OR is_test_user = false)
+      AND (${!hasSessionFilter} OR session_id = ${filters.sessionId || ''})
+      AND (${!hasEmailFilter} OR email ILIKE ${'%' + (filters.email || '') + '%'})
+      AND (${!hasEventTypeFilter} OR event_type = ${filters.eventType || ''})
+  ` as unknown as any[];
+
+  const total = Number(countRows[0]?.total) || 0;
+
+  // Sessions sidebar: recent sessions with summary
+  const sessionsRows = await sql`
+    SELECT 
+      ts.session_id,
+      ts.email,
+      ts.events_count,
+      ts.created_at as first_seen,
+      ts.last_step,
+      ts.device,
+      ts.country,
+      ts.completed
+    FROM tunnel_sessions ts
+    WHERE ts.created_at >= ${periodStartIso}
+      AND (${!excludeTests} OR ts.is_test_user = false)
+      AND (${!hasEmailFilter} OR ts.email ILIKE ${'%' + (filters.email || '') + '%'})
+    ORDER BY ts.created_at DESC
+    LIMIT 50
+  ` as unknown as any[];
+
+  return {
+    events: eventsRows.map((r: any) => ({
+      id: r.id,
+      created_at: r.created_at,
+      session_id: r.session_id,
+      event_type: r.event_type,
+      logical_step: r.logical_step,
+      screen_id: r.screen_id,
+      source: r.source,
+      country: r.country,
+      device: r.device,
+      email: r.email,
+      url_path: r.url_path,
+      is_test_user: r.is_test_user,
+      extra: r.extra,
+      form_snapshot: r.form_snapshot,
+      pricing_snapshot: r.pricing_snapshot,
+      utm_source: r.utm_source,
+      utm_medium: r.utm_medium,
+      utm_campaign: r.utm_campaign,
+      utm_content: r.utm_content,
+      referrer: r.referrer,
+      user_agent: r.user_agent,
+      screen_width: r.screen_width,
+      screen_height: r.screen_height,
+      language: r.language,
+      timezone: r.timezone,
+      region: r.region,
+      city_geo: r.city_geo,
+    })),
+    total,
+    limit,
+    offset,
+    sessions: sessionsRows.map((r: any) => ({
+      session_id: r.session_id,
+      email: r.email,
+      events_count: Number(r.events_count),
+      first_seen: r.first_seen,
+      last_step: r.last_step,
+      device: r.device,
+      country: r.country,
+      completed: r.completed,
+    })),
+  };
+}

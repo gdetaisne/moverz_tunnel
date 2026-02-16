@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import type { DashboardData } from "@/lib/analytics/neon";
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { DashboardData, JournalResult, JournalEvent } from "@/lib/analytics/neon";
 
 // ============================================================
 // Helpers
@@ -438,15 +438,511 @@ function Dashboard({ password }: { password: string }) {
 }
 
 // ============================================================
-// Page wrapper
+// Journal — raw events timeline + session filter
+// ============================================================
+
+function TimeAgo({ date }: { date: string }) {
+  const d = new Date(date);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return <span>à l&apos;instant</span>;
+  if (diffMin < 60) return <span>il y a {diffMin}min</span>;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return <span>il y a {diffH}h</span>;
+  const diffD = Math.floor(diffH / 24);
+  return <span>il y a {diffD}j</span>;
+}
+
+const EVENT_COLORS: Record<string, string> = {
+  TUNNEL_STEP_VIEWED: "bg-purple-500",
+  TUNNEL_STEP_CHANGED: "bg-blue-500",
+  TUNNEL_COMPLETED: "bg-green-500",
+  form_start: "bg-cyan-500",
+  field_interaction: "bg-gray-500",
+  field_completion: "bg-gray-400",
+  validation_error: "bg-red-500",
+  pricing_viewed: "bg-yellow-500",
+  cta_clicked: "bg-orange-500",
+  scroll_depth: "bg-gray-600",
+  tab_visibility: "bg-gray-700",
+};
+
+function EventBadge({ type }: { type: string }) {
+  const bg = EVENT_COLORS[type] || "bg-gray-600";
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-mono text-white ${bg}`}>
+      {type}
+    </span>
+  );
+}
+
+function JsonPreview({ data, label }: { data: Record<string, unknown> | null; label: string }) {
+  const [open, setOpen] = useState(false);
+  if (!data || Object.keys(data).length === 0) return null;
+
+  return (
+    <div className="mt-1">
+      <button
+        onClick={() => setOpen(!open)}
+        className="text-[10px] text-gray-500 hover:text-gray-300 underline"
+      >
+        {open ? "▼" : "▶"} {label}
+      </button>
+      {open && (
+        <pre className="mt-1 text-[10px] text-gray-400 bg-gray-800/50 p-2 rounded overflow-x-auto max-h-40 overflow-y-auto">
+          {JSON.stringify(data, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+function SessionCard({
+  session,
+  isActive,
+  onClick,
+}: {
+  session: { session_id: string; email: string | null; events_count: number; first_seen: string; last_step: string | null; device: string | null; country: string | null; completed: boolean };
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left p-3 rounded-xl border transition-all ${
+        isActive
+          ? "border-purple-500 bg-purple-500/10"
+          : "border-gray-800 bg-gray-900 hover:border-gray-700"
+      }`}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-mono text-gray-300 truncate max-w-[140px]">
+          {session.email || session.session_id.slice(0, 12) + "…"}
+        </span>
+        {session.completed && (
+          <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">✓</span>
+        )}
+      </div>
+      <div className="flex items-center gap-2 text-[10px] text-gray-500">
+        <span>{session.events_count} events</span>
+        <span>•</span>
+        <span>{session.device || "?"}</span>
+        <span>•</span>
+        <span>{session.country || "?"}</span>
+      </div>
+      <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
+        {session.last_step && <span>→ {session.last_step}</span>}
+        <span>•</span>
+        <TimeAgo date={session.first_seen} />
+      </div>
+    </button>
+  );
+}
+
+function Journal({ password }: { password: string }) {
+  const [journal, setJournal] = useState<JournalResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [eventTypeFilter, setEventTypeFilter] = useState("");
+  const [days, setDays] = useState(30);
+  const [includeTests, setIncludeTests] = useState(false);
+  const [page, setPage] = useState(0);
+  const LIMIT = 100;
+
+  // Expanded event details
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchJournal = useCallback(async (opts?: { sessionId?: string; resetPage?: boolean }) => {
+    setLoading(true);
+    setError(null);
+    const currentPage = opts?.resetPage ? 0 : page;
+    if (opts?.resetPage) setPage(0);
+
+    const sessionId = opts?.sessionId ?? activeSessionId;
+
+    const params = new URLSearchParams({
+      password,
+      days: String(days),
+      limit: String(LIMIT),
+      offset: String(currentPage * LIMIT),
+      includeTests: String(includeTests),
+    });
+
+    if (sessionId) params.set("sessionId", sessionId);
+    if (!sessionId && searchQuery.trim()) {
+      // Could be email or sessionId — try email first
+      if (searchQuery.includes("@")) {
+        params.set("email", searchQuery.trim());
+      } else {
+        params.set("sessionId", searchQuery.trim());
+      }
+    }
+    if (eventTypeFilter) params.set("eventType", eventTypeFilter);
+
+    try {
+      const res = await fetch(`/api/analytics/journal?${params.toString()}`);
+      if (res.status === 401) {
+        setError("Mot de passe incorrect");
+        return;
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || "Erreur serveur");
+        return;
+      }
+      const data: JournalResult = await res.json();
+      setJournal(data);
+    } catch {
+      setError("Erreur réseau");
+    } finally {
+      setLoading(false);
+    }
+  }, [password, days, includeTests, activeSessionId, searchQuery, eventTypeFilter, page]);
+
+  useEffect(() => {
+    fetchJournal();
+  }, [fetchJournal]);
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      setActiveSessionId(null);
+      fetchJournal({ resetPage: true });
+    }, 500);
+  };
+
+  const handleSessionClick = (sessionId: string) => {
+    setActiveSessionId(sessionId);
+    setSearchQuery("");
+    fetchJournal({ sessionId, resetPage: true });
+  };
+
+  const clearFilters = () => {
+    setActiveSessionId(null);
+    setSearchQuery("");
+    setEventTypeFilter("");
+    setPage(0);
+    fetchJournal({ resetPage: true });
+  };
+
+  // Unique event types for filter dropdown
+  const eventTypes = journal
+    ? [...new Set(journal.events.map((e) => e.event_type))].sort()
+    : [];
+
+  const totalPages = journal ? Math.ceil(journal.total / LIMIT) : 0;
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      {/* Header */}
+      <div className="border-b border-gray-800 px-4 sm:px-8 py-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold">📋 Journal des événements</h1>
+            <p className="text-gray-400 text-sm">
+              {journal ? `${journal.total} événements` : "Chargement…"}
+              {activeSessionId && (
+                <span className="ml-2 text-purple-400">
+                  Filtré : session {activeSessionId.slice(0, 12)}…
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <select
+              value={days}
+              onChange={(e) => setDays(Number(e.target.value))}
+              className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value={7}>7 jours</option>
+              <option value={14}>14 jours</option>
+              <option value={30}>30 jours</option>
+              <option value={90}>90 jours</option>
+            </select>
+            <label className="flex items-center gap-2 text-sm text-gray-400">
+              <input
+                type="checkbox"
+                checked={includeTests}
+                onChange={(e) => setIncludeTests(e.target.checked)}
+                className="rounded"
+              />
+              Tests
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6">
+        <div className="flex gap-6">
+          {/* Sidebar: Sessions */}
+          <div className="hidden lg:block w-72 flex-shrink-0">
+            <div className="sticky top-6 space-y-3">
+              {/* Search */}
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Chercher email ou session ID…"
+                className="w-full px-3 py-2 rounded-xl bg-gray-800 text-white border border-gray-700 focus:border-purple-500 focus:outline-none text-sm"
+              />
+
+              {activeSessionId && (
+                <button
+                  onClick={clearFilters}
+                  className="text-xs text-purple-400 hover:text-purple-300 underline"
+                >
+                  ✕ Voir toutes les sessions
+                </button>
+              )}
+
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider">Sessions récentes</p>
+
+              <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+                {journal?.sessions?.map((s) => (
+                  <SessionCard
+                    key={s.session_id}
+                    session={s}
+                    isActive={activeSessionId === s.session_id}
+                    onClick={() => handleSessionClick(s.session_id)}
+                  />
+                ))}
+                {(!journal?.sessions || journal.sessions.length === 0) && !loading && (
+                  <p className="text-gray-600 text-xs">Aucune session trouvée</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Main: Events timeline */}
+          <div className="flex-1 min-w-0">
+            {/* Mobile search */}
+            <div className="lg:hidden mb-4 space-y-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Chercher email ou session ID…"
+                className="w-full px-3 py-2 rounded-xl bg-gray-800 text-white border border-gray-700 focus:border-purple-500 focus:outline-none text-sm"
+              />
+              {activeSessionId && (
+                <button
+                  onClick={clearFilters}
+                  className="text-xs text-purple-400 hover:text-purple-300 underline"
+                >
+                  ✕ Voir tout
+                </button>
+              )}
+            </div>
+
+            {/* Event type filter */}
+            <div className="flex items-center gap-3 mb-4">
+              <select
+                value={eventTypeFilter}
+                onChange={(e) => { setEventTypeFilter(e.target.value); setPage(0); }}
+                className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="">Tous les types</option>
+                {eventTypes.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <span className="text-xs text-gray-500">
+                {journal?.total ?? 0} résultats
+              </span>
+            </div>
+
+            {loading && (
+              <div className="text-gray-400 text-center py-12 animate-pulse">Chargement…</div>
+            )}
+
+            {error && (
+              <div className="bg-red-900/30 text-red-300 p-4 rounded-xl mb-4">{error}</div>
+            )}
+
+            {!loading && !error && journal && (
+              <>
+                {/* Events list */}
+                <div className="space-y-1">
+                  {journal.events.map((ev) => {
+                    const isExpanded = expandedId === ev.id;
+                    const time = new Date(ev.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+                    const date = new Date(ev.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+
+                    return (
+                      <div
+                        key={ev.id}
+                        className={`border rounded-xl p-3 transition-all cursor-pointer ${
+                          isExpanded
+                            ? "border-gray-600 bg-gray-900"
+                            : "border-gray-800/50 bg-gray-900/50 hover:border-gray-700"
+                        }`}
+                        onClick={() => setExpandedId(isExpanded ? null : ev.id)}
+                      >
+                        <div className="flex items-center gap-3">
+                          {/* Timestamp */}
+                          <div className="text-[10px] text-gray-500 font-mono w-20 flex-shrink-0 text-right">
+                            <div>{date}</div>
+                            <div>{time}</div>
+                          </div>
+
+                          {/* Dot */}
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${EVENT_COLORS[ev.event_type] || "bg-gray-600"}`} />
+
+                          {/* Event info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <EventBadge type={ev.event_type} />
+                              {ev.logical_step && (
+                                <span className="text-xs text-gray-400">→ {ev.logical_step}</span>
+                              )}
+                              {ev.screen_id && (
+                                <span className="text-[10px] text-gray-500">[{ev.screen_id}]</span>
+                              )}
+                            </div>
+                            {!activeSessionId && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleSessionClick(ev.session_id); }}
+                                className="text-[10px] text-purple-400 hover:text-purple-300 font-mono mt-0.5"
+                              >
+                                {ev.email || ev.session_id.slice(0, 16)}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Device/Country badges */}
+                          <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+                            {ev.device && (
+                              <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded">
+                                {ev.device}
+                              </span>
+                            )}
+                            {ev.country && (
+                              <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded">
+                                {ev.country}
+                              </span>
+                            )}
+                            {ev.source && (
+                              <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded">
+                                {ev.source}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Expanded details */}
+                        {isExpanded && (
+                          <div className="mt-3 pt-3 border-t border-gray-800 space-y-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+                              <div><span className="text-gray-500">Session:</span> <span className="text-gray-300 font-mono">{ev.session_id}</span></div>
+                              <div><span className="text-gray-500">Email:</span> <span className="text-gray-300">{ev.email || "—"}</span></div>
+                              <div><span className="text-gray-500">Device:</span> <span className="text-gray-300">{ev.device || "—"}</span></div>
+                              <div><span className="text-gray-500">Country:</span> <span className="text-gray-300">{ev.country || "—"} {ev.region ? `/ ${ev.region}` : ""} {ev.city_geo ? `/ ${ev.city_geo}` : ""}</span></div>
+                              <div><span className="text-gray-500">Source:</span> <span className="text-gray-300">{ev.source || "—"}</span></div>
+                              <div><span className="text-gray-500">Referrer:</span> <span className="text-gray-300 truncate">{ev.referrer || "—"}</span></div>
+                              <div><span className="text-gray-500">UTM:</span> <span className="text-gray-300">{[ev.utm_source, ev.utm_medium, ev.utm_campaign, ev.utm_content].filter(Boolean).join(" / ") || "—"}</span></div>
+                              <div><span className="text-gray-500">Screen:</span> <span className="text-gray-300">{ev.screen_width && ev.screen_height ? `${ev.screen_width}×${ev.screen_height}` : "—"}</span></div>
+                              <div><span className="text-gray-500">Lang:</span> <span className="text-gray-300">{ev.language || "—"} · {ev.timezone || "—"}</span></div>
+                              <div><span className="text-gray-500">Test:</span> <span className={ev.is_test_user ? "text-yellow-400" : "text-gray-300"}>{ev.is_test_user ? "Oui" : "Non"}</span></div>
+                              <div><span className="text-gray-500">Path:</span> <span className="text-gray-300 font-mono">{ev.url_path}</span></div>
+                            </div>
+
+                            <JsonPreview data={ev.extra} label="Extra data" />
+                            <JsonPreview data={ev.form_snapshot} label="Form snapshot" />
+                            <JsonPreview data={ev.pricing_snapshot} label="Pricing snapshot" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {journal.events.length === 0 && (
+                    <div className="text-center text-gray-600 py-12">
+                      Aucun événement trouvé
+                    </div>
+                  )}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-3 mt-6">
+                    <button
+                      disabled={page === 0}
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                      className="px-3 py-1.5 rounded-lg bg-gray-800 text-sm text-gray-300 disabled:opacity-30 hover:bg-gray-700 transition"
+                    >
+                      ← Précédent
+                    </button>
+                    <span className="text-xs text-gray-500">
+                      Page {page + 1} / {totalPages}
+                    </span>
+                    <button
+                      disabled={page >= totalPages - 1}
+                      onClick={() => setPage((p) => p + 1)}
+                      className="px-3 py-1.5 rounded-lg bg-gray-800 text-sm text-gray-300 disabled:opacity-30 hover:bg-gray-700 transition"
+                    >
+                      Suivant →
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Page wrapper with tabs
 // ============================================================
 
 export default function AnalyticsPage() {
   const [password, setPassword] = useState<string | null>(null);
+  const [tab, setTab] = useState<"dashboard" | "journal">("dashboard");
 
   if (!password) {
     return <PasswordGate onAuth={setPassword} />;
   }
 
-  return <Dashboard password={password} />;
+  return (
+    <div className="min-h-screen bg-gray-950">
+      {/* Tab bar */}
+      <div className="border-b border-gray-800 bg-gray-950 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex gap-1">
+          <button
+            onClick={() => setTab("dashboard")}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
+              tab === "dashboard"
+                ? "border-purple-500 text-white"
+                : "border-transparent text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            📊 Dashboard
+          </button>
+          <button
+            onClick={() => setTab("journal")}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
+              tab === "journal"
+                ? "border-purple-500 text-white"
+                : "border-transparent text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            📋 Journal
+          </button>
+        </div>
+      </div>
+
+      {tab === "dashboard" && <Dashboard password={password} />}
+      {tab === "journal" && <Journal password={password} />}
+    </div>
+  );
 }
