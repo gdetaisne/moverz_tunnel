@@ -239,7 +239,59 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
   }, [source, from, leadId]);
 
   // ============================================================
-  // NEW: Fine-grained interaction tracking (Neon only)
+  // Block-level tracking — granular funnel
+  // ============================================================
+
+  const blockTimestampsRef = useRef<Record<string, number>>({});
+  const lastBlockRef = useRef<string | null>(null);
+
+  /**
+   * Track when a user enters a specific block within the tunnel.
+   * Blocks are the granular sections within steps:
+   *   cities_surface, validate_step1, route_housing, moving_date,
+   *   volume_density, formule, contact_info, optional_details,
+   *   validate_step3, validate_step4
+   */
+  const trackBlock = useCallback((
+    blockId: string,
+    logicalStep: LogicalStep,
+    screenId: string,
+    extra?: Record<string, unknown>
+  ) => {
+    const now = Date.now();
+
+    // Compute duration of previous block
+    const prevBlock = lastBlockRef.current;
+    let prevDurationMs: number | undefined;
+    if (prevBlock && blockTimestampsRef.current[prevBlock]) {
+      prevDurationMs = now - blockTimestampsRef.current[prevBlock];
+    }
+
+    // Record entry time for this block
+    blockTimestampsRef.current[blockId] = now;
+    lastBlockRef.current = blockId;
+
+    sendAnalyticsEvent({
+      eventType: "BLOCK_ENTERED",
+      backofficeLeadId: leadId || undefined,
+      source,
+      logicalStep,
+      screenId,
+      email: emailRef.current || undefined,
+      formSnapshot: formSnapshotRef.current || undefined,
+      pricingSnapshot: pricingSnapshotRef.current || undefined,
+      extra: {
+        blockId,
+        prevBlock: prevBlock || null,
+        prevDurationMs: prevDurationMs || null,
+        from,
+        ...extra,
+      },
+    });
+  }, [source, from, leadId]);
+
+  // ============================================================
+  // Fine-grained interaction tracking (Neon only)
   // ============================================================
 
   const trackFieldInteraction = useCallback((
@@ -331,7 +383,9 @@ export function useTunnelTracking(config: TunnelTrackingConfig) {
     // Snapshot updaters
     updateFormSnapshot,
     updatePricingSnapshot,
-    // NEW (Neon only — fine-grained)
+    // Block-level funnel
+    trackBlock,
+    // Fine-grained (Neon only)
     trackFieldInteraction,
     trackValidationError,
     trackPricingViewed,

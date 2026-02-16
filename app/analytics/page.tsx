@@ -22,6 +22,37 @@ function formatPct(n: number): string {
 
 const STEP_ORDER = ["ENTRY", "PROJECT", "RECAP", "CONTACT", "THANK_YOU"];
 
+// Block-level funnel order (detailed tunnel flow)
+const BLOCK_ORDER = [
+  "cities_surface",
+  "validate_step1",
+  "estimation_recap",
+  "validate_step2",
+  "route_housing",
+  "moving_date",
+  "volume_density",
+  "formule",
+  "contact_info",
+  "optional_details",
+  "validate_step3",
+  "confirmation",
+];
+
+const BLOCK_LABELS: Record<string, { emoji: string; label: string; color: string }> = {
+  cities_surface:    { emoji: "🏙️", label: "Villes & m²",          color: "bg-blue-500" },
+  validate_step1:    { emoji: "✅", label: "Validation étape 1",    color: "bg-blue-600" },
+  estimation_recap:  { emoji: "💰", label: "Estimation budget",     color: "bg-indigo-500" },
+  validate_step2:    { emoji: "✅", label: "Validation étape 2",    color: "bg-indigo-600" },
+  route_housing:     { emoji: "🚛", label: "Trajet & logements",    color: "bg-purple-500" },
+  moving_date:       { emoji: "📅", label: "Date de déménagement",  color: "bg-purple-600" },
+  volume_density:    { emoji: "📦", label: "Volume & densité",      color: "bg-violet-500" },
+  formule:           { emoji: "⭐", label: "Formule",               color: "bg-pink-500" },
+  contact_info:      { emoji: "📞", label: "Coordonnées",           color: "bg-pink-600" },
+  optional_details:  { emoji: "📝", label: "Précisions (facultatif)", color: "bg-rose-500" },
+  validate_step3:    { emoji: "✅", label: "Validation étape 3",    color: "bg-green-500" },
+  confirmation:      { emoji: "🎉", label: "Confirmation",          color: "bg-green-600" },
+};
+
 const STEP_LABELS_EARLY: Record<string, string> = {
   ENTRY:    "🏠 Entrée",
   PROJECT:  "📦 Projet",
@@ -380,6 +411,96 @@ function Dashboard({ password }: { password: string }) {
           </div>
         )}
 
+        {/* Block-level funnel (detailed) */}
+        {data.blockFunnel && data.blockFunnel.length > 0 && (() => {
+          // Sort blocks by tunnel order
+          const sortedBlocks = [...data.blockFunnel].sort(
+            (a, b) => BLOCK_ORDER.indexOf(a.block_id) - BLOCK_ORDER.indexOf(b.block_id)
+          );
+          const maxBlock = Math.max(...sortedBlocks.map((b) => b.sessions), 1);
+
+          // Build duration map
+          const durationMap: Record<string, { median: number; avg: number; p90: number }> = {};
+          (data.blockDurations || []).forEach((d) => {
+            durationMap[d.block_id] = {
+              median: d.median_duration_ms,
+              avg: d.avg_duration_ms,
+              p90: d.p90_duration_ms,
+            };
+          });
+
+          return (
+            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h2 className="text-sm font-semibold text-gray-300 mb-4">🔍 Funnel détaillé par bloc</h2>
+              <p className="text-xs text-gray-500 mb-4">Chaque section du tunnel, avec drop-off et temps médian.</p>
+              <div className="space-y-2">
+                {sortedBlocks.map((b, i) => {
+                  const info = BLOCK_LABELS[b.block_id] || { emoji: "•", label: b.block_id, color: "bg-gray-500" };
+                  const pct = maxBlock > 0 ? (b.sessions / maxBlock) * 100 : 0;
+                  const dur = durationMap[b.block_id];
+                  const prevBlock = sortedBlocks[i - 1];
+                  const dropoff = prevBlock && prevBlock.sessions > 0
+                    ? ((prevBlock.sessions - b.sessions) / prevBlock.sessions * 100).toFixed(1)
+                    : null;
+
+                  return (
+                    <div key={b.block_id} className="flex items-center gap-3">
+                      <span className="text-gray-400 text-[11px] w-44 text-right truncate">
+                        {info.emoji} {info.label}
+                      </span>
+                      <div className="flex-1 bg-gray-800 rounded-full h-7 overflow-hidden relative">
+                        <div
+                          className={`h-full ${info.color} rounded-full transition-all duration-500 flex items-center justify-end pr-2`}
+                          style={{ width: `${Math.max(pct, 3)}%` }}
+                        >
+                          <span className="text-white text-[11px] font-semibold">{b.sessions}</span>
+                        </div>
+                      </div>
+                      <div className="w-24 text-right flex-shrink-0">
+                        {dur ? (
+                          <span className="text-[10px] text-gray-400" title={`Méd: ${formatDuration(dur.median)} | Moy: ${formatDuration(dur.avg)} | P90: ${formatDuration(dur.p90)}`}>
+                            ⏱ {formatDuration(dur.median)}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-gray-600">—</span>
+                        )}
+                      </div>
+                      <div className="w-16 text-right flex-shrink-0">
+                        {dropoff && Number(dropoff) > 0 ? (
+                          <span className="text-[10px] text-red-400">-{dropoff}%</span>
+                        ) : (
+                          <span className="text-[10px] text-gray-600">—</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Block durations table */}
+              {data.blockDurations && data.blockDurations.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-800">
+                  <h3 className="text-xs font-semibold text-gray-400 mb-3">⏱️ Temps par bloc (détail)</h3>
+                  <DataTable
+                    headers={["Bloc", "Médiane", "Moyenne", "P90"]}
+                    rows={[...data.blockDurations]
+                      .sort((a, b) => BLOCK_ORDER.indexOf(a.block_id) - BLOCK_ORDER.indexOf(b.block_id))
+                      .map((d) => {
+                        const info = BLOCK_LABELS[d.block_id] || { emoji: "•", label: d.block_id };
+                        return [
+                          `${info.emoji} ${info.label}`,
+                          formatDuration(d.median_duration_ms),
+                          formatDuration(d.avg_duration_ms),
+                          formatDuration(d.p90_duration_ms),
+                        ];
+                      })}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Sources */}
@@ -468,6 +589,7 @@ const EVENT_LABELS: Record<string, { emoji: string; label: string; color: string
   TUNNEL_STEP_VIEWED:  { emoji: "👁", label: "Vue étape",      color: "bg-purple-500" },
   TUNNEL_STEP_CHANGED: { emoji: "➡️", label: "Changement",     color: "bg-blue-500" },
   TUNNEL_COMPLETED:    { emoji: "🎉", label: "Complété",       color: "bg-green-500" },
+  BLOCK_ENTERED:       { emoji: "🔹", label: "Bloc entré",     color: "bg-indigo-500" },
   form_start:          { emoji: "🚀", label: "Début tunnel",   color: "bg-cyan-500" },
   field_interaction:   { emoji: "✏️", label: "Saisie champ",   color: "bg-gray-500" },
   field_completion:    { emoji: "✅", label: "Champ rempli",   color: "bg-teal-500" },

@@ -93,6 +93,8 @@ interface StepAccessLogisticsV4Props {
     PREMIUM: { priceMin: number; priceMax: number };
   } | null;
   collapseAllOnEnterToken?: number;
+  /** Called when user enters a new block/section */
+  onBlockEntered?: (blockId: string) => void;
 }
 
 const questions: Array<{ key: QuestionKey; label: string }> = [
@@ -955,6 +957,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     setShowMissingInfoPanel(false);
     setActiveSection(null);
   }, [props.collapseAllOnEnterToken]);
+
+  // Track block transitions
+  useEffect(() => {
+    if (activeSection && props.onBlockEntered) {
+      props.onBlockEntered(activeSection);
+    }
+  }, [activeSection]);
 
   const renderSectionHeader = (key: SectionKey, title: string) => {
     const meta = sectionMeta[key];

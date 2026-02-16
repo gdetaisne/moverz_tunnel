@@ -267,9 +267,84 @@ export interface DashboardData {
   daily: DailyRow[];
   stepDurations: StepDurationRow[];
 
+  // Block-level funnel
+  blockFunnel: BlockFunnelRow[];
+  blockDurations: BlockDurationRow[];
+
   // Period
   periodStart: string;
   periodEnd: string;
+}
+
+// ============================================================
+// Read: Block-level funnel + durations
+// ============================================================
+
+export interface BlockFunnelRow {
+  block_id: string;
+  sessions: number;
+}
+
+export interface BlockDurationRow {
+  block_id: string;
+  median_duration_ms: number;
+  avg_duration_ms: number;
+  p90_duration_ms: number;
+}
+
+export async function getBlockFunnel(
+  daysBack: number = 30,
+  excludeTests: boolean = true
+): Promise<{ funnel: BlockFunnelRow[]; durations: BlockDurationRow[] }> {
+  const sql = getSQL();
+  const periodStart = new Date();
+  periodStart.setDate(periodStart.getDate() - daysBack);
+  const periodStartIso = periodStart.toISOString();
+
+  // Block funnel: distinct sessions per block
+  const funnelRows = await sql`
+    SELECT
+      extra->>'blockId' as block_id,
+      COUNT(DISTINCT session_id) as sessions
+    FROM tunnel_events
+    WHERE created_at >= ${periodStartIso}
+      AND event_type = 'BLOCK_ENTERED'
+      AND extra->>'blockId' IS NOT NULL
+      AND (${!excludeTests} OR is_test_user = false)
+    GROUP BY extra->>'blockId'
+    ORDER BY sessions DESC
+  ` as unknown as any[];
+
+  // Block durations: from prevDurationMs in extra
+  const durationRows = await sql`
+    SELECT
+      extra->>'prevBlock' as block_id,
+      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY (extra->>'prevDurationMs')::numeric) as median_duration_ms,
+      ROUND(AVG((extra->>'prevDurationMs')::numeric)) as avg_duration_ms,
+      PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY (extra->>'prevDurationMs')::numeric) as p90_duration_ms
+    FROM tunnel_events
+    WHERE created_at >= ${periodStartIso}
+      AND event_type = 'BLOCK_ENTERED'
+      AND extra->>'prevDurationMs' IS NOT NULL
+      AND (extra->>'prevDurationMs')::numeric > 0
+      AND extra->>'prevBlock' IS NOT NULL
+      AND (${!excludeTests} OR is_test_user = false)
+    GROUP BY extra->>'prevBlock'
+    ORDER BY median_duration_ms ASC
+  ` as unknown as any[];
+
+  return {
+    funnel: funnelRows.map((r: any) => ({
+      block_id: r.block_id,
+      sessions: Number(r.sessions),
+    })),
+    durations: durationRows.map((r: any) => ({
+      block_id: r.block_id,
+      median_duration_ms: Number(r.median_duration_ms),
+      avg_duration_ms: Number(r.avg_duration_ms),
+      p90_duration_ms: Number(r.p90_duration_ms),
+    })),
+  };
 }
 
 export async function getDashboardData(
@@ -396,6 +471,9 @@ export async function getDashboardData(
   const dailyArr = dailyRows as unknown as any[];
   const stepDurationArr = stepDurationRows as unknown as any[];
 
+  // Block-level funnel + durations
+  const blockData = await getBlockFunnel(daysBack, excludeTests);
+
   const kpi = kpiArr[0] || { total_sessions: 0, total_completions: 0, conversion_rate: 0, avg_duration_ms: 0 };
 
   return {
@@ -436,6 +514,10 @@ export async function getDashboardData(
       avg_duration_ms: Number(r.avg_duration_ms),
       p90_duration_ms: Number(r.p90_duration_ms),
     })),
+
+    // Block-level funnel
+    blockFunnel: blockData.funnel,
+    blockDurations: blockData.durations,
 
     periodStart: periodStartIso,
     periodEnd: new Date().toISOString(),

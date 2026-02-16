@@ -516,6 +516,7 @@ function DevisGratuitsV3Content() {
     updatePricingSnapshot,
     trackValidationError,
     trackPricingViewed,
+    trackBlock,
     trackCustomEvent,
   } = useTunnelTracking({
     source,
@@ -537,7 +538,7 @@ function DevisGratuitsV3Content() {
     }
   }, [source, from]);
 
-  // Track step views
+  // Track step views + block entry
   useEffect(() => {
       const stepMap = {
         1: { logical: "PROJECT" as const, screen: "qualification_v2" },
@@ -548,6 +549,17 @@ function DevisGratuitsV3Content() {
       const current = stepMap[state.currentStep as 1 | 2 | 3 | 4];
       if (current) {
         trackStep(state.currentStep, current.logical, current.screen);
+      }
+      // Block-level entry
+      const blockMap: Record<number, string> = {
+        1: "cities_surface",
+        2: "estimation_recap",
+        3: "route_housing", // first section of step 3
+        4: "confirmation",
+      };
+      const block = blockMap[state.currentStep];
+      if (block) {
+        trackBlock(block, current?.logical || "PROJECT", current?.screen || "unknown");
       }
   }, [state.currentStep]);
 
@@ -1647,6 +1659,7 @@ function DevisGratuitsV3Content() {
     }
 
     setShowValidationStep1(false);
+    trackBlock("validate_step1", "PROJECT", "qualification_v2");
     trackStepChange(1, 2, "PROJECT", "RECAP", "estimation_v2", "forward");
     goToStep(2);
   };
@@ -1663,6 +1676,7 @@ function DevisGratuitsV3Content() {
         rewardBaselineFormule: state.formule,
       });
     }
+    trackBlock("validate_step2", "RECAP", "estimation_v2");
     trackStepChange(2, 3, "RECAP", "PROJECT", "acces_v2", "forward");
     goToStep(3);
   };
@@ -2043,6 +2057,7 @@ function DevisGratuitsV3Content() {
 
       setShowValidationStep3(false);
       // Step 4 : confirmation (plus de photos)
+      trackBlock("validate_step3", "PROJECT", "acces_v2");
       trackStepChange(3, 4, "PROJECT", "THANK_YOU", "confirmation_v2", "forward");
       trackCompletion({ leadId: state.leadId, screenId: "confirmation_v2" });
       goToStep(4);
@@ -2247,6 +2262,19 @@ function DevisGratuitsV3Content() {
                 phone={state.phone}
                 specificNotes={state.specificNotes}
                 collapseAllOnEnterToken={collapseStep3OnEnterToken}
+                onBlockEntered={(blockId) => {
+                  // Map step3 sections to block IDs
+                  const blockMap: Record<string, string> = {
+                    trajet: "route_housing",
+                    date: "moving_date",
+                    volume: "volume_density",
+                    formule: "formule",
+                    contact: "contact_info",
+                    missingInfo: "optional_details",
+                  };
+                  const mappedId = blockMap[blockId] || blockId;
+                  trackBlock(mappedId, "PROJECT", "acces_v2");
+                }}
               />
               </div>
 
