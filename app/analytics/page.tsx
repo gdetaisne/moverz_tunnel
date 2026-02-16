@@ -22,6 +22,14 @@ function formatPct(n: number): string {
 
 const STEP_ORDER = ["ENTRY", "PROJECT", "RECAP", "CONTACT", "THANK_YOU"];
 
+const STEP_LABELS_EARLY: Record<string, string> = {
+  ENTRY:    "🏠 Entrée",
+  PROJECT:  "📦 Projet",
+  RECAP:    "📋 Récapitulatif",
+  CONTACT:  "📞 Contact",
+  THANK_YOU:"🎉 Merci",
+};
+
 function sortFunnel(rows: { logical_step: string; sessions: number }[]) {
   return [...rows].sort(
     (a, b) =>
@@ -99,7 +107,7 @@ function FunnelBar({ step, sessions, maxSessions }: { step: string; sessions: nu
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-gray-400 text-xs w-24 text-right font-mono">{step}</span>
+      <span className="text-gray-400 text-xs w-32 text-right">{STEP_LABELS_EARLY[step] || step}</span>
       <div className="flex-1 bg-gray-800 rounded-full h-6 overflow-hidden">
         <div
           className={`h-full ${colors[step] || "bg-gray-500"} rounded-full transition-all duration-500 flex items-center justify-end pr-2`}
@@ -362,7 +370,7 @@ function Dashboard({ password }: { password: string }) {
                     const dropoff = prev > 0 ? ((prev - f.sessions) / prev * 100).toFixed(1) : "—";
                     return (
                       <span key={f.logical_step} className="text-xs bg-gray-800 px-2 py-1 rounded text-gray-300">
-                        {funnel[i].logical_step} → {f.logical_step}: <span className="text-red-400">-{dropoff}%</span>
+                        {STEP_LABELS_EARLY[funnel[i].logical_step] || funnel[i].logical_step} → {STEP_LABELS_EARLY[f.logical_step] || f.logical_step}: <span className="text-red-400">-{dropoff}%</span>
                       </span>
                     );
                   })}
@@ -395,7 +403,7 @@ function Dashboard({ password }: { password: string }) {
               <DataTable
                 headers={["Étape", "Médiane", "Moyenne", "P90"]}
                 rows={data.stepDurations.map((s) => [
-                  s.logical_step,
+                  STEP_LABELS_EARLY[s.logical_step] || s.logical_step,
                   formatDuration(s.median_duration_ms),
                   formatDuration(s.avg_duration_ms),
                   formatDuration(s.p90_duration_ms),
@@ -454,25 +462,58 @@ function TimeAgo({ date }: { date: string }) {
   return <span>il y a {diffD}j</span>;
 }
 
-const EVENT_COLORS: Record<string, string> = {
-  TUNNEL_STEP_VIEWED: "bg-purple-500",
-  TUNNEL_STEP_CHANGED: "bg-blue-500",
-  TUNNEL_COMPLETED: "bg-green-500",
-  form_start: "bg-cyan-500",
-  field_interaction: "bg-gray-500",
-  field_completion: "bg-gray-400",
-  validation_error: "bg-red-500",
-  pricing_viewed: "bg-yellow-500",
-  cta_clicked: "bg-orange-500",
-  scroll_depth: "bg-gray-600",
-  tab_visibility: "bg-gray-700",
+// ── Human-readable labels ──
+
+const EVENT_LABELS: Record<string, { emoji: string; label: string; color: string }> = {
+  TUNNEL_STEP_VIEWED:  { emoji: "👁", label: "Vue étape",      color: "bg-purple-500" },
+  TUNNEL_STEP_CHANGED: { emoji: "➡️", label: "Changement",     color: "bg-blue-500" },
+  TUNNEL_COMPLETED:    { emoji: "🎉", label: "Complété",       color: "bg-green-500" },
+  form_start:          { emoji: "🚀", label: "Début tunnel",   color: "bg-cyan-500" },
+  field_interaction:   { emoji: "✏️", label: "Saisie champ",   color: "bg-gray-500" },
+  field_completion:    { emoji: "✅", label: "Champ rempli",   color: "bg-teal-500" },
+  validation_error:    { emoji: "⚠️", label: "Erreur valid.",  color: "bg-red-500" },
+  pricing_viewed:      { emoji: "💰", label: "Prix affiché",   color: "bg-yellow-500" },
+  cta_clicked:         { emoji: "👆", label: "CTA cliqué",     color: "bg-orange-500" },
+  scroll_depth:        { emoji: "📜", label: "Scroll",         color: "bg-gray-600" },
+  tab_visibility:      { emoji: "👀", label: "Visibilité tab", color: "bg-gray-700" },
 };
 
+const STEP_LABELS: Record<string, string> = {
+  ENTRY:    "🏠 Entrée",
+  PROJECT:  "📦 Projet",
+  RECAP:    "📋 Récapitulatif",
+  CONTACT:  "📞 Contact",
+  THANK_YOU:"🎉 Merci",
+};
+
+const SCREEN_LABELS: Record<string, string> = {
+  acces_v2:        "Accueil",
+  qualification_v2:"Qualification",
+  estimation_v2:   "Estimation",
+  contact_v3:      "Contact",
+  confirmation_v2: "Confirmation",
+};
+
+function getEventInfo(type: string) {
+  return EVENT_LABELS[type] || { emoji: "•", label: type, color: "bg-gray-600" };
+}
+
+function getStepLabel(step: string | null) {
+  if (!step) return null;
+  return STEP_LABELS[step] || step;
+}
+
+function getScreenLabel(screen: string | null) {
+  if (!screen) return null;
+  return SCREEN_LABELS[screen] || screen;
+}
+
 function EventBadge({ type }: { type: string }) {
-  const bg = EVENT_COLORS[type] || "bg-gray-600";
+  const info = getEventInfo(type);
   return (
-    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-mono text-white ${bg}`}>
-      {type}
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-white ${info.color}`}>
+      <span>{info.emoji}</span>
+      <span>{info.label}</span>
     </span>
   );
 }
@@ -532,7 +573,7 @@ function SessionCard({
         <span>{session.country || "?"}</span>
       </div>
       <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
-        {session.last_step && <span>→ {session.last_step}</span>}
+        {session.last_step && <span>→ {STEP_LABELS[session.last_step] || session.last_step}</span>}
         <span>•</span>
         <TimeAgo date={session.first_seen} />
       </div>
@@ -794,17 +835,17 @@ function Journal({ password }: { password: string }) {
                           </div>
 
                           {/* Dot */}
-                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${EVENT_COLORS[ev.event_type] || "bg-gray-600"}`} />
+                          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${getEventInfo(ev.event_type).color} ring-2 ring-gray-950`} />
 
                           {/* Event info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <EventBadge type={ev.event_type} />
                               {ev.logical_step && (
-                                <span className="text-xs text-gray-400">→ {ev.logical_step}</span>
+                                <span className="text-sm text-gray-200 font-medium">{getStepLabel(ev.logical_step)}</span>
                               )}
                               {ev.screen_id && (
-                                <span className="text-[10px] text-gray-500">[{ev.screen_id}]</span>
+                                <span className="text-xs text-gray-500 bg-gray-800/80 px-1.5 py-0.5 rounded">{getScreenLabel(ev.screen_id)}</span>
                               )}
                             </div>
                             {!activeSessionId && (
