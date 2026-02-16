@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
       email: req.nextUrl.searchParams.get("email") || undefined,
       eventType: req.nextUrl.searchParams.get("eventType") || undefined,
       excludeTests: req.nextUrl.searchParams.get("includeTests") !== "true",
+      excludeBots: req.nextUrl.searchParams.get("includeBots") !== "true",
       daysBack: Number(req.nextUrl.searchParams.get("days")) || 30,
       limit: Number(req.nextUrl.searchParams.get("limit")) || 100,
       offset: Number(req.nextUrl.searchParams.get("offset")) || 0,

@@ -611,6 +611,7 @@ export interface JournalFilters {
   email?: string;
   eventType?: string;
   excludeTests?: boolean;
+  excludeBots?: boolean;
   daysBack?: number;
   limit?: number;
   offset?: number;
@@ -648,6 +649,7 @@ export async function getJournalEvents(filters: JournalFilters): Promise<Journal
   const offset = filters.offset || 0;
   const daysBack = filters.daysBack || 30;
   const excludeTests = filters.excludeTests ?? true;
+  const excludeBots = filters.excludeBots ?? true;
 
   const periodStart = new Date();
   periodStart.setDate(periodStart.getDate() - daysBack);
@@ -671,6 +673,7 @@ export async function getJournalEvents(filters: JournalFilters): Promise<Journal
     FROM tunnel_events
     WHERE created_at >= ${periodStartIso}
       AND (${!excludeTests} OR is_test_user = false)
+      AND (${!excludeBots} OR user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
       AND (${!hasSessionFilter} OR session_id = ${filters.sessionId || ''})
       AND (${!hasEmailFilter} OR email ILIKE ${'%' + (filters.email || '') + '%'})
       AND (${!hasEventTypeFilter} OR event_type = ${filters.eventType || ''})
@@ -685,6 +688,7 @@ export async function getJournalEvents(filters: JournalFilters): Promise<Journal
     FROM tunnel_events
     WHERE created_at >= ${periodStartIso}
       AND (${!excludeTests} OR is_test_user = false)
+      AND (${!excludeBots} OR user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
       AND (${!hasSessionFilter} OR session_id = ${filters.sessionId || ''})
       AND (${!hasEmailFilter} OR email ILIKE ${'%' + (filters.email || '') + '%'})
       AND (${!hasEventTypeFilter} OR event_type = ${filters.eventType || ''})
@@ -720,6 +724,11 @@ export async function getJournalEvents(filters: JournalFilters): Promise<Journal
     ) fe ON true
     WHERE ts.created_at >= ${periodStartIso}
       AND (${!excludeTests} OR ts.is_test_user = false)
+      AND (${!excludeBots} OR NOT EXISTS (
+        SELECT 1 FROM tunnel_events te
+        WHERE te.session_id = ts.session_id
+          AND te.user_agent ~* ${BOT_UA_SQL_PATTERN}
+      ))
       AND (${!hasEmailFilter} OR ts.email ILIKE ${'%' + (filters.email || '') + '%'})
     ORDER BY ts.created_at DESC
     LIMIT 50

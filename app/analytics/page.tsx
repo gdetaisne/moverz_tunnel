@@ -261,14 +261,13 @@ function Dashboard({ password }: { password: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [days, setDays] = useState(30);
-  const [includeTests, setIncludeTests] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(
-        `/api/analytics/dashboard?password=${encodeURIComponent(password)}&days=${days}&includeTests=${includeTests}`
+        `/api/analytics/dashboard?password=${encodeURIComponent(password)}&days=${days}&includeTests=false`
       );
       if (res.status === 401) {
         setError("Mot de passe incorrect");
@@ -288,7 +287,7 @@ function Dashboard({ password }: { password: string }) {
     } finally {
       setLoading(false);
     }
-  }, [password, days, includeTests]);
+  }, [password, days]);
 
   useEffect(() => {
     fetchData();
@@ -337,15 +336,6 @@ function Dashboard({ password }: { password: string }) {
               <option value={30}>30 jours</option>
               <option value={90}>90 jours</option>
             </select>
-            <label className="flex items-center gap-2 text-sm text-gray-400">
-              <input
-                type="checkbox"
-                checked={includeTests}
-                onChange={(e) => setIncludeTests(e.target.checked)}
-                className="rounded"
-              />
-              Inclure tests
-            </label>
             <button
               onClick={fetchData}
               className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition"
@@ -704,7 +694,6 @@ function SessionCard({
     completed: boolean;
     source: string | null;
     user_agent: string | null;
-    is_bot: boolean;
     max_step_index: number | null;
     utm_source: string | null;
     language: string | null;
@@ -719,25 +708,18 @@ function SessionCard({
     <button
       onClick={onClick}
       className={`w-full text-left p-3 rounded-xl border transition-all ${
-        session.is_bot
-          ? isActive
-            ? "border-yellow-600 bg-yellow-500/10 opacity-60"
-            : "border-gray-800/50 bg-gray-900/50 opacity-40 hover:opacity-70"
-          : isActive
+        isActive
           ? "border-purple-500 bg-purple-500/10"
           : "border-gray-800 bg-gray-900 hover:border-gray-700"
       }`}
     >
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-mono text-gray-300 truncate max-w-[140px]">
-          {session.email || (session.is_bot ? "🤖 Bot" : session.session_id.slice(-8))}
+          {session.email || session.session_id.slice(-8)}
         </span>
         <div className="flex items-center gap-1">
           {session.completed && (
             <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">✓</span>
-          )}
-          {session.is_bot && (
-            <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded">bot</span>
           )}
         </div>
       </div>
@@ -771,9 +753,6 @@ function Journal({ password }: { password: string }) {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [eventTypeFilter, setEventTypeFilter] = useState("");
   const [days, setDays] = useState(30);
-  const [includeTests, setIncludeTests] = useState(false);
-  const [hideBounces, setHideBounces] = useState(false);
-  const [hideBots, setHideBots] = useState(false);
   const [page, setPage] = useState(0);
   const LIMIT = 100;
 
@@ -795,7 +774,8 @@ function Journal({ password }: { password: string }) {
       days: String(days),
       limit: String(LIMIT),
       offset: String(currentPage * LIMIT),
-      includeTests: String(includeTests),
+      includeTests: "false",
+      includeBots: "false",
     });
 
     if (sessionId) params.set("sessionId", sessionId);
@@ -827,7 +807,7 @@ function Journal({ password }: { password: string }) {
     } finally {
       setLoading(false);
     }
-  }, [password, days, includeTests, activeSessionId, searchQuery, eventTypeFilter, page]);
+  }, [password, days, activeSessionId, searchQuery, eventTypeFilter, page]);
 
   useEffect(() => {
     fetchJournal();
@@ -874,12 +854,10 @@ function Journal({ password }: { password: string }) {
               {journal ? `${journal.total} événements` : "Chargement…"}
               {journal?.sessions && (() => {
                 const total = journal.sessions.length;
-                const bots = journal.sessions.filter((s) => s.is_bot).length;
                 const bounces = journal.sessions.filter((s) => s.events_count <= 1).length;
-                const real = total - bots;
                 return (
                   <span className="ml-2 text-gray-500">
-                    ({total} sessions · {bots > 0 ? <span className="text-yellow-400">{bots} bots</span> : null}{bots > 0 ? " · " : ""}{bounces} bounces · {real - bounces} engagés)
+                    ({total} sessions · {bounces} bounces · {total - bounces} engagés)
                   </span>
                 );
               })()}
@@ -901,15 +879,6 @@ function Journal({ password }: { password: string }) {
               <option value={30}>30 jours</option>
               <option value={90}>90 jours</option>
             </select>
-            <label className="flex items-center gap-2 text-sm text-gray-400">
-              <input
-                type="checkbox"
-                checked={includeTests}
-                onChange={(e) => setIncludeTests(e.target.checked)}
-                className="rounded"
-              />
-              Tests
-            </label>
           </div>
         </div>
       </div>
@@ -937,28 +906,12 @@ function Journal({ password }: { password: string }) {
                 </button>
               )}
 
-              {/* Quick filters */}
-              <div className="space-y-1">
-                <label className="flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer">
-                  <input type="checkbox" checked={hideBounces} onChange={(e) => setHideBounces(e.target.checked)} className="rounded w-3 h-3" />
-                  Masquer bounces (1 evt)
-                </label>
-                <label className="flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer">
-                  <input type="checkbox" checked={hideBots} onChange={(e) => setHideBots(e.target.checked)} className="rounded w-3 h-3" />
-                  Masquer bots 🤖
-                </label>
-              </div>
-
               <p className="text-[10px] text-gray-500 uppercase tracking-wider">Sessions récentes</p>
+              <p className="text-[10px] text-gray-600">Bots & tests exclus</p>
 
               <div className="space-y-2 max-h-[calc(100vh-260px)] overflow-y-auto pr-1">
                 {journal?.sessions
-                  ?.filter((s) => {
-                    if (hideBounces && s.events_count <= 1) return false;
-                    if (hideBots && s.is_bot) return false;
-                    return true;
-                  })
-                  .map((s) => (
+                  ?.map((s) => (
                   <SessionCard
                     key={s.session_id}
                     session={s}
