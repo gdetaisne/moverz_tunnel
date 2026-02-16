@@ -6529,7 +6529,16 @@ Couche analytics complète : enregistrer **tous** les événements du tunnel enr
 | `PRICING_VIEWED` | Neon only | Prix affiché |
 
 ### Dashboard `/analytics`
-KPIs, tendance quotidienne, funnel + drop-off, sources, temps/étape, device, pays. Filtres : période + tests.
+KPIs, tendance quotidienne, funnel + drop-off, sources, temps/étape, device, pays.
+- Bots et tests **toujours** exclus (pas de toggle).
+- Journal : sessions filtrées côté SQL (`excludeBots` + `excludeTests`).
+
+### Exclusion bots (2026-02-16)
+- **Écriture** : `POST /api/analytics/events` → drop silencieux (200) si user_agent matche un bot (30+ patterns).
+- **Lecture** : toutes les queries `tunnel_events` & `tunnel_sessions` filtrent bots via `user_agent !~* pattern` / `NOT EXISTS`.
+- Regex partagée : `isBotUserAgent()` + `BOT_UA_SQL_PATTERN` dans `lib/analytics/neon.ts`.
+- Tests exclus : `is_test_user = false` forcé dans toutes les queries.
+- UI : aucune checkbox tests/bots dans dashboard ni journal — exclusion systématique.
 
 ### Tracking stable
 - `logicalStep` / `screenId` : inchangé.
