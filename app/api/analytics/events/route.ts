@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { insertAnalyticsEvent, type AnalyticsEventInput } from "@/lib/analytics/neon";
+import { insertAnalyticsEvent, isBotUserAgent, type AnalyticsEventInput } from "@/lib/analytics/neon";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,6 +17,12 @@ export async function POST(req: NextRequest) {
         { error: "sessionId and eventType are required" },
         { status: 400 }
       );
+    }
+
+    // ---- Bot detection: drop events from bots silently ----
+    const userAgent = body.userAgent || req.headers.get("user-agent") || null;
+    if (isBotUserAgent(userAgent)) {
+      return NextResponse.json({ ok: true, dropped: "bot" }, { status: 200 });
     }
 
     // ---- Server-side geo enrichment via Vercel/Cloudflare headers ----

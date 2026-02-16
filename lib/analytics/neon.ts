@@ -28,6 +28,20 @@ function getSQL() {
 }
 
 // ============================================================
+// Bot detection (shared regex)
+// ============================================================
+
+const BOT_UA_REGEX = /bot|crawl|spider|slurp|facebook|facebookexternalhit|twitter|twitterbot|whatsapp|telegram|preview|lighthouse|pagespeed|pingdom|uptimerobot|headless|phantom|selenium|puppeteer|playwright|semrush|ahref|mj12bot|dotbot|bytespider|gptbot|claudebot|petalbot|yandex|baidu|sogou|duckduckbot|ia_archiver|archive\.org/i;
+
+export function isBotUserAgent(ua: string | null | undefined): boolean {
+  if (!ua) return false;
+  return BOT_UA_REGEX.test(ua);
+}
+
+/** SQL-safe regex for Postgres ~* operator — excludes bots from queries */
+const BOT_UA_SQL_PATTERN = 'bot|crawl|spider|slurp|facebook|twitter|whatsapp|telegram|preview|lighthouse|pagespeed|pingdom|uptimerobot|headless|phantom|selenium|puppeteer|playwright|semrush|ahref|mj12bot|dotbot|bytespider|gptbot|claudebot|petalbot|yandex|baidu|sogou|duckduckbot|ia_archiver';
+
+// ============================================================
 // Types
 // ============================================================
 
@@ -311,6 +325,7 @@ export async function getBlockFunnel(
       AND event_type = 'BLOCK_ENTERED'
       AND extra->>'blockId' IS NOT NULL
       AND (${!excludeTests} OR is_test_user = false)
+      AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
     GROUP BY extra->>'blockId'
     ORDER BY sessions DESC
   ` as unknown as any[];
@@ -329,6 +344,7 @@ export async function getBlockFunnel(
       AND (extra->>'prevDurationMs')::numeric > 0
       AND extra->>'prevBlock' IS NOT NULL
       AND (${!excludeTests} OR is_test_user = false)
+      AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
     GROUP BY extra->>'prevBlock'
     ORDER BY median_duration_ms ASC
   ` as unknown as any[];
@@ -358,7 +374,7 @@ export async function getDashboardData(
   periodStart.setDate(periodStart.getDate() - daysBack);
   const periodStartIso = periodStart.toISOString();
 
-  // KPIs from sessions
+  // KPIs from sessions (exclude bot sessions)
   const kpiRows = await sql`
     SELECT 
       COUNT(*) as total_sessions,
@@ -367,12 +383,18 @@ export async function getDashboardData(
         COUNT(*) FILTER (WHERE completed = true)::numeric / NULLIF(COUNT(*), 0) * 100, 1
       ) as conversion_rate,
       ROUND(AVG(total_duration_ms) FILTER (WHERE total_duration_ms IS NOT NULL)) as avg_duration_ms
-    FROM tunnel_sessions
-    WHERE created_at >= ${periodStartIso}
-      AND (${!excludeTests} OR is_test_user = false)
+    FROM tunnel_sessions ts
+    WHERE ts.created_at >= ${periodStartIso}
+      AND (${!excludeTests} OR ts.is_test_user = false)
+      AND NOT EXISTS (
+        SELECT 1 FROM tunnel_events te
+        WHERE te.session_id = ts.session_id
+          AND te.user_agent ~* ${BOT_UA_SQL_PATTERN}
+        LIMIT 1
+      )
   `;
 
-  // Funnel: count distinct sessions per logical step
+  // Funnel: count distinct sessions per logical step (exclude bots)
   const funnelRows = await sql`
     SELECT 
       logical_step,
@@ -382,71 +404,96 @@ export async function getDashboardData(
       AND event_type = 'TUNNEL_STEP_VIEWED'
       AND logical_step IS NOT NULL
       AND (${!excludeTests} OR is_test_user = false)
+      AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
     GROUP BY logical_step
     ORDER BY sessions DESC
   `;
 
-  // Top sources
+  // Top sources (exclude bot sessions)
   const sourceRows = await sql`
     SELECT 
-      COALESCE(source, 'direct') as source,
+      COALESCE(ts.source, 'direct') as source,
       COUNT(*) as sessions,
-      COUNT(*) FILTER (WHERE completed = true) as completions,
+      COUNT(*) FILTER (WHERE ts.completed = true) as completions,
       ROUND(
-        COUNT(*) FILTER (WHERE completed = true)::numeric / NULLIF(COUNT(*), 0) * 100, 1
+        COUNT(*) FILTER (WHERE ts.completed = true)::numeric / NULLIF(COUNT(*), 0) * 100, 1
       ) as conversion_rate
-    FROM tunnel_sessions
-    WHERE created_at >= ${periodStartIso}
-      AND (${!excludeTests} OR is_test_user = false)
-    GROUP BY source
+    FROM tunnel_sessions ts
+    WHERE ts.created_at >= ${periodStartIso}
+      AND (${!excludeTests} OR ts.is_test_user = false)
+      AND NOT EXISTS (
+        SELECT 1 FROM tunnel_events te
+        WHERE te.session_id = ts.session_id
+          AND te.user_agent ~* ${BOT_UA_SQL_PATTERN}
+        LIMIT 1
+      )
+    GROUP BY ts.source
     ORDER BY sessions DESC
     LIMIT 20
   `;
 
-  // Device breakdown
+  // Device breakdown (exclude bot sessions)
   const deviceRows = await sql`
     SELECT 
-      COALESCE(device, 'unknown') as device,
+      COALESCE(ts.device, 'unknown') as device,
       COUNT(*) as sessions,
       ROUND(COUNT(*)::numeric / NULLIF(SUM(COUNT(*)) OVER (), 0) * 100, 1) as pct
-    FROM tunnel_sessions
-    WHERE created_at >= ${periodStartIso}
-      AND (${!excludeTests} OR is_test_user = false)
-    GROUP BY device
+    FROM tunnel_sessions ts
+    WHERE ts.created_at >= ${periodStartIso}
+      AND (${!excludeTests} OR ts.is_test_user = false)
+      AND NOT EXISTS (
+        SELECT 1 FROM tunnel_events te
+        WHERE te.session_id = ts.session_id
+          AND te.user_agent ~* ${BOT_UA_SQL_PATTERN}
+        LIMIT 1
+      )
+    GROUP BY ts.device
     ORDER BY sessions DESC
   `;
 
-  // Country breakdown
+  // Country breakdown (exclude bot sessions)
   const countryRows = await sql`
     SELECT 
-      COALESCE(country, 'unknown') as country,
+      COALESCE(ts.country, 'unknown') as country,
       COUNT(*) as sessions,
       ROUND(COUNT(*)::numeric / NULLIF(SUM(COUNT(*)) OVER (), 0) * 100, 1) as pct
-    FROM tunnel_sessions
-    WHERE created_at >= ${periodStartIso}
-      AND (${!excludeTests} OR is_test_user = false)
-    GROUP BY country
+    FROM tunnel_sessions ts
+    WHERE ts.created_at >= ${periodStartIso}
+      AND (${!excludeTests} OR ts.is_test_user = false)
+      AND NOT EXISTS (
+        SELECT 1 FROM tunnel_events te
+        WHERE te.session_id = ts.session_id
+          AND te.user_agent ~* ${BOT_UA_SQL_PATTERN}
+        LIMIT 1
+      )
+    GROUP BY ts.country
     ORDER BY sessions DESC
     LIMIT 15
   `;
 
-  // Daily trend
+  // Daily trend (exclude bot sessions)
   const dailyRows = await sql`
     SELECT 
-      DATE(created_at AT TIME ZONE 'Europe/Paris') as day,
+      DATE(ts.created_at AT TIME ZONE 'Europe/Paris') as day,
       COUNT(*) as sessions,
-      COUNT(*) FILTER (WHERE completed = true) as completions,
+      COUNT(*) FILTER (WHERE ts.completed = true) as completions,
       ROUND(
-        COUNT(*) FILTER (WHERE completed = true)::numeric / NULLIF(COUNT(*), 0) * 100, 1
+        COUNT(*) FILTER (WHERE ts.completed = true)::numeric / NULLIF(COUNT(*), 0) * 100, 1
       ) as conversion_rate
-    FROM tunnel_sessions
-    WHERE created_at >= ${periodStartIso}
-      AND (${!excludeTests} OR is_test_user = false)
-    GROUP BY DATE(created_at AT TIME ZONE 'Europe/Paris')
+    FROM tunnel_sessions ts
+    WHERE ts.created_at >= ${periodStartIso}
+      AND (${!excludeTests} OR ts.is_test_user = false)
+      AND NOT EXISTS (
+        SELECT 1 FROM tunnel_events te
+        WHERE te.session_id = ts.session_id
+          AND te.user_agent ~* ${BOT_UA_SQL_PATTERN}
+        LIMIT 1
+      )
+    GROUP BY DATE(ts.created_at AT TIME ZONE 'Europe/Paris')
     ORDER BY day ASC
   `;
 
-  // Step durations (from TUNNEL_STEP_CHANGED events)
+  // Step durations (from TUNNEL_STEP_CHANGED events, exclude bots)
   const stepDurationRows = await sql`
     SELECT
       extra->>'fromStep' as logical_step,
@@ -458,6 +505,7 @@ export async function getDashboardData(
       AND event_type = 'TUNNEL_STEP_CHANGED'
       AND extra->>'durationMs' IS NOT NULL
       AND (${!excludeTests} OR is_test_user = false)
+      AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
     GROUP BY extra->>'fromStep'
     ORDER BY median_duration_ms ASC
   `;
@@ -711,8 +759,7 @@ export async function getJournalEvents(filters: JournalFilters): Promise<Journal
     limit,
     offset,
     sessions: sessionsRows.map((r: any) => {
-      const ua = (r.first_user_agent || "").toLowerCase();
-      const isBot = /bot|crawl|spider|slurp|facebook|twitter|whatsapp|telegram|preview|lighthouse|pagespeed|pingdom|uptimerobot|headless|phantom|selenium|puppeteer|playwright/i.test(ua);
+      const isBot = isBotUserAgent(r.first_user_agent);
       return {
         session_id: r.session_id,
         email: r.email,
