@@ -1,5 +1,38 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-16 — Analytics: funnel détaillé par bloc avec durées
+
+**Contexte** : le funnel macro (PROJECT / RECAP / CONTACT / THANK_YOU) est trop simplifié.
+Il ne permet pas de voir où exactement les utilisateurs abandonnent dans le Step 3 (qui contient 6 sous-sections).
+
+**Implémentation** :
+- `hooks/useTunnelTracking.ts` : ajout de `trackBlock(blockId, logicalStep, screenId)` → émet `BLOCK_ENTERED` vers Neon Analytics avec `prevDurationMs` (temps passé sur le bloc précédent).
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx` : prop `onBlockEntered` → appelée quand `activeSection` change (accordéon Step 3).
+- `app/devis-gratuits-v3/page.tsx` : appels `trackBlock()` à chaque transition de step + validation + callback `onBlockEntered` de Step 3.
+
+**12 blocs trackés (dans l'ordre du tunnel)** :
+1. `cities_surface` — Villes & m²
+2. `validate_step1` — Validation étape 1
+3. `estimation_recap` — Estimation budget
+4. `validate_step2` — Validation étape 2
+5. `route_housing` — Trajet & logements
+6. `moving_date` — Date de déménagement
+7. `volume_density` — Volume & densité
+8. `formule` — Formule
+9. `contact_info` — Coordonnées
+10. `optional_details` — Précisions (facultatif)
+11. `validate_step3` — Validation étape 3
+12. `confirmation` — Confirmation
+
+**Dashboard** :
+- Nouveau bloc "🔍 Funnel détaillé par bloc" avec barres, drop-off et temps médian
+- Tableau "⏱️ Temps par bloc" (médiane / moyenne / P90)
+- `lib/analytics/neon.ts` : nouvelle query `getBlockFunnel()` (distinct sessions + PERCENTILE_CONT pour durées)
+
+**Tracking stable** : les logicalStep / screenId existants ne sont pas modifiés. Les events BLOCK_ENTERED sont envoyés uniquement vers Neon (pas BO / GA4).
+
+---
+
 ## 2026-02-15 — Pricing accès: `oui mais petit` moins pénalisant que `non`
 
 **Bug métier** :
