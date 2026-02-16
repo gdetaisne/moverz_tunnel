@@ -14,9 +14,9 @@ export const TYPE_COEFFICIENTS = {
 } as const;
 
 export const DENSITY_COEFFICIENTS = {
-  light: 0.9, // Sobre : -10%
-  normal: 1.0, // Normal : baseline
-  dense: 1.1, // Bien meublé : +10%
+  light: 0.9,  // Peu meublé : -10%
+  normal: 1.15, // Normal : +15%
+  dense: 1.35,  // Très meublé : +35%
 } as const;
 
 export const FORMULE_MULTIPLIERS = {

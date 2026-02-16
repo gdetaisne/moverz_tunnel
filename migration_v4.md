@@ -6540,6 +6540,13 @@ KPIs, tendance quotidienne, funnel + drop-off, sources, temps/étape, device, pa
 - Tests exclus : `is_test_user = false` forcé dans toutes les queries.
 - UI : aucune checkbox tests/bots dans dashboard ni journal — exclusion systématique.
 
+### Coefficients densité recalibrés (2026-02-16)
+- `light` : 0.9 (inchangé)
+- `normal` : 1.0 → **1.15** (+15%)
+- `dense` : 1.1 → **1.35** (+35%)
+- Fichier : `lib/pricing/constants.ts` (`DENSITY_COEFFICIENTS`).
+- Impact : le volume estimé (et donc le prix) augmente pour `normal` et `dense`.
+
 ### Tracking stable
 - `logicalStep` / `screenId` : inchangé.
 - Payload Back Office : strictement identique.
