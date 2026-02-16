@@ -661,44 +661,102 @@ function JsonPreview({ data, label }: { data: Record<string, unknown> | null; la
   );
 }
 
+/** Parse user agent to a short readable browser/OS summary */
+function shortUA(ua: string | null): string {
+  if (!ua) return "?";
+  const lower = ua.toLowerCase();
+  // Bots
+  if (/bot|crawl|spider|slurp|lighthouse|headless|phantom|selenium|puppeteer|playwright/i.test(lower)) return "🤖 Bot";
+  if (/facebook|facebookexternalhit/i.test(lower)) return "🤖 Facebook";
+  if (/twitter|twitterbot/i.test(lower)) return "🤖 Twitter";
+  if (/whatsapp/i.test(lower)) return "🤖 WhatsApp";
+  if (/telegram/i.test(lower)) return "🤖 Telegram";
+  // Browsers
+  let browser = "?";
+  if (/edg/i.test(lower)) browser = "Edge";
+  else if (/chrome/i.test(lower) && !/chromium/i.test(lower)) browser = "Chrome";
+  else if (/safari/i.test(lower) && !/chrome/i.test(lower)) browser = "Safari";
+  else if (/firefox/i.test(lower)) browser = "Firefox";
+  else if (/opera|opr/i.test(lower)) browser = "Opera";
+  // OS
+  let os = "";
+  if (/iphone|ipad/i.test(lower)) os = "iOS";
+  else if (/android/i.test(lower)) os = "Android";
+  else if (/mac/i.test(lower)) os = "Mac";
+  else if (/windows/i.test(lower)) os = "Win";
+  else if (/linux/i.test(lower)) os = "Linux";
+  return os ? `${browser}/${os}` : browser;
+}
+
 function SessionCard({
   session,
   isActive,
   onClick,
 }: {
-  session: { session_id: string; email: string | null; events_count: number; first_seen: string; last_step: string | null; device: string | null; country: string | null; completed: boolean };
+  session: {
+    session_id: string;
+    email: string | null;
+    events_count: number;
+    first_seen: string;
+    last_step: string | null;
+    device: string | null;
+    country: string | null;
+    completed: boolean;
+    source: string | null;
+    user_agent: string | null;
+    is_bot: boolean;
+    max_step_index: number | null;
+    utm_source: string | null;
+    language: string | null;
+  };
   isActive: boolean;
   onClick: () => void;
 }) {
+  const time = new Date(session.first_seen).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const date = new Date(session.first_seen).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+
   return (
     <button
       onClick={onClick}
       className={`w-full text-left p-3 rounded-xl border transition-all ${
-        isActive
+        session.is_bot
+          ? isActive
+            ? "border-yellow-600 bg-yellow-500/10 opacity-60"
+            : "border-gray-800/50 bg-gray-900/50 opacity-40 hover:opacity-70"
+          : isActive
           ? "border-purple-500 bg-purple-500/10"
           : "border-gray-800 bg-gray-900 hover:border-gray-700"
       }`}
     >
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-mono text-gray-300 truncate max-w-[140px]">
-          {session.email || session.session_id.slice(0, 12) + "…"}
+          {session.email || (session.is_bot ? "🤖 Bot" : session.session_id.slice(-8))}
         </span>
-        {session.completed && (
-          <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">✓</span>
-        )}
+        <div className="flex items-center gap-1">
+          {session.completed && (
+            <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">✓</span>
+          )}
+          {session.is_bot && (
+            <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded">bot</span>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-2 text-[10px] text-gray-500">
-        <span>{session.events_count} events</span>
+      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 flex-wrap">
+        <span className="font-medium">{session.events_count} evt</span>
         <span>•</span>
-        <span>{session.device || "?"}</span>
-        <span>•</span>
-        <span>{session.country || "?"}</span>
+        <span>{shortUA(session.user_agent)}</span>
+        {session.country && session.country !== "?" && <><span>•</span><span>{session.country}</span></>}
       </div>
-      <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
+      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mt-0.5 flex-wrap">
         {session.last_step && <span>→ {STEP_LABELS[session.last_step] || session.last_step}</span>}
         <span>•</span>
-        <TimeAgo date={session.first_seen} />
+        <span>{date} {time}</span>
       </div>
+      {session.source && session.source !== "direct" && (
+        <div className="text-[9px] text-gray-600 mt-0.5 truncate">
+          via {session.utm_source || session.source}
+        </div>
+      )}
     </button>
   );
 }
@@ -714,6 +772,8 @@ function Journal({ password }: { password: string }) {
   const [eventTypeFilter, setEventTypeFilter] = useState("");
   const [days, setDays] = useState(30);
   const [includeTests, setIncludeTests] = useState(false);
+  const [hideBounces, setHideBounces] = useState(false);
+  const [hideBots, setHideBots] = useState(false);
   const [page, setPage] = useState(0);
   const LIMIT = 100;
 
@@ -812,9 +872,20 @@ function Journal({ password }: { password: string }) {
             <h1 className="text-xl font-bold">📋 Journal des événements</h1>
             <p className="text-gray-400 text-sm">
               {journal ? `${journal.total} événements` : "Chargement…"}
+              {journal?.sessions && (() => {
+                const total = journal.sessions.length;
+                const bots = journal.sessions.filter((s) => s.is_bot).length;
+                const bounces = journal.sessions.filter((s) => s.events_count <= 1).length;
+                const real = total - bots;
+                return (
+                  <span className="ml-2 text-gray-500">
+                    ({total} sessions · {bots > 0 ? <span className="text-yellow-400">{bots} bots</span> : null}{bots > 0 ? " · " : ""}{bounces} bounces · {real - bounces} engagés)
+                  </span>
+                );
+              })()}
               {activeSessionId && (
                 <span className="ml-2 text-purple-400">
-                  Filtré : session {activeSessionId.slice(0, 12)}…
+                  Filtré : session …{activeSessionId.slice(-8)}
                 </span>
               )}
             </p>
@@ -866,10 +937,28 @@ function Journal({ password }: { password: string }) {
                 </button>
               )}
 
+              {/* Quick filters */}
+              <div className="space-y-1">
+                <label className="flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer">
+                  <input type="checkbox" checked={hideBounces} onChange={(e) => setHideBounces(e.target.checked)} className="rounded w-3 h-3" />
+                  Masquer bounces (1 evt)
+                </label>
+                <label className="flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer">
+                  <input type="checkbox" checked={hideBots} onChange={(e) => setHideBots(e.target.checked)} className="rounded w-3 h-3" />
+                  Masquer bots 🤖
+                </label>
+              </div>
+
               <p className="text-[10px] text-gray-500 uppercase tracking-wider">Sessions récentes</p>
 
-              <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
-                {journal?.sessions?.map((s) => (
+              <div className="space-y-2 max-h-[calc(100vh-260px)] overflow-y-auto pr-1">
+                {journal?.sessions
+                  ?.filter((s) => {
+                    if (hideBounces && s.events_count <= 1) return false;
+                    if (hideBots && s.is_bot) return false;
+                    return true;
+                  })
+                  .map((s) => (
                   <SessionCard
                     key={s.session_id}
                     session={s}

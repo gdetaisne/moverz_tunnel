@@ -574,7 +574,24 @@ export interface JournalResult {
   limit: number;
   offset: number;
   /** Distinct sessions found (for sidebar) */
-  sessions?: { session_id: string; email: string | null; events_count: number; first_seen: string; last_step: string | null; device: string | null; country: string | null; completed: boolean }[];
+  sessions?: {
+    session_id: string;
+    email: string | null;
+    events_count: number;
+    first_seen: string;
+    last_step: string | null;
+    device: string | null;
+    country: string | null;
+    completed: boolean;
+    source: string | null;
+    landing_url: string | null;
+    max_step_index: number | null;
+    user_agent: string | null;
+    referrer: string | null;
+    utm_source: string | null;
+    language: string | null;
+    is_bot: boolean;
+  }[];
 }
 
 export async function getJournalEvents(filters: JournalFilters): Promise<JournalResult> {
@@ -627,7 +644,7 @@ export async function getJournalEvents(filters: JournalFilters): Promise<Journal
 
   const total = Number(countRows[0]?.total) || 0;
 
-  // Sessions sidebar: recent sessions with summary
+  // Sessions sidebar: recent sessions with summary + first event context
   const sessionsRows = await sql`
     SELECT 
       ts.session_id,
@@ -637,8 +654,22 @@ export async function getJournalEvents(filters: JournalFilters): Promise<Journal
       ts.last_step,
       ts.device,
       ts.country,
-      ts.completed
+      ts.completed,
+      ts.source,
+      ts.landing_url,
+      ts.max_step_index,
+      fe.user_agent as first_user_agent,
+      fe.referrer as first_referrer,
+      fe.utm_source as first_utm_source,
+      fe.language as first_language
     FROM tunnel_sessions ts
+    LEFT JOIN LATERAL (
+      SELECT user_agent, referrer, utm_source, language
+      FROM tunnel_events
+      WHERE session_id = ts.session_id
+      ORDER BY created_at ASC
+      LIMIT 1
+    ) fe ON true
     WHERE ts.created_at >= ${periodStartIso}
       AND (${!excludeTests} OR ts.is_test_user = false)
       AND (${!hasEmailFilter} OR ts.email ILIKE ${'%' + (filters.email || '') + '%'})
@@ -679,15 +710,27 @@ export async function getJournalEvents(filters: JournalFilters): Promise<Journal
     total,
     limit,
     offset,
-    sessions: sessionsRows.map((r: any) => ({
-      session_id: r.session_id,
-      email: r.email,
-      events_count: Number(r.events_count),
-      first_seen: r.first_seen,
-      last_step: r.last_step,
-      device: r.device,
-      country: r.country,
-      completed: r.completed,
-    })),
+    sessions: sessionsRows.map((r: any) => {
+      const ua = (r.first_user_agent || "").toLowerCase();
+      const isBot = /bot|crawl|spider|slurp|facebook|twitter|whatsapp|telegram|preview|lighthouse|pagespeed|pingdom|uptimerobot|headless|phantom|selenium|puppeteer|playwright/i.test(ua);
+      return {
+        session_id: r.session_id,
+        email: r.email,
+        events_count: Number(r.events_count),
+        first_seen: r.first_seen,
+        last_step: r.last_step,
+        device: r.device,
+        country: r.country,
+        completed: r.completed,
+        source: r.source,
+        landing_url: r.landing_url,
+        max_step_index: r.max_step_index != null ? Number(r.max_step_index) : null,
+        user_agent: r.first_user_agent,
+        referrer: r.first_referrer,
+        utm_source: r.first_utm_source,
+        language: r.first_language,
+        is_bot: isBot,
+      };
+    }),
   };
 }
