@@ -6540,6 +6540,14 @@ KPIs, tendance quotidienne, funnel + drop-off, sources, temps/étape, device, pa
 - Tests exclus : `is_test_user = false` forcé dans toutes les queries.
 - UI : aucune checkbox tests/bots dans dashboard ni journal — exclusion systématique.
 
+### Saisonnalité recalibrée (2026-02-16)
+**Avant** : haute = juin–sept + déc (×1.3), basse = janv+fév+nov (×0.85).
+**Après** :
+- **Haute** (rouge) : **juillet + août** seulement (×1.3)
+- **Basse** (vert) : **janv, fév, mars, avril, nov** (×0.85)
+- Normal : mai, juin, sept, oct, déc (×1.0)
+- Fichiers : `DatePickerFr.tsx` (`getMonthSeason`), `page.tsx` (`getSeasonFactor`).
+
 ### Coefficients densité recalibrés (2026-02-16)
 - `light` : 0.9 (inchangé)
 - `normal` : 1.0 → **1.15** (+15%)
