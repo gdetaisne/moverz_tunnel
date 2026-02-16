@@ -53,8 +53,8 @@ const WEEKDAYS_FR = ["L", "M", "M", "J", "V", "S", "D"];
 type SeasonType = "haute" | "basse" | "normal";
 
 function getMonthSeason(month1: number): SeasonType {
-  if ([6, 7, 8, 9, 12].includes(month1)) return "haute";
-  if ([1, 2, 11].includes(month1)) return "basse";
+  if ([7, 8].includes(month1)) return "haute";           // Juillet, Août
+  if ([1, 2, 3, 4, 11].includes(month1)) return "basse"; // Janv, Fév, Mars, Avr, Nov
   return "normal";
 }
 

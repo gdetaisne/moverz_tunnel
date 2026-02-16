@@ -720,8 +720,8 @@ function DevisGratuitsV3Content() {
     const d = parseInputDateLocal(dateStr);
     if (!d) return 1;
     const month = d.getMonth() + 1;
-    if ((month >= 6 && month <= 9) || month === 12) return 1.3;
-    if (month === 1 || month === 2 || month === 11) return 0.85;
+    if (month === 7 || month === 8) return 1.3;                              // Haute : juil, août
+    if ([1, 2, 3, 4, 11].includes(month)) return 0.85;                      // Basse : janv, fév, mars, avr, nov
     return 1.0;
   };
 
