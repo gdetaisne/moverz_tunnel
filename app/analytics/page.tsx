@@ -25,6 +25,21 @@ const STEP_ORDER = ["ENTRY", "PROJECT", "RECAP", "CONTACT", "THANK_YOU"];
 type PricingSimulatorHypotheses = {
   displayCenterBias: number;
   baselineDistanceBufferKm: number;
+  step2Defaults: {
+    density: string;
+    kitchenIncluded: string;
+    kitchenApplianceCount: number;
+    extraVolumeM3: number;
+    seasonFactor: number;
+    originFloor: number;
+    destinationFloor: number;
+    originElevator: string;
+    destinationElevator: string;
+    longCarry: boolean;
+    tightAccess: boolean;
+    difficultParking: boolean;
+    liftRequired: boolean;
+  };
   decote: number;
   prixMinSocle: number;
   densityCoefficients: Record<string, number>;
@@ -1332,6 +1347,18 @@ function PricingLab({ password }: { password: string }) {
             </div>
 
             <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h2 className="text-sm font-semibold text-gray-300 mb-4">Step 2 — champs préselectionnés</h2>
+              <div className="space-y-2 text-sm">
+                <p><span className="text-gray-500">Densité (défaut) :</span> <span className="font-semibold">{hypotheses.step2Defaults.density}</span></p>
+                <p><span className="text-gray-500">Cuisine (défaut) :</span> <span className="font-semibold">{hypotheses.step2Defaults.kitchenIncluded} ({hypotheses.step2Defaults.kitchenApplianceCount} équipements)</span></p>
+                <p><span className="text-gray-500">Volume extra cuisine :</span> <span className="font-semibold">{hypotheses.step2Defaults.extraVolumeM3} m³</span></p>
+                <p><span className="text-gray-500">Facteur saison :</span> <span className="font-semibold">×{hypotheses.step2Defaults.seasonFactor}</span></p>
+                <p><span className="text-gray-500">Étages/ascenseurs :</span> <span className="font-semibold">0 / 0 · yes / yes</span></p>
+                <p><span className="text-gray-500">Contraintes :</span> <span className="font-semibold">aucune par défaut</span></p>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
               <h2 className="text-sm font-semibold text-gray-300 mb-4">Densité</h2>
               <DataTable
                 headers={["Profil", "Coefficient"]}
@@ -1350,7 +1377,7 @@ function PricingLab({ password }: { password: string }) {
         )}
 
         <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-5">
-          <h2 className="text-sm font-semibold text-gray-300">Simulateur</h2>
+          <h2 className="text-sm font-semibold text-gray-300">Simulateur Step 3 (budget affiné)</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <input
               type="number"
@@ -1498,7 +1525,7 @@ function PricingLab({ password }: { password: string }) {
 
         {simulation && (
           <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-6">
-            <h3 className="text-sm font-semibold text-gray-300">Détail des calculs (item par item)</h3>
+            <h3 className="text-sm font-semibold text-gray-300">Step 3 vs Step 2 — détail des calculs</h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
@@ -1528,6 +1555,10 @@ function PricingLab({ password }: { password: string }) {
               </div>
             </div>
 
+            <div className="pt-2 border-t border-gray-800">
+              <p className="text-xs uppercase tracking-wider text-purple-300 mb-2">Step 3 (affiné)</p>
+            </div>
+
             <div>
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Calcul détaillé (avant provision)</p>
               <ul className="space-y-1.5 text-sm">
@@ -1551,7 +1582,8 @@ function PricingLab({ password }: { password: string }) {
               </ul>
             </div>
 
-            <div>
+            <div className="pt-2 border-t border-gray-800">
+              <p className="text-xs uppercase tracking-wider text-emerald-300 mb-2">Step 2 / Home (baseline figée)</p>
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Baseline Step 2 / Home (référence)</p>
               <ul className="space-y-1.5 text-sm">
                 <li><span className="text-gray-500">Centre avant provision:</span> {fmtEur(simulation.baseline.step2CenterBeforeProvisionEur)}</li>

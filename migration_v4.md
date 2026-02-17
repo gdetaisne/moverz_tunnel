@@ -39,6 +39,47 @@
 
 ---
 
+## 2026-02-17 — Step 3: branchement réel des coûts objets/contraintes
+
+**Problème constaté** :
+- Les blocs `Objets spécifiques` / `Contraintes` étaient visibles en UI, mais les coûts détaillés n'étaient pas entièrement injectés dans le budget affiné.
+
+**Implémentation** :
+- `app/devis-gratuits-v3/page.tsx`
+  - ajout d'un parsing de `access_details` par côté (départ/arrivée),
+  - ajout d'un parsing du bloc `[[OBJETS_SPECIFIQUES_V4_*]]` stocké dans `specificNotes`,
+  - application des coûts fixes dans `v2PricingCart`:
+    - contraintes: `étroit 70€`, `portage 80€`, `parking 100€`, `monte-meuble 250€` par occurrence côté,
+    - objets: `piano 150€`, `coffre-fort 150€`, `aquarium 100€`, `objets fragiles volumineux 80€`, `meubles très lourds 100€/u`,
+  - ajout de la ligne `Objets spécifiques` dans les détails SmartCart,
+  - mapping d'impact `specificNotes -> specific_objects` pour refléter le dernier clic/input.
+
+**Impact** :
+- Les coûts objets/contraintes impactent désormais effectivement le `Budget affiné` et les `Détails`.
+- Aucun changement de schéma DB/Prisma, aucun nouveau champ tunnel.
+
+---
+
+## 2026-02-17 — Analytics: séparation explicite Step 2 / Step 3
+
+**Demande** :
+- Isoler visuellement Step 2 et Step 3 dans l'onglet `Hypothèses & Simulation`.
+- Rendre explicites les champs préselectionnés Step 2 (ex: densité par défaut).
+
+**Implémentation** :
+- `app/api/analytics/pricing-simulator/route.ts`
+  - ajout de `hypotheses.step2Defaults` dans le `GET` (densité, cuisine, volume extra, saison, accès par défaut).
+- `app/analytics/page.tsx`
+  - ajout d'une carte dédiée `Step 2 — champs préselectionnés`,
+  - renommage du formulaire en `Simulateur Step 3 (budget affiné)`,
+  - séparation visuelle des résultats `Step 3 (affiné)` vs `Step 2/Home (baseline figée)`.
+
+**Impact** :
+- Lecture des hypothèses plus claire pour audit métier.
+- Aucun impact sur le calcul tunnel côté client.
+
+---
+
 ## 2026-02-17 — Fix affichage Step 3: bloc enrichissement non visible
 
 **Problème** :

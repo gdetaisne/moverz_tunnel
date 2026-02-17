@@ -100,6 +100,7 @@ function DevisGratuitsV3Content() {
     | "kitchen"
     | "access_housing"
     | "access_constraints"
+    | "specific_objects"
     | "formule"
     | null
   >(null);
@@ -139,6 +140,50 @@ function DevisGratuitsV3Content() {
     const fallback = new Date(trimmed);
     if (Number.isNaN(fallback.getTime())) return null;
     return fallback;
+  };
+
+  const parseAccessDetailSides = (raw: string | null | undefined) => {
+    const counts = {
+      narrow_access: 0,
+      long_carry: 0,
+      difficult_parking: 0,
+      lift_required: 0,
+    };
+    const parts = (raw || "").split("|").map((p) => p.trim()).filter(Boolean);
+    for (const part of parts) {
+      const [loc, key] = part.split(":");
+      if ((loc === "origin" || loc === "destination") && key in counts) {
+        counts[key as keyof typeof counts] += 1;
+      }
+    }
+    return counts;
+  };
+
+  const parseObjectsFromSpecificNotes = (raw: string | null | undefined) => {
+    const defaults = {
+      piano: false,
+      coffreFort: false,
+      aquarium: false,
+      objetsFragilesVolumineux: false,
+      meublesTresLourdsCount: 0,
+    };
+    const note = raw || "";
+    const startTag = "[[OBJETS_SPECIFIQUES_V4_START]]";
+    const endTag = "[[OBJETS_SPECIFIQUES_V4_END]]";
+    const start = note.indexOf(startTag);
+    const end = note.indexOf(endTag);
+    if (start === -1 || end === -1 || end < start) return defaults;
+    const block = note.slice(start + startTag.length, end);
+    const readBool = (key: string) =>
+      new RegExp(`^${key}:(true|false)$`, "m").exec(block)?.[1] === "true";
+    const countMatch = /^meublesTresLourdsCount:(\d+)$/m.exec(block);
+    return {
+      piano: readBool("piano"),
+      coffreFort: readBool("coffreFort"),
+      aquarium: readBool("aquarium"),
+      objetsFragilesVolumineux: readBool("objetsFragilesVolumineux"),
+      meublesTresLourdsCount: countMatch ? Number.parseInt(countMatch[1], 10) : 0,
+    };
   };
 
   // Formatter utilisé dans le rendu (sidebar Step 3, etc.)
@@ -1068,6 +1113,12 @@ function DevisGratuitsV3Content() {
       prixFinal: pricing.prixFinal + fixedProvisionEur,
       prixMax: pricing.prixMax + fixedProvisionEur,
     });
+    const withFixedAddon = (pricing: ReturnType<typeof withFixedProvision>, addonEur: number) => ({
+      ...pricing,
+      prixMin: pricing.prixMin + addonEur,
+      prixFinal: pricing.prixFinal + addonEur,
+      prixMax: pricing.prixMax + addonEur,
+    });
 
     const minMovingDate = getMinMovingDateIso();
     const isMovingDateValid = !!state.movingDate && state.movingDate >= minMovingDate;
@@ -1167,7 +1218,14 @@ function DevisGratuitsV3Content() {
       originFloorComplete &&
       destinationFloorComplete;
 
+    const accessSideCounts = parseAccessDetailSides(state.access_details);
+    const hasAccessDetailSides =
+      accessSideCounts.narrow_access > 0 ||
+      accessSideCounts.long_carry > 0 ||
+      accessSideCounts.difficult_parking > 0 ||
+      accessSideCounts.lift_required > 0;
     const accessConstraintsConfirmed =
+      hasAccessDetailSides ||
       !!state.narrow_access ||
       !!state.long_carry ||
       !!state.difficult_parking ||
@@ -1185,14 +1243,12 @@ function DevisGratuitsV3Content() {
       const inferredMonteMeuble =
         (originElevator === "no" && originFloor >= 4) ||
         (destinationElevator === "no" && destinationFloor >= 4);
-      const needsMonteMeuble = inferredMonteMeuble || !!state.lift_required;
       return {
         originFloor,
         destinationFloor,
         originElevator,
         destinationElevator,
         inferredMonteMeuble,
-        needsMonteMeuble,
       };
     })();
 
@@ -1220,21 +1276,24 @@ function DevisGratuitsV3Content() {
         )
       : 0;
 
-    const inputAccessConstraints = (() => {
-      if (!accessConstraintsConfirmed) return inputAccessHousing;
-      return {
-        ...inputAccessHousing,
-        longCarry: !!state.long_carry,
-        tightAccess: !!state.narrow_access,
-        difficultParking: !!state.difficult_parking,
-        services: {
-          ...inputAccessHousing.services,
-          // Monte-meuble explicite via la question contraintes
-          monteMeuble: accessMeta.needsMonteMeuble,
-        },
-      };
-    })();
-    const sAccessStandard = withFixedProvision(calculatePricing(inputAccessConstraints));
+    const inputAccessConstraints = inputAccessHousing;
+    const effectiveConstraintCounts = hasAccessDetailSides
+      ? accessSideCounts
+      : {
+          narrow_access: state.narrow_access ? 1 : 0,
+          long_carry: state.long_carry ? 1 : 0,
+          difficult_parking: state.difficult_parking ? 1 : 0,
+          lift_required: state.lift_required ? 1 : 0,
+        };
+    const accessFixedAddonEur =
+      effectiveConstraintCounts.narrow_access * 70 +
+      effectiveConstraintCounts.long_carry * 80 +
+      effectiveConstraintCounts.difficult_parking * 100 +
+      effectiveConstraintCounts.lift_required * 250;
+    const sAccessStandard = withFixedAddon(
+      withFixedProvision(calculatePricing(inputAccessConstraints)),
+      accessFixedAddonEur
+    );
     const deltaAccessConstraintsEur = accessConstraintsConfirmed
       ? formatDelta(
           centerEur(sAccessStandard.prixMin, sAccessStandard.prixMax) -
@@ -1242,21 +1301,42 @@ function DevisGratuitsV3Content() {
         )
       : 0;
 
+    const objectsState = parseObjectsFromSpecificNotes(state.specificNotes);
+    // Tant qu'on n'a pas la granularité complète en UI (piano droit/queue, coffre léger/lourd),
+    // on branche les coûts fixes sur la variante standard demandée.
+    const objectsFixedAddonEur =
+      (objectsState.piano ? 150 : 0) +
+      (objectsState.coffreFort ? 150 : 0) +
+      (objectsState.aquarium ? 100 : 0) +
+      (objectsState.objetsFragilesVolumineux ? 80 : 0) +
+      Math.max(0, objectsState.meublesTresLourdsCount) * 100;
+
     const inputSelectedFormule = {
       ...inputAccessConstraints,
       formule: selectedFormule,
     };
-    const sFinal =
+    const sSelectedFormule =
       selectedFormule === baselineFormule
         ? sAccessStandard
-        : withFixedProvision(calculatePricing(inputSelectedFormule));
+        : withFixedAddon(
+            withFixedProvision(calculatePricing(inputSelectedFormule)),
+            accessFixedAddonEur
+          );
     const deltaFormuleEur =
       selectedFormule === baselineFormule
         ? 0
         : formatDelta(
-            centerEur(sFinal.prixMin, sFinal.prixMax) -
+            centerEur(sSelectedFormule.prixMin, sSelectedFormule.prixMax) -
               centerEur(sAccessStandard.prixMin, sAccessStandard.prixMax)
           );
+    const sFinal = withFixedAddon(sSelectedFormule, objectsFixedAddonEur);
+    const deltaObjectsEur =
+      objectsFixedAddonEur > 0
+        ? formatDelta(
+            centerEur(sFinal.prixMin, sFinal.prixMax) -
+              centerEur(sSelectedFormule.prixMin, sSelectedFormule.prixMax)
+          )
+        : 0;
 
     const refinedCenterEur = centerEur(sFinal.prixMin, sFinal.prixMax);
 
@@ -1283,9 +1363,16 @@ function DevisGratuitsV3Content() {
         ? "maison"
         : `étage ${accessMeta.destinationFloor}`
     }`;
-    const accessConstraintsLabel = accessMeta.needsMonteMeuble
-      ? "≥4 sans ascenseur (monte-meuble)"
-      : "confirmées";
+    const accessConstraintsLabel = [
+      effectiveConstraintCounts.narrow_access > 0 ? `étroit×${effectiveConstraintCounts.narrow_access}` : null,
+      effectiveConstraintCounts.long_carry > 0 ? `portage×${effectiveConstraintCounts.long_carry}` : null,
+      effectiveConstraintCounts.difficult_parking > 0
+        ? `parking×${effectiveConstraintCounts.difficult_parking}`
+        : null,
+      effectiveConstraintCounts.lift_required > 0 ? `monte-meuble×${effectiveConstraintCounts.lift_required}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ") || "confirmées";
 
     const formuleLabel =
       selectedFormule === "ECONOMIQUE"
@@ -1302,6 +1389,7 @@ function DevisGratuitsV3Content() {
         | "date"
         | "access_housing"
         | "access_constraints"
+        | "specific_objects"
         | "formule";
       label: string;
       status: string;
@@ -1363,6 +1451,15 @@ function DevisGratuitsV3Content() {
         confirmed: true,
       });
     }
+    if (objectsFixedAddonEur > 0) {
+      lines.push({
+        key: "specific_objects",
+        label: "Objets spécifiques",
+        status: "déclarés",
+        amountEur: deltaObjectsEur,
+        confirmed: true,
+      });
+    }
     lines.push({
       key: "formule",
       label: "Formule",
@@ -1412,6 +1509,8 @@ function DevisGratuitsV3Content() {
     state.long_carry,
     state.difficult_parking,
     state.lift_required,
+    state.access_details,
+    state.specificNotes,
   ]);
 
   const estimateRange = useMemo(() => {
@@ -1693,6 +1792,7 @@ function DevisGratuitsV3Content() {
     | "kitchen"
     | "access_housing"
     | "access_constraints"
+    | "specific_objects"
     | null => {
     if (
       field === "originAddress" ||
@@ -1734,6 +1834,7 @@ function DevisGratuitsV3Content() {
     ) {
       return "access_constraints";
     }
+    if (field === "specificNotes") return "specific_objects";
     return null;
   };
 
