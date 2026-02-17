@@ -1,5 +1,19 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Copy SmartCart: "Notre estimation"
+
+**Demande** :
+- Remplacer le titre `Votre estimation` par `Notre estimation` dans la carte de prix live.
+
+**Implémentation** :
+- `components/tunnel-v4/SmartCart.tsx`
+  - libellé header : `Votre estimation` → `Notre estimation`.
+
+**Impact** :
+- Ajustement de wording uniquement (aucune logique modifiée).
+
+---
+
 ## 2026-02-17 — DatePicker: saisie manuelle `jj/mm/aaaa`
 
 **Demande** :

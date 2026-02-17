@@ -207,7 +207,7 @@ export function SmartCart({
             className={`font-bold uppercase tracking-wide ${isMobile && drawerOpen ? "text-sm" : "text-xs"}`}
             style={{ color: "var(--color-text-muted)" }}
           >
-            Votre estimation
+            Notre estimation
           </p>
           <div
             className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"
