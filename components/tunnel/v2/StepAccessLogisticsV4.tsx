@@ -384,7 +384,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   };
 
   const renderApartmentAccessFields = (
-    housingType: string,
     floor: string,
     elevator: string,
     setFloor: (v: string) => void,
@@ -465,11 +464,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           ))}
         </div>
       </div>
-      {!isApartment(housingType) && (
-        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-          Aucun détail d'étage/ascenseur requis pour un logement en maison.
-        </p>
-        )}
       </div>
     );
 
@@ -1222,7 +1216,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   )}
                   {isApartment(props.originHousingType) &&
                     renderApartmentAccessFields(
-                      props.originHousingType,
                       props.originFloor,
                       props.originElevator,
                       (v) => props.onFieldChange("originFloor", v),
@@ -1287,7 +1280,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   )}
                   {isApartment(props.destinationHousingType) &&
                     renderApartmentAccessFields(
-                      props.destinationHousingType,
                       props.destinationFloor,
                       props.destinationElevator,
                       (v) => props.onFieldChange("destinationFloor", v),
@@ -1424,19 +1416,19 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                               (v) => props.onFieldChange("destinationFloor", v),
                               (v) => props.onFieldChange("destinationElevator", v)
                             )}
-                        {renderApartmentAccessFields(
-                          housingType,
-                          floor,
-                          elevator,
-                          (v) =>
-                            isOrigin
-                              ? props.onFieldChange("originFloor", v)
-                              : props.onFieldChange("destinationFloor", v),
-                          (v) =>
-                            isOrigin
-                              ? props.onFieldChange("originElevator", v)
-                              : props.onFieldChange("destinationElevator", v)
-                        )}
+                        {isApartment(housingType) &&
+                          renderApartmentAccessFields(
+                            floor,
+                            elevator,
+                            (v) =>
+                              isOrigin
+                                ? props.onFieldChange("originFloor", v)
+                                : props.onFieldChange("destinationFloor", v),
+                            (v) =>
+                              isOrigin
+                                ? props.onFieldChange("originElevator", v)
+                                : props.onFieldChange("destinationElevator", v)
+                          )}
                       </div>
                     </AnimatedSection>
                   </div>

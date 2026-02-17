@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Step 3: masquer Étage/Ascenseur si logement = Maison
+
+**Demande** :
+- Ne plus afficher les lignes `Étage` / `Ascenseur` quand `Maison` est sélectionné.
+
+**Implémentation** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - rendu conditionnel des blocs `Étage`/`Ascenseur` uniquement si `Appartement`,
+  - suppression du message informatif "Aucun détail..." pour `Maison`.
+
+**Impact** :
+- UI plus claire, sans changement de logique/payload.
+
+---
+
 ## 2026-02-17 — Fix autocomplete villes: éviter les suggestions sans code postal
 
 **Problème** :
