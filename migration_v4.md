@@ -139,6 +139,28 @@
 
 ---
 
+## 2026-02-17 — Step 3: alignement des cartes "Formule" avec le Budget affiné
+
+**Problème** :
+- Les montants affichés dans les cartes `Éco / Standard / Premium` pouvaient diverger du `Budget affiné`.
+
+**Cause** :
+- Les cartes Formule utilisaient un calcul différent (prix bruts par formule) au lieu de reprendre le pipeline complet du panier Step 3.
+
+**Fix** :
+- `app/devis-gratuits-v3/page.tsx`
+  - calcul d'une map `formuleRanges` dans `v2PricingCart` via le même pipeline que le budget affiné:
+    - provision figée Step 2,
+    - ajustements accès,
+    - remise Box (-20% accès-étages),
+    - add-ons fixes accès + objets.
+  - passage de cette map à `StepAccessLogisticsV4` pour afficher les cartes Formule.
+
+**Impact** :
+- Les cartes Formule sont désormais cohérentes avec le `Budget affiné`.
+
+---
+
 ## 2026-02-17 — Step 3 précisions: retrait CTA de validation explicite
 
 **Demande** :

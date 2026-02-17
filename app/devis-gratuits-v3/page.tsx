@@ -1357,6 +1357,21 @@ function DevisGratuitsV3Content() {
             withFixedProvision(calculatePricing(inputSelectedFormule)),
             accessFixedAddonEur - accessHousingDiscountEur
           );
+    const formuleRanges = (["ECONOMIQUE", "STANDARD", "PREMIUM"] as PricingFormuleType[]).reduce(
+      (acc, formule) => {
+        const sFormule = withFixedAddon(
+          withFixedProvision(calculatePricing({ ...inputAccessConstraints, formule })),
+          accessFixedAddonEur - accessHousingDiscountEur
+        );
+        const sFormuleWithObjects = withFixedAddon(sFormule, objectsFixedAddonEur);
+        acc[formule] = {
+          priceMin: sFormuleWithObjects.prixMin,
+          priceMax: sFormuleWithObjects.prixMax,
+        };
+        return acc;
+      },
+      {} as Record<PricingFormuleType, { priceMin: number; priceMax: number }>
+    );
     const deltaFormuleEur =
       selectedFormule === baselineFormule
         ? 0
@@ -1515,6 +1530,7 @@ function DevisGratuitsV3Content() {
       refinedCenterEur,
       lines,
       formuleLabel,
+      formuleRanges,
     };
   }, [
     cityOsrmDistanceKm,
@@ -2510,7 +2526,13 @@ function DevisGratuitsV3Content() {
                   setLastImpactDetailId("formule");
                 }}
                 pricingByFormule={
-                  pricingByFormule
+                  v2PricingCart?.formuleRanges
+                    ? {
+                        ECONOMIQUE: v2PricingCart.formuleRanges.ECONOMIQUE,
+                        STANDARD: v2PricingCart.formuleRanges.STANDARD,
+                        PREMIUM: v2PricingCart.formuleRanges.PREMIUM,
+                      }
+                    : pricingByFormule
                     ? {
                         ECONOMIQUE: {
                           priceMin: pricingByFormule.ECONOMIQUE.prixMin,
