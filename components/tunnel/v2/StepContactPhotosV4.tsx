@@ -422,11 +422,10 @@ ${EXTRA_NOTES_BLOCK_END}`;
           <div className="space-y-4">
             <div className="space-y-1">
               <h3 className="text-xl sm:text-2xl font-bold" style={{ color: "var(--color-text)" }}>
-                Evitons les mauvaises surprises le jour J
+                Eviter les suppléments imprévus
               </h3>
               <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                Ces 3 points permettent aux déménageurs d'envoyer un devis précis et
-                d'éviter les suppléments imprévus.
+                Un accès mal déclaré peut générer 150 à 500 € de frais supplémentaires.
               </p>
             </div>
 

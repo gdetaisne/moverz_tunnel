@@ -1,5 +1,17 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Copy Step 4: titre + sous-texte enrichissement
+
+**Demande** :
+- Titre: `Eviter les suppléments imprévus`
+- Sous-texte: `Un accès mal déclaré peut générer 150 à 500 € de frais supplémentaires.`
+
+**Implémentation** :
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - mise à jour du heading et du sous-texte du bloc enrichissement.
+
+---
+
 ## 2026-02-17 — Copy fix: "Contraintes au départ" (pluriel)
 
 **Demande** :
