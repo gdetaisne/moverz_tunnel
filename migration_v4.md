@@ -1,5 +1,18 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Fix affichage Step 3: bloc enrichissement non visible
+
+**Problème** :
+- Le bloc enrichissement n'apparaissait pas en Step 3 malgré le déplacement.
+
+**Cause** :
+- `app/devis-gratuits-v3/page.tsx` passait `showOptionalDetailsBlock={false}` à `StepAccessLogisticsV4`.
+
+**Fix** :
+- passage à `showOptionalDetailsBlock={true}` pour réactiver l'affichage du bloc en fin de Step 3.
+
+---
+
 ## 2026-02-17 — Déplacement pur du bloc enrichissement: Step 4 -> fin Step 3
 
 **Décision validée** :

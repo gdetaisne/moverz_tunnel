@@ -2294,7 +2294,7 @@ function DevisGratuitsV3Content() {
                 phone={state.phone}
                 specificNotes={state.specificNotes}
                 collapseAllOnEnterToken={collapseStep3OnEnterToken}
-                showOptionalDetailsBlock={false}
+                showOptionalDetailsBlock={true}
                 onBlockEntered={(blockId) => {
                   // Map step3 sections to block IDs
                   const blockMap: Record<string, string> = {
