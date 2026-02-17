@@ -26,6 +26,17 @@ const questions: Array<{ key: QuestionKey; label: string }> = [
   { key: "lift_required", label: "Besoin d'un monte-meuble ?" },
 ];
 
+const OBJECTS_BLOCK_START = "[[OBJETS_SPECIFIQUES_V4_START]]";
+const OBJECTS_BLOCK_END = "[[OBJETS_SPECIFIQUES_V4_END]]";
+
+type ObjectsState = {
+  piano: boolean;
+  coffreFort: boolean;
+  meublesTresLourdsCount: number;
+  aquarium: boolean;
+  objetsFragilesVolumineux: boolean;
+};
+
 interface StepContactPhotosV4Props {
   leadId?: string | null;
   linkingCode?: string | null;
@@ -68,8 +79,6 @@ export function StepContactPhotosV4({
     { status: "idle" | "sending" | "sent"; message?: string } | { status: "error"; message: string }
   >({ status: "idle" });
   const [enrichmentMode, setEnrichmentMode] = useState<"idle" | "menu">("idle");
-  const [activeEnrichmentTab, setActiveEnrichmentTab] =
-    useState<"notes" | "photos" | "constraints">("notes");
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -88,6 +97,71 @@ export function StepContactPhotosV4({
   }, [mounted, leadId]);
 
   const normalizedEmail = (email || "").trim().toLowerCase();
+
+  const stripObjectsBlock = (raw: string): string => {
+    const start = raw.indexOf(OBJECTS_BLOCK_START);
+    const end = raw.indexOf(OBJECTS_BLOCK_END);
+    if (start === -1 || end === -1 || end < start) return raw.trim();
+    const before = raw.slice(0, start).trim();
+    const after = raw.slice(end + OBJECTS_BLOCK_END.length).trim();
+    return [before, after].filter(Boolean).join("\n\n").trim();
+  };
+
+  const parseObjectsState = (raw: string): ObjectsState => {
+    const start = raw.indexOf(OBJECTS_BLOCK_START);
+    const end = raw.indexOf(OBJECTS_BLOCK_END);
+    const defaults: ObjectsState = {
+      piano: false,
+      coffreFort: false,
+      meublesTresLourdsCount: 0,
+      aquarium: false,
+      objetsFragilesVolumineux: false,
+    };
+    if (start === -1 || end === -1 || end < start) return defaults;
+    const block = raw.slice(start + OBJECTS_BLOCK_START.length, end);
+    const readBool = (key: string) =>
+      new RegExp(`^${key}:(true|false)$`, "m").exec(block)?.[1] === "true";
+    const countMatch = /^meublesTresLourdsCount:(\d+)$/m.exec(block);
+    return {
+      piano: readBool("piano"),
+      coffreFort: readBool("coffreFort"),
+      meublesTresLourdsCount: countMatch ? Number.parseInt(countMatch[1], 10) : 0,
+      aquarium: readBool("aquarium"),
+      objetsFragilesVolumineux: readBool("objetsFragilesVolumineux"),
+    };
+  };
+
+  const serializeObjectsState = (state: ObjectsState): string =>
+    `${OBJECTS_BLOCK_START}
+piano:${state.piano}
+coffreFort:${state.coffreFort}
+meublesTresLourdsCount:${state.meublesTresLourdsCount}
+aquarium:${state.aquarium}
+objetsFragilesVolumineux:${state.objetsFragilesVolumineux}
+${OBJECTS_BLOCK_END}`;
+
+  const upsertObjectsState = (next: ObjectsState) => {
+    const base = stripObjectsBlock(specificNotes || "");
+    const hasAnyObject =
+      next.piano ||
+      next.coffreFort ||
+      next.aquarium ||
+      next.objetsFragilesVolumineux ||
+      next.meublesTresLourdsCount > 0;
+    const nextRaw = hasAnyObject
+      ? [base, serializeObjectsState(next)].filter(Boolean).join("\n\n").trim()
+      : base;
+    onFieldChange("specificNotes", nextRaw);
+    setSaveMessage(null);
+  };
+
+  const objectsState = parseObjectsState(specificNotes || "");
+  const objectsRas =
+    !objectsState.piano &&
+    !objectsState.coffreFort &&
+    !objectsState.aquarium &&
+    !objectsState.objetsFragilesVolumineux &&
+    objectsState.meublesTresLourdsCount <= 0;
 
   const parseAccessSides = () => {
     const sides: Record<QuestionKey, { origin?: boolean; destination?: boolean }> = {
@@ -112,6 +186,30 @@ export function StepContactPhotosV4({
     const was = current[q]?.[loc] ?? false;
     current[q][loc] = !was;
 
+    const parts: string[] = [];
+    for (const qKey of Object.keys(current) as QuestionKey[]) {
+      if (current[qKey].origin) parts.push(`origin:${qKey}`);
+      if (current[qKey].destination) parts.push(`destination:${qKey}`);
+    }
+    const nextDetails = parts.join("|");
+    onFieldChange("access_details", nextDetails);
+    const hasAny = parts.length > 0;
+    onFieldChange("access_type", hasAny ? "constrained" : "simple");
+    onFieldChange("narrow_access", Boolean(current.narrow_access.origin || current.narrow_access.destination));
+    onFieldChange("long_carry", Boolean(current.long_carry.origin || current.long_carry.destination));
+    onFieldChange(
+      "difficult_parking",
+      Boolean(current.difficult_parking.origin || current.difficult_parking.destination)
+    );
+    onFieldChange("lift_required", Boolean(current.lift_required.origin || current.lift_required.destination));
+    setSaveMessage(null);
+  };
+
+  const setSideRas = (loc: "origin" | "destination") => {
+    const current = parseAccessSides();
+    for (const qKey of Object.keys(current) as QuestionKey[]) {
+      current[qKey][loc] = false;
+    }
     const parts: string[] = [];
     for (const qKey of Object.keys(current) as QuestionKey[]) {
       if (current[qKey].origin) parts.push(`origin:${qKey}`);
@@ -270,150 +368,246 @@ export function StepContactPhotosV4({
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-              Comment souhaitez-vous enrichir votre dossier ?
-            </p>
-            {access_type === "constrained" && (
-              <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                Des contraintes d'accès sont déjà renseignées, vous pouvez les ajuster si besoin.
+            <div className="space-y-1">
+              <h3 className="text-xl sm:text-2xl font-bold" style={{ color: "var(--color-text)" }}>
+                Evitons les mauvaises surprises le jour J
+              </h3>
+              <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                Ces 3 points permettent aux déménageurs d'envoyer un devis précis et
+                d'éviter les suppléments imprévus.
               </p>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {[
-                { id: "notes" as const, label: "Laisser un commentaire", icon: MessageSquare },
-                { id: "photos" as const, label: "Ajouter des photos", icon: Camera },
-                { id: "constraints" as const, label: "Choisir parmi une liste", icon: ListChecks },
-              ].map((item) => {
-                const selected = activeEnrichmentTab === item.id;
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveEnrichmentTab(item.id);
-                      setSaveMessage(null);
-                    }}
-                    className="rounded-xl px-3 py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
-                    style={{
-                      background: selected ? "var(--color-accent)" : "var(--color-surface)",
-                      color: selected ? "#fff" : "var(--color-text)",
-                      border: selected ? "none" : "2px solid var(--color-border)",
-                    }}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
-                  </button>
-                );
-              })}
             </div>
 
-            {activeEnrichmentTab === "notes" && (
-              <div className="space-y-2">
-                <label
-                  htmlFor="v4-step4-specific-notes"
-                  className="block text-sm font-semibold"
-                  style={{ color: "var(--color-text)" }}
-                >
-                  Votre commentaire
-                </label>
-                <textarea
-                  id="v4-step4-specific-notes"
-                  value={specificNotes}
-                  onChange={(e) => {
-                    onFieldChange("specificNotes", e.target.value);
-                    setSaveMessage(null);
-                  }}
-                  rows={4}
-                  className="w-full rounded-xl px-4 py-3 text-sm resize-y"
-                  style={{
-                    background: "var(--color-bg)",
-                    border: "2px solid var(--color-border)",
-                    color: "var(--color-text)",
-                  }}
-                  placeholder="Ex: accès étroit, objets lourds, contraintes horaires..."
-                />
-              </div>
-            )}
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={async (e) => {
+                const files = Array.from(e.target.files || []);
+                await handleUploadPhotos(files);
+                e.currentTarget.value = "";
+              }}
+            />
 
-            {activeEnrichmentTab === "photos" && (
-              <div className="space-y-3">
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={async (e) => {
-                    const files = Array.from(e.target.files || []);
-                    await handleUploadPhotos(files);
-                    e.currentTarget.value = "";
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => photoInputRef.current?.click()}
-                  disabled={!leadId || isUploadingPhotos}
-                  className="w-full rounded-xl px-4 py-3 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
-                  style={{
-                    background: "var(--color-surface)",
-                    color: "var(--color-text)",
-                    border: "2px solid var(--color-border)",
-                  }}
-                >
-                  <Upload className="w-4 h-4" />
-                  {isUploadingPhotos ? "Envoi en cours..." : "Importer des photos"}
-                </button>
-                {!leadId && (
-                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                    Les photos seront disponibles après création du dossier.
+            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible">
+              <div
+                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 space-y-3"
+                style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                    1. Contrainte au départ
                   </p>
-                )}
-                {uploadMessage && (
-                  <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                    {uploadMessage}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {activeEnrichmentTab === "constraints" && (
-              <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={!leadId || isUploadingPhotos}
+                    className="px-2 py-1 rounded-lg text-xs font-semibold disabled:opacity-60"
+                    style={{ border: "1px solid var(--color-border)", color: "var(--color-text)" }}
+                  >
+                    <Camera className="w-3.5 h-3.5 inline mr-1" />
+                    Photo
+                  </button>
+                </div>
                 {questions.map((q) => {
                   const sides = parseAccessSides()[q.key];
+                  const active = Boolean(sides?.origin);
                   return (
-                    <div
-                      key={q.key}
-                      className="rounded-xl border p-3 space-y-2"
-                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                    <button
+                      key={`origin-${q.key}`}
+                      type="button"
+                      onClick={() => toggleSide(q.key, "origin")}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium"
+                      style={{
+                        background: active ? "var(--color-accent-light)" : "var(--color-bg)",
+                        color: "var(--color-text)",
+                        border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
+                      }}
                     >
-                      <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-                        {q.label}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        {[
-                          { loc: "origin" as const, label: "Départ", active: Boolean(sides?.origin) },
-                          { loc: "destination" as const, label: "Arrivée", active: Boolean(sides?.destination) },
-                        ].map((item) => (
-                          <button
-                            key={item.loc}
-                            type="button"
-                            onClick={() => toggleSide(q.key, item.loc)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-                            style={{
-                              background: item.active ? "var(--color-accent)" : "var(--color-bg)",
-                              color: item.active ? "#fff" : "var(--color-text)",
-                              border: item.active ? "none" : "1px solid var(--color-border)",
-                            }}
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                      {q.label}
+                    </button>
                   );
                 })}
+                <button
+                  type="button"
+                  onClick={() => setSideRas("origin")}
+                  className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
+                  style={{
+                    background:
+                      questions.every((q) => !parseAccessSides()[q.key]?.origin)
+                        ? "var(--color-accent)"
+                        : "var(--color-bg)",
+                    color:
+                      questions.every((q) => !parseAccessSides()[q.key]?.origin)
+                        ? "#fff"
+                        : "var(--color-text)",
+                    border: "1px solid var(--color-border)",
+                  }}
+                >
+                  RAS
+                </button>
               </div>
+
+              <div
+                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 space-y-3"
+                style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                    2. Contrainte à l'arrivée
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={!leadId || isUploadingPhotos}
+                    className="px-2 py-1 rounded-lg text-xs font-semibold disabled:opacity-60"
+                    style={{ border: "1px solid var(--color-border)", color: "var(--color-text)" }}
+                  >
+                    <Camera className="w-3.5 h-3.5 inline mr-1" />
+                    Photo
+                  </button>
+                </div>
+                {questions.map((q) => {
+                  const sides = parseAccessSides()[q.key];
+                  const active = Boolean(sides?.destination);
+                  return (
+                    <button
+                      key={`dest-${q.key}`}
+                      type="button"
+                      onClick={() => toggleSide(q.key, "destination")}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium"
+                      style={{
+                        background: active ? "var(--color-accent-light)" : "var(--color-bg)",
+                        color: "var(--color-text)",
+                        border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
+                      }}
+                    >
+                      {q.label}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setSideRas("destination")}
+                  className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
+                  style={{
+                    background:
+                      questions.every((q) => !parseAccessSides()[q.key]?.destination)
+                        ? "var(--color-accent)"
+                        : "var(--color-bg)",
+                    color:
+                      questions.every((q) => !parseAccessSides()[q.key]?.destination)
+                        ? "#fff"
+                        : "var(--color-text)",
+                    border: "1px solid var(--color-border)",
+                  }}
+                >
+                  RAS
+                </button>
+              </div>
+
+              <div
+                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 space-y-3"
+                style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                    3. Objets spécifiques
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={!leadId || isUploadingPhotos}
+                    className="px-2 py-1 rounded-lg text-xs font-semibold disabled:opacity-60"
+                    style={{ border: "1px solid var(--color-border)", color: "var(--color-text)" }}
+                  >
+                    <Camera className="w-3.5 h-3.5 inline mr-1" />
+                    Photo
+                  </button>
+                </div>
+                {[
+                  { key: "piano", label: "Piano" },
+                  { key: "coffreFort", label: "Coffre-fort" },
+                  { key: "aquarium", label: "Aquarium" },
+                  { key: "objetsFragilesVolumineux", label: "Objets fragiles volumineux" },
+                ].map((item) => {
+                  const active = Boolean(objectsState[item.key as keyof ObjectsState]);
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => {
+                        upsertObjectsState({
+                          ...objectsState,
+                          [item.key]: !active,
+                        } as ObjectsState);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium"
+                      style={{
+                        background: active ? "var(--color-accent-light)" : "var(--color-bg)",
+                        color: "var(--color-text)",
+                        border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+                    Meuble(s) très lourd(s)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={20}
+                    value={objectsState.meublesTresLourdsCount}
+                    onChange={(e) => {
+                      const next = Number.parseInt(e.target.value || "0", 10);
+                      upsertObjectsState({
+                        ...objectsState,
+                        meublesTresLourdsCount: Number.isFinite(next) ? Math.max(0, next) : 0,
+                      });
+                    }}
+                    className="w-full rounded-lg px-3 py-2 text-sm"
+                    style={{
+                      background: "var(--color-bg)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text)",
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    upsertObjectsState({
+                      piano: false,
+                      coffreFort: false,
+                      meublesTresLourdsCount: 0,
+                      aquarium: false,
+                      objetsFragilesVolumineux: false,
+                    })
+                  }
+                  className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
+                  style={{
+                    background: objectsRas ? "var(--color-accent)" : "var(--color-bg)",
+                    color: objectsRas ? "#fff" : "var(--color-text)",
+                    border: "1px solid var(--color-border)",
+                  }}
+                >
+                  RAS
+                </button>
+              </div>
+            </div>
+
+            {uploadMessage && (
+              <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                {uploadMessage}
+              </p>
             )}
 
             <div className="flex flex-col sm:flex-row gap-3">

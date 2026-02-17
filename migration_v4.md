@@ -1,5 +1,33 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Refonte enrichissement Step 4 en 3 cartes (slider mobile)
+
+**Demande** :
+- Repenser la présentation de `Comment souhaitez-vous enrichir votre dossier ?`
+- Ajouter un titre/texte explicatif court, puis 3 cartes avec option photo sur chacune.
+
+**Implémentation** :
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - nouveau header enrichissement :
+    - `Evitons les mauvaises surprises le jour J`
+    - `Ces 3 points permettent aux déménageurs d'envoyer un devis précis et d'éviter les suppléments imprévus.`
+  - 3 cartes :
+    1. `Contrainte au départ` (liste contraintes + `RAS`)
+    2. `Contrainte à l'arrivée` (liste contraintes + `RAS`)
+    3. `Objets spécifiques` (`Piano`, `Coffre-fort`, `Meuble(s) très lourd(s)` [int], `Aquarium`, `Objets fragiles volumineux`, `RAS`)
+  - mobile: cartes en slider horizontal (`snap`), desktop: grille 3 colonnes,
+  - bouton `Photo` présent sur chaque carte (upload vers lead existant).
+
+**Données** :
+- Contraintes toujours mappées vers `access_details` / `access_type` et flags existants.
+- Objets spécifiques stockés dans `specificNotes` via bloc structuré interne (pas de nouveau champ DB/Prisma).
+
+**Impact** :
+- UX plus guidée et plus scannable sur mobile.
+- Pas de suppression d'inputs existants, pas de migration DB.
+
+---
+
 ## 2026-02-17 — Step 4 simplification (Option A)
 
 **Décision** :
