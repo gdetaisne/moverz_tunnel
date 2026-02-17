@@ -101,6 +101,28 @@
 
 ---
 
+## 2026-02-17 — UX Box: ajustements silencieux + restauration des paramètres initiaux
+
+**Demande** :
+- Au clic `Box`, la densité/cuisine doivent être ajustées en sous-marin sans déclencher la sélection formule.
+- En sortant de `Box` (retour maison/appartement), revenir aux paramètres initiaux.
+
+**Implémentation** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - ajout d'un snapshot local pré-box (`density`, `kitchenIncluded`, `kitchenApplianceCount`),
+  - entrée en box départ:
+    - sauvegarde snapshot,
+    - forçage silencieux `density=normal` + `kitchenIncluded=none` (+ reset count),
+    - garde-fou anti auto-advance du bloc `volume` vers `formule`,
+  - sortie du box départ:
+    - restauration des valeurs pré-box mémorisées.
+
+**Impact** :
+- Le changement `Box` n'entraîne plus de progression UI inattendue vers Formule.
+- Le retour maison/appartement restaure bien la configuration volume/densité précédente.
+
+---
+
 ## 2026-02-17 — Step 3 précisions: retrait CTA de validation explicite
 
 **Demande** :

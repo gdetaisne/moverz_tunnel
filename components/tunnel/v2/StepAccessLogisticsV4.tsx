@@ -212,16 +212,53 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     isOriginBox ||
     props.kitchenIncluded !== "appliances" ||
     (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
+  const prevIsOriginBoxRef = useRef(isOriginBox);
+  const originBoxSnapshotRef = useRef<{
+    density: "" | "light" | "normal" | "dense";
+    kitchenIncluded: "" | "none" | "appliances" | "full";
+    kitchenApplianceCount: string;
+  } | null>(null);
+  const suppressNextVolumeAutoAdvanceRef = useRef(false);
   useEffect(() => {
-    if (!isOriginBox) return;
-    if (props.density !== "normal") {
-      props.onFieldChange("density", "normal");
+    const wasOriginBox = prevIsOriginBoxRef.current;
+    if (!wasOriginBox && isOriginBox) {
+      // Entrée en mode box départ: on mémorise les choix utilisateur pour les restaurer à la sortie.
+      originBoxSnapshotRef.current = {
+        density: props.density,
+        kitchenIncluded: props.kitchenIncluded,
+        kitchenApplianceCount: props.kitchenApplianceCount,
+      };
+      // Ajustement "sous-marin": on évite que ce basculement auto déclenche une auto-navigation vers Formule.
+      suppressNextVolumeAutoAdvanceRef.current = true;
+      if (props.density !== "normal") {
+        props.onFieldChange("density", "normal");
+      }
+      if (props.kitchenIncluded !== "none") {
+        props.onFieldChange("kitchenIncluded", "none");
+        props.onFieldChange("kitchenApplianceCount", "");
+      }
+    } else if (wasOriginBox && !isOriginBox) {
+      // Sortie du mode box départ: on restaure les paramètres initiaux pré-box.
+      const snap = originBoxSnapshotRef.current;
+      if (snap) {
+        if (props.density !== snap.density) props.onFieldChange("density", snap.density);
+        if (props.kitchenIncluded !== snap.kitchenIncluded) {
+          props.onFieldChange("kitchenIncluded", snap.kitchenIncluded);
+        }
+        if (props.kitchenApplianceCount !== snap.kitchenApplianceCount) {
+          props.onFieldChange("kitchenApplianceCount", snap.kitchenApplianceCount);
+        }
+      }
+      originBoxSnapshotRef.current = null;
     }
-    if (props.kitchenIncluded !== "none") {
-      props.onFieldChange("kitchenIncluded", "none");
-      props.onFieldChange("kitchenApplianceCount", "");
-    }
-  }, [isOriginBox, props.density, props.kitchenIncluded, props.onFieldChange]);
+    prevIsOriginBoxRef.current = isOriginBox;
+  }, [
+    isOriginBox,
+    props.density,
+    props.kitchenIncluded,
+    props.kitchenApplianceCount,
+    props.onFieldChange,
+  ]);
   const [touched, setTouched] = useState({
     originAddress: false,
     destinationAddress: false,
@@ -1086,6 +1123,11 @@ ${EXTRA_NOTES_BLOCK_END}`;
     };
 
     const newlyValidated = sectionOrder.find((k) => !prev[k] && next[k]);
+    if (newlyValidated === "volume" && suppressNextVolumeAutoAdvanceRef.current) {
+      suppressNextVolumeAutoAdvanceRef.current = false;
+      prevSectionValidityRef.current = next;
+      return;
+    }
     if (newlyValidated) {
       if (autoAdvanceTimerRef.current) {
         window.clearTimeout(autoAdvanceTimerRef.current);
