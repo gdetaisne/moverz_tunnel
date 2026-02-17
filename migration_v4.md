@@ -168,6 +168,21 @@
 
 ---
 
+## 2026-02-17 — SmartCart Step 3: afficher la distance réelle en km dans le détail "Distance"
+
+**Demande** :
+- Afficher la vraie distance en kilomètres entre parenthèses dans la ligne `Distance` des détails.
+
+**Implémentation** :
+- `app/devis-gratuits-v3/page.tsx`
+  - mise à jour du libellé de la ligne panier:
+    - `Distance` -> `Distance (XXX km)` (distance réelle utilisée quand OSRM/adresses validées).
+
+**Impact** :
+- Le détail distance est immédiatement lisible pour l'utilisateur final, sans ambiguïté.
+
+---
+
 ## 2026-02-17 — Fix affichage Step 3: bloc enrichissement non visible
 
 **Problème** :

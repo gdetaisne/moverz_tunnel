@@ -1398,9 +1398,10 @@ function DevisGratuitsV3Content() {
     }> = [];
 
     if (canUseOsrmDistance) {
+      const realDistanceKmLabel = `${Math.round(refinedDistanceKm)} km`;
       lines.push({
         key: "distance",
-        label: "Distance",
+        label: `Distance (${realDistanceKmLabel})`,
         status: "adresses validées",
         amountEur: deltaDistanceEur,
         confirmed: true,
