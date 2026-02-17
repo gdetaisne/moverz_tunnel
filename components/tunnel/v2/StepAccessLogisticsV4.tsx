@@ -392,7 +392,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   ) => (
     <div className="space-y-3">
       <div
-        className="flex items-center justify-between gap-3 sm:rounded-lg sm:border sm:px-2 sm:py-2"
+        className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-3 sm:rounded-lg sm:border sm:px-2 sm:py-2"
         style={{
           borderColor: "var(--color-border)",
           background: "var(--color-bg)",
@@ -404,13 +404,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             >
               Étage
             </span>
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 whitespace-nowrap">
               {FLOOR_OPTIONS.map((o) => (
                 <button
                   key={o.value}
                   type="button"
                   onClick={() => setFloor(o.value)}
-                  className="px-2.5 py-2 rounded-xl text-xs font-semibold transition-all"
+              className="shrink-0 px-2.5 py-2 rounded-xl text-xs font-semibold transition-all"
                   style={{
                     background:
                       floor === o.value ? "var(--color-accent)" : "var(--color-surface)",
@@ -427,7 +427,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
             </div>
           </div>
       <div
-        className="flex items-center justify-between gap-3 sm:rounded-lg sm:border sm:px-2 sm:py-2"
+        className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-3 sm:rounded-lg sm:border sm:px-2 sm:py-2"
         style={{
           borderColor: "var(--color-border)",
           background: "var(--color-bg)",
@@ -439,7 +439,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         >
           Ascenseur
         </span>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 whitespace-nowrap">
           {[
             { value: "yes", label: "Oui" },
             { value: "partial", label: "Oui mais petit" },
@@ -449,7 +449,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               key={o.value}
               type="button"
               onClick={() => setElevator(o.value)}
-              className="px-2.5 py-2 rounded-xl text-xs font-semibold transition-all"
+              className="shrink-0 px-2.5 py-2 rounded-xl text-xs font-semibold transition-all"
               style={{
                 background:
                   elevator === o.value ? "var(--color-accent)" : "var(--color-surface)",

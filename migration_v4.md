@@ -1,5 +1,21 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Mobile UX: puces Étage/Ascenseur sur une ligne
+
+**Demande** :
+- En mobile, rendre les sections `Étage` et `Ascenseur` plus lisibles dans `Votre trajet`.
+
+**Implémentation** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - titre conservé au-dessus (`ÉTAGE`, `ASCENSEUR`),
+  - options affichées sur une seule ligne horizontale (`overflow-x-auto`, puces `shrink-0`),
+  - desktop inchangé.
+
+**Impact** :
+- Lisibilité mobile nettement améliorée sans perte d'information.
+
+---
+
 ## 2026-02-17 — Ajustement visuel desktop: séparation légère Logement / Étage / Ascenseur
 
 **Demande** :
