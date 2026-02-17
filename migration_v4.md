@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Step 4: réordonnancement des 3 cartes enrichissement
+
+**Demande** :
+- Changer l'ordre des cartes :
+  1. Objets spécifiques
+  2. Contraintes au départ
+  3. Contraintes à l'arrivée
+
+**Implémentation** :
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - réordonnancement visuel via classes `order-*` (mobile slider + desktop grid),
+  - mise à jour de la numérotation et des libellés des titres de cartes.
+
+---
+
 ## 2026-02-17 — Copy Step 4: ajout d'une promesse temps
 
 **Demande** :

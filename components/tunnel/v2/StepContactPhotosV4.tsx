@@ -444,12 +444,12 @@ ${EXTRA_NOTES_BLOCK_END}`;
 
             <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible">
               <div
-                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
+                className="order-2 sm:order-2 min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
                 style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                    1. Contraintes au départ
+                    2. Contraintes au départ
                   </p>
                 </div>
                 {questions.map((q) => {
@@ -501,12 +501,12 @@ ${EXTRA_NOTES_BLOCK_END}`;
               </div>
 
               <div
-                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
+                className="order-3 sm:order-3 min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
                 style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                    2. Contrainte à l'arrivée
+                    3. Contraintes à l'arrivée
                   </p>
                 </div>
                 {questions.map((q) => {
@@ -558,12 +558,12 @@ ${EXTRA_NOTES_BLOCK_END}`;
               </div>
 
               <div
-                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
+                className="order-1 sm:order-1 min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
                 style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                    3. Objets spécifiques
+                    1. Objets spécifiques
                   </p>
                 </div>
                 {[
