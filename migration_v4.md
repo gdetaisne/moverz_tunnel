@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Hotfix UX "Votre trajet" (desktop)
+
+**Problème remonté** :
+- Le panneau latéral `Détails accès` rendait le bloc confus (décalage de contexte Départ/Arrivée).
+
+**Correction** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - suppression du panneau latéral contextuel,
+  - retour à une lecture simple en desktop: 2 cartes côte à côte `Départ` / `Arrivée`,
+  - chaque carte conserve ses champs (adresse, logement, étage/ascenseur si appartement).
+
+**Impact** :
+- Parcours plus lisible, sans perte d'information.
+- Aucun changement de payload / logique métier.
+
+---
+
 ## 2026-02-17 — Copy SmartCart: "Notre estimation"
 
 **Demande** :

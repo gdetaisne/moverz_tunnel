@@ -155,7 +155,6 @@ function AnimatedSection({
 
 export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   type SectionKey = "trajet" | "date" | "volume" | "formule" | "contact";
-  type RouteSide = "origin" | "destination";
   type PipelineStepKey =
     | "normalize"
     | "compress"
@@ -247,8 +246,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     useState<"idle" | "analyzing" | "done" | "error">("idle");
   const [fallbackUploadLeadId, setFallbackUploadLeadId] = useState<string | null>(null);
   const [isDragOverPhotos, setIsDragOverPhotos] = useState(false);
-  const [activeRoutePanel, setActiveRoutePanel] = useState<RouteSide>("origin");
-  const [mobileRouteOpen, setMobileRouteOpen] = useState<RouteSide>("origin");
+  const [mobileRouteOpen, setMobileRouteOpen] = useState<"origin" | "destination">("origin");
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const densityPhotoInputRef = useRef<HTMLInputElement | null>(null);
   const [photoAnalysisContext, setPhotoAnalysisContext] =
@@ -387,35 +385,35 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     setElevator: (v: string) => void
   ) => (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <span
-          className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: "var(--color-text-muted)" }}
-        >
-          Étage
-        </span>
-        <div className="flex flex-wrap items-center gap-2">
-          {FLOOR_OPTIONS.map((o) => (
-            <button
-              key={o.value}
-              type="button"
-              onClick={() => setFloor(o.value)}
-              className="px-2.5 py-2 rounded-xl text-xs font-semibold transition-all"
-              style={{
-                background:
-                  floor === o.value ? "var(--color-accent)" : "var(--color-surface)",
-                color: floor === o.value ? "#FFFFFF" : "var(--color-text)",
-                border:
-                  floor === o.value
-                    ? "none"
-                    : "2px solid var(--color-border)",
-              }}
+          <div className="flex items-center justify-between gap-3">
+            <span
+              className="text-xs font-semibold uppercase tracking-wide"
+              style={{ color: "var(--color-text-muted)" }}
             >
-              {o.label}
-            </button>
-          ))}
-        </div>
-      </div>
+              Étage
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {FLOOR_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setFloor(o.value)}
+                  className="px-2.5 py-2 rounded-xl text-xs font-semibold transition-all"
+                  style={{
+                    background:
+                      floor === o.value ? "var(--color-accent)" : "var(--color-surface)",
+                    color: floor === o.value ? "#FFFFFF" : "var(--color-text)",
+                    border:
+                      floor === o.value
+                        ? "none"
+                        : "2px solid var(--color-border)",
+                  }}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
       <div className="flex items-center justify-between gap-3">
         <span
           className="text-xs font-semibold uppercase tracking-wide"
@@ -453,9 +451,9 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
         <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
           Aucun détail d'étage/ascenseur requis pour un logement en maison.
         </p>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
 
   const ToggleYes = ({
     active,
@@ -993,7 +991,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       : isOpen
       ? "var(--color-accent)"
       : "var(--color-text-muted)";
-    return (
+  return (
       <button
         id={`v4-header-${key}`}
         type="button"
@@ -1152,189 +1150,134 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
           <div className="space-y-4">
             <div className="hidden sm:grid sm:grid-cols-2 gap-3">
-              <div className="space-y-3">
-                {renderSubBlock(
-                  "Départ",
-                  isOriginAddressValid &&
-                    isOriginHousingValid &&
-                    isOriginFloorValid &&
-                    isOriginElevatorValid,
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setActiveRoutePanel("origin")}
-                      className="w-full rounded-xl border px-3 py-2 text-left"
-                      style={{
-                        borderColor:
-                          activeRoutePanel === "origin"
-                            ? "var(--color-accent)"
-                            : "var(--color-border)",
-                        background:
-                          activeRoutePanel === "origin"
-                            ? "var(--color-accent-light)"
-                            : "var(--color-surface)",
-                      }}
-                    >
-                      <p className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
-                        Détails accès
-                      </p>
-                      <p className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
-                        {isApartment(props.originHousingType)
-                          ? `Étage: ${floorLabel(props.originFloor)} · Ascenseur: ${elevatorLabel(props.originElevator)}`
-                          : "Maison"}
-                      </p>
-                    </button>
-                    <AddressAutocomplete
-                      label={
-                        props.originCity
-                          ? `Départ · ${props.originCity}${
-                              props.originPostalCode ? ` (${props.originPostalCode})` : ""
-                            }`
-                          : "Adresse de départ"
-                      }
-                      placeholder="Ex: 10 rue de la République"
-                      inputId="v4-origin-address"
-                      initialValue={props.originAddress || ""}
-                      required
-                      contextPostalCode={props.originPostalCode || undefined}
-                      contextCity={props.originCity || undefined}
-                      contextCountryCode={(props.originCountryCode || "").trim() || undefined}
-                      validated={props.originLat != null && props.originLon != null}
-                      errorMessage={
-                        shouldShowFieldError("originAddress") && !isOriginAddressValid
-                          ? "Adresse de départ requise"
-                          : null
-                      }
-                      onInputChange={(raw) => {
-                        markTouched("originAddress");
-                        props.onFieldChange("originAddress", raw);
-                      }}
-                      onSelect={(s) => {
-                        markTouched("originAddress");
-                        props.onFieldChange("originAddress", s.addressLine ?? s.label ?? "");
-                        props.onFieldChange("originCity", s.city ?? "");
-                        props.onFieldChange("originPostalCode", s.postalCode ?? "");
-                        props.onFieldChange(
-                          "originCountryCode",
-                          (s.countryCode ?? "fr").toLowerCase()
-                        );
-                        props.onFieldChange("originLat", s.lat ?? null);
-                        props.onFieldChange("originLon", s.lon ?? null);
-                      }}
-                    />
-                    {renderHousingTypePicker(
-                      "origin",
-                      props.originHousingType,
-                      (v) => props.onFieldChange("originHousingType", v),
-                      (v) => props.onFieldChange("originFloor", v),
-                      (v) => props.onFieldChange("originElevator", v)
-                    )}
-                  </>
-                )}
-
-                {renderSubBlock(
-                  "Arrivée",
-                  isDestinationAddressValid &&
-                    isDestinationHousingValid &&
-                    isDestinationFloorValid &&
-                    isDestinationElevatorValid,
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setActiveRoutePanel("destination")}
-                      className="w-full rounded-xl border px-3 py-2 text-left"
-                      style={{
-                        borderColor:
-                          activeRoutePanel === "destination"
-                            ? "var(--color-accent)"
-                            : "var(--color-border)",
-                        background:
-                          activeRoutePanel === "destination"
-                            ? "var(--color-accent-light)"
-                            : "var(--color-surface)",
-                      }}
-                    >
-                      <p className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
-                        Détails accès
-                      </p>
-                      <p className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
-                        {isApartment(props.destinationHousingType)
-                          ? `Étage: ${floorLabel(props.destinationFloor)} · Ascenseur: ${elevatorLabel(props.destinationElevator)}`
-                          : "Maison"}
-                      </p>
-                    </button>
-                    <AddressAutocomplete
-                      label={
-                        props.destinationCity
-                          ? `Arrivée · ${props.destinationCity}${
-                              props.destinationPostalCode
-                                ? ` (${props.destinationPostalCode})`
-                                : ""
-                            }`
-                          : "Adresse d'arrivée"
-                      }
-                      placeholder="Ex: 5 avenue Victor Hugo"
-                      inputId="v4-destination-address"
-                      initialValue={props.destinationAddress || ""}
-                      required
-                      contextPostalCode={props.destinationPostalCode || undefined}
-                      contextCity={props.destinationCity || undefined}
-                      contextCountryCode={(props.destinationCountryCode || "").trim() || undefined}
-                      validated={props.destinationLat != null && props.destinationLon != null}
-                      errorMessage={
-                        shouldShowFieldError("destinationAddress") && !isDestinationAddressValid
-                          ? "Adresse d'arrivée requise"
-                          : null
-                      }
-                      onInputChange={(raw) => {
-                        markTouched("destinationAddress");
-                        props.onFieldChange("destinationAddress", raw);
-                      }}
-                      onSelect={(s) => {
-                        markTouched("destinationAddress");
-                        props.onFieldChange("destinationAddress", s.addressLine ?? s.label ?? "");
-                        props.onFieldChange("destinationCity", s.city ?? "");
-                        props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
-                        props.onFieldChange(
-                          "destinationCountryCode",
-                          (s.countryCode ?? "fr").toLowerCase()
-                        );
-                        props.onFieldChange("destinationLat", s.lat ?? null);
-                        props.onFieldChange("destinationLon", s.lon ?? null);
-                      }}
-                    />
-                    {renderHousingTypePicker(
-                      "destination",
-                      props.destinationHousingType,
-                      (v) => props.onFieldChange("destinationHousingType", v),
-                      (v) => props.onFieldChange("destinationFloor", v),
-                      (v) => props.onFieldChange("destinationElevator", v)
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div className="rounded-xl border p-3 space-y-3 h-fit" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
-                <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                  Détails accès — {activeRoutePanel === "origin" ? "Départ" : "Arrivée"}
-                </p>
-                {activeRoutePanel === "origin"
-                  ? renderApartmentAccessFields(
+              {renderSubBlock(
+                "Départ",
+                isOriginAddressValid &&
+                  isOriginHousingValid &&
+                  isOriginFloorValid &&
+                  isOriginElevatorValid,
+                <>
+            <AddressAutocomplete
+              label={
+                props.originCity
+                  ? `Départ · ${props.originCity}${
+                      props.originPostalCode ? ` (${props.originPostalCode})` : ""
+                    }`
+                  : "Adresse de départ"
+              }
+              placeholder="Ex: 10 rue de la République"
+              inputId="v4-origin-address"
+              initialValue={props.originAddress || ""}
+              required
+              contextPostalCode={props.originPostalCode || undefined}
+              contextCity={props.originCity || undefined}
+              contextCountryCode={(props.originCountryCode || "").trim() || undefined}
+              validated={props.originLat != null && props.originLon != null}
+              errorMessage={
+                      shouldShowFieldError("originAddress") && !isOriginAddressValid
+                  ? "Adresse de départ requise"
+                  : null
+              }
+              onInputChange={(raw) => {
+                      markTouched("originAddress");
+                props.onFieldChange("originAddress", raw);
+              }}
+              onSelect={(s) => {
+                      markTouched("originAddress");
+                props.onFieldChange("originAddress", s.addressLine ?? s.label ?? "");
+                props.onFieldChange("originCity", s.city ?? "");
+                props.onFieldChange("originPostalCode", s.postalCode ?? "");
+                props.onFieldChange(
+                  "originCountryCode",
+                  (s.countryCode ?? "fr").toLowerCase()
+                );
+                props.onFieldChange("originLat", s.lat ?? null);
+                props.onFieldChange("originLon", s.lon ?? null);
+              }}
+            />
+                  {renderHousingTypePicker(
+                    "origin",
+                    props.originHousingType,
+                    (v) => props.onFieldChange("originHousingType", v),
+                    (v) => props.onFieldChange("originFloor", v),
+                    (v) => props.onFieldChange("originElevator", v)
+                  )}
+                  {isApartment(props.originHousingType) &&
+                    renderApartmentAccessFields(
                       props.originHousingType,
                       props.originFloor,
                       props.originElevator,
                       (v) => props.onFieldChange("originFloor", v),
                       (v) => props.onFieldChange("originElevator", v)
-                    )
-                  : renderApartmentAccessFields(
+                    )}
+                </>
+              )}
+
+              {renderSubBlock(
+                "Arrivée",
+                isDestinationAddressValid &&
+                  isDestinationHousingValid &&
+                  isDestinationFloorValid &&
+                  isDestinationElevatorValid,
+                <>
+            <AddressAutocomplete
+              label={
+                props.destinationCity
+                  ? `Arrivée · ${props.destinationCity}${
+                      props.destinationPostalCode
+                        ? ` (${props.destinationPostalCode})`
+                        : ""
+                    }`
+                  : "Adresse d'arrivée"
+              }
+              placeholder="Ex: 5 avenue Victor Hugo"
+              inputId="v4-destination-address"
+              initialValue={props.destinationAddress || ""}
+              required
+              contextPostalCode={props.destinationPostalCode || undefined}
+              contextCity={props.destinationCity || undefined}
+              contextCountryCode={(props.destinationCountryCode || "").trim() || undefined}
+              validated={props.destinationLat != null && props.destinationLon != null}
+              errorMessage={
+                      shouldShowFieldError("destinationAddress") && !isDestinationAddressValid
+                  ? "Adresse d'arrivée requise"
+                  : null
+              }
+              onInputChange={(raw) => {
+                      markTouched("destinationAddress");
+                props.onFieldChange("destinationAddress", raw);
+              }}
+              onSelect={(s) => {
+                      markTouched("destinationAddress");
+                props.onFieldChange("destinationAddress", s.addressLine ?? s.label ?? "");
+                props.onFieldChange("destinationCity", s.city ?? "");
+                props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
+                props.onFieldChange(
+                  "destinationCountryCode",
+                  (s.countryCode ?? "fr").toLowerCase()
+                );
+                props.onFieldChange("destinationLat", s.lat ?? null);
+                props.onFieldChange("destinationLon", s.lon ?? null);
+              }}
+            />
+                  {renderHousingTypePicker(
+                    "destination",
+                    props.destinationHousingType,
+                    (v) => props.onFieldChange("destinationHousingType", v),
+                    (v) => props.onFieldChange("destinationFloor", v),
+                    (v) => props.onFieldChange("destinationElevator", v)
+                  )}
+                  {isApartment(props.destinationHousingType) &&
+                    renderApartmentAccessFields(
                       props.destinationHousingType,
                       props.destinationFloor,
                       props.destinationElevator,
                       (v) => props.onFieldChange("destinationFloor", v),
                       (v) => props.onFieldChange("destinationElevator", v)
                     )}
-              </div>
-            </div>
+                </>
+              )}
+          </div>
 
             <div className="sm:hidden space-y-3">
               {([
@@ -1359,7 +1302,6 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                       className="w-full px-3 py-2 flex items-center justify-between"
                       onClick={() => {
                         setMobileRouteOpen(key);
-                        setActiveRoutePanel(key);
                       }}
                     >
                       <div className="text-left">
@@ -1451,16 +1393,16 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                         )}
                         {isOrigin
                           ? renderHousingTypePicker(
-                              "origin",
-                              props.originHousingType,
-                              (v) => props.onFieldChange("originHousingType", v),
+              "origin",
+              props.originHousingType,
+              (v) => props.onFieldChange("originHousingType", v),
                               (v) => props.onFieldChange("originFloor", v),
                               (v) => props.onFieldChange("originElevator", v)
                             )
                           : renderHousingTypePicker(
-                              "destination",
-                              props.destinationHousingType,
-                              (v) => props.onFieldChange("destinationHousingType", v),
+              "destination",
+              props.destinationHousingType,
+              (v) => props.onFieldChange("destinationHousingType", v),
                               (v) => props.onFieldChange("destinationFloor", v),
                               (v) => props.onFieldChange("destinationElevator", v)
                             )}
@@ -1743,7 +1685,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
           >
             <div className="min-w-0">
               <p className="text-sm font-semibold truncate" style={{ color: "var(--color-text)" }}>
-                Ajouter des précisions (facultatif)
+              Ajouter des précisions (facultatif)
               </p>
               {!missingInfoPanelOpen && (
                 <p className="text-xs truncate mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
@@ -1764,15 +1706,15 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
                   }}
                 >
                   {isMissingInfoLocked ? "Verrouillé" : missingInfoPanelOpen ? "En cours" : "Facultatif"}
-                </span>
+            </span>
               )}
               {missingInfoValidated ? (
                 <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
               ) : (
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
-                  style={{ color: "var(--color-text-muted)" }}
-                />
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
+                style={{ color: "var(--color-text-muted)" }}
+              />
               )}
             </div>
           </button>
@@ -2170,8 +2112,8 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               >
                 Valider ces précisions
               </button>
-            </div>
-            </CardV4>
+        </div>
+      </CardV4>
           </AnimatedSection>
       </div>
 
