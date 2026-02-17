@@ -1553,7 +1553,7 @@ function PricingLab({ password }: { password: string }) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
             <div>Option Box</div>
-            <div className="text-gray-400">Box départ/arrivée ; départ box => m³ exact + densité normal + cuisine neutre ; réduction accès-étages -20%</div>
+            <div className="text-gray-400">Box départ/arrivée ; départ box =&gt; m³ exact + densité normal + cuisine neutre ; réduction accès-étages -20%</div>
             <div className="grid grid-cols-3 gap-2 text-xs">
               <label><input type="checkbox" checked={step3Form.originIsBox} onChange={(e) => setStep3Form((p) => ({ ...p, originIsBox: e.target.checked }))} /> Box départ</label>
               <label><input type="checkbox" checked={step3Form.destinationIsBox} onChange={(e) => setStep3Form((p) => ({ ...p, destinationIsBox: e.target.checked }))} /> Box arrivée</label>
@@ -1792,7 +1792,7 @@ function PricingLab({ password }: { password: string }) {
             <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
               <div>Option Box</div>
               <div className="text-gray-400">`app/devis-gratuits-v3/page.tsx`</div>
-              <div className="text-gray-400">Départ box: m³ exact -> surface dérivée, densité=normal, cuisine=0 + remise accès -20%</div>
+              <div className="text-gray-400">Départ box: m³ exact -&gt; surface dérivée, densité=normal, cuisine=0 + remise accès -20%</div>
               <div className="grid grid-cols-3 gap-1">
                 <label><input type="checkbox" checked={step3Form.originIsBox} onChange={(e) => setStep3Form((p) => ({ ...p, originIsBox: e.target.checked }))} /> dép.</label>
                 <label><input type="checkbox" checked={step3Form.destinationIsBox} onChange={(e) => setStep3Form((p) => ({ ...p, destinationIsBox: e.target.checked }))} /> arr.</label>

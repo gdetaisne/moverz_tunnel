@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Fix build Turbopack (analytics page JSX text)
+
+**Erreur build** :
+- `app/analytics/page.tsx` parse error JSX (`Unexpected token` sur `>` dans texte inline).
+
+**Fix** :
+- échappement des caractères `>` dans deux chaînes JSX :
+  - `=>` -> `=&gt;`
+  - `->` -> `-&gt;`
+
+**Impact** :
+- correction du build production sans impact fonctionnel tunnel.
+
+---
+
 ## 2026-02-17 — Option "Box" en Step 3 + règles pricing/UX associées
 
 **Demande** :
