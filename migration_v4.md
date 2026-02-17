@@ -1,5 +1,27 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Step 3 précisions: titre final + étape obligatoire
+
+**Demande** :
+- Titre du bloc :
+  - `Eviter les suppléments imprévus` -> `Derniere étape, 1 minute pour éviter les imprévus`
+- L'étape `Ajouter des précisions` devient non-facultative.
+
+**Implémentation** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - mise à jour du titre,
+  - suppression de la mention `(facultatif)` sur le header,
+  - badge de statut fermé: `Obligatoire`,
+  - au clic sur `Valider ces précisions`, insertion d'un marqueur `[[ENRICHISSEMENT_CONFIRMED_V4]]` dans `specificNotes`.
+- `app/devis-gratuits-v3/page.tsx`
+  - blocage de `handleSubmitAccessV2` tant que le marqueur de validation n'est pas présent,
+  - scroll sur `v4-header-missingInfo` + `trackError` dédié.
+
+**Impact** :
+- L'utilisateur doit valider explicitement l'étape "Précisions" avant soumission Step 3.
+
+---
+
 ## 2026-02-17 — Pré-création lead BO en Step 3 dès contact valide
 
 **Demande** :

@@ -109,6 +109,7 @@ const OBJECTS_BLOCK_START = "[[OBJETS_SPECIFIQUES_V4_START]]";
 const OBJECTS_BLOCK_END = "[[OBJETS_SPECIFIQUES_V4_END]]";
 const EXTRA_NOTES_BLOCK_START = "[[ENRICHISSEMENT_NOTES_V4_START]]";
 const EXTRA_NOTES_BLOCK_END = "[[ENRICHISSEMENT_NOTES_V4_END]]";
+const ENRICHMENT_CONFIRMED_TOKEN = "[[ENRICHISSEMENT_CONFIRMED_V4]]";
 
 type ObjectsState = {
   piano: boolean;
@@ -630,6 +631,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
   );
 
   const destinationUnknown = !!props.destinationUnknown;
+  const missingInfoConfirmed = (props.specificNotes || "").includes(ENRICHMENT_CONFIRMED_TOKEN);
   const accessSides = parseAccessSides();
   const originRas = questions.every((q) => !accessSides[q.key]?.origin);
   const destinationRas = questions.every((q) => !accessSides[q.key]?.destination);
@@ -1857,16 +1859,16 @@ ${EXTRA_NOTES_BLOCK_END}`;
           >
             <div className="min-w-0">
               <p className="text-sm font-semibold truncate" style={{ color: "var(--color-text)" }}>
-              Ajouter des précisions (facultatif)
+              Ajouter des précisions
               </p>
               {!missingInfoPanelOpen && (
                 <p className="text-xs truncate mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
-                  {missingInfoValidated ? "Précisions validées" : "Photos / contraintes / notes"}
+                  {missingInfoValidated || missingInfoConfirmed ? "Précisions validées" : "Photos / contraintes / notes"}
                 </p>
               )}
             </div>
             <div className="shrink-0 flex items-center gap-2" aria-hidden>
-              {(!missingInfoValidated || isMissingInfoLocked) && (
+              {(!(missingInfoValidated || missingInfoConfirmed) || isMissingInfoLocked) && (
                 <span
                   className="text-xs font-semibold"
                   style={{
@@ -1877,10 +1879,10 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       : "var(--color-text-muted)",
                   }}
                 >
-                  {isMissingInfoLocked ? "Verrouillé" : missingInfoPanelOpen ? "En cours" : "Facultatif"}
+                  {isMissingInfoLocked ? "Verrouillé" : missingInfoPanelOpen ? "En cours" : "Obligatoire"}
             </span>
               )}
-              {missingInfoValidated ? (
+              {missingInfoValidated || missingInfoConfirmed ? (
                 <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
               ) : (
               <ChevronDown
@@ -1901,7 +1903,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
             <div className="space-y-4">
               <div className="space-y-1">
                 <h3 className="text-xl sm:text-2xl font-bold" style={{ color: "var(--color-text)" }}>
-                  Eviter les suppléments imprévus
+                  Derniere étape, 1 minute pour éviter les imprévus
                 </h3>
                 <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
                   Un accès mal déclaré peut générer 150 à 500 € de frais supplémentaires.
@@ -2166,6 +2168,13 @@ ${EXTRA_NOTES_BLOCK_END}`;
               <button
                 type="button"
                 onClick={() => {
+                  if (!(props.specificNotes || "").includes(ENRICHMENT_CONFIRMED_TOKEN)) {
+                    const normalized = (props.specificNotes || "").trim();
+                    props.onFieldChange(
+                      "specificNotes",
+                      [normalized, ENRICHMENT_CONFIRMED_TOKEN].filter(Boolean).join("\n\n")
+                    );
+                  }
                   setMissingInfoValidated(true);
                   setShowMissingInfoPanel(false);
                 }}

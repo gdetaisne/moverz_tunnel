@@ -59,6 +59,7 @@ import { StickySummary, SummaryDrawer, type PricingDriver } from "@/components/t
 import { SmartCart, type CartItem } from "@/components/tunnel-v4";
 
 function DevisGratuitsV3Content() {
+  const ENRICHMENT_CONFIRMED_TOKEN = "[[ENRICHISSEMENT_CONFIRMED_V4]]";
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -2014,6 +2015,20 @@ function DevisGratuitsV3Content() {
         (document.getElementById(focusId) as any)?.focus?.();
       });
       trackError("VALIDATION_ERROR", "Invalid kitchen appliances count", 3, "PROJECT", "acces_v2");
+      return;
+    }
+
+    // Validation obligatoire: bloc "Précisions" validé explicitement
+    const isMissingInfoConfirmed = (state.specificNotes || "").includes(ENRICHMENT_CONFIRMED_TOKEN);
+    if (!isMissingInfoConfirmed) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        document.getElementById("v4-header-missingInfo")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      });
+      trackError("VALIDATION_ERROR", "Missing required enrichment confirmation", 3, "PROJECT", "acces_v2");
       return;
     }
 
