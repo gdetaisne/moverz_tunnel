@@ -28,6 +28,8 @@ const questions: Array<{ key: QuestionKey; label: string }> = [
 
 const OBJECTS_BLOCK_START = "[[OBJETS_SPECIFIQUES_V4_START]]";
 const OBJECTS_BLOCK_END = "[[OBJETS_SPECIFIQUES_V4_END]]";
+const EXTRA_NOTES_BLOCK_START = "[[ENRICHISSEMENT_NOTES_V4_START]]";
+const EXTRA_NOTES_BLOCK_END = "[[ENRICHISSEMENT_NOTES_V4_END]]";
 
 type ObjectsState = {
   piano: boolean;
@@ -35,6 +37,12 @@ type ObjectsState = {
   meublesTresLourdsCount: number;
   aquarium: boolean;
   objetsFragilesVolumineux: boolean;
+};
+
+type ExtraNotesState = {
+  depart: string;
+  arrivee: string;
+  objets: string;
 };
 
 interface StepContactPhotosV4Props {
@@ -98,12 +106,12 @@ export function StepContactPhotosV4({
 
   const normalizedEmail = (email || "").trim().toLowerCase();
 
-  const stripObjectsBlock = (raw: string): string => {
-    const start = raw.indexOf(OBJECTS_BLOCK_START);
-    const end = raw.indexOf(OBJECTS_BLOCK_END);
+  const stripTaggedBlock = (raw: string, startTag: string, endTag: string): string => {
+    const start = raw.indexOf(startTag);
+    const end = raw.indexOf(endTag);
     if (start === -1 || end === -1 || end < start) return raw.trim();
     const before = raw.slice(0, start).trim();
-    const after = raw.slice(end + OBJECTS_BLOCK_END.length).trim();
+    const after = raw.slice(end + endTag.length).trim();
     return [before, after].filter(Boolean).join("\n\n").trim();
   };
 
@@ -140,22 +148,64 @@ aquarium:${state.aquarium}
 objetsFragilesVolumineux:${state.objetsFragilesVolumineux}
 ${OBJECTS_BLOCK_END}`;
 
-  const upsertObjectsState = (next: ObjectsState) => {
-    const base = stripObjectsBlock(specificNotes || "");
+  const parseExtraNotesState = (raw: string): ExtraNotesState => {
+    const start = raw.indexOf(EXTRA_NOTES_BLOCK_START);
+    const end = raw.indexOf(EXTRA_NOTES_BLOCK_END);
+    const defaults: ExtraNotesState = { depart: "", arrivee: "", objets: "" };
+    if (start === -1 || end === -1 || end < start) return defaults;
+    const block = raw.slice(start + EXTRA_NOTES_BLOCK_START.length, end);
+    const read = (key: "depart" | "arrivee" | "objets") => {
+      const m = new RegExp(`^${key}:(.*)$`, "m").exec(block);
+      if (!m?.[1]) return "";
+      try {
+        return decodeURIComponent(m[1]);
+      } catch {
+        return m[1];
+      }
+    };
+    return {
+      depart: read("depart"),
+      arrivee: read("arrivee"),
+      objets: read("objets"),
+    };
+  };
+
+  const serializeExtraNotesState = (state: ExtraNotesState): string =>
+    `${EXTRA_NOTES_BLOCK_START}
+depart:${encodeURIComponent(state.depart || "")}
+arrivee:${encodeURIComponent(state.arrivee || "")}
+objets:${encodeURIComponent(state.objets || "")}
+${EXTRA_NOTES_BLOCK_END}`;
+
+  const rebuildSpecificNotes = (nextObjects: ObjectsState, nextExtraNotes: ExtraNotesState) => {
+    const withoutObjects = stripTaggedBlock(specificNotes || "", OBJECTS_BLOCK_START, OBJECTS_BLOCK_END);
+    const base = stripTaggedBlock(withoutObjects, EXTRA_NOTES_BLOCK_START, EXTRA_NOTES_BLOCK_END);
     const hasAnyObject =
-      next.piano ||
-      next.coffreFort ||
-      next.aquarium ||
-      next.objetsFragilesVolumineux ||
-      next.meublesTresLourdsCount > 0;
-    const nextRaw = hasAnyObject
-      ? [base, serializeObjectsState(next)].filter(Boolean).join("\n\n").trim()
-      : base;
+      nextObjects.piano ||
+      nextObjects.coffreFort ||
+      nextObjects.aquarium ||
+      nextObjects.objetsFragilesVolumineux ||
+      nextObjects.meublesTresLourdsCount > 0;
+    const hasAnyExtra =
+      nextExtraNotes.depart.trim().length > 0 ||
+      nextExtraNotes.arrivee.trim().length > 0 ||
+      nextExtraNotes.objets.trim().length > 0;
+    const blocks = [
+      hasAnyObject ? serializeObjectsState(nextObjects) : "",
+      hasAnyExtra ? serializeExtraNotesState(nextExtraNotes) : "",
+    ].filter(Boolean);
+    const nextRaw = [base, ...blocks].filter(Boolean).join("\n\n").trim();
     onFieldChange("specificNotes", nextRaw);
     setSaveMessage(null);
   };
 
+  const upsertObjectsState = (next: ObjectsState) => {
+    const currentExtra = parseExtraNotesState(specificNotes || "");
+    rebuildSpecificNotes(next, currentExtra);
+  };
+
   const objectsState = parseObjectsState(specificNotes || "");
+  const extraNotesState = parseExtraNotesState(specificNotes || "");
   const objectsRas =
     !objectsState.piano &&
     !objectsState.coffreFort &&
@@ -257,6 +307,9 @@ ${OBJECTS_BLOCK_END}`;
       setSaveMessage("Impossible d'enregistrer pour le moment.");
     }
   };
+  const accessSides = parseAccessSides();
+  const originRas = questions.every((q) => !accessSides[q.key]?.origin);
+  const destinationRas = questions.every((q) => !accessSides[q.key]?.destination);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -392,7 +445,7 @@ ${OBJECTS_BLOCK_END}`;
 
             <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible">
               <div
-                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 space-y-3"
+                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
                 style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -401,8 +454,7 @@ ${OBJECTS_BLOCK_END}`;
                   </p>
                 </div>
                 {questions.map((q) => {
-                  const sides = parseAccessSides()[q.key];
-                  const active = Boolean(sides?.origin);
+                  const active = Boolean(accessSides[q.key]?.origin);
                   return (
                     <button
                       key={`origin-${q.key}`}
@@ -419,42 +471,55 @@ ${OBJECTS_BLOCK_END}`;
                     </button>
                   );
                 })}
-                <button
-                  type="button"
-                  onClick={() => setSideRas("origin")}
-                  className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
-                  style={{
-                    background:
-                      questions.every((q) => !parseAccessSides()[q.key]?.origin)
-                        ? "var(--color-accent)"
-                        : "var(--color-bg)",
-                    color:
-                      questions.every((q) => !parseAccessSides()[q.key]?.origin)
-                        ? "#fff"
-                        : "var(--color-text)",
-                    border: "1px solid var(--color-border)",
-                  }}
-                >
-                  RAS
-                </button>
-                <button
-                  type="button"
-                  onClick={() => photoInputRef.current?.click()}
-                  disabled={!leadId || isUploadingPhotos}
-                  className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
-                  style={{
-                    background: "transparent",
-                    color: "var(--color-text-secondary)",
-                    border: "1px dashed var(--color-border)",
-                  }}
-                >
-                  <Camera className="w-3.5 h-3.5 inline mr-1" />
-                  Ajouter une photo (optionnel)
-                </button>
+                <div className="mt-auto space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setSideRas("origin")}
+                    className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
+                    style={{
+                      background: originRas ? "var(--color-accent)" : "var(--color-bg)",
+                      color: originRas ? "#fff" : "var(--color-text)",
+                      border: "1px solid var(--color-border)",
+                    }}
+                  >
+                    Rien à déclarer
+                  </button>
+                  <input
+                    type="text"
+                    value={extraNotesState.depart}
+                    onChange={(e) =>
+                      rebuildSpecificNotes(objectsState, {
+                        ...extraNotesState,
+                        depart: e.target.value,
+                      })
+                    }
+                    className="w-full rounded-lg px-3 py-2 text-xs"
+                    style={{
+                      background: "var(--color-bg)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text)",
+                    }}
+                    placeholder="Précision manuelle (optionnel)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={!leadId || isUploadingPhotos}
+                    className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
+                    style={{
+                      background: "transparent",
+                      color: "var(--color-text-secondary)",
+                      border: "1px dashed var(--color-border)",
+                    }}
+                  >
+                    <Camera className="w-3.5 h-3.5 inline mr-1" />
+                    Ajouter une photo (optionnel)
+                  </button>
+                </div>
               </div>
 
               <div
-                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 space-y-3"
+                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
                 style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -463,8 +528,7 @@ ${OBJECTS_BLOCK_END}`;
                   </p>
                 </div>
                 {questions.map((q) => {
-                  const sides = parseAccessSides()[q.key];
-                  const active = Boolean(sides?.destination);
+                  const active = Boolean(accessSides[q.key]?.destination);
                   return (
                     <button
                       key={`dest-${q.key}`}
@@ -481,42 +545,55 @@ ${OBJECTS_BLOCK_END}`;
                     </button>
                   );
                 })}
-                <button
-                  type="button"
-                  onClick={() => setSideRas("destination")}
-                  className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
-                  style={{
-                    background:
-                      questions.every((q) => !parseAccessSides()[q.key]?.destination)
-                        ? "var(--color-accent)"
-                        : "var(--color-bg)",
-                    color:
-                      questions.every((q) => !parseAccessSides()[q.key]?.destination)
-                        ? "#fff"
-                        : "var(--color-text)",
-                    border: "1px solid var(--color-border)",
-                  }}
-                >
-                  RAS
-                </button>
-                <button
-                  type="button"
-                  onClick={() => photoInputRef.current?.click()}
-                  disabled={!leadId || isUploadingPhotos}
-                  className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
-                  style={{
-                    background: "transparent",
-                    color: "var(--color-text-secondary)",
-                    border: "1px dashed var(--color-border)",
-                  }}
-                >
-                  <Camera className="w-3.5 h-3.5 inline mr-1" />
-                  Ajouter une photo (optionnel)
-                </button>
+                <div className="mt-auto space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setSideRas("destination")}
+                    className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
+                    style={{
+                      background: destinationRas ? "var(--color-accent)" : "var(--color-bg)",
+                      color: destinationRas ? "#fff" : "var(--color-text)",
+                      border: "1px solid var(--color-border)",
+                    }}
+                  >
+                    Rien à déclarer
+                  </button>
+                  <input
+                    type="text"
+                    value={extraNotesState.arrivee}
+                    onChange={(e) =>
+                      rebuildSpecificNotes(objectsState, {
+                        ...extraNotesState,
+                        arrivee: e.target.value,
+                      })
+                    }
+                    className="w-full rounded-lg px-3 py-2 text-xs"
+                    style={{
+                      background: "var(--color-bg)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text)",
+                    }}
+                    placeholder="Précision manuelle (optionnel)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={!leadId || isUploadingPhotos}
+                    className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
+                    style={{
+                      background: "transparent",
+                      color: "var(--color-text-secondary)",
+                      border: "1px dashed var(--color-border)",
+                    }}
+                  >
+                    <Camera className="w-3.5 h-3.5 inline mr-1" />
+                    Ajouter une photo (optionnel)
+                  </button>
+                </div>
               </div>
 
               <div
-                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 space-y-3"
+                className="min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
                 style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -578,40 +655,59 @@ ${OBJECTS_BLOCK_END}`;
                   />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    upsertObjectsState({
-                      piano: false,
-                      coffreFort: false,
-                      meublesTresLourdsCount: 0,
-                      aquarium: false,
-                      objetsFragilesVolumineux: false,
-                    })
-                  }
-                  className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
-                  style={{
-                    background: objectsRas ? "var(--color-accent)" : "var(--color-bg)",
-                    color: objectsRas ? "#fff" : "var(--color-text)",
-                    border: "1px solid var(--color-border)",
-                  }}
-                >
-                  RAS
-                </button>
-                <button
-                  type="button"
-                  onClick={() => photoInputRef.current?.click()}
-                  disabled={!leadId || isUploadingPhotos}
-                  className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
-                  style={{
-                    background: "transparent",
-                    color: "var(--color-text-secondary)",
-                    border: "1px dashed var(--color-border)",
-                  }}
-                >
-                  <Camera className="w-3.5 h-3.5 inline mr-1" />
-                  Ajouter une photo (optionnel)
-                </button>
+                <div className="mt-auto space-y-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      upsertObjectsState({
+                        piano: false,
+                        coffreFort: false,
+                        meublesTresLourdsCount: 0,
+                        aquarium: false,
+                        objetsFragilesVolumineux: false,
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
+                    style={{
+                      background: objectsRas ? "var(--color-accent)" : "var(--color-bg)",
+                      color: objectsRas ? "#fff" : "var(--color-text)",
+                      border: "1px solid var(--color-border)",
+                    }}
+                  >
+                    Rien à déclarer
+                  </button>
+                  <input
+                    type="text"
+                    value={extraNotesState.objets}
+                    onChange={(e) =>
+                      rebuildSpecificNotes(objectsState, {
+                        ...extraNotesState,
+                        objets: e.target.value,
+                      })
+                    }
+                    className="w-full rounded-lg px-3 py-2 text-xs"
+                    style={{
+                      background: "var(--color-bg)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text)",
+                    }}
+                    placeholder="Précision manuelle (optionnel)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={!leadId || isUploadingPhotos}
+                    className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
+                    style={{
+                      background: "transparent",
+                      color: "var(--color-text-secondary)",
+                      border: "1px dashed var(--color-border)",
+                    }}
+                  >
+                    <Camera className="w-3.5 h-3.5 inline mr-1" />
+                    Ajouter une photo (optionnel)
+                  </button>
+                </div>
               </div>
             </div>
 

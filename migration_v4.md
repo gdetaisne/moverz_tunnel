@@ -1,5 +1,25 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Step 4 cartes enrichissement: CTA bas + renommage RAS + input manuel
+
+**Demande** :
+- Coller les CTA en bas des colonnes.
+- Remplacer `RAS` par `Rien à déclarer`.
+- Ajouter un champ input manuel sous ce CTA.
+
+**Implémentation** :
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - cartes en layout `flex-col` avec zone `mt-auto` pour coller les CTA en bas,
+  - renommage des boutons `RAS` -> `Rien à déclarer`,
+  - ajout d'un input manuel optionnel sur chaque carte (départ, arrivée, objets),
+  - persistance des inputs manuels dans `specificNotes` via bloc structuré interne.
+
+**Impact** :
+- Hiérarchie visuelle plus stable entre cartes.
+- Lecture plus claire des actions finales par colonne.
+
+---
+
 ## 2026-02-17 — Step 4: CTA photo passé en secondaire
 
 **Demande** :
