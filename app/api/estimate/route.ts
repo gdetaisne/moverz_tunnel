@@ -25,6 +25,8 @@ import {
 const FORMULES = ["ECONOMIQUE", "STANDARD", "PREMIUM"] as const;
 const BAN_TIMEOUT_MS = 1800;
 const OSRM_TIMEOUT_MS = 1800;
+const GEO_CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24h
+const DISTANCE_CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6h
 
 const EstimateQuerySchema = z.object({
   originPostalCode: z
@@ -48,6 +50,38 @@ const EstimateQuerySchema = z.object({
   destinationLon: z.coerce.number().finite().min(-180).max(180).optional(),
 });
 
+type CacheEntry<T> = {
+  value: T;
+  expiresAt: number;
+};
+
+const geocodeCache = new Map<string, CacheEntry<[number, number]>>();
+const osrmDistanceCache = new Map<string, CacheEntry<number>>();
+const geocodeInFlight = new Map<string, Promise<[number, number] | null>>();
+const osrmInFlight = new Map<string, Promise<number | null>>();
+
+function getFromCache<T>(cache: Map<string, CacheEntry<T>>, key: string): T | null {
+  const hit = cache.get(key);
+  if (!hit) return null;
+  if (Date.now() > hit.expiresAt) {
+    cache.delete(key);
+    return null;
+  }
+  return hit.value;
+}
+
+function setInCache<T>(
+  cache: Map<string, CacheEntry<T>>,
+  key: string,
+  value: T,
+  ttlMs: number
+): void {
+  cache.set(key, {
+    value,
+    expiresAt: Date.now() + ttlMs,
+  });
+}
+
 // ─── Helpers ────────────────────────────────────────────
 
 /**
@@ -57,30 +91,45 @@ const EstimateQuerySchema = z.object({
 async function geocodePostalCode(
   postalCode: string
 ): Promise<[number, number] | null> {
+  const cacheKey = postalCode.trim();
+  const cached = getFromCache(geocodeCache, cacheKey);
+  if (cached) return cached;
+
+  const inFlight = geocodeInFlight.get(cacheKey);
+  if (inFlight) return inFlight;
+
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  try {
-    const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
-      postalCode
-    )}&type=municipality&limit=1`;
-    const controller = new AbortController();
-    timeoutId = setTimeout(() => controller.abort(), BAN_TIMEOUT_MS);
-    const res = await fetch(url, { cache: "no-store", signal: controller.signal });
-    if (!res.ok) return null;
-    const data = (await res.json()) as {
-      features?: { geometry?: { coordinates?: [number, number] } }[];
-    };
-    const coords = data.features?.[0]?.geometry?.coordinates;
-    if (!coords) return null;
-    const [lon, lat] = coords;
-    if (typeof lat === "number" && typeof lon === "number") {
-      return [lat, lon];
+  const reqPromise = (async () => {
+    try {
+      const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
+        postalCode
+      )}&type=municipality&limit=1`;
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), BAN_TIMEOUT_MS);
+      const res = await fetch(url, { cache: "no-store", signal: controller.signal });
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        features?: { geometry?: { coordinates?: [number, number] } }[];
+      };
+      const coords = data.features?.[0]?.geometry?.coordinates;
+      if (!coords) return null;
+      const [lon, lat] = coords;
+      if (typeof lat === "number" && typeof lon === "number") {
+        const parsed: [number, number] = [lat, lon];
+        setInCache(geocodeCache, cacheKey, parsed, GEO_CACHE_TTL_MS);
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+      geocodeInFlight.delete(cacheKey);
     }
-    return null;
-  } catch {
-    return null;
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
+  })();
+
+  geocodeInFlight.set(cacheKey, reqPromise);
+  return reqPromise;
 }
 
 /**
@@ -93,28 +142,53 @@ async function osrmDistanceKm(
   destLat: number,
   destLon: number
 ): Promise<number | null> {
+  const cacheKey = [
+    Math.round(originLat * 1e4) / 1e4,
+    Math.round(originLon * 1e4) / 1e4,
+    Math.round(destLat * 1e4) / 1e4,
+    Math.round(destLon * 1e4) / 1e4,
+  ].join(":");
+  const cached = getFromCache(osrmDistanceCache, cacheKey);
+  if (typeof cached === "number") return cached;
+
+  const inFlight = osrmInFlight.get(cacheKey);
+  if (inFlight) return inFlight;
+
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${originLon},${originLat};${destLon},${destLat}?overview=false&alternatives=false&steps=false`;
-    const controller = new AbortController();
-    timeoutId = setTimeout(() => controller.abort(), OSRM_TIMEOUT_MS);
-    const res = await fetch(url, {
-      headers: { "User-Agent": "moverz-tunnel (estimate)" },
-      cache: "no-store",
-      signal: controller.signal,
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as {
-      routes?: Array<{ distance?: number }>;
-    };
-    const distanceM = data?.routes?.[0]?.distance;
-    if (typeof distanceM !== "number" || distanceM <= 0) return null;
-    return Math.max(1, Math.round(distanceM / 1000));
-  } catch {
-    return null;
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
+  const reqPromise = (async () => {
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${originLon},${originLat};${destLon},${destLat}?overview=false&alternatives=false&steps=false`;
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), OSRM_TIMEOUT_MS);
+      const res = await fetch(url, {
+        headers: { "User-Agent": "moverz-tunnel (estimate)" },
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        routes?: Array<{ distance?: number }>;
+      };
+      const distanceM = data?.routes?.[0]?.distance;
+      if (typeof distanceM !== "number" || distanceM <= 0) return null;
+      const distanceKm = Math.max(1, Math.round(distanceM / 1000));
+      setInCache(
+        osrmDistanceCache,
+        cacheKey,
+        distanceKm,
+        DISTANCE_CACHE_TTL_MS
+      );
+      return distanceKm;
+    } catch {
+      return null;
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+      osrmInFlight.delete(cacheKey);
+    }
+  })();
+
+  osrmInFlight.set(cacheKey, reqPromise);
+  return reqPromise;
 }
 
 /**

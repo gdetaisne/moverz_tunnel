@@ -1,5 +1,25 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Option C perf API estimate: cache TTL + déduplication in-flight (précision OSRM conservée)
+
+**Demande** :
+- Garder la précision maximale, mais accélérer fortement `/api/estimate`.
+
+**Implémentation** :
+- `app/api/estimate/route.ts`
+  - conservation du flux précis BAN -> OSRM -> fallback heuristique,
+  - ajout cache mémoire TTL :
+    - géocodage BAN (`GEO_CACHE_TTL_MS = 24h`),
+    - distance OSRM (`DISTANCE_CACHE_TTL_MS = 6h`),
+  - ajout déduplication des requêtes en vol (`geocodeInFlight`, `osrmInFlight`) pour éviter les appels externes doublons en cas de trafic concurrent.
+
+**Impact** :
+- Temps de réponse fortement réduit sur routes/CP déjà vus (cache hit),
+- charge externe BAN/OSRM diminuée,
+- précision inchangée sur les réponses OSRM.
+
+---
+
 ## 2026-02-17 — Hardening API estimate: timeout court BAN/OSRM + fallback rapide
 
 **Constat** :
