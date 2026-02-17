@@ -71,6 +71,11 @@ type PricingSimulatorResponse = {
       debarras: boolean;
     };
   };
+  effectiveInput?: {
+    surfaceM2: number;
+    density: string;
+    extraVolumeM3: number;
+  };
   detailed: {
     raw: {
       volumeM3: number;
@@ -115,6 +120,13 @@ type PricingSimulatorResponse = {
         aquarium: boolean;
         objetsFragilesVolumineux: boolean;
         meublesTresLourdsCount: number;
+      };
+      box: {
+        originIsBox: boolean;
+        destinationIsBox: boolean;
+        originBoxVolumeM3: number | null;
+        accessHousingRawDeltaEur: number;
+        accessHousingBoxDiscountEur: number;
       };
     };
   };
@@ -1253,6 +1265,9 @@ function PricingLab({ password }: { password: string }) {
     objectAquarium: false,
     objectFragile: false,
     objectHeavyCount: 0,
+    originIsBox: false,
+    destinationIsBox: false,
+    originBoxVolumeM3: "",
   });
 
   const fmtEur = (n: number) =>
@@ -1388,6 +1403,11 @@ function PricingLab({ password }: { password: string }) {
             objetsFragilesVolumineux: step3Form.objectFragile,
             meublesTresLourdsCount: step3Form.objectHeavyCount,
           },
+        },
+        step3Box: {
+          originIsBox: step3Form.originIsBox,
+          destinationIsBox: step3Form.destinationIsBox,
+          originBoxVolumeM3: Number.parseFloat(String(step3Form.originBoxVolumeM3).replace(",", ".")),
         },
       };
       const json = await postSimulation(payload);
@@ -1532,6 +1552,15 @@ function PricingLab({ password }: { password: string }) {
             <input type="number" value={step3Form.distanceKm} onChange={(e) => setStep3Form((p) => ({ ...p, distanceKm: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Option Box</div>
+            <div className="text-gray-400">Box départ/arrivée ; départ box => m³ exact + densité normal + cuisine neutre ; réduction accès-étages -20%</div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <label><input type="checkbox" checked={step3Form.originIsBox} onChange={(e) => setStep3Form((p) => ({ ...p, originIsBox: e.target.checked }))} /> Box départ</label>
+              <label><input type="checkbox" checked={step3Form.destinationIsBox} onChange={(e) => setStep3Form((p) => ({ ...p, destinationIsBox: e.target.checked }))} /> Box arrivée</label>
+              <input type="text" value={step3Form.originBoxVolumeM3} onChange={(e) => setStep3Form((p) => ({ ...p, originBoxVolumeM3: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5" placeholder="m³ box départ" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
             <div>Date / saison</div>
             <div className="text-gray-400">Facteur saison/urgence</div>
             <input type="number" step="0.01" value={step3Form.seasonFactor} onChange={(e) => setStep3Form((p) => ({ ...p, seasonFactor: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
@@ -1635,8 +1664,12 @@ function PricingLab({ password }: { password: string }) {
 
           {step3Simulation && (
             <div className="mt-2 rounded-xl border border-gray-800 bg-gray-950/50 p-4 text-sm space-y-1">
+              {step3Simulation.effectiveInput && (
+                <p><span className="text-gray-500">Input effectif (après règles Box):</span> surface {step3Simulation.effectiveInput.surfaceM2} m² · densité {step3Simulation.effectiveInput.density} · extra {step3Simulation.effectiveInput.extraVolumeM3} m³</p>
+              )}
               <p><span className="text-gray-500">Prix brut (centre):</span> {fmtEur(step3Simulation.detailed.raw.prixFinal)}</p>
               <p><span className="text-gray-500">Provision:</span> {fmtEur(step3Simulation.detailed.withProvision.provisionEur)}</p>
+              <p><span className="text-gray-500">Réduction Box (Accès - étages):</span> -{fmtEur(step3Simulation.detailed.addons.box.accessHousingBoxDiscountEur)}</p>
               <p><span className="text-gray-500">Add-ons fixes accès:</span> {fmtEur(step3Simulation.detailed.addons.accessFixedAddonEur)}</p>
               <p><span className="text-gray-500">Add-ons fixes objets:</span> {fmtEur(step3Simulation.detailed.addons.objectsFixedAddonEur)}</p>
               <p><span className="text-gray-500">Centre final Step 3:</span> {fmtEur(step3Simulation.detailed.withProvisionAndAddons.centerAfterProvisionEur)}</p>
@@ -1755,6 +1788,18 @@ function PricingLab({ password }: { password: string }) {
               </div>
               <div>{step3Simulation ? fmtEur(step3Simulation.detailed.addons.objectsFixedAddonEur) : "—"}</div>
               <div>{step3Simulation ? fmtEur(step3Simulation.detailed.addons.objectsFixedAddonEur) : "—"}</div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
+              <div>Option Box</div>
+              <div className="text-gray-400">`app/devis-gratuits-v3/page.tsx`</div>
+              <div className="text-gray-400">Départ box: m³ exact -> surface dérivée, densité=normal, cuisine=0 + remise accès -20%</div>
+              <div className="grid grid-cols-3 gap-1">
+                <label><input type="checkbox" checked={step3Form.originIsBox} onChange={(e) => setStep3Form((p) => ({ ...p, originIsBox: e.target.checked }))} /> dép.</label>
+                <label><input type="checkbox" checked={step3Form.destinationIsBox} onChange={(e) => setStep3Form((p) => ({ ...p, destinationIsBox: e.target.checked }))} /> arr.</label>
+                <input type="text" value={step3Form.originBoxVolumeM3} onChange={(e) => setStep3Form((p) => ({ ...p, originBoxVolumeM3: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded px-1.5 py-1" placeholder="m³" />
+              </div>
+              <div>{step3Simulation?.effectiveInput ? `surface=${step3Simulation.effectiveInput.surfaceM2} · densité=${step3Simulation.effectiveInput.density}` : "—"}</div>
+              <div>{step3Simulation ? `-${fmtEur(step3Simulation.detailed.addons.box.accessHousingBoxDiscountEur)}` : "—"}</div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
               <div>Provision Moverz</div>

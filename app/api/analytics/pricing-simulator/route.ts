@@ -53,6 +53,11 @@ type SimulatorPayload = {
       meublesTresLourdsCount?: number;
     };
   };
+  step3Box?: {
+    originIsBox?: boolean;
+    destinationIsBox?: boolean;
+    originBoxVolumeM3?: number;
+  };
 };
 
 type SanitizedAddons = {
@@ -69,6 +74,12 @@ type SanitizedAddons = {
     objetsFragilesVolumineux: boolean;
     meublesTresLourdsCount: number;
   };
+};
+
+type SanitizedBox = {
+  originIsBox: boolean;
+  destinationIsBox: boolean;
+  originBoxVolumeM3: number | null;
 };
 
 function isAuthorized(req: NextRequest): boolean {
@@ -134,6 +145,18 @@ function sanitizeAddons(raw: Partial<SimulatorPayload>["step3Addons"]): Sanitize
       objetsFragilesVolumineux: Boolean(raw?.objects?.objetsFragilesVolumineux),
       meublesTresLourdsCount: toHeavyCount(raw?.objects?.meublesTresLourdsCount),
     },
+  };
+}
+
+function sanitizeBox(raw: Partial<SimulatorPayload>["step3Box"]): SanitizedBox {
+  const parsedBoxVolume = toNumber(raw?.originBoxVolumeM3, 0);
+  return {
+    originIsBox: Boolean(raw?.originIsBox),
+    destinationIsBox: Boolean(raw?.destinationIsBox),
+    originBoxVolumeM3:
+      Number.isFinite(parsedBoxVolume) && parsedBoxVolume > 0
+        ? Math.round(parsedBoxVolume * 10) / 10
+        : null,
   };
 }
 
@@ -217,10 +240,18 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as Partial<SimulatorPayload>;
     const input = sanitizePayload(body);
     const addons = sanitizeAddons(body.step3Addons);
+    const box = sanitizeBox(body.step3Box);
+    const divisor = TYPE_COEFFICIENTS.t2 * DENSITY_COEFFICIENTS.normal;
+    const effectiveSurfaceM2 =
+      box.originIsBox && box.originBoxVolumeM3 != null
+        ? Math.max(10, Math.min(500, Math.round(box.originBoxVolumeM3 / divisor)))
+        : input.surfaceM2;
+    const effectiveDensity: DensityType = box.originIsBox ? "normal" : input.density;
+    const effectiveExtraVolumeM3 = box.originIsBox ? 0 : input.extraVolumeM3;
     const raw = calculatePricing({
-      surfaceM2: input.surfaceM2,
+      surfaceM2: effectiveSurfaceM2,
       housingType: "t2",
-      density: input.density,
+      density: effectiveDensity,
       distanceKm: input.distanceKm,
       seasonFactor: input.seasonFactor,
       originFloor: input.originFloor,
@@ -232,10 +263,61 @@ export async function POST(req: NextRequest) {
       longCarry: input.longCarry,
       tightAccess: input.tightAccess,
       difficultParking: input.difficultParking,
-      extraVolumeM3: input.extraVolumeM3,
+      extraVolumeM3: effectiveExtraVolumeM3,
     });
 
     const detailedWithProvision = withProvision(raw.prixMin, raw.prixFinal, raw.prixMax);
+    const accessHousingBaselineRaw = calculatePricing({
+      surfaceM2: effectiveSurfaceM2,
+      housingType: "t2",
+      density: effectiveDensity,
+      distanceKm: input.distanceKm,
+      seasonFactor: input.seasonFactor,
+      originFloor: 0,
+      originElevator: "yes",
+      destinationFloor: 0,
+      destinationElevator: "yes",
+      formule: input.formule,
+      services: { monteMeuble: false, piano: null, debarras: false },
+      longCarry: false,
+      tightAccess: false,
+      difficultParking: false,
+      extraVolumeM3: effectiveExtraVolumeM3,
+    });
+    const accessHousingCurrentRaw = calculatePricing({
+      surfaceM2: effectiveSurfaceM2,
+      housingType: "t2",
+      density: effectiveDensity,
+      distanceKm: input.distanceKm,
+      seasonFactor: input.seasonFactor,
+      originFloor: input.originFloor,
+      originElevator: input.originElevator,
+      destinationFloor: input.destinationFloor,
+      destinationElevator: input.destinationElevator,
+      formule: input.formule,
+      services: { monteMeuble: false, piano: null, debarras: false },
+      longCarry: false,
+      tightAccess: false,
+      difficultParking: false,
+      extraVolumeM3: effectiveExtraVolumeM3,
+    });
+    const accessHousingBaselineWithProvision = withProvision(
+      accessHousingBaselineRaw.prixMin,
+      accessHousingBaselineRaw.prixFinal,
+      accessHousingBaselineRaw.prixMax
+    );
+    const accessHousingCurrentWithProvision = withProvision(
+      accessHousingCurrentRaw.prixMin,
+      accessHousingCurrentRaw.prixFinal,
+      accessHousingCurrentRaw.prixMax
+    );
+    const accessHousingRawDeltaEur =
+      accessHousingCurrentWithProvision.centerAfterProvisionEur -
+      accessHousingBaselineWithProvision.centerAfterProvisionEur;
+    const accessHousingBoxDiscountEur =
+      (box.originIsBox || box.destinationIsBox) && accessHousingRawDeltaEur > 0
+        ? Math.round(accessHousingRawDeltaEur * 0.2)
+        : 0;
     const accessFixedAddonEur =
       addons.accessSideCounts.narrow_access * 70 +
       addons.accessSideCounts.long_carry * 80 +
@@ -250,13 +332,14 @@ export async function POST(req: NextRequest) {
     const totalFixedAddonsEur = accessFixedAddonEur + objectsFixedAddonEur;
     const detailedWithProvisionAndAddons = {
       ...detailedWithProvision,
-      prixMin: detailedWithProvision.prixMin + totalFixedAddonsEur,
-      prixFinal: detailedWithProvision.prixFinal + totalFixedAddonsEur,
-      prixMax: detailedWithProvision.prixMax + totalFixedAddonsEur,
-      centerAfterProvisionEur: detailedWithProvision.centerAfterProvisionEur + totalFixedAddonsEur,
+      prixMin: detailedWithProvision.prixMin + totalFixedAddonsEur - accessHousingBoxDiscountEur,
+      prixFinal: detailedWithProvision.prixFinal + totalFixedAddonsEur - accessHousingBoxDiscountEur,
+      prixMax: detailedWithProvision.prixMax + totalFixedAddonsEur - accessHousingBoxDiscountEur,
+      centerAfterProvisionEur:
+        detailedWithProvision.centerAfterProvisionEur + totalFixedAddonsEur - accessHousingBoxDiscountEur,
     };
     const baseline = computeBaselineEstimate({
-      surfaceM2: input.surfaceM2,
+      surfaceM2: effectiveSurfaceM2,
       distanceKm: input.distanceKm,
       formule: input.formule,
     });
@@ -264,6 +347,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         input,
+        effectiveInput: {
+          surfaceM2: effectiveSurfaceM2,
+          density: effectiveDensity,
+          extraVolumeM3: effectiveExtraVolumeM3,
+        },
         detailed: {
           raw,
           withProvision: detailedWithProvision,
@@ -274,6 +362,11 @@ export async function POST(req: NextRequest) {
             totalFixedAddonsEur,
             accessSideCounts: addons.accessSideCounts,
             objects: addons.objects,
+            box: {
+              ...box,
+              accessHousingRawDeltaEur,
+              accessHousingBoxDiscountEur,
+            },
           },
         },
         baseline,

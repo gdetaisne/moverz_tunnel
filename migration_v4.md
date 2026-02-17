@@ -27,6 +27,35 @@
 
 ---
 
+## 2026-02-17 — Vérification câblage Box + mise à jour Analytics
+
+**Audit demandé** :
+- Vérifier que l'option `Box` est bien câblée de bout en bout (UI + calcul + validation + payload).
+- Mettre à jour `Hypothèses & Simulation` pour refléter les règles Box.
+
+**Vérification (OK)** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - auto-règles Box départ bien appliquées (`density=normal`, `kitchen=none`, m³ exact requis),
+  - contraintes départ/arrivée bien masquées selon box côté correspondant.
+- `app/devis-gratuits-v3/page.tsx`
+  - réduction `-20%` de la composante `Acces - étages` bien appliquée si box départ/arrivée,
+  - propagation BO du volume box exact via `tunnelOptions.volumeAdjustments.boxExactVolumeM3`.
+
+**Mise à jour Analytics** :
+- `app/api/analytics/pricing-simulator/route.ts`
+  - ajout `step3Box` dans le payload (`originIsBox`, `destinationIsBox`, `originBoxVolumeM3`),
+  - simulation des règles Box:
+    - surface effective dérivée des m³ box,
+    - densité forcée `normal`,
+    - volume cuisine neutralisé,
+    - remise `-20%` sur l'impact `Acces - étages`,
+  - exposé de métriques détaillées (`effectiveInput`, `accessHousingBoxDiscountEur`).
+- `app/analytics/page.tsx`
+  - ajout des inputs Box dans la simulation Step 3,
+  - affichage de l'impact Box dans le résultat et la table d'audit exhaustive.
+
+---
+
 ## 2026-02-17 — Step 3 précisions: retrait CTA de validation explicite
 
 **Demande** :
