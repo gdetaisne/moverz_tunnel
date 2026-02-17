@@ -450,7 +450,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                    1. Contrainte au départ
+                    1. Contraintes au départ
                   </p>
                 </div>
                 {questions.map((q) => {

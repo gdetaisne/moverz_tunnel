@@ -1,5 +1,16 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Copy fix: "Contraintes au départ" (pluriel)
+
+**Demande** :
+- Corriger le titre de carte en pluriel.
+
+**Implémentation** :
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - `1. Contrainte au départ` -> `1. Contraintes au départ`.
+
+---
+
 ## 2026-02-17 — Step 4 cartes enrichissement: CTA bas + renommage RAS + input manuel
 
 **Demande** :
