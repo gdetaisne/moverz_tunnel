@@ -1,5 +1,24 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Fix BO: `pricingSnapshot.byFormule` aligné sur le panier final Step 3
+
+**Constat** :
+- Même après soumission complète, un écart persistait entre "Budget affiné" et le bloc "Par formule" affiché côté BO.
+
+**Cause** :
+- `pricingSnapshot.byFormule` était encore alimenté à partir de `pricingByFormule` (calcul brut), au lieu des plages finales du pipeline Step 3 (provision + deltas + add-ons + règles box).
+
+**Fix** :
+- `app/devis-gratuits-v3/page.tsx`
+  - dans la construction de `pricingSnapshot`, `byFormule` utilise maintenant `v2PricingCart.formuleRanges`,
+  - `prixFinal` est recalculé via le centre affiché (`getDisplayedCenter`) pour chaque formule,
+  - fallback robuste conservé (formule sélectionnée uniquement) si `formuleRanges` indisponible.
+
+**Impact** :
+- Les montants "Par formule" archivés/affichés côté BO sont désormais cohérents avec le panier final Step 3.
+
+---
+
 ## 2026-02-17 — Fix BO: nettoyage du champ "notes" Step 3 (suppression blocs techniques + décodage)
 
 **Constat** :

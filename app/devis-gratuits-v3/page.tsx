@@ -2195,7 +2195,31 @@ function DevisGratuitsV3Content() {
 
       // Snapshot complet du panier ("Votre panier") pour archivage BO
       const pricingSnapshot = (() => {
-        if (!v2PricingCart || !pricingByFormule || !activePricing) return undefined;
+        if (!v2PricingCart || !activePricing) return undefined;
+        const byFormuleFromRefined = (() => {
+          const ranges = v2PricingCart.formuleRanges;
+          if (!ranges) return undefined;
+          return {
+            ECONOMIQUE: {
+              prixMin: ranges.ECONOMIQUE.priceMin,
+              prixMax: ranges.ECONOMIQUE.priceMax,
+              prixFinal: getDisplayedCenter(ranges.ECONOMIQUE.priceMin, ranges.ECONOMIQUE.priceMax),
+              volumeM3: activePricing.volumeM3,
+            },
+            STANDARD: {
+              prixMin: ranges.STANDARD.priceMin,
+              prixMax: ranges.STANDARD.priceMax,
+              prixFinal: getDisplayedCenter(ranges.STANDARD.priceMin, ranges.STANDARD.priceMax),
+              volumeM3: activePricing.volumeM3,
+            },
+            PREMIUM: {
+              prixMin: ranges.PREMIUM.priceMin,
+              prixMax: ranges.PREMIUM.priceMax,
+              prixFinal: getDisplayedCenter(ranges.PREMIUM.priceMin, ranges.PREMIUM.priceMax),
+              volumeM3: activePricing.volumeM3,
+            },
+          } as Record<string, { prixMin: number; prixMax: number; prixFinal: number; volumeM3: number }>;
+        })();
         return {
           capturedAt: new Date().toISOString(),
           formule: state.formule,
@@ -2214,13 +2238,16 @@ function DevisGratuitsV3Content() {
           // Lignes d'ajustement du panier
           lines: v2PricingCart.lines,
           // Prix par formule (les 3 formules)
-          byFormule: (Object.entries(pricingByFormule) as [string, ReturnType<typeof calculatePricing>][]).reduce(
-            (acc, [key, val]) => {
-              acc[key] = { prixMin: val.prixMin, prixMax: val.prixMax, prixFinal: val.prixFinal, volumeM3: val.volumeM3 };
-              return acc;
+          byFormule:
+            byFormuleFromRefined ??
+            {
+              [state.formule]: {
+                prixMin: v2PricingCart.refinedMinEur,
+                prixMax: v2PricingCart.refinedMaxEur,
+                prixFinal: v2PricingCart.refinedCenterEur,
+                volumeM3: activePricing.volumeM3,
+              },
             },
-            {} as Record<string, { prixMin: number; prixMax: number; prixFinal: number; volumeM3: number }>
-          ),
         };
       })();
 
