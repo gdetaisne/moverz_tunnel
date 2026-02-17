@@ -40,9 +40,7 @@ type ObjectsState = {
 };
 
 type ExtraNotesState = {
-  depart: string;
-  arrivee: string;
-  objets: string;
+  note: string;
 };
 
 interface StepContactPhotosV4Props {
@@ -151,10 +149,10 @@ ${OBJECTS_BLOCK_END}`;
   const parseExtraNotesState = (raw: string): ExtraNotesState => {
     const start = raw.indexOf(EXTRA_NOTES_BLOCK_START);
     const end = raw.indexOf(EXTRA_NOTES_BLOCK_END);
-    const defaults: ExtraNotesState = { depart: "", arrivee: "", objets: "" };
+    const defaults: ExtraNotesState = { note: "" };
     if (start === -1 || end === -1 || end < start) return defaults;
     const block = raw.slice(start + EXTRA_NOTES_BLOCK_START.length, end);
-    const read = (key: "depart" | "arrivee" | "objets") => {
+    const read = (key: string) => {
       const m = new RegExp(`^${key}:(.*)$`, "m").exec(block);
       if (!m?.[1]) return "";
       try {
@@ -163,18 +161,20 @@ ${OBJECTS_BLOCK_END}`;
         return m[1];
       }
     };
-    return {
-      depart: read("depart"),
-      arrivee: read("arrivee"),
-      objets: read("objets"),
-    };
+    const unified = read("note");
+    if (unified) return { note: unified };
+    // Compat: relit l'ancien format (depart/arrivee/objets) si présent.
+    const legacyParts = [
+      read("depart"),
+      read("arrivee"),
+      read("objets"),
+    ].filter((v) => v.trim().length > 0);
+    return { note: legacyParts.join(" | ") };
   };
 
   const serializeExtraNotesState = (state: ExtraNotesState): string =>
     `${EXTRA_NOTES_BLOCK_START}
-depart:${encodeURIComponent(state.depart || "")}
-arrivee:${encodeURIComponent(state.arrivee || "")}
-objets:${encodeURIComponent(state.objets || "")}
+note:${encodeURIComponent(state.note || "")}
 ${EXTRA_NOTES_BLOCK_END}`;
 
   const rebuildSpecificNotes = (nextObjects: ObjectsState, nextExtraNotes: ExtraNotesState) => {
@@ -186,10 +186,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
       nextObjects.aquarium ||
       nextObjects.objetsFragilesVolumineux ||
       nextObjects.meublesTresLourdsCount > 0;
-    const hasAnyExtra =
-      nextExtraNotes.depart.trim().length > 0 ||
-      nextExtraNotes.arrivee.trim().length > 0 ||
-      nextExtraNotes.objets.trim().length > 0;
+    const hasAnyExtra = nextExtraNotes.note.trim().length > 0;
     const blocks = [
       hasAnyObject ? serializeObjectsState(nextObjects) : "",
       hasAnyExtra ? serializeExtraNotesState(nextExtraNotes) : "",
@@ -483,23 +480,6 @@ ${EXTRA_NOTES_BLOCK_END}`;
                   >
                     Rien à déclarer
                   </button>
-                  <input
-                    type="text"
-                    value={extraNotesState.depart}
-                    onChange={(e) =>
-                      rebuildSpecificNotes(objectsState, {
-                        ...extraNotesState,
-                        depart: e.target.value,
-                      })
-                    }
-                    className="w-full rounded-lg px-3 py-2 text-xs"
-                    style={{
-                      background: "var(--color-bg)",
-                      border: "1px solid var(--color-border)",
-                      color: "var(--color-text)",
-                    }}
-                    placeholder="Précision manuelle (optionnel)"
-                  />
                   <button
                     type="button"
                     onClick={() => photoInputRef.current?.click()}
@@ -557,23 +537,6 @@ ${EXTRA_NOTES_BLOCK_END}`;
                   >
                     Rien à déclarer
                   </button>
-                  <input
-                    type="text"
-                    value={extraNotesState.arrivee}
-                    onChange={(e) =>
-                      rebuildSpecificNotes(objectsState, {
-                        ...extraNotesState,
-                        arrivee: e.target.value,
-                      })
-                    }
-                    className="w-full rounded-lg px-3 py-2 text-xs"
-                    style={{
-                      background: "var(--color-bg)",
-                      border: "1px solid var(--color-border)",
-                      color: "var(--color-text)",
-                    }}
-                    placeholder="Précision manuelle (optionnel)"
-                  />
                   <button
                     type="button"
                     onClick={() => photoInputRef.current?.click()}
@@ -675,23 +638,6 @@ ${EXTRA_NOTES_BLOCK_END}`;
                   >
                     Rien à déclarer
                   </button>
-                  <input
-                    type="text"
-                    value={extraNotesState.objets}
-                    onChange={(e) =>
-                      rebuildSpecificNotes(objectsState, {
-                        ...extraNotesState,
-                        objets: e.target.value,
-                      })
-                    }
-                    className="w-full rounded-lg px-3 py-2 text-xs"
-                    style={{
-                      background: "var(--color-bg)",
-                      border: "1px solid var(--color-border)",
-                      color: "var(--color-text)",
-                    }}
-                    placeholder="Précision manuelle (optionnel)"
-                  />
                   <button
                     type="button"
                     onClick={() => photoInputRef.current?.click()}
@@ -708,6 +654,28 @@ ${EXTRA_NOTES_BLOCK_END}`;
                   </button>
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+                Précision manuelle (commune)
+              </label>
+              <input
+                type="text"
+                value={extraNotesState.note}
+                onChange={(e) =>
+                  rebuildSpecificNotes(objectsState, {
+                    note: e.target.value,
+                  })
+                }
+                className="w-full rounded-lg px-3 py-2 text-sm"
+                style={{
+                  background: "var(--color-bg)",
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text)",
+                }}
+                placeholder="Ajouter une précision utile (optionnel)"
+              />
             </div>
 
             {uploadMessage && (

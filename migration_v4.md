@@ -1,5 +1,19 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Step 4: champ "Précision manuelle" commun sous les 3 cartes
+
+**Demande** :
+- Le champ `Précision manuelle` doit être commun à toutes les contraintes, placé sous les 3 blocs.
+
+**Implémentation** :
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - suppression des inputs manuels par carte,
+  - ajout d'un input unique sous la grille/slider des 3 cartes,
+  - conservation de la persistance dans `specificNotes`,
+  - compatibilité de lecture avec l'ancien format (départ/arrivée/objets) pour éviter toute perte d'information.
+
+---
+
 ## 2026-02-17 — Copy Step 4: titre + sous-texte enrichissement
 
 **Demande** :
