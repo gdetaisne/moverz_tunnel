@@ -40,6 +40,7 @@ export interface TunnelFormState {
   destinationTightAccess: boolean; // Passages serrés / petit ascenseur
   destinationAccess: string;
   destinationUnknown: boolean;
+  originBoxVolumeM3: string;
 
   // Meta: permet de distinguer "valeur par défaut UI" vs "choix explicite utilisateur"
   // (sans changer l'UI). Utilisé pour éviter d'envoyer des valeurs inventées au Back Office.
@@ -158,6 +159,7 @@ const INITIAL_STATE: TunnelFormState = {
   destinationTightAccess: false,
   destinationAccess: "easy",
   destinationUnknown: false,
+  originBoxVolumeM3: "",
 
   originHousingTypeTouched: false,
   originFloorTouched: false,

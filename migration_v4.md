@@ -1,5 +1,32 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Option "Box" en Step 3 + règles pricing/UX associées
+
+**Demande** :
+- Ajouter une option `Box` au logement départ/arrivée.
+- Si box départ : demander le volume exact (m³), forcer la densité en `normal` et neutraliser la cuisine.
+- Si box départ/arrivée : appliquer une baisse de 20% sur la ligne `Acces - étages`.
+- Dans le bloc `Eviter les suppléments imprévus` :
+  - cacher `2. Contraintes au départ` si box au départ,
+  - cacher `3. Contraintes à l'arrivée` si box à l'arrivée.
+
+**Implémentation** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - ajout du bouton `Box` dans le picker logement (départ/arrivée),
+  - auto-réglages au départ box: `density="normal"`, `kitchenIncluded="none"`,
+  - ajout d'un input `Volume exact de la box (m³)` requis en départ box,
+  - validation section volume adaptée (départ box => validation basée sur m³ exact),
+  - masquage conditionnel des cartes contraintes départ/arrivée dans le bloc précisions.
+- `hooks/useTunnelState.ts`
+  - ajout du champ `originBoxVolumeM3` dans l'état tunnel.
+- `app/devis-gratuits-v3/page.tsx`
+  - prise en compte du volume box dans le calcul de surface effective de pricing,
+  - validation Step 3 : m³ exact requis si départ box,
+  - ajout `boxExactVolumeM3` dans `tunnelOptions.volumeAdjustments`,
+  - application d'un discount `-20%` sur la composante `Acces - étages` dans le panier Step 3.
+
+---
+
 ## 2026-02-17 — Step 3 précisions: retrait CTA de validation explicite
 
 **Demande** :

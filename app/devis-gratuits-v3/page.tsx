@@ -788,6 +788,22 @@ function DevisGratuitsV3Content() {
 
   const isHouseType = (t: string | null | undefined) =>
     !!t && (t === "house" || t.startsWith("house_"));
+  const isBoxType = (t: string | null | undefined) => !!t && t === "box";
+  const getBoxVolumeM3 = (raw: string | null | undefined): number | null => {
+    const n = Number.parseFloat(String(raw || "").replace(",", "."));
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return n;
+  };
+  const getEffectiveSurfaceForPricing = (): number => {
+    const boxVolume = getBoxVolumeM3(state.originBoxVolumeM3);
+    const originIsBox = isBoxType(state.originHousingType);
+    if (originIsBox && boxVolume != null) {
+      const divisor = TYPE_COEFFICIENTS.t2 * DENSITY_COEFFICIENTS.normal;
+      const derivedSurface = boxVolume / divisor;
+      return Math.max(10, Math.min(500, Math.round(derivedSurface)));
+    }
+    return parseInt(state.surfaceM2) || 60;
+  };
 
   const toPricingElevator = (e: string): "yes" | "no" | "partial" => {
     if (!e || e === "none" || e === "no") return "no";
@@ -796,7 +812,7 @@ function DevisGratuitsV3Content() {
   };
 
   const pricingByFormule = useMemo(() => {
-    const surface = parseInt(state.surfaceM2) || 60;
+    const surface = getEffectiveSurfaceForPricing();
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
     // La surface (m²) est saisie en Step 1; le choix "Maison/Appartement" en Step 3
@@ -813,6 +829,8 @@ function DevisGratuitsV3Content() {
 
     const originIsHouse = isHouseType(state.originHousingType);
     const destIsHouse = isHouseType(state.destinationHousingType);
+    const originIsBox = isBoxType(state.originHousingType);
+    const destIsBox = isBoxType(state.destinationHousingType);
 
     const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
     const destinationFloor = state.destinationUnknown
@@ -920,7 +938,7 @@ function DevisGratuitsV3Content() {
     const baselineDistanceKm = getBaselineDistanceKm(cityOsrmDistanceKm);
     if (baselineDistanceKm == null) return null; // attend l'OSRM
 
-    const surface = parseInt(state.surfaceM2) || 60;
+    const surface = getEffectiveSurfaceForPricing();
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
     return computeBaselineEstimateByFormule({
@@ -930,6 +948,8 @@ function DevisGratuitsV3Content() {
   }, [
     state.currentStep,
     state.surfaceM2,
+    state.originHousingType,
+    state.originBoxVolumeM3,
     cityOsrmDistanceKm,
   ]);
 
@@ -953,7 +973,7 @@ function DevisGratuitsV3Content() {
     const baselineDistanceKm = getBaselineDistanceKm(cityOsrmDistanceKm);
     if (baselineDistanceKm == null) return null;
 
-    const surface = parseInt(state.surfaceM2) || 60;
+    const surface = getEffectiveSurfaceForPricing();
     const selectedFormule = state.formule as PricingFormuleType;
     const distanceKm = baselineDistanceKm;
     const extraVolumeM3 = 3 * 0.6; // debug Step 2: cuisine=3 équipements
@@ -1017,6 +1037,8 @@ function DevisGratuitsV3Content() {
     debugMode,
     state.currentStep,
     state.surfaceM2,
+    state.originHousingType,
+    state.originBoxVolumeM3,
     state.formule,
     cityOsrmDistanceKm,
   ]);
@@ -1030,7 +1052,7 @@ function DevisGratuitsV3Content() {
     const baselineDistanceKm = getBaselineDistanceKm(cityOsrmDistanceKm);
     if (baselineDistanceKm == null) return; // attend l'OSRM
 
-    const surface = parseInt(state.surfaceM2) || 60;
+    const surface = getEffectiveSurfaceForPricing();
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return;
 
     const baseline = computeBaselineEstimate({
@@ -1050,6 +1072,8 @@ function DevisGratuitsV3Content() {
     state.rewardBaselineMinEur,
     state.rewardBaselineMaxEur,
     state.surfaceM2,
+    state.originHousingType,
+    state.originBoxVolumeM3,
     state.formule,
     cityOsrmDistanceKm,
   ]);
@@ -1060,7 +1084,7 @@ function DevisGratuitsV3Content() {
       getDisplayedCenter(minEur, maxEur);
     const formatDelta = (delta: number) => Math.round(delta);
 
-    const surface = parseInt(state.surfaceM2) || 60;
+    const surface = getEffectiveSurfaceForPricing();
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
     const selectedFormule = state.formule as PricingFormuleType;
@@ -1268,7 +1292,16 @@ function DevisGratuitsV3Content() {
       };
     })();
     const sAccessHousing = calculatePricing(inputAccessHousing);
-    const sAccessHousingWithFee = withFixedProvision(sAccessHousing);
+    const sAccessHousingWithFeeRaw = withFixedProvision(sAccessHousing);
+    const accessHousingRawDelta = formatDelta(
+      centerEur(sAccessHousingWithFeeRaw.prixMin, sAccessHousingWithFeeRaw.prixMax) -
+        centerEur(sDate.prixMin, sDate.prixMax)
+    );
+    const accessHousingDiscountEur =
+      (originIsBox || destIsBox) && accessHousingRawDelta > 0
+        ? Math.round(accessHousingRawDelta * 0.2)
+        : 0;
+    const sAccessHousingWithFee = withFixedAddon(sAccessHousingWithFeeRaw, -accessHousingDiscountEur);
     const deltaAccessHousingEur = accessHousingConfirmed
       ? formatDelta(
           centerEur(sAccessHousingWithFee.prixMin, sAccessHousingWithFee.prixMax) -
@@ -1292,7 +1325,7 @@ function DevisGratuitsV3Content() {
       effectiveConstraintCounts.lift_required * 250;
     const sAccessStandard = withFixedAddon(
       withFixedProvision(calculatePricing(inputAccessConstraints)),
-      accessFixedAddonEur
+      accessFixedAddonEur - accessHousingDiscountEur
     );
     const deltaAccessConstraintsEur = accessConstraintsConfirmed
       ? formatDelta(
@@ -1320,7 +1353,7 @@ function DevisGratuitsV3Content() {
         ? sAccessStandard
         : withFixedAddon(
             withFixedProvision(calculatePricing(inputSelectedFormule)),
-            accessFixedAddonEur
+            accessFixedAddonEur - accessHousingDiscountEur
           );
     const deltaFormuleEur =
       selectedFormule === baselineFormule
@@ -1356,9 +1389,11 @@ function DevisGratuitsV3Content() {
         : state.kitchenIncluded === "appliances"
         ? `${Math.max(0, kitchenApplianceCount)} équipement(s)`
         : "rien";
-    const accessHousingLabel = `${originIsHouse ? "maison" : `étage ${accessMeta.originFloor}`} → ${
+    const accessHousingLabel = `${originIsBox ? "box" : originIsHouse ? "maison" : `étage ${accessMeta.originFloor}`} → ${
       state.destinationUnknown
         ? "destination inconnue"
+        : destIsBox
+        ? "box"
         : destIsHouse
         ? "maison"
         : `étage ${accessMeta.destinationFloor}`
@@ -1594,7 +1629,7 @@ function DevisGratuitsV3Content() {
   const activePricingDetails = useMemo(() => {
     if (!activePricing) return null;
 
-    const surface = parseInt(state.surfaceM2) || 60;
+    const surface = getEffectiveSurfaceForPricing();
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
     const housingType = "t2" as const;
@@ -1816,6 +1851,7 @@ function DevisGratuitsV3Content() {
     if (field === "kitchenIncluded" || field === "kitchenApplianceCount") return "kitchen";
     if (
       field === "originHousingType" ||
+      field === "originBoxVolumeM3" ||
       field === "originFloor" ||
       field === "originElevator" ||
       field === "destinationHousingType" ||
@@ -1957,8 +1993,15 @@ function DevisGratuitsV3Content() {
     }
 
     // Validation champs Step 3 obligatoires (hors exceptions explicites)
-    const isDensityValid = state.density === "light" || state.density === "normal" || state.density === "dense";
+    const originIsBoxStep3 = isBoxType(state.originHousingType);
+    const originBoxVolumeM3 = getBoxVolumeM3(state.originBoxVolumeM3);
+    const isDensityValid =
+      originIsBoxStep3 ||
+      state.density === "light" ||
+      state.density === "normal" ||
+      state.density === "dense";
     const isKitchenSelectionValid =
+      originIsBoxStep3 ||
       state.kitchenIncluded === "none" ||
       state.kitchenIncluded === "appliances" ||
       state.kitchenIncluded === "full";
@@ -1975,6 +2018,15 @@ function DevisGratuitsV3Content() {
         "PROJECT",
         "acces_v2"
       );
+      return;
+    }
+    if (originIsBoxStep3 && originBoxVolumeM3 == null) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        document.getElementById("v4-box-volume-section")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById("v4-origin-box-volume-m3") as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Missing exact box volume", 3, "PROJECT", "acces_v2");
       return;
     }
 
@@ -2005,6 +2057,7 @@ function DevisGratuitsV3Content() {
     const kitchenAppliancesCount =
       Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
     const isKitchenValid =
+      originIsBoxStep3 ||
       state.kitchenIncluded !== "appliances" || kitchenAppliancesCount >= 1;
     if (!isKitchenValid) {
       setShowValidationStep3(true);
@@ -2031,6 +2084,7 @@ function DevisGratuitsV3Content() {
     // Création / MAJ lead Back Office à la fin de Step 3 (avant les photos)
     try {
       const kitchenExtraVolumeM3 = (() => {
+        if (originIsBoxStep3) return 0;
         // UI: pas de pré-sélection. Calcul: hypothèse par défaut = 3 équipements.
         const kitchenTouched =
           state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
@@ -2040,9 +2094,11 @@ function DevisGratuitsV3Content() {
         if (state.kitchenIncluded === "appliances") return Math.max(0, kitchenAppliancesCount) * 0.6;
         return 0;
       })();
-      const kitchenIncludedForBo = state.kitchenIncluded || "appliances";
+      const kitchenIncludedForBo = originIsBoxStep3 ? "none" : state.kitchenIncluded || "appliances";
       const kitchenApplianceCountForBo =
-        state.kitchenIncluded === ""
+        originIsBoxStep3
+          ? undefined
+          : state.kitchenIncluded === ""
           ? 3
           : kitchenIncludedForBo === "appliances"
           ? kitchenAppliancesCount
@@ -2182,6 +2238,7 @@ function DevisGratuitsV3Content() {
             kitchenIncluded: kitchenIncludedForBo,
             kitchenApplianceCount: kitchenApplianceCountForBo,
             extraVolumeM3: kitchenExtraVolumeM3,
+            boxExactVolumeM3: originIsBoxStep3 ? originBoxVolumeM3 ?? undefined : undefined,
           },
           services: {
             furnitureStorage: state.serviceFurnitureStorage,
@@ -2415,6 +2472,7 @@ function DevisGratuitsV3Content() {
                 destinationLat={state.destinationLat}
                 destinationLon={state.destinationLon}
                 destinationUnknown={state.destinationUnknown}
+                originBoxVolumeM3={state.originBoxVolumeM3}
                 originHousingType={state.originHousingType}
                 originFloor={state.originFloor}
                 originFloorTouched={state.originFloorTouched}

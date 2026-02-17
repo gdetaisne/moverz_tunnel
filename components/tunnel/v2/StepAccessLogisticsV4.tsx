@@ -54,6 +54,7 @@ interface StepAccessLogisticsV4Props {
   destinationLat?: number | null;
   destinationLon?: number | null;
   destinationUnknown?: boolean;
+  originBoxVolumeM3: string;
   destinationHousingType: string;
   destinationFloor: string;
   destinationFloorTouched?: boolean;
@@ -192,17 +193,35 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     const normalized = (t || "").trim().toLowerCase();
     return normalized === "t1" || normalized === "t2" || normalized === "t3" || normalized === "t4" || normalized === "t5";
   };
+  const isBox = (t: string) => (t || "").trim().toLowerCase() === "box";
   const showValidation = !!props.showValidation;
   const isOriginAddressValid = (props.originAddress || "").trim().length >= 5;
   const isDestinationAddressValid = (props.destinationAddress || "").trim().length >= 5;
   const isFirstNameValid = (props.firstName || "").trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((props.email || "").trim());
   const isMovingDateValid = !!props.movingDate && props.movingDate >= minMovingDate;
-  const isDensityValid = props.density !== "";
-  const isKitchenSelectionValid = props.kitchenIncluded !== "";
+  const isOriginBox = isBox(props.originHousingType);
+  const isDestinationBox = isBox(props.destinationHousingType);
+  const parsedOriginBoxVolumeM3 = Number.parseFloat(
+    String(props.originBoxVolumeM3 || "").replace(",", ".")
+  );
+  const isOriginBoxVolumeValid = Number.isFinite(parsedOriginBoxVolumeM3) && parsedOriginBoxVolumeM3 > 0;
+  const isDensityValid = isOriginBox ? true : props.density !== "";
+  const isKitchenSelectionValid = isOriginBox ? true : props.kitchenIncluded !== "";
   const isKitchenValid =
+    isOriginBox ||
     props.kitchenIncluded !== "appliances" ||
     (Number.parseInt(String(props.kitchenApplianceCount || "").trim(), 10) || 0) >= 1;
+  useEffect(() => {
+    if (!isOriginBox) return;
+    if (props.density !== "normal") {
+      props.onFieldChange("density", "normal");
+    }
+    if (props.kitchenIncluded !== "none") {
+      props.onFieldChange("kitchenIncluded", "none");
+      props.onFieldChange("kitchenApplianceCount", "");
+    }
+  }, [isOriginBox, props.density, props.kitchenIncluded, props.onFieldChange]);
   const [touched, setTouched] = useState({
     originAddress: false,
     destinationAddress: false,
@@ -508,6 +527,28 @@ ${EXTRA_NOTES_BLOCK_END}`;
               }}
             >
               Appartement
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setHousingType("box");
+                setFloor("0");
+                setElevator("yes");
+                props.onFieldChange(`${prefix}FloorTouched`, true);
+                props.onFieldChange(`${prefix}ElevatorTouched`, true);
+              }}
+              className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+              style={{
+                background: isBox(housingType)
+                  ? "var(--color-accent)"
+                  : "var(--color-surface)",
+                color: isBox(housingType) ? "#FFFFFF" : "var(--color-text)",
+                border: isBox(housingType)
+                  ? "none"
+                  : "2px solid var(--color-border)",
+              }}
+            >
+              Box
             </button>
           </div>
         </div>
@@ -972,8 +1013,12 @@ ${EXTRA_NOTES_BLOCK_END}`;
       summary: props.movingDate ? props.movingDate : "Date à confirmer",
     },
     volume: {
-      valid: isDensityValid && isKitchenSelectionValid && isKitchenValid,
-      summary: `${props.density ? densityLabelFromId(props.density) : "Densité ?"} · ${
+      valid: isOriginBox ? isOriginBoxVolumeValid : isDensityValid && isKitchenSelectionValid && isKitchenValid,
+      summary: isOriginBox
+        ? isOriginBoxVolumeValid
+          ? `Box départ · ${parsedOriginBoxVolumeM3} m³`
+          : "Box départ · volume à renseigner"
+        : `${props.density ? densityLabelFromId(props.density) : "Densité ?"} · ${
         props.kitchenIncluded === "full"
           ? "Cuisine complète"
           : props.kitchenIncluded === "appliances"
@@ -1480,6 +1525,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
                         <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
                           {isApartment(housingType)
                             ? `Appartement · ${floorLabel(floor)} · ${elevatorLabel(elevator)}`
+                            : isBox(housingType)
+                            ? "Box"
                             : "Maison"}
                         </p>
                       </div>
@@ -1676,6 +1723,11 @@ ${EXTRA_NOTES_BLOCK_END}`;
             >
               Densité de meubles
             </label>
+            {isOriginBox && (
+              <p className="mb-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+                Départ en box : densité fixée automatiquement à "Normal".
+              </p>
+            )}
             {densityAiNote && (
               <p
                 className="mb-2 text-xs"
@@ -1693,11 +1745,12 @@ ${EXTRA_NOTES_BLOCK_END}`;
                 <button
                   key={d.id}
                   type="button"
+                  disabled={isOriginBox}
                   onClick={() => {
                     markTouched("density");
                     props.onFieldChange("density", d.id);
                   }}
-                  className="px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                  className="px-3 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
                   style={{
                     background:
                       props.density === d.id ? "var(--color-accent)" : "var(--color-surface)",
@@ -1711,8 +1764,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
               ))}
               <button
                 type="button"
+                disabled={isOriginBox}
                 onClick={openDensityPhotoFlow}
-                className="col-span-3 sm:col-span-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                className="col-span-3 sm:col-span-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
                 style={{
                   background: "var(--color-surface)",
                   color: "var(--color-text)",
@@ -1738,6 +1792,43 @@ ${EXTRA_NOTES_BLOCK_END}`;
             )}
           </div>
 
+          {isOriginBox && (
+            <div id="v4-box-volume-section">
+              <label
+                htmlFor="v4-origin-box-volume-m3"
+                className="block text-sm font-medium mb-2"
+                style={{ color: "var(--color-text)" }}
+              >
+                Volume exact de la box (m³)
+              </label>
+              <input
+                id="v4-origin-box-volume-m3"
+                type="number"
+                min={1}
+                max={400}
+                step={0.1}
+                value={props.originBoxVolumeM3}
+                onChange={(e) => props.onFieldChange("originBoxVolumeM3", e.target.value)}
+                className="w-full rounded-xl px-4 py-3 text-sm"
+                style={{
+                  background: "var(--color-bg)",
+                  border: `2px solid ${
+                    shouldShowFieldError("density") && !isOriginBoxVolumeValid
+                      ? "var(--color-danger)"
+                      : "var(--color-border)"
+                  }`,
+                  color: "var(--color-text)",
+                }}
+                placeholder="Ex: 18"
+              />
+              {shouldShowFieldError("density") && !isOriginBoxVolumeValid && (
+                <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
+                  Volume exact requis pour un départ en box
+                </p>
+              )}
+            </div>
+          )}
+
           <div id="v4-kitchen-section">
             <label
               className="block text-sm font-medium mb-2"
@@ -1754,11 +1845,12 @@ ${EXTRA_NOTES_BLOCK_END}`;
                 <button
                   key={k.id}
                   type="button"
+                  disabled={isOriginBox}
                   onClick={() => {
                     markTouched("kitchenIncluded");
                     props.onFieldChange("kitchenIncluded", k.id);
                   }}
-                  className="px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                  className="px-3 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
                   style={{
                     background:
                       props.kitchenIncluded === k.id
@@ -1783,7 +1875,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
             )}
           </div>
 
-          {props.kitchenIncluded === "appliances" && (
+          {!isOriginBox && props.kitchenIncluded === "appliances" && (
             <div>
               <label
                 htmlFor="v4-kitchen-count"
@@ -1832,11 +1924,11 @@ ${EXTRA_NOTES_BLOCK_END}`;
         className="order-6 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "missingInfo")}
       >
-          <button
+                    <button
             id="v4-header-missingInfo"
-            type="button"
+                      type="button"
             disabled={isMissingInfoLocked}
-            onClick={() => {
+                      onClick={() => {
               if (isMissingInfoLocked) return;
               setShowMissingInfoPanel((v) => {
                 const next = !v;
@@ -1848,7 +1940,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
             className={`w-full rounded-xl border px-3 text-left flex items-center justify-between gap-3 disabled:cursor-not-allowed ${
               missingInfoValidated && !missingInfoPanelOpen ? "py-1.5" : "py-2"
             }`}
-            style={{
+                      style={{
               background: "var(--color-surface)",
               borderColor: "var(--color-border)",
               opacity: isMissingInfoLocked ? 0.62 : 1,
@@ -1868,7 +1960,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
             <div className="shrink-0 flex items-center gap-2" aria-hidden>
               <span
                 className="text-xs font-semibold"
-                style={{
+                    style={{
                   color: isMissingInfoLocked
                     ? "var(--color-text-muted)"
                     : missingInfoPanelOpen
@@ -1882,7 +1974,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
                 className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
                 style={{ color: "var(--color-text-muted)" }}
               />
-            </div>
+                </div>
           </button>
           {isMissingInfoLocked && (
             <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
@@ -1900,24 +1992,24 @@ ${EXTRA_NOTES_BLOCK_END}`;
                 <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
                   Un accès mal déclaré peut générer 150 à 500 € de frais supplémentaires.
                 </p>
-                <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                      <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
                   ⏱ 1 minute pour sécuriser votre estimation
-                </p>
-              </div>
+                        </p>
+                      </div>
 
-              <input
-                ref={photoInputRef}
-                id="v4-optional-photos"
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={async (e) => {
-                  const files = Array.from(e.target.files || []);
-                  await onPhotoFilesPicked(files);
-                  e.currentTarget.value = "";
-                }}
-              />
+                      <input
+                        ref={photoInputRef}
+                        id="v4-optional-photos"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={async (e) => {
+                          const files = Array.from(e.target.files || []);
+                          await onPhotoFilesPicked(files);
+                          e.currentTarget.value = "";
+                        }}
+                      />
 
               <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible">
                 <div
@@ -2000,9 +2092,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
                     >
                       Rien à déclarer
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => photoInputRef.current?.click()}
+                      <button
+                        type="button"
+                        onClick={() => photoInputRef.current?.click()}
                       disabled={isUploadingPhotos || isAnalyzingPhotos}
                       className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
                       style={{
@@ -2013,23 +2105,24 @@ ${EXTRA_NOTES_BLOCK_END}`;
                     >
                       <Camera className="w-3.5 h-3.5 inline mr-1" />
                       Ajouter une photo (optionnel)
-                    </button>
+                      </button>
                   </div>
                 </div>
 
+                {!isOriginBox && (
                 <div
                   className="order-2 sm:order-2 min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
-                  style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-                >
+                                style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                              >
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
                     2. Contraintes au départ
                   </p>
                   {questions.map((q) => {
                     const active = Boolean(accessSides[q.key]?.origin);
                     return (
-                      <button
+                                <button
                         key={`origin-${q.key}`}
-                        type="button"
+                                  type="button"
                         onClick={() => toggleSide(q.key, "origin")}
                         className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium"
                         style={{
@@ -2039,9 +2132,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
                         }}
                       >
                         {q.label}
-                      </button>
-                    );
-                  })}
+                                </button>
+                            );
+                          })}
                   <div className="mt-auto space-y-2">
                     <button
                       type="button"
@@ -2069,26 +2162,28 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       <Camera className="w-3.5 h-3.5 inline mr-1" />
                       Ajouter une photo (optionnel)
                     </button>
-                  </div>
-                </div>
+                      </div>
+                    </div>
+                )}
 
-                <div
+                    {!isDestinationBox && (
+                    <div
                   className="order-3 sm:order-3 min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
                   style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-                >
-                  <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                    >
+                      <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
                     3. Contraintes à l'arrivée
                   </p>
                   {questions.map((q) => {
                     const active = Boolean(accessSides[q.key]?.destination);
-                    return (
+                            return (
                       <button
                         key={`destination-${q.key}`}
                         type="button"
                         disabled={destinationUnknown}
                         onClick={() => toggleSide(q.key, "destination")}
                         className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-50"
-                        style={{
+                                    style={{
                           background: active ? "var(--color-accent-light)" : "var(--color-bg)",
                           color: "var(--color-text)",
                           border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
@@ -2096,8 +2191,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       >
                         {q.label}
                       </button>
-                    );
-                  })}
+                            );
+                          })}
                   <div className="mt-auto space-y-2">
                     <button
                       type="button"
@@ -2125,8 +2220,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       <Camera className="w-3.5 h-3.5 inline mr-1" />
                       Ajouter une photo (optionnel)
                     </button>
-                  </div>
+                        </div>
                 </div>
+                    )}
               </div>
 
               <div className="space-y-1">
@@ -2147,21 +2243,21 @@ ${EXTRA_NOTES_BLOCK_END}`;
                 />
               </div>
 
-              {photoPanelError && (
-                <p className="text-xs" style={{ color: "var(--color-danger)" }}>
-                  {photoPanelError}
-                </p>
-              )}
-              {activeUploadedPhotos.length > 0 && (
-                <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                      {photoPanelError && (
+                        <p className="text-xs" style={{ color: "var(--color-danger)" }}>
+                          {photoPanelError}
+                        </p>
+                      )}
+                      {activeUploadedPhotos.length > 0 && (
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                   {activeUploadedPhotos.length} photo(s) ajoutée(s) au dossier.
-                </p>
-              )}
-        </div>
+                        </p>
+                      )}
+                    </div>
       </CardV4>
           </AnimatedSection>
-      </div>
-      )}
+                </div>
+              )}
 
       {/* Formule */}
       {props.pricingByFormule && (
