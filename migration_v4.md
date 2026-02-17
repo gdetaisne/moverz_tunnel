@@ -1,5 +1,24 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — API estimate: géocodage aligné tunnel (ville + CP)
+
+**Contexte** :
+- Écart persistant API vs Step 2/3 sur certains trajets malgré les fixes timeout/fallback.
+- Cause identifiée: l'API géocodait principalement par CP seul, ce qui dérive sur CP multi-communes.
+
+**Fix** :
+- `app/api/estimate/route.ts`
+  - ajout de `originCity` / `destinationCity` en query params optionnels,
+  - géocodage BAN renforcé avec `q="<cp> <ville>"` + filtre `postcode=<cp>`,
+  - cache BAN clé incluant `cp|ville` (au lieu de CP seul),
+  - réponse API enrichie avec `input.originCity` / `input.destinationCity`.
+
+**Impact** :
+- Coordonnées API beaucoup plus proches de celles du tunnel Step 1 (autocomplete ville),
+- meilleure cohérence du chiffre API home avec Step 2/Step 3.
+
+---
+
 ## 2026-02-17 — API estimate: priorité à la cohérence Step 2/3 (réduction fallback heuristique)
 
 **Contexte** :

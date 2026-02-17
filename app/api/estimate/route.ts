@@ -39,6 +39,8 @@ const EstimateQuerySchema = z.object({
     .string()
     .min(2, "Code postal destination requis")
     .max(10),
+  originCity: z.string().min(1).max(120).optional(),
+  destinationCity: z.string().min(1).max(120).optional(),
   surface: z.coerce
     .number()
     .int()
@@ -91,9 +93,11 @@ function setInCache<T>(
  * Retourne [lat, lon] ou null si échec.
  */
 async function geocodePostalCode(
-  postalCode: string
+  postalCode: string,
+  city?: string
 ): Promise<[number, number] | null> {
-  const cacheKey = postalCode.trim();
+  const cityPart = (city || "").trim().toLowerCase();
+  const cacheKey = `${postalCode.trim()}|${cityPart}`;
   const cached = getFromCache(geocodeCache, cacheKey);
   if (cached) return cached;
 
@@ -103,9 +107,10 @@ async function geocodePostalCode(
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   const reqPromise = (async () => {
     try {
+      const query = cityPart ? `${postalCode} ${cityPart}` : postalCode;
       const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
-        postalCode
-      )}&type=municipality&limit=1`;
+        query
+      )}&type=municipality&postcode=${encodeURIComponent(postalCode)}&limit=1`;
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), BAN_TIMEOUT_MS);
       const res = await fetch(url, { cache: "no-store", signal: controller.signal });
@@ -231,6 +236,8 @@ export async function GET(req: NextRequest) {
     const {
       originPostalCode,
       destinationPostalCode,
+      originCity,
+      destinationCity,
       surface,
       formule,
       originLat: paramOriginLat,
@@ -251,8 +258,8 @@ export async function GET(req: NextRequest) {
 
     if (needGeoOrigin || needGeoDest) {
       const [geoOrigin, geoDest] = await Promise.all([
-        needGeoOrigin ? geocodePostalCode(originPostalCode) : null,
-        needGeoDest ? geocodePostalCode(destinationPostalCode) : null,
+        needGeoOrigin ? geocodePostalCode(originPostalCode, originCity) : null,
+        needGeoDest ? geocodePostalCode(destinationPostalCode, destinationCity) : null,
       ]);
       if (geoOrigin) {
         oLat = geoOrigin[0];
@@ -304,6 +311,8 @@ export async function GET(req: NextRequest) {
       input: {
         originPostalCode,
         destinationPostalCode,
+        originCity: originCity ?? null,
+        destinationCity: destinationCity ?? null,
         surface,
       },
     });
