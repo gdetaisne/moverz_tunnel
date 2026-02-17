@@ -123,6 +123,22 @@
 
 ---
 
+## 2026-02-17 — Box UX: demande m3 déplacée dans "Trajet & logements"
+
+**Constat** :
+- Le volume exact box était demandé uniquement dans le bloc `Volume & densité`, donc perçu comme "non demandé" juste après le choix Box.
+
+**Fix** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - ajout du champ `Volume exact de la box (m3)` directement dans `Trajet & logements` dès que `Box` est sélectionné au départ,
+  - disponible en desktop et mobile,
+  - conservation de la validation existante (m3 requis pour départ box).
+
+**Impact** :
+- Le besoin m3 est visible immédiatement au moment du choix Box, sans attendre le bloc volume.
+
+---
+
 ## 2026-02-17 — Step 3 précisions: retrait CTA de validation explicite
 
 **Demande** :

@@ -1133,51 +1133,51 @@ ${EXTRA_NOTES_BLOCK_END}`;
         window.clearTimeout(autoAdvanceTimerRef.current);
       }
       autoAdvanceTimerRef.current = window.setTimeout(() => {
-        const currentIndex = sectionOrder.indexOf(newlyValidated);
-        const following = sectionOrder.find((k, idx) => idx > currentIndex && !next[k]);
+      const currentIndex = sectionOrder.indexOf(newlyValidated);
+      const following = sectionOrder.find((k, idx) => idx > currentIndex && !next[k]);
         const shouldOpenMissingInfo =
           showOptionalDetailsBlock && newlyValidated === "contact" && !isMissingInfoLocked;
-        setOpenSections((state) => ({
-          ...state,
-          [newlyValidated]: false,
-          ...(following ? { [following]: true } : {}),
-        }));
+      setOpenSections((state) => ({
+        ...state,
+        [newlyValidated]: false,
+        ...(following ? { [following]: true } : {}),
+      }));
         if (shouldOpenMissingInfo) {
           setShowMissingInfoPanel(true);
           setActiveSection("missingInfo");
         } else if (following) {
-          setActiveSection(following);
-        }
-        if (following) {
-          // Laisse le layout se stabiliser après collapse, puis scrolle de façon contrôlée
-          // (alignement haut) pour éviter les "sauts" trop bas en mobile.
-          window.setTimeout(() => {
-            const target = document.getElementById(`v4-header-${following}`);
-            if (!target) return;
-            const rect = target.getBoundingClientRect();
-            const vh = window.innerHeight || document.documentElement.clientHeight;
-            const isAlreadyWellPositioned = rect.top >= 16 && rect.top <= vh * 0.42;
-            if (isAlreadyWellPositioned) return;
+        setActiveSection(following);
+      }
+      if (following) {
+        // Laisse le layout se stabiliser après collapse, puis scrolle de façon contrôlée
+        // (alignement haut) pour éviter les "sauts" trop bas en mobile.
+        window.setTimeout(() => {
+          const target = document.getElementById(`v4-header-${following}`);
+          if (!target) return;
+          const rect = target.getBoundingClientRect();
+          const vh = window.innerHeight || document.documentElement.clientHeight;
+          const isAlreadyWellPositioned = rect.top >= 16 && rect.top <= vh * 0.42;
+          if (isAlreadyWellPositioned) return;
 
-            // UX guard: ne jamais auto-scroller vers le bas à la validation d'un bloc.
-            // Si la section suivante est plus bas, on laisse l'utilisateur poursuivre naturellement.
-            if (rect.top > 16) return;
+          // UX guard: ne jamais auto-scroller vers le bas à la validation d'un bloc.
+          // Si la section suivante est plus bas, on laisse l'utilisateur poursuivre naturellement.
+          if (rect.top > 16) return;
 
-            const now = Date.now();
-            if (lastAutoScrollRef.current.key === following && now - lastAutoScrollRef.current.at < 900) {
-              return;
-            }
+          const now = Date.now();
+          if (lastAutoScrollRef.current.key === following && now - lastAutoScrollRef.current.at < 900) {
+            return;
+          }
 
-            const desiredTop = Math.max(0, window.scrollY + rect.top - 16);
-            if (Math.abs(desiredTop - window.scrollY) < 24) return;
+          const desiredTop = Math.max(0, window.scrollY + rect.top - 16);
+          if (Math.abs(desiredTop - window.scrollY) < 24) return;
 
-            lastAutoScrollRef.current = { key: following, at: now };
-            window.scrollTo({
-              top: desiredTop,
-              behavior: "smooth",
-            });
-          }, 140);
-        }
+          lastAutoScrollRef.current = { key: following, at: now };
+          window.scrollTo({
+            top: desiredTop,
+            behavior: "smooth",
+          });
+        }, 140);
+      }
         if (shouldOpenMissingInfo) {
           window.setTimeout(() => {
             const target = document.getElementById("v4-header-missingInfo");
@@ -1251,7 +1251,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
       : isOpen
       ? "var(--color-accent)"
       : "var(--color-text-muted)";
-  return (
+    return (
       <button
         id={`v4-header-${key}`}
         type="button"
@@ -1410,14 +1410,14 @@ ${EXTRA_NOTES_BLOCK_END}`;
 
           <div className="space-y-4">
             <div className="hidden sm:grid sm:grid-cols-2 gap-3">
-              {renderSubBlock(
-                "Départ",
+            {renderSubBlock(
+              "Départ",
                 isOriginAddressValid &&
                   isOriginHousingValid &&
                   isOriginFloorValid &&
                   isOriginElevatorValid,
-                <>
-            <AddressAutocomplete
+              <>
+                <AddressAutocomplete
               label={
                 props.originCity
                   ? `Départ · ${props.originCity}${
@@ -1434,16 +1434,16 @@ ${EXTRA_NOTES_BLOCK_END}`;
               contextCountryCode={(props.originCountryCode || "").trim() || undefined}
               validated={props.originLat != null && props.originLon != null}
               errorMessage={
-                      shouldShowFieldError("originAddress") && !isOriginAddressValid
+                shouldShowFieldError("originAddress") && !isOriginAddressValid
                   ? "Adresse de départ requise"
                   : null
               }
               onInputChange={(raw) => {
-                      markTouched("originAddress");
+                markTouched("originAddress");
                 props.onFieldChange("originAddress", raw);
               }}
               onSelect={(s) => {
-                      markTouched("originAddress");
+                markTouched("originAddress");
                 props.onFieldChange("originAddress", s.addressLine ?? s.label ?? "");
                 props.onFieldChange("originCity", s.city ?? "");
                 props.onFieldChange("originPostalCode", s.postalCode ?? "");
@@ -1456,9 +1456,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
               }}
             />
                   {renderHousingTypePicker(
-                    "origin",
-                    props.originHousingType,
-                    (v) => props.onFieldChange("originHousingType", v),
+                  "origin",
+                  props.originHousingType,
+                  (v) => props.onFieldChange("originHousingType", v),
                     (v) => props.onFieldChange("originFloor", v),
                     (v) => props.onFieldChange("originElevator", v)
                   )}
@@ -1469,17 +1469,47 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       (v) => props.onFieldChange("originFloor", v),
                       (v) => props.onFieldChange("originElevator", v)
                     )}
-                </>
-              )}
+                  {isBox(props.originHousingType) && (
+                    <div className="space-y-1.5 rounded-lg border p-2" style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}>
+                      <label
+                        htmlFor="v4-origin-box-volume-m3-trajet"
+                        className="text-xs font-semibold uppercase tracking-wide"
+                        style={{ color: "var(--color-text-muted)" }}
+                      >
+                        Volume exact de la box (m3)
+                      </label>
+                      <input
+                        id="v4-origin-box-volume-m3-trajet"
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={props.originBoxVolumeM3}
+                        onChange={(e) => props.onFieldChange("originBoxVolumeM3", e.target.value)}
+                        placeholder="Ex: 18.5"
+                        className="w-full rounded-lg px-3 py-2 text-sm"
+                        style={{
+                          background: "var(--color-surface)",
+                          border: `1px solid ${
+                            shouldShowFieldError("density") && !isOriginBoxVolumeValid
+                              ? "var(--color-danger)"
+                              : "var(--color-border)"
+                          }`,
+                          color: "var(--color-text)",
+                        }}
+                      />
+                    </div>
+                )}
+              </>
+            )}
 
-              {renderSubBlock(
-                "Arrivée",
+            {renderSubBlock(
+              "Arrivée",
                 isDestinationAddressValid &&
                   isDestinationHousingValid &&
                   isDestinationFloorValid &&
                   isDestinationElevatorValid,
-                <>
-            <AddressAutocomplete
+              <>
+                <AddressAutocomplete
               label={
                 props.destinationCity
                   ? `Arrivée · ${props.destinationCity}${
@@ -1498,16 +1528,16 @@ ${EXTRA_NOTES_BLOCK_END}`;
               contextCountryCode={(props.destinationCountryCode || "").trim() || undefined}
               validated={props.destinationLat != null && props.destinationLon != null}
               errorMessage={
-                      shouldShowFieldError("destinationAddress") && !isDestinationAddressValid
+                shouldShowFieldError("destinationAddress") && !isDestinationAddressValid
                   ? "Adresse d'arrivée requise"
                   : null
               }
               onInputChange={(raw) => {
-                      markTouched("destinationAddress");
+                markTouched("destinationAddress");
                 props.onFieldChange("destinationAddress", raw);
               }}
               onSelect={(s) => {
-                      markTouched("destinationAddress");
+                markTouched("destinationAddress");
                 props.onFieldChange("destinationAddress", s.addressLine ?? s.label ?? "");
                 props.onFieldChange("destinationCity", s.city ?? "");
                 props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
@@ -1520,9 +1550,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
               }}
             />
                   {renderHousingTypePicker(
-                    "destination",
-                    props.destinationHousingType,
-                    (v) => props.onFieldChange("destinationHousingType", v),
+                  "destination",
+                  props.destinationHousingType,
+                  (v) => props.onFieldChange("destinationHousingType", v),
                     (v) => props.onFieldChange("destinationFloor", v),
                     (v) => props.onFieldChange("destinationElevator", v)
                   )}
@@ -1532,9 +1562,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       props.destinationElevator,
                       (v) => props.onFieldChange("destinationFloor", v),
                       (v) => props.onFieldChange("destinationElevator", v)
-                    )}
-                </>
-              )}
+                )}
+              </>
+            )}
           </div>
 
             <div className="sm:hidden space-y-3">
@@ -1571,7 +1601,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
                             ? "Box"
                             : "Maison"}
                         </p>
-                      </div>
+        </div>
                       <span className="text-xs font-semibold" style={{ color: isComplete ? "var(--color-success)" : "var(--color-text-muted)" }}>
                         {isComplete ? "Complet" : isOpen ? "En cours" : "À compléter"}
                       </span>
@@ -1679,6 +1709,36 @@ ${EXTRA_NOTES_BLOCK_END}`;
                                 ? props.onFieldChange("originElevator", v)
                                 : props.onFieldChange("destinationElevator", v)
                           )}
+                        {isOrigin && isBox(housingType) && (
+                          <div className="space-y-1.5 rounded-lg border p-2" style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}>
+                            <label
+                              htmlFor="v4-origin-box-volume-m3-trajet-mobile"
+                              className="text-xs font-semibold uppercase tracking-wide"
+                              style={{ color: "var(--color-text-muted)" }}
+                            >
+                              Volume exact de la box (m3)
+                            </label>
+                            <input
+                              id="v4-origin-box-volume-m3-trajet-mobile"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={props.originBoxVolumeM3}
+                              onChange={(e) => props.onFieldChange("originBoxVolumeM3", e.target.value)}
+                              placeholder="Ex: 18.5"
+                              className="w-full rounded-lg px-3 py-2 text-sm"
+                              style={{
+                                background: "var(--color-surface)",
+                                border: `1px solid ${
+                                  shouldShowFieldError("density") && !isOriginBoxVolumeValid
+                                    ? "var(--color-danger)"
+                                    : "var(--color-border)"
+                                }`,
+                                color: "var(--color-text)",
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     </AnimatedSection>
                   </div>
@@ -1966,11 +2026,11 @@ ${EXTRA_NOTES_BLOCK_END}`;
         className="order-6 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "missingInfo")}
       >
-                    <button
+          <button
             id="v4-header-missingInfo"
-                      type="button"
+            type="button"
             disabled={isMissingInfoLocked}
-                      onClick={() => {
+            onClick={() => {
               if (isMissingInfoLocked) return;
               setShowMissingInfoPanel((v) => {
                 const next = !v;
@@ -1982,7 +2042,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
             className={`w-full rounded-xl border px-3 text-left flex items-center justify-between gap-3 disabled:cursor-not-allowed ${
               missingInfoValidated && !missingInfoPanelOpen ? "py-1.5" : "py-2"
             }`}
-                      style={{
+            style={{
               background: "var(--color-surface)",
               borderColor: "var(--color-border)",
               opacity: isMissingInfoLocked ? 0.62 : 1,
@@ -2000,23 +2060,23 @@ ${EXTRA_NOTES_BLOCK_END}`;
               )}
             </div>
             <div className="shrink-0 flex items-center gap-2" aria-hidden>
-              <span
-                className="text-xs font-semibold"
-                    style={{
-                  color: isMissingInfoLocked
-                    ? "var(--color-text-muted)"
-                    : missingInfoPanelOpen
-                    ? "var(--color-accent)"
-                    : "var(--color-text-muted)",
-                }}
-              >
+                <span
+                  className="text-xs font-semibold"
+                  style={{
+                    color: isMissingInfoLocked
+                      ? "var(--color-text-muted)"
+                      : missingInfoPanelOpen
+                      ? "var(--color-accent)"
+                      : "var(--color-text-muted)",
+                  }}
+                >
                 {isMissingInfoLocked ? "Verrouillé" : missingInfoPanelOpen ? "En cours" : "Pré-rempli"}
-              </span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
-                style={{ color: "var(--color-text-muted)" }}
-              />
-                </div>
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
+                  style={{ color: "var(--color-text-muted)" }}
+                />
+            </div>
           </button>
           {isMissingInfoLocked && (
             <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
@@ -2068,10 +2128,10 @@ ${EXTRA_NOTES_BLOCK_END}`;
                     { key: "objetsFragilesVolumineux", label: "Objets fragiles volumineux" },
                   ].map((item) => {
                     const active = Boolean(objectsState[item.key as keyof ObjectsState]);
-                    return (
-                      <button
+                  return (
+                    <button
                         key={item.key}
-                        type="button"
+                      type="button"
                         onClick={() =>
                           upsertObjectsState({
                             ...objectsState,
@@ -2079,26 +2139,26 @@ ${EXTRA_NOTES_BLOCK_END}`;
                           } as ObjectsState)
                         }
                         className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium"
-                        style={{
+                      style={{
                           background: active ? "var(--color-accent-light)" : "var(--color-bg)",
                           color: "var(--color-text)",
                           border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
                         }}
                       >
                         {item.label}
-                      </button>
-                    );
-                  })}
+                    </button>
+                  );
+                })}
                   <div className="space-y-1">
                     <label className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
                       Meuble(s) très lourd(s)
-                    </label>
+                  </label>
                     <input
                       type="number"
                       min={0}
                       max={20}
                       value={objectsState.meublesTresLourdsCount}
-                      onChange={(e) => {
+                    onChange={(e) => {
                         const next = Number.parseInt(e.target.value || "0", 10);
                         upsertObjectsState({
                           ...objectsState,
@@ -2106,13 +2166,13 @@ ${EXTRA_NOTES_BLOCK_END}`;
                         });
                       }}
                       className="w-full rounded-lg px-3 py-2 text-sm"
-                      style={{
-                        background: "var(--color-bg)",
+                    style={{
+                      background: "var(--color-bg)",
                         border: "1px solid var(--color-border)",
-                        color: "var(--color-text)",
-                      }}
-                    />
-                  </div>
+                      color: "var(--color-text)",
+                    }}
+                  />
+                </div>
                   <div className="mt-auto space-y-2">
                     <button
                       type="button"
@@ -2126,7 +2186,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
                         })
                       }
                       className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
-                      style={{
+                        style={{
                         background: objectsRas ? "var(--color-accent)" : "var(--color-bg)",
                         color: objectsRas ? "#fff" : "var(--color-text)",
                         border: "1px solid var(--color-border)",
@@ -2204,7 +2264,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       <Camera className="w-3.5 h-3.5 inline mr-1" />
                       Ajouter une photo (optionnel)
                     </button>
-                      </div>
+                        </div>
                     </div>
                 )}
 
@@ -2263,8 +2323,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       Ajouter une photo (optionnel)
                     </button>
                         </div>
-                </div>
-                    )}
+                        </div>
+                      )}
               </div>
 
               <div className="space-y-1">
@@ -2512,7 +2572,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
                   setEmailCheckMessage(null);
                   props.onFieldChange("email", e.target.value);
                 }}
-                onBlur={() => markTouched("email")}
+                  onBlur={() => markTouched("email")}
                 className="w-full rounded-xl pl-10 pr-4 py-3 text-sm"
                 style={{
                   background: "var(--color-bg)",
