@@ -399,16 +399,6 @@ ${OBJECTS_BLOCK_END}`;
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
                     1. Contrainte au départ
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => photoInputRef.current?.click()}
-                    disabled={!leadId || isUploadingPhotos}
-                    className="px-2 py-1 rounded-lg text-xs font-semibold disabled:opacity-60"
-                    style={{ border: "1px solid var(--color-border)", color: "var(--color-text)" }}
-                  >
-                    <Camera className="w-3.5 h-3.5 inline mr-1" />
-                    Photo
-                  </button>
                 </div>
                 {questions.map((q) => {
                   const sides = parseAccessSides()[q.key];
@@ -447,6 +437,20 @@ ${OBJECTS_BLOCK_END}`;
                 >
                   RAS
                 </button>
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={!leadId || isUploadingPhotos}
+                  className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
+                  style={{
+                    background: "transparent",
+                    color: "var(--color-text-secondary)",
+                    border: "1px dashed var(--color-border)",
+                  }}
+                >
+                  <Camera className="w-3.5 h-3.5 inline mr-1" />
+                  Ajouter une photo (optionnel)
+                </button>
               </div>
 
               <div
@@ -457,16 +461,6 @@ ${OBJECTS_BLOCK_END}`;
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
                     2. Contrainte à l'arrivée
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => photoInputRef.current?.click()}
-                    disabled={!leadId || isUploadingPhotos}
-                    className="px-2 py-1 rounded-lg text-xs font-semibold disabled:opacity-60"
-                    style={{ border: "1px solid var(--color-border)", color: "var(--color-text)" }}
-                  >
-                    <Camera className="w-3.5 h-3.5 inline mr-1" />
-                    Photo
-                  </button>
                 </div>
                 {questions.map((q) => {
                   const sides = parseAccessSides()[q.key];
@@ -505,6 +499,20 @@ ${OBJECTS_BLOCK_END}`;
                 >
                   RAS
                 </button>
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={!leadId || isUploadingPhotos}
+                  className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
+                  style={{
+                    background: "transparent",
+                    color: "var(--color-text-secondary)",
+                    border: "1px dashed var(--color-border)",
+                  }}
+                >
+                  <Camera className="w-3.5 h-3.5 inline mr-1" />
+                  Ajouter une photo (optionnel)
+                </button>
               </div>
 
               <div
@@ -515,16 +523,6 @@ ${OBJECTS_BLOCK_END}`;
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
                     3. Objets spécifiques
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => photoInputRef.current?.click()}
-                    disabled={!leadId || isUploadingPhotos}
-                    className="px-2 py-1 rounded-lg text-xs font-semibold disabled:opacity-60"
-                    style={{ border: "1px solid var(--color-border)", color: "var(--color-text)" }}
-                  >
-                    <Camera className="w-3.5 h-3.5 inline mr-1" />
-                    Photo
-                  </button>
                 </div>
                 {[
                   { key: "piano", label: "Piano" },
@@ -599,6 +597,20 @@ ${OBJECTS_BLOCK_END}`;
                   }}
                 >
                   RAS
+                </button>
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={!leadId || isUploadingPhotos}
+                  className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
+                  style={{
+                    background: "transparent",
+                    color: "var(--color-text-secondary)",
+                    border: "1px dashed var(--color-border)",
+                  }}
+                >
+                  <Camera className="w-3.5 h-3.5 inline mr-1" />
+                  Ajouter une photo (optionnel)
                 </button>
               </div>
             </div>

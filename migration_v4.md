@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Step 4: CTA photo passé en secondaire
+
+**Demande** :
+- Le bouton photo doit être un CTA secondaire dans les cartes d'enrichissement.
+
+**Implémentation** :
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - retrait du bouton photo en header de carte,
+  - ajout d'un CTA secondaire en bas de chaque carte :
+    - `Ajouter une photo (optionnel)`
+    - style discret (outline/dashed), priorité visuelle réduite.
+
+**Impact** :
+- Hiérarchie d'action plus claire (actions métier d'abord, photo en complément).
+
+---
+
 ## 2026-02-17 — Fix build TypeScript StepContactPhotosV4
 
 **Erreur build** :
