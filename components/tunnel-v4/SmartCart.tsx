@@ -178,7 +178,7 @@ export function SmartCart({
     ? ((priceInRange - displayedEstimate.min) / (displayedEstimate.max - displayedEstimate.min)) * 100
     : 50;
 
-  const itemsCount = items.filter((item) => item.amountEur !== 0).length;
+  const itemsCount = items.length;
   const latestImpact = useMemo(() => {
     if (preferredImpactId) {
       // Si l'utilisateur vient de cliquer un détail sans impact, on l'affiche quand même (0€).
@@ -399,24 +399,26 @@ export function SmartCart({
                       </p>
                     </div>
                   </div>
-                  {item.amountEur !== 0 && (
-                    <span
-                      className="text-sm font-bold tabular-nums flex-shrink-0 inline-flex items-center gap-1"
-                      style={{
-                        color:
-                          item.amountEur > 0
-                            ? "var(--color-danger)"
-                            : "var(--color-success)",
-                      }}
-                    >
-                      {item.amountEur > 0 ? (
-                        <TrendingUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <TrendingDown className="w-3.5 h-3.5" />
-                      )}
-                      <span>{fmtEur(Math.abs(item.amountEur))}</span>
-                    </span>
-                  )}
+                  <span
+                    className="text-sm font-bold tabular-nums flex-shrink-0 inline-flex items-center gap-1"
+                    style={{
+                      color:
+                        item.amountEur > 0
+                          ? "var(--color-danger)"
+                          : item.amountEur < 0
+                          ? "var(--color-success)"
+                          : "var(--color-text-muted)",
+                    }}
+                  >
+                    {item.amountEur > 0 ? (
+                      <TrendingUp className="w-3.5 h-3.5" />
+                    ) : item.amountEur < 0 ? (
+                      <TrendingDown className="w-3.5 h-3.5" />
+                    ) : (
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    )}
+                    <span>{fmtEur(Math.abs(item.amountEur))}</span>
+                  </span>
                 </motion.div>
               ))}
             </AnimatePresence>

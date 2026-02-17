@@ -1399,7 +1399,7 @@ function DevisGratuitsV3Content() {
         : destIsHouse
         ? "maison"
         : `étage ${accessMeta.destinationFloor}`
-    }`;
+    }${originIsBox || destIsBox ? " · box (-20%)" : ""}`;
     const accessConstraintsLabel = [
       effectiveConstraintCounts.narrow_access > 0 ? `étroit×${effectiveConstraintCounts.narrow_access}` : null,
       effectiveConstraintCounts.long_carry > 0 ? `portage×${effectiveConstraintCounts.long_carry}` : null,

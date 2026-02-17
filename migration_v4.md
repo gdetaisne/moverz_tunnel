@@ -84,6 +84,23 @@
 
 ---
 
+## 2026-02-17 — SmartCart Step 3: cohérence des lignes de détails (0€ visibles)
+
+**Constat** :
+- Le compteur `Détails (N)` pouvait être incohérent avec les lignes affichées (lignes à 0€ visibles sans montant).
+
+**Fix** :
+- `components/tunnel-v4/SmartCart.tsx`
+  - alignement du compteur sur les lignes réellement affichées (`items.length`),
+  - affichage explicite des montants `0 €` avec style neutre.
+- `app/devis-gratuits-v3/page.tsx`
+  - libellé `Acces - étages` enrichi avec l'indication `box (-20%)` quand la règle Box s'applique.
+
+**Impact** :
+- Lecture des détails plus claire, plus de confusion sur le nombre de lignes et les impacts nuls.
+
+---
+
 ## 2026-02-17 — Step 3 précisions: retrait CTA de validation explicite
 
 **Demande** :
