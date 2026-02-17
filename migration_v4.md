@@ -9,7 +9,9 @@
 **Fix** :
 - `app/api/estimate/route.ts`
   - ajout de `originCity` / `destinationCity` en query params optionnels,
-  - géocodage BAN renforcé avec `q="<cp> <ville>"` + filtre `postcode=<cp>`,
+  - géocodage BAN aligné `AddressAutocomplete` (city):
+    - `q="<ville>"` (ou CP si ville absente),
+    - filtre `postcode=<cp>`,
   - cache BAN clé incluant `cp|ville` (au lieu de CP seul),
   - réponse API enrichie avec `input.originCity` / `input.destinationCity`.
 

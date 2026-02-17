@@ -107,7 +107,9 @@ async function geocodePostalCode(
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   const reqPromise = (async () => {
     try {
-      const query = cityPart ? `${postalCode} ${cityPart}` : postalCode;
+      // Alignement avec `AddressAutocomplete` (kind=city):
+      // q = ville, filtre postcode séparé.
+      const query = cityPart || postalCode;
       const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
         query
       )}&type=municipality&postcode=${encodeURIComponent(postalCode)}&limit=1`;
