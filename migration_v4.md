@@ -17,6 +17,28 @@
 
 ---
 
+## 2026-02-17 — Analytics: affichage "liste d'items" des calculs
+
+**Demande** :
+- Remplacer la présentation du simulateur analytics par une liste claire des items de calcul.
+
+**Implémentation** :
+- `app/analytics/page.tsx`
+  - remplacement du bloc résultat en cartes par un rendu **item par item**,
+  - ajout des sections:
+    - entrées de simulation,
+    - contraintes/services,
+    - calcul détaillé avant provision,
+    - provision Moverz,
+    - baseline Step 2/Home.
+  - ajout des champs typés manquants dans la réponse de simulation (`prixBase`, `coeffEtage`, `prixAvecFormule`, etc.) pour afficher tous les postes.
+
+**Impact** :
+- Lecture beaucoup plus explicite des calculs et hypothèses appliquées.
+- Aucun impact sur le moteur pricing ou le tunnel client.
+
+---
+
 ## 2026-02-17 — Fix affichage Step 3: bloc enrichissement non visible
 
 **Problème** :

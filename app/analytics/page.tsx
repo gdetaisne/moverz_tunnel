@@ -58,11 +58,15 @@ type PricingSimulatorResponse = {
   };
   detailed: {
     raw: {
+      volumeM3: number;
+      distanceKm: number;
+      prixBase: number;
+      coeffEtage: number;
+      prixAvecFormule: number;
+      servicesTotal: number;
       prixMin: number;
       prixFinal: number;
       prixMax: number;
-      volumeM3: number;
-      servicesTotal: number;
     };
     withProvision: {
       provisionEur: number;
@@ -1493,31 +1497,68 @@ function PricingLab({ password }: { password: string }) {
         </div>
 
         {simulation && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <h3 className="text-sm font-semibold text-gray-300 mb-3">Détaillé (sans provision)</h3>
-              <p className="text-gray-400 text-xs mb-1">Fourchette</p>
-              <p className="text-lg font-semibold">{fmtEur(simulation.detailed.raw.prixMin)} → {fmtEur(simulation.detailed.raw.prixMax)}</p>
-              <p className="text-gray-400 text-xs mt-3">Centre</p>
-              <p className="text-base font-semibold">{fmtEur((simulation.detailed.raw.prixMin + simulation.detailed.raw.prixMax) / 2)}</p>
+          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-6">
+            <h3 className="text-sm font-semibold text-gray-300">Détail des calculs (item par item)</h3>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Entrées de simulation</p>
+                <ul className="space-y-1.5 text-sm">
+                  <li><span className="text-gray-500">Surface:</span> {simulation.input.surfaceM2} m²</li>
+                  <li><span className="text-gray-500">Distance:</span> {simulation.input.distanceKm} km</li>
+                  <li><span className="text-gray-500">Formule:</span> {simulation.input.formule}</li>
+                  <li><span className="text-gray-500">Densité:</span> {simulation.input.density}</li>
+                  <li><span className="text-gray-500">Saison:</span> ×{simulation.input.seasonFactor}</li>
+                  <li><span className="text-gray-500">Étages:</span> départ {simulation.input.originFloor} / arrivée {simulation.input.destinationFloor}</li>
+                  <li><span className="text-gray-500">Ascenseurs:</span> départ {simulation.input.originElevator} / arrivée {simulation.input.destinationElevator}</li>
+                  <li><span className="text-gray-500">Volume extra:</span> {simulation.input.extraVolumeM3} m³</li>
+                </ul>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Contraintes & services</p>
+                <ul className="space-y-1.5 text-sm">
+                  <li><span className="text-gray-500">Portage &gt; 10m:</span> {simulation.input.longCarry ? "oui" : "non"}</li>
+                  <li><span className="text-gray-500">Passage étroit / petit asc.:</span> {simulation.input.tightAccess ? "oui" : "non"}</li>
+                  <li><span className="text-gray-500">Stationnement compliqué:</span> {simulation.input.difficultParking ? "oui" : "non"}</li>
+                  <li><span className="text-gray-500">Monte-meuble:</span> {simulation.input.services.monteMeuble ? "oui" : "non"}</li>
+                  <li><span className="text-gray-500">Piano:</span> {simulation.input.services.piano || "non"}</li>
+                  <li><span className="text-gray-500">Débarras:</span> {simulation.input.services.debarras ? "oui" : "non"}</li>
+                </ul>
+              </div>
             </div>
-            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <h3 className="text-sm font-semibold text-gray-300 mb-3">Détaillé (+ provision)</h3>
-              <p className="text-gray-400 text-xs mb-1">Fourchette</p>
-              <p className="text-lg font-semibold">
-                {fmtEur(simulation.detailed.withProvision.prixMin)} → {fmtEur(simulation.detailed.withProvision.prixMax)}
-              </p>
-              <p className="text-gray-400 text-xs mt-3">Provision</p>
-              <p className="text-base font-semibold text-purple-300">{fmtEur(simulation.detailed.withProvision.provisionEur)}</p>
+
+            <div>
+              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Calcul détaillé (avant provision)</p>
+              <ul className="space-y-1.5 text-sm">
+                <li><span className="text-gray-500">Volume calculé:</span> {simulation.detailed.raw.volumeM3} m³</li>
+                <li><span className="text-gray-500">Prix base (hors services):</span> {fmtEur(simulation.detailed.raw.prixBase)}</li>
+                <li><span className="text-gray-500">Coeff étage appliqué:</span> ×{simulation.detailed.raw.coeffEtage.toFixed(2)}</li>
+                <li><span className="text-gray-500">Prix avec formule/accès:</span> {fmtEur(simulation.detailed.raw.prixAvecFormule)}</li>
+                <li><span className="text-gray-500">Total services:</span> {fmtEur(simulation.detailed.raw.servicesTotal)}</li>
+                <li><span className="text-gray-500">Prix final centre:</span> {fmtEur(simulation.detailed.raw.prixFinal)}</li>
+                <li><span className="text-gray-500">Fourchette:</span> {fmtEur(simulation.detailed.raw.prixMin)} → {fmtEur(simulation.detailed.raw.prixMax)}</li>
+              </ul>
             </div>
-            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <h3 className="text-sm font-semibold text-gray-300 mb-3">Baseline Step 2/Home</h3>
-              <p className="text-gray-400 text-xs mb-1">Fourchette</p>
-              <p className="text-lg font-semibold">{fmtEur(simulation.baseline.prixMin)} → {fmtEur(simulation.baseline.prixMax)}</p>
-              <p className="text-gray-400 text-xs mt-3">Centre avant / après provision</p>
-              <p className="text-base font-semibold">
-                {fmtEur(simulation.baseline.step2CenterBeforeProvisionEur)} → {fmtEur(simulation.baseline.step2CenterAfterProvisionEur)}
-              </p>
+
+            <div>
+              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Provision Moverz (interne)</p>
+              <ul className="space-y-1.5 text-sm">
+                <li><span className="text-gray-500">Centre avant provision:</span> {fmtEur(simulation.detailed.withProvision.centerBeforeProvisionEur)}</li>
+                <li><span className="text-gray-500">Provision appliquée:</span> {fmtEur(simulation.detailed.withProvision.provisionEur)}</li>
+                <li><span className="text-gray-500">Centre après provision:</span> {fmtEur(simulation.detailed.withProvision.centerAfterProvisionEur)}</li>
+                <li><span className="text-gray-500">Fourchette après provision:</span> {fmtEur(simulation.detailed.withProvision.prixMin)} → {fmtEur(simulation.detailed.withProvision.prixMax)}</li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Baseline Step 2 / Home (référence)</p>
+              <ul className="space-y-1.5 text-sm">
+                <li><span className="text-gray-500">Centre avant provision:</span> {fmtEur(simulation.baseline.step2CenterBeforeProvisionEur)}</li>
+                <li><span className="text-gray-500">Provision baseline:</span> {fmtEur(simulation.baseline.moverzFeeProvisionEur)}</li>
+                <li><span className="text-gray-500">Centre après provision:</span> {fmtEur(simulation.baseline.step2CenterAfterProvisionEur)}</li>
+                <li><span className="text-gray-500">Fourchette baseline:</span> {fmtEur(simulation.baseline.prixMin)} → {fmtEur(simulation.baseline.prixMax)}</li>
+              </ul>
             </div>
           </div>
         )}
