@@ -1,5 +1,27 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — API estimate: priorité à la cohérence Step 2/3 (réduction fallback heuristique)
+
+**Contexte** :
+- Cas observés avec montants API home incohérents vs Step 2/Step 3 tunnel.
+- Cause principale: fallback heuristique trop fréquent (timeouts externes) et trop agressif (distance surestimée).
+
+**Fix** :
+- `app/api/estimate/route.ts`
+  - ajustement timeouts:
+    - `BAN_TIMEOUT_MS: 2600`
+    - `OSRM_TIMEOUT_MS: 1200`
+  - heuristique fallback adoucie:
+    - ancienne formule: `40 + diffDept * 40` (cap 1000),
+    - nouvelle formule: `30 + diffDept * 16` (bornée `20..280`).
+
+**Impact** :
+- Moins de bascule sur fallback incohérent,
+- fallback moins explosif quand il arrive,
+- meilleure cohérence des montants API avec les chiffres tunnel Step 2/3.
+
+---
+
 ## 2026-02-17 — Option C perf API estimate: cache TTL + déduplication in-flight (précision OSRM conservée)
 
 **Demande** :

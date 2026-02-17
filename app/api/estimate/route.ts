@@ -23,8 +23,10 @@ import {
  */
 
 const FORMULES = ["ECONOMIQUE", "STANDARD", "PREMIUM"] as const;
-const BAN_TIMEOUT_MS = 1800;
-const OSRM_TIMEOUT_MS = 1800;
+// Timeouts calibrés pour limiter les fallbacks heuristiques incohérents
+// tout en restant sous la fenêtre client (~5s).
+const BAN_TIMEOUT_MS = 2600;
+const OSRM_TIMEOUT_MS = 1200;
 const GEO_CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24h
 const DISTANCE_CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6h
 
@@ -199,13 +201,17 @@ function heuristicDistanceKm(
   originPostalCode: string,
   destinationPostalCode: string
 ): number {
-  if (!originPostalCode || !destinationPostalCode) return 50;
+  // Fallback de dernier recours seulement.
+  // On garde une estimation prudente mais on évite les explosions de distance
+  // (qui créent des écarts majeurs avec Step 2/Step 3).
+  if (!originPostalCode || !destinationPostalCode) return 80;
   if (originPostalCode === destinationPostalCode) return 10;
   const o = parseInt(originPostalCode.slice(0, 2), 10);
   const d = parseInt(destinationPostalCode.slice(0, 2), 10);
-  if (Number.isNaN(o) || Number.isNaN(d)) return 50;
+  if (Number.isNaN(o) || Number.isNaN(d)) return 80;
   const diff = Math.abs(o - d);
-  return Math.min(1000, 40 + diff * 40);
+  const raw = 30 + diff * 16;
+  return Math.min(280, Math.max(20, raw));
 }
 
 // ─── Route Handler ──────────────────────────────────────
