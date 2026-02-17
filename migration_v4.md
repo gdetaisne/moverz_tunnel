@@ -161,6 +161,27 @@
 
 ---
 
+## 2026-02-17 — Documentation unique pricing pour Back Office (`PRICING_SPEC.md`)
+
+**Demande** :
+- Créer un document unique pour permettre au Back Office de comprendre et reproduire le calcul de prix.
+- Préparer une base claire pour justifier un prix ligne par ligne devant les déménageurs.
+
+**Implémentation** :
+- Ajout de `PRICING_SPEC.md` (racine repo) contenant:
+  - sources de vérité code (`calculate.ts`, `scenarios.ts`, `page.tsx`, `estimate/route.ts`),
+  - pipeline complet Step 2 / Step 3,
+  - règle provision Moverz,
+  - règles Box,
+  - add-ons fixes contraintes/objets,
+  - mapping des données nécessaires côté BO,
+  - format de tableau d'explication (`Libellé | Input | m3 | Euros`) pour restitution métier.
+
+**Impact** :
+- Référence unique lisible pour audit, support et explication commerciale des prix.
+
+---
+
 ## 2026-02-17 — Step 3 précisions: retrait CTA de validation explicite
 
 **Demande** :
