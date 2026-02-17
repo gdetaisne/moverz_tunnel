@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Step 3: fermeture auto des blocs adoucie
+
+**Demande** :
+- La fermeture auto des blocs validés était perçue comme trop abrupte/rapide.
+
+**Implémentation** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - ajout d'un délai court (`~380ms`) avant auto-fermeture / auto-ouverture du bloc suivant,
+  - nettoyage du timer pour éviter les transitions concurrentes.
+
+**Impact** :
+- Transition plus naturelle après validation, sans changer l'ordre ni la logique de progression.
+
+---
+
 ## 2026-02-17 — Step 3: masquer Étage/Ascenseur si logement = Maison
 
 **Demande** :

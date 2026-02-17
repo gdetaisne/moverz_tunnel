@@ -876,6 +876,16 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     key: null,
     at: 0,
   });
+  const autoAdvanceTimerRef = useRef<number | null>(null);
+  const AUTO_ADVANCE_DELAY_MS = 380;
+
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimerRef.current) {
+        window.clearTimeout(autoAdvanceTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const prev = prevSectionValidityRef.current;
@@ -889,56 +899,62 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
 
     const newlyValidated = sectionOrder.find((k) => !prev[k] && next[k]);
     if (newlyValidated) {
-      const currentIndex = sectionOrder.indexOf(newlyValidated);
-      const following = sectionOrder.find((k, idx) => idx > currentIndex && !next[k]);
-      const shouldOpenMissingInfo = newlyValidated === "contact" && !isMissingInfoLocked;
-      setOpenSections((state) => ({
-        ...state,
-        [newlyValidated]: false,
-        ...(following ? { [following]: true } : {}),
-      }));
-      if (shouldOpenMissingInfo) {
-        setShowMissingInfoPanel(true);
-        setActiveSection("missingInfo");
-      } else if (following) {
-        setActiveSection(following);
+      if (autoAdvanceTimerRef.current) {
+        window.clearTimeout(autoAdvanceTimerRef.current);
       }
-      if (following) {
-        // Laisse le layout se stabiliser après collapse, puis scrolle de façon contrôlée
-        // (alignement haut) pour éviter les "sauts" trop bas en mobile.
-        window.setTimeout(() => {
-          const target = document.getElementById(`v4-header-${following}`);
-          if (!target) return;
-          const rect = target.getBoundingClientRect();
-          const vh = window.innerHeight || document.documentElement.clientHeight;
-          const isAlreadyWellPositioned = rect.top >= 16 && rect.top <= vh * 0.42;
-          if (isAlreadyWellPositioned) return;
+      autoAdvanceTimerRef.current = window.setTimeout(() => {
+        const currentIndex = sectionOrder.indexOf(newlyValidated);
+        const following = sectionOrder.find((k, idx) => idx > currentIndex && !next[k]);
+        const shouldOpenMissingInfo = newlyValidated === "contact" && !isMissingInfoLocked;
+        setOpenSections((state) => ({
+          ...state,
+          [newlyValidated]: false,
+          ...(following ? { [following]: true } : {}),
+        }));
+        if (shouldOpenMissingInfo) {
+          setShowMissingInfoPanel(true);
+          setActiveSection("missingInfo");
+        } else if (following) {
+          setActiveSection(following);
+        }
+        if (following) {
+          // Laisse le layout se stabiliser après collapse, puis scrolle de façon contrôlée
+          // (alignement haut) pour éviter les "sauts" trop bas en mobile.
+          window.setTimeout(() => {
+            const target = document.getElementById(`v4-header-${following}`);
+            if (!target) return;
+            const rect = target.getBoundingClientRect();
+            const vh = window.innerHeight || document.documentElement.clientHeight;
+            const isAlreadyWellPositioned = rect.top >= 16 && rect.top <= vh * 0.42;
+            if (isAlreadyWellPositioned) return;
 
-          // UX guard: ne jamais auto-scroller vers le bas à la validation d'un bloc.
-          // Si la section suivante est plus bas, on laisse l'utilisateur poursuivre naturellement.
-          if (rect.top > 16) return;
+            // UX guard: ne jamais auto-scroller vers le bas à la validation d'un bloc.
+            // Si la section suivante est plus bas, on laisse l'utilisateur poursuivre naturellement.
+            if (rect.top > 16) return;
 
-          const now = Date.now();
-          if (lastAutoScrollRef.current.key === following && now - lastAutoScrollRef.current.at < 900) {
-            return;
-          }
+            const now = Date.now();
+            if (lastAutoScrollRef.current.key === following && now - lastAutoScrollRef.current.at < 900) {
+              return;
+            }
 
-          const desiredTop = Math.max(0, window.scrollY + rect.top - 16);
-          if (Math.abs(desiredTop - window.scrollY) < 24) return;
+            const desiredTop = Math.max(0, window.scrollY + rect.top - 16);
+            if (Math.abs(desiredTop - window.scrollY) < 24) return;
 
-          lastAutoScrollRef.current = { key: following, at: now };
-          window.scrollTo({
-            top: desiredTop,
-            behavior: "smooth",
-          });
-        }, 140);
-      }
-      if (shouldOpenMissingInfo) {
-        window.setTimeout(() => {
-          const target = document.getElementById("v4-header-missingInfo");
-          target?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        }, 140);
-      }
+            lastAutoScrollRef.current = { key: following, at: now };
+            window.scrollTo({
+              top: desiredTop,
+              behavior: "smooth",
+            });
+          }, 140);
+        }
+        if (shouldOpenMissingInfo) {
+          window.setTimeout(() => {
+            const target = document.getElementById("v4-header-missingInfo");
+            target?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }, 140);
+        }
+        autoAdvanceTimerRef.current = null;
+      }, AUTO_ADVANCE_DELAY_MS);
     }
     prevSectionValidityRef.current = next;
   }, [
