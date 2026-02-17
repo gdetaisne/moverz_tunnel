@@ -38,6 +38,37 @@ type SimulatorPayload = {
     piano: "droit" | "quart" | null;
     debarras: boolean;
   };
+  step3Addons?: {
+    accessSideCounts?: {
+      narrow_access?: number;
+      long_carry?: number;
+      difficult_parking?: number;
+      lift_required?: number;
+    };
+    objects?: {
+      piano?: boolean;
+      coffreFort?: boolean;
+      aquarium?: boolean;
+      objetsFragilesVolumineux?: boolean;
+      meublesTresLourdsCount?: number;
+    };
+  };
+};
+
+type SanitizedAddons = {
+  accessSideCounts: {
+    narrow_access: number;
+    long_carry: number;
+    difficult_parking: number;
+    lift_required: number;
+  };
+  objects: {
+    piano: boolean;
+    coffreFort: boolean;
+    aquarium: boolean;
+    objetsFragilesVolumineux: boolean;
+    meublesTresLourdsCount: number;
+  };
 };
 
 function isAuthorized(req: NextRequest): boolean {
@@ -82,6 +113,26 @@ function sanitizePayload(raw: Partial<SimulatorPayload>): SimulatorPayload {
       monteMeuble: Boolean(raw.services?.monteMeuble),
       piano,
       debarras: Boolean(raw.services?.debarras),
+    },
+  };
+}
+
+function sanitizeAddons(raw: Partial<SimulatorPayload>["step3Addons"]): SanitizedAddons {
+  const toCount = (v: unknown) => Math.max(0, Math.min(2, Math.round(toNumber(v, 0))));
+  const toHeavyCount = (v: unknown) => Math.max(0, Math.min(50, Math.round(toNumber(v, 0))));
+  return {
+    accessSideCounts: {
+      narrow_access: toCount(raw?.accessSideCounts?.narrow_access),
+      long_carry: toCount(raw?.accessSideCounts?.long_carry),
+      difficult_parking: toCount(raw?.accessSideCounts?.difficult_parking),
+      lift_required: toCount(raw?.accessSideCounts?.lift_required),
+    },
+    objects: {
+      piano: Boolean(raw?.objects?.piano),
+      coffreFort: Boolean(raw?.objects?.coffreFort),
+      aquarium: Boolean(raw?.objects?.aquarium),
+      objetsFragilesVolumineux: Boolean(raw?.objects?.objetsFragilesVolumineux),
+      meublesTresLourdsCount: toHeavyCount(raw?.objects?.meublesTresLourdsCount),
     },
   };
 }
@@ -165,6 +216,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as Partial<SimulatorPayload>;
     const input = sanitizePayload(body);
+    const addons = sanitizeAddons(body.step3Addons);
     const raw = calculatePricing({
       surfaceM2: input.surfaceM2,
       housingType: "t2",
@@ -184,6 +236,25 @@ export async function POST(req: NextRequest) {
     });
 
     const detailedWithProvision = withProvision(raw.prixMin, raw.prixFinal, raw.prixMax);
+    const accessFixedAddonEur =
+      addons.accessSideCounts.narrow_access * 70 +
+      addons.accessSideCounts.long_carry * 80 +
+      addons.accessSideCounts.difficult_parking * 100 +
+      addons.accessSideCounts.lift_required * 250;
+    const objectsFixedAddonEur =
+      (addons.objects.piano ? 150 : 0) +
+      (addons.objects.coffreFort ? 150 : 0) +
+      (addons.objects.aquarium ? 100 : 0) +
+      (addons.objects.objetsFragilesVolumineux ? 80 : 0) +
+      addons.objects.meublesTresLourdsCount * 100;
+    const totalFixedAddonsEur = accessFixedAddonEur + objectsFixedAddonEur;
+    const detailedWithProvisionAndAddons = {
+      ...detailedWithProvision,
+      prixMin: detailedWithProvision.prixMin + totalFixedAddonsEur,
+      prixFinal: detailedWithProvision.prixFinal + totalFixedAddonsEur,
+      prixMax: detailedWithProvision.prixMax + totalFixedAddonsEur,
+      centerAfterProvisionEur: detailedWithProvision.centerAfterProvisionEur + totalFixedAddonsEur,
+    };
     const baseline = computeBaselineEstimate({
       surfaceM2: input.surfaceM2,
       distanceKm: input.distanceKm,
@@ -196,6 +267,14 @@ export async function POST(req: NextRequest) {
         detailed: {
           raw,
           withProvision: detailedWithProvision,
+          withProvisionAndAddons: detailedWithProvisionAndAddons,
+          addons: {
+            accessFixedAddonEur,
+            objectsFixedAddonEur,
+            totalFixedAddonsEur,
+            accessSideCounts: addons.accessSideCounts,
+            objects: addons.objects,
+          },
         },
         baseline,
       },

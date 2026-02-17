@@ -106,6 +106,68 @@
 
 ---
 
+## 2026-02-17 — Analytics Step 2: ligne explicite de décote restaurée
+
+**Demande** :
+- La décote (20%) n'était plus visible clairement dans la nouvelle présentation.
+
+**Implémentation** :
+- `app/analytics/page.tsx`
+  - ajout d'une ligne dédiée `Décote` dans le bloc Step 2 (`Champ | Règle | Input simulation`),
+  - affichage explicite de la valeur active (read-only) pour éviter l'ambiguïté.
+
+**Impact** :
+- La décote est à nouveau immédiatement visible dans la section Step 2.
+
+---
+
+## 2026-02-17 — Analytics Step 2: provision commission Moverz rendue explicite
+
+**Demande** :
+- Rendre visible la provision commission Moverz dans la grille Step 2.
+
+**Implémentation** :
+- `app/analytics/page.tsx`
+  - ajout d'une ligne dédiée `Provision commission Moverz` dans `Champ | Règle | Input simulation`,
+  - affichage de la règle (`MAX(100€; 10% du centre estimé)`) et de la valeur calculée après simulation Step 2.
+
+**Impact** :
+- La provision n'est plus implicite: elle est lisible et quantifiée dans Step 2.
+
+---
+
+## 2026-02-17 — Analytics: couverture exhaustive Step 2 / Step 3 (deepsearch calculs)
+
+**Demande** :
+- Deepsearch complet des calculs et table exhaustive Step 2/Step 3.
+
+**Audit réalisé** :
+- Sources de vérité confirmées:
+  - `lib/pricing/calculate.ts` (moteur commun),
+  - `lib/pricing/scenarios.ts` (baseline Step 2 + provision),
+  - `app/devis-gratuits-v3/page.tsx` (`v2PricingCart` Step 3 + add-ons fixes),
+  - `app/api/estimate/route.ts` (home alignée Step 2).
+
+**Implémentation** :
+- `app/api/analytics/pricing-simulator/route.ts`
+  - extension du payload avec `step3Addons`:
+    - contraintes par côté (`0..2`) : `narrow_access`, `long_carry`, `difficult_parking`, `lift_required`,
+    - objets : `piano`, `coffreFort`, `aquarium`, `objetsFragilesVolumineux`, `meublesTresLourdsCount`,
+  - calcul et retour des montants add-ons:
+    - `accessFixedAddonEur`,
+    - `objectsFixedAddonEur`,
+    - `totalFixedAddonsEur`,
+    - `withProvisionAndAddons` (final Step 3 simulé).
+- `app/analytics/page.tsx`
+  - ajout des lignes d'inputs Step 3 pour contraintes par côté + objets spécifiques,
+  - affichage séparé des montants add-ons accès/objets dans le résultat Step 3 final.
+
+**Impact** :
+- La simulation Analytics couvre désormais moteur + provision + add-ons fixes Step 3.
+- La table est alignée avec les calculs effectivement appliqués dans le tunnel.
+
+---
+
 ## 2026-02-17 — Fix affichage Step 3: bloc enrichissement non visible
 
 **Problème** :

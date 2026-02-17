@@ -91,6 +91,32 @@ type PricingSimulatorResponse = {
       prixFinal: number;
       prixMax: number;
     };
+    withProvisionAndAddons: {
+      provisionEur: number;
+      centerBeforeProvisionEur: number;
+      centerAfterProvisionEur: number;
+      prixMin: number;
+      prixFinal: number;
+      prixMax: number;
+    };
+    addons: {
+      accessFixedAddonEur: number;
+      objectsFixedAddonEur: number;
+      totalFixedAddonsEur: number;
+      accessSideCounts: {
+        narrow_access: number;
+        long_carry: number;
+        difficult_parking: number;
+        lift_required: number;
+      };
+      objects: {
+        piano: boolean;
+        coffreFort: boolean;
+        aquarium: boolean;
+        objetsFragilesVolumineux: boolean;
+        meublesTresLourdsCount: number;
+      };
+    };
   };
   baseline: {
     prixMin: number;
@@ -1218,6 +1244,15 @@ function PricingLab({ password }: { password: string }) {
     monteMeuble: false,
     piano: "none",
     debarras: false,
+    narrowAccessSides: 0,
+    longCarrySides: 0,
+    difficultParkingSides: 0,
+    liftRequiredSides: 0,
+    objectPiano: false,
+    objectCoffreFort: false,
+    objectAquarium: false,
+    objectFragile: false,
+    objectHeavyCount: 0,
   });
 
   const fmtEur = (n: number) =>
@@ -1339,6 +1374,21 @@ function PricingLab({ password }: { password: string }) {
           piano: step3Form.piano === "none" ? null : step3Form.piano,
           debarras: step3Form.debarras,
         },
+        step3Addons: {
+          accessSideCounts: {
+            narrow_access: step3Form.narrowAccessSides,
+            long_carry: step3Form.longCarrySides,
+            difficult_parking: step3Form.difficultParkingSides,
+            lift_required: step3Form.liftRequiredSides,
+          },
+          objects: {
+            piano: step3Form.objectPiano,
+            coffreFort: step3Form.objectCoffreFort,
+            aquarium: step3Form.objectAquarium,
+            objetsFragilesVolumineux: step3Form.objectFragile,
+            meublesTresLourdsCount: step3Form.objectHeavyCount,
+          },
+        },
       };
       const json = await postSimulation(payload);
       if (json) setStep3Simulation(json);
@@ -1404,6 +1454,26 @@ function PricingLab({ password }: { password: string }) {
               <div>Buffer distance</div>
               <div className="text-gray-400">Par défaut: +{hypotheses.baselineDistanceBufferKm} km</div>
               <input type="number" value={step2Form.bufferKm} onChange={(e) => setStep2Form((p) => ({ ...p, bufferKm: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+              <div>Décote</div>
+              <div className="text-gray-400">Appliquée au calcul base (constante pricing)</div>
+              <input
+                type="text"
+                value={fmtPct(hypotheses.decote)}
+                readOnly
+                className="bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-300"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+              <div>Provision commission Moverz</div>
+              <div className="text-gray-400">{hypotheses.moverzFeeProvisionRule}</div>
+              <input
+                type="text"
+                value={step2Simulation ? fmtEur(step2Simulation.baseline.moverzFeeProvisionEur) : "Simuler Step 2"}
+                readOnly
+                className="bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-300"
+              />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
               <div>Formule</div>
@@ -1514,6 +1584,16 @@ function PricingLab({ password }: { password: string }) {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Contraintes fixes par côté</div>
+            <div className="text-gray-400">Étroit 70€ · Portage 80€ · Parking 100€ · Monte-meuble 250€</div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+              <input type="number" min={0} max={2} value={step3Form.narrowAccessSides} onChange={(e) => setStep3Form((p) => ({ ...p, narrowAccessSides: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs" placeholder="Étroit côtés" />
+              <input type="number" min={0} max={2} value={step3Form.longCarrySides} onChange={(e) => setStep3Form((p) => ({ ...p, longCarrySides: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs" placeholder="Portage côtés" />
+              <input type="number" min={0} max={2} value={step3Form.difficultParkingSides} onChange={(e) => setStep3Form((p) => ({ ...p, difficultParkingSides: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs" placeholder="Parking côtés" />
+              <input type="number" min={0} max={2} value={step3Form.liftRequiredSides} onChange={(e) => setStep3Form((p) => ({ ...p, liftRequiredSides: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs" placeholder="Monte côtés" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
             <div>Services</div>
             <div className="text-gray-400">Monte-meuble / Piano / Débarras</div>
             <div className="grid grid-cols-3 gap-2">
@@ -1524,6 +1604,17 @@ function PricingLab({ password }: { password: string }) {
                 <option value="quart">quart</option>
               </select>
               <label className="text-xs"><input type="checkbox" checked={step3Form.debarras} onChange={(e) => setStep3Form((p) => ({ ...p, debarras: e.target.checked }))} /> Débarras</label>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Objets spécifiques (coûts fixes)</div>
+            <div className="text-gray-400">Piano 150€ · Coffre 150€ · Aquarium 100€ · Fragile 80€ · Meuble lourd 100€/u</div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <label><input type="checkbox" checked={step3Form.objectPiano} onChange={(e) => setStep3Form((p) => ({ ...p, objectPiano: e.target.checked }))} /> Piano</label>
+              <label><input type="checkbox" checked={step3Form.objectCoffreFort} onChange={(e) => setStep3Form((p) => ({ ...p, objectCoffreFort: e.target.checked }))} /> Coffre</label>
+              <label><input type="checkbox" checked={step3Form.objectAquarium} onChange={(e) => setStep3Form((p) => ({ ...p, objectAquarium: e.target.checked }))} /> Aquarium</label>
+              <label><input type="checkbox" checked={step3Form.objectFragile} onChange={(e) => setStep3Form((p) => ({ ...p, objectFragile: e.target.checked }))} /> Fragile vol.</label>
+              <input type="number" min={0} value={step3Form.objectHeavyCount} onChange={(e) => setStep3Form((p) => ({ ...p, objectHeavyCount: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs col-span-2" placeholder="Meubles très lourds (u)" />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
@@ -1546,11 +1637,134 @@ function PricingLab({ password }: { password: string }) {
             <div className="mt-2 rounded-xl border border-gray-800 bg-gray-950/50 p-4 text-sm space-y-1">
               <p><span className="text-gray-500">Prix brut (centre):</span> {fmtEur(step3Simulation.detailed.raw.prixFinal)}</p>
               <p><span className="text-gray-500">Provision:</span> {fmtEur(step3Simulation.detailed.withProvision.provisionEur)}</p>
-              <p><span className="text-gray-500">Centre après provision:</span> {fmtEur(step3Simulation.detailed.withProvision.centerAfterProvisionEur)}</p>
-              <p><span className="text-gray-500">Fourchette Step 3:</span> {fmtEur(step3Simulation.detailed.withProvision.prixMin)} → {fmtEur(step3Simulation.detailed.withProvision.prixMax)}</p>
+              <p><span className="text-gray-500">Add-ons fixes accès:</span> {fmtEur(step3Simulation.detailed.addons.accessFixedAddonEur)}</p>
+              <p><span className="text-gray-500">Add-ons fixes objets:</span> {fmtEur(step3Simulation.detailed.addons.objectsFixedAddonEur)}</p>
+              <p><span className="text-gray-500">Centre final Step 3:</span> {fmtEur(step3Simulation.detailed.withProvisionAndAddons.centerAfterProvisionEur)}</p>
+              <p><span className="text-gray-500">Fourchette Step 3:</span> {fmtEur(step3Simulation.detailed.withProvisionAndAddons.prixMin)} → {fmtEur(step3Simulation.detailed.withProvisionAndAddons.prixMax)}</p>
               <p><span className="text-gray-500">Comparatif baseline Step 2:</span> {fmtEur(step3Simulation.baseline.step2CenterAfterProvisionEur)}</p>
             </div>
           )}
+        </div>
+
+        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-4">
+          <h2 className="text-base font-semibold text-white">3) Audit tableur exhaustif</h2>
+          <p className="text-xs text-gray-500">Colonnes fixes: Facteur · Source code · Formule · Input simulation · Valeur appliquée · Impact €</p>
+
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-emerald-300">Step 2</p>
+            <div className="hidden lg:grid lg:grid-cols-6 gap-2 text-[11px] uppercase tracking-wide text-gray-500">
+              <div>Facteur</div><div>Source code</div><div>Formule</div><div>Input simulation</div><div>Valeur appliquée</div><div>Impact €</div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs border-t border-gray-800 pt-2">
+              <div>Surface m²</div>
+              <div className="text-gray-400">`lib/pricing/calculate.ts`</div>
+              <div className="text-gray-400">Volume base = coeff logement × surface</div>
+              <input type="number" value={step2Form.surfaceM2} onChange={(e) => setStep2Form((p) => ({ ...p, surfaceM2: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5" />
+              <div>{step2Form.surfaceM2} m²</div>
+              <div>—</div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
+              <div>Distance + buffer</div>
+              <div className="text-gray-400">`lib/pricing/scenarios.ts`</div>
+              <div className="text-gray-400">distanceStep2 = distanceVille + buffer</div>
+              <div className="grid grid-cols-2 gap-1">
+                <input type="number" value={step2Form.cityDistanceKm} onChange={(e) => setStep2Form((p) => ({ ...p, cityDistanceKm: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5" placeholder="km ville" />
+                <input type="number" value={step2Form.bufferKm} onChange={(e) => setStep2Form((p) => ({ ...p, bufferKm: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5" placeholder="buffer" />
+              </div>
+              <div>{Math.max(0, step2Form.cityDistanceKm + step2Form.bufferKm)} km</div>
+              <div>—</div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
+              <div>Densité préset</div>
+              <div className="text-gray-400">`lib/pricing/scenarios.ts`</div>
+              <div className="text-gray-400">Step2 default: dense</div>
+              <select value={step2Form.density} onChange={(e) => setStep2Form((p) => ({ ...p, density: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5">
+                <option value="light">light</option><option value="normal">normal</option><option value="dense">dense</option>
+              </select>
+              <div>{step2Form.density}</div>
+              <div>—</div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
+              <div>Décote</div>
+              <div className="text-gray-400">`lib/pricing/constants.ts`</div>
+              <div className="text-gray-400">DECOTE factor sur rate/m³ + distance</div>
+              <input readOnly value={fmtPct(hypotheses?.decote ?? -0.2)} className="bg-gray-800/60 border border-gray-700 rounded px-2 py-1.5 text-gray-300" />
+              <div>{fmtPct(hypotheses?.decote ?? -0.2)}</div>
+              <div>—</div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
+              <div>Provision Moverz</div>
+              <div className="text-gray-400">`lib/pricing/scenarios.ts`</div>
+              <div className="text-gray-400">MAX(100€; 10% du centre)</div>
+              <input readOnly value={step2Simulation ? fmtEur(step2Simulation.baseline.moverzFeeProvisionEur) : "Simuler Step 2"} className="bg-gray-800/60 border border-gray-700 rounded px-2 py-1.5 text-gray-300" />
+              <div>{step2Simulation ? fmtEur(step2Simulation.baseline.moverzFeeProvisionEur) : "—"}</div>
+              <div>{step2Simulation ? fmtEur(step2Simulation.baseline.moverzFeeProvisionEur) : "—"}</div>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-2 border-t border-gray-800">
+            <p className="text-sm font-semibold text-purple-300">Step 3</p>
+            <div className="hidden lg:grid lg:grid-cols-6 gap-2 text-[11px] uppercase tracking-wide text-gray-500">
+              <div>Facteur</div><div>Source code</div><div>Formule</div><div>Input simulation</div><div>Valeur appliquée</div><div>Impact €</div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs border-t border-gray-800 pt-2">
+              <div>Date/saison</div>
+              <div className="text-gray-400">`app/devis-gratuits-v3/page.tsx`</div>
+              <div className="text-gray-400">seasonFactor = saison × urgence</div>
+              <input type="number" step="0.01" value={step3Form.seasonFactor} onChange={(e) => setStep3Form((p) => ({ ...p, seasonFactor: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5" />
+              <div>×{step3Form.seasonFactor}</div>
+              <div>—</div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
+              <div>Majos accès (%)</div>
+              <div className="text-gray-400">`lib/pricing/calculate.ts`</div>
+              <div className="text-gray-400">(portage ?1.05)×(étroit ?1.05)×(parking ?1.03)</div>
+              <div className="flex gap-2">
+                <label><input type="checkbox" checked={step3Form.longCarry} onChange={(e) => setStep3Form((p) => ({ ...p, longCarry: e.target.checked }))} /> P</label>
+                <label><input type="checkbox" checked={step3Form.tightAccess} onChange={(e) => setStep3Form((p) => ({ ...p, tightAccess: e.target.checked }))} /> E</label>
+                <label><input type="checkbox" checked={step3Form.difficultParking} onChange={(e) => setStep3Form((p) => ({ ...p, difficultParking: e.target.checked }))} /> S</label>
+              </div>
+              <div>{step3Form.longCarry || step3Form.tightAccess || step3Form.difficultParking ? "actif" : "off"}</div>
+              <div>inclu centre brut</div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
+              <div>Add-ons contraintes fixes</div>
+              <div className="text-gray-400">`app/devis-gratuits-v3/page.tsx`</div>
+              <div className="text-gray-400">70/80/100/250€ par côté</div>
+              <div className="grid grid-cols-4 gap-1">
+                <input type="number" min={0} max={2} value={step3Form.narrowAccessSides} onChange={(e) => setStep3Form((p) => ({ ...p, narrowAccessSides: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded px-1.5 py-1" />
+                <input type="number" min={0} max={2} value={step3Form.longCarrySides} onChange={(e) => setStep3Form((p) => ({ ...p, longCarrySides: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded px-1.5 py-1" />
+                <input type="number" min={0} max={2} value={step3Form.difficultParkingSides} onChange={(e) => setStep3Form((p) => ({ ...p, difficultParkingSides: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded px-1.5 py-1" />
+                <input type="number" min={0} max={2} value={step3Form.liftRequiredSides} onChange={(e) => setStep3Form((p) => ({ ...p, liftRequiredSides: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded px-1.5 py-1" />
+              </div>
+              <div>{step3Simulation ? fmtEur(step3Simulation.detailed.addons.accessFixedAddonEur) : "—"}</div>
+              <div>{step3Simulation ? fmtEur(step3Simulation.detailed.addons.accessFixedAddonEur) : "—"}</div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
+              <div>Add-ons objets fixes</div>
+              <div className="text-gray-400">`app/devis-gratuits-v3/page.tsx`</div>
+              <div className="text-gray-400">150/150/100/80€ + 100€/u</div>
+              <div className="grid grid-cols-2 gap-1">
+                <label><input type="checkbox" checked={step3Form.objectPiano} onChange={(e) => setStep3Form((p) => ({ ...p, objectPiano: e.target.checked }))} /> Piano</label>
+                <label><input type="checkbox" checked={step3Form.objectCoffreFort} onChange={(e) => setStep3Form((p) => ({ ...p, objectCoffreFort: e.target.checked }))} /> Coffre</label>
+                <label><input type="checkbox" checked={step3Form.objectAquarium} onChange={(e) => setStep3Form((p) => ({ ...p, objectAquarium: e.target.checked }))} /> Aquarium</label>
+                <label><input type="checkbox" checked={step3Form.objectFragile} onChange={(e) => setStep3Form((p) => ({ ...p, objectFragile: e.target.checked }))} /> Fragile</label>
+                <input type="number" min={0} value={step3Form.objectHeavyCount} onChange={(e) => setStep3Form((p) => ({ ...p, objectHeavyCount: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded px-1.5 py-1 col-span-2" placeholder="lourds u" />
+              </div>
+              <div>{step3Simulation ? fmtEur(step3Simulation.detailed.addons.objectsFixedAddonEur) : "—"}</div>
+              <div>{step3Simulation ? fmtEur(step3Simulation.detailed.addons.objectsFixedAddonEur) : "—"}</div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-center text-xs">
+              <div>Provision Moverz</div>
+              <div className="text-gray-400">`lib/pricing/scenarios.ts`</div>
+              <div className="text-gray-400">MAX(100€; 10% du centre)</div>
+              <input readOnly value={step3Simulation ? fmtEur(step3Simulation.detailed.withProvision.provisionEur) : "Simuler Step 3"} className="bg-gray-800/60 border border-gray-700 rounded px-2 py-1.5 text-gray-300" />
+              <div>{step3Simulation ? fmtEur(step3Simulation.detailed.withProvision.provisionEur) : "—"}</div>
+              <div>{step3Simulation ? fmtEur(step3Simulation.detailed.withProvision.provisionEur) : "—"}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
