@@ -22,6 +22,67 @@ function formatPct(n: number): string {
 
 const STEP_ORDER = ["ENTRY", "PROJECT", "RECAP", "CONTACT", "THANK_YOU"];
 
+type PricingSimulatorHypotheses = {
+  displayCenterBias: number;
+  baselineDistanceBufferKm: number;
+  decote: number;
+  prixMinSocle: number;
+  densityCoefficients: Record<string, number>;
+  housingCoefficients: Record<string, number>;
+  formuleMultipliersReference: Record<string, number>;
+  servicesPricesEur: Record<string, number>;
+  moverzFeeProvisionRule: string;
+  accessRules: Record<string, unknown>;
+};
+
+type PricingSimulatorResponse = {
+  input: {
+    surfaceM2: number;
+    distanceKm: number;
+    formule: string;
+    density: string;
+    seasonFactor: number;
+    originFloor: number;
+    originElevator: string;
+    destinationFloor: number;
+    destinationElevator: string;
+    longCarry: boolean;
+    tightAccess: boolean;
+    difficultParking: boolean;
+    extraVolumeM3: number;
+    services: {
+      monteMeuble: boolean;
+      piano: "droit" | "quart" | null;
+      debarras: boolean;
+    };
+  };
+  detailed: {
+    raw: {
+      prixMin: number;
+      prixFinal: number;
+      prixMax: number;
+      volumeM3: number;
+      servicesTotal: number;
+    };
+    withProvision: {
+      provisionEur: number;
+      centerBeforeProvisionEur: number;
+      centerAfterProvisionEur: number;
+      prixMin: number;
+      prixFinal: number;
+      prixMax: number;
+    };
+  };
+  baseline: {
+    prixMin: number;
+    prixFinal: number;
+    prixMax: number;
+    moverzFeeProvisionEur: number;
+    step2CenterBeforeProvisionEur: number;
+    step2CenterAfterProvisionEur: number;
+  };
+};
+
 // Block-level funnel order (detailed tunnel flow)
 const BLOCK_ORDER = [
   "cities_surface",
@@ -1106,13 +1167,372 @@ function Journal({ password }: { password: string }) {
   );
 }
 
+function PricingLab({ password }: { password: string }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hypotheses, setHypotheses] = useState<PricingSimulatorHypotheses | null>(null);
+  const [simulating, setSimulating] = useState(false);
+  const [simulation, setSimulation] = useState<PricingSimulatorResponse | null>(null);
+  const [form, setForm] = useState({
+    surfaceM2: 60,
+    distanceKm: 120,
+    formule: "STANDARD",
+    density: "dense",
+    seasonFactor: 1,
+    originFloor: 0,
+    originElevator: "yes",
+    destinationFloor: 0,
+    destinationElevator: "yes",
+    longCarry: false,
+    tightAccess: false,
+    difficultParking: false,
+    extraVolumeM3: 1.8,
+    monteMeuble: false,
+    piano: "none",
+    debarras: false,
+  });
+
+  const fmtEur = (n: number) =>
+    new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 0,
+    }).format(n || 0);
+
+  const fmtPct = (n: number) => `${Math.round((n || 0) * 100)}%`;
+
+  const fetchHypotheses = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/analytics/pricing-simulator?password=${encodeURIComponent(password)}`
+      );
+      if (res.status === 401) {
+        setError("Mot de passe incorrect");
+        return;
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || "Erreur serveur");
+        return;
+      }
+      const json = await res.json();
+      setHypotheses(json.hypotheses ?? null);
+    } catch {
+      setError("Erreur réseau");
+    } finally {
+      setLoading(false);
+    }
+  }, [password]);
+
+  const runSimulation = useCallback(async () => {
+    setSimulating(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/analytics/pricing-simulator?password=${encodeURIComponent(password)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            surfaceM2: form.surfaceM2,
+            distanceKm: form.distanceKm,
+            formule: form.formule,
+            density: form.density,
+            seasonFactor: form.seasonFactor,
+            originFloor: form.originFloor,
+            originElevator: form.originElevator,
+            destinationFloor: form.destinationFloor,
+            destinationElevator: form.destinationElevator,
+            longCarry: form.longCarry,
+            tightAccess: form.tightAccess,
+            difficultParking: form.difficultParking,
+            extraVolumeM3: form.extraVolumeM3,
+            services: {
+              monteMeuble: form.monteMeuble,
+              piano: form.piano === "none" ? null : form.piano,
+              debarras: form.debarras,
+            },
+          }),
+        }
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || "Simulation impossible");
+        return;
+      }
+      const json = (await res.json()) as PricingSimulatorResponse;
+      setSimulation(json);
+    } catch {
+      setError("Erreur réseau");
+    } finally {
+      setSimulating(false);
+    }
+  }, [password, form]);
+
+  useEffect(() => {
+    fetchHypotheses();
+  }, [fetchHypotheses]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+        <div className="text-gray-400 text-lg animate-pulse">Chargement des hypothèses…</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      <div className="border-b border-gray-800 px-4 sm:px-8 py-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold">🧠 Hypothèses & Simulation</h1>
+            <p className="text-gray-400 text-sm">Vue claire des règles pricing + test de scénarios</p>
+          </div>
+          <button
+            onClick={fetchHypotheses}
+            className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition"
+          >
+            ↻ Refresh
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 space-y-6">
+        {error && <div className="bg-red-900/30 text-red-300 p-4 rounded-xl">{error}</div>}
+
+        {hypotheses && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h2 className="text-sm font-semibold text-gray-300 mb-4">Hypothèses globales</h2>
+              <div className="space-y-2 text-sm">
+                <p><span className="text-gray-500">Centre affiché :</span> <span className="font-semibold">{fmtPct(hypotheses.displayCenterBias)}</span></p>
+                <p><span className="text-gray-500">Buffer distance baseline :</span> <span className="font-semibold">+{hypotheses.baselineDistanceBufferKm} km</span></p>
+                <p><span className="text-gray-500">Décote :</span> <span className="font-semibold">{fmtPct(hypotheses.decote)}</span></p>
+                <p><span className="text-gray-500">Socle minimum :</span> <span className="font-semibold">{fmtEur(hypotheses.prixMinSocle)}</span></p>
+                <p><span className="text-gray-500">Provision Moverz :</span> <span className="font-semibold">{hypotheses.moverzFeeProvisionRule}</span></p>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h2 className="text-sm font-semibold text-gray-300 mb-4">Majos accès</h2>
+              <div className="space-y-2 text-sm">
+                <p><span className="text-gray-500">Portage &gt; 10m :</span> <span className="font-semibold">+5%</span></p>
+                <p><span className="text-gray-500">Petit ascenseur / passage étroit :</span> <span className="font-semibold">+5%</span></p>
+                <p><span className="text-gray-500">Stationnement compliqué :</span> <span className="font-semibold">+3%</span></p>
+                <p><span className="text-gray-500">Sans ascenseur :</span> <span className="font-semibold">1er +5% · 2e +10% · 3e+ +15%</span></p>
+                <p><span className="text-gray-500">Petit ascenseur :</span> <span className="font-semibold">1er +2% · 2e +6% · 3e+ +10%</span></p>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h2 className="text-sm font-semibold text-gray-300 mb-4">Densité</h2>
+              <DataTable
+                headers={["Profil", "Coefficient"]}
+                rows={Object.entries(hypotheses.densityCoefficients).map(([k, v]) => [k, v])}
+              />
+            </div>
+
+            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h2 className="text-sm font-semibold text-gray-300 mb-4">Services fixes</h2>
+              <DataTable
+                headers={["Service", "Montant"]}
+                rows={Object.entries(hypotheses.servicesPricesEur).map(([k, v]) => [k, fmtEur(v)])}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-5">
+          <h2 className="text-sm font-semibold text-gray-300">Simulateur</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <input
+              type="number"
+              value={form.surfaceM2}
+              onChange={(e) => setForm((prev) => ({ ...prev, surfaceM2: Number(e.target.value) }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              placeholder="Surface m²"
+            />
+            <input
+              type="number"
+              value={form.distanceKm}
+              onChange={(e) => setForm((prev) => ({ ...prev, distanceKm: Number(e.target.value) }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              placeholder="Distance km"
+            />
+            <input
+              type="number"
+              step="0.01"
+              value={form.seasonFactor}
+              onChange={(e) => setForm((prev) => ({ ...prev, seasonFactor: Number(e.target.value) }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              placeholder="Facteur saison"
+            />
+            <input
+              type="number"
+              step="0.1"
+              value={form.extraVolumeM3}
+              onChange={(e) => setForm((prev) => ({ ...prev, extraVolumeM3: Number(e.target.value) }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              placeholder="Volume extra m³"
+            />
+
+            <select
+              value={form.formule}
+              onChange={(e) => setForm((prev) => ({ ...prev, formule: e.target.value }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="ECONOMIQUE">Économique</option>
+              <option value="STANDARD">Standard</option>
+              <option value="PREMIUM">Premium</option>
+            </select>
+            <select
+              value={form.density}
+              onChange={(e) => setForm((prev) => ({ ...prev, density: e.target.value }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="light">Peu meublé</option>
+              <option value="normal">Normal</option>
+              <option value="dense">Très meublé</option>
+            </select>
+            <select
+              value={form.originElevator}
+              onChange={(e) => setForm((prev) => ({ ...prev, originElevator: e.target.value }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="yes">Ascenseur départ: oui</option>
+              <option value="partial">Ascenseur départ: petit</option>
+              <option value="no">Ascenseur départ: non</option>
+            </select>
+            <select
+              value={form.destinationElevator}
+              onChange={(e) => setForm((prev) => ({ ...prev, destinationElevator: e.target.value }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="yes">Ascenseur arrivée: oui</option>
+              <option value="partial">Ascenseur arrivée: petit</option>
+              <option value="no">Ascenseur arrivée: non</option>
+            </select>
+
+            <input
+              type="number"
+              value={form.originFloor}
+              onChange={(e) => setForm((prev) => ({ ...prev, originFloor: Number(e.target.value) }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              placeholder="Étage départ"
+            />
+            <input
+              type="number"
+              value={form.destinationFloor}
+              onChange={(e) => setForm((prev) => ({ ...prev, destinationFloor: Number(e.target.value) }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              placeholder="Étage arrivée"
+            />
+            <select
+              value={form.piano}
+              onChange={(e) => setForm((prev) => ({ ...prev, piano: e.target.value }))}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="none">Piano: non</option>
+              <option value="droit">Piano droit</option>
+              <option value="quart">Piano quart</option>
+            </select>
+            <button
+              onClick={runSimulation}
+              disabled={simulating}
+              className="rounded-lg px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-sm font-semibold"
+            >
+              {simulating ? "Simulation..." : "Lancer la simulation"}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-3 text-xs text-gray-300">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.longCarry}
+                onChange={(e) => setForm((prev) => ({ ...prev, longCarry: e.target.checked }))}
+              />
+              Portage &gt; 10m
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.tightAccess}
+                onChange={(e) => setForm((prev) => ({ ...prev, tightAccess: e.target.checked }))}
+              />
+              Petit ascenseur / passage étroit
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.difficultParking}
+                onChange={(e) => setForm((prev) => ({ ...prev, difficultParking: e.target.checked }))}
+              />
+              Stationnement compliqué
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.monteMeuble}
+                onChange={(e) => setForm((prev) => ({ ...prev, monteMeuble: e.target.checked }))}
+              />
+              Monte-meuble
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.debarras}
+                onChange={(e) => setForm((prev) => ({ ...prev, debarras: e.target.checked }))}
+              />
+              Débarras
+            </label>
+          </div>
+        </div>
+
+        {simulation && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h3 className="text-sm font-semibold text-gray-300 mb-3">Détaillé (sans provision)</h3>
+              <p className="text-gray-400 text-xs mb-1">Fourchette</p>
+              <p className="text-lg font-semibold">{fmtEur(simulation.detailed.raw.prixMin)} → {fmtEur(simulation.detailed.raw.prixMax)}</p>
+              <p className="text-gray-400 text-xs mt-3">Centre</p>
+              <p className="text-base font-semibold">{fmtEur((simulation.detailed.raw.prixMin + simulation.detailed.raw.prixMax) / 2)}</p>
+            </div>
+            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h3 className="text-sm font-semibold text-gray-300 mb-3">Détaillé (+ provision)</h3>
+              <p className="text-gray-400 text-xs mb-1">Fourchette</p>
+              <p className="text-lg font-semibold">
+                {fmtEur(simulation.detailed.withProvision.prixMin)} → {fmtEur(simulation.detailed.withProvision.prixMax)}
+              </p>
+              <p className="text-gray-400 text-xs mt-3">Provision</p>
+              <p className="text-base font-semibold text-purple-300">{fmtEur(simulation.detailed.withProvision.provisionEur)}</p>
+            </div>
+            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h3 className="text-sm font-semibold text-gray-300 mb-3">Baseline Step 2/Home</h3>
+              <p className="text-gray-400 text-xs mb-1">Fourchette</p>
+              <p className="text-lg font-semibold">{fmtEur(simulation.baseline.prixMin)} → {fmtEur(simulation.baseline.prixMax)}</p>
+              <p className="text-gray-400 text-xs mt-3">Centre avant / après provision</p>
+              <p className="text-base font-semibold">
+                {fmtEur(simulation.baseline.step2CenterBeforeProvisionEur)} → {fmtEur(simulation.baseline.step2CenterAfterProvisionEur)}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ============================================================
 // Page wrapper with tabs
 // ============================================================
 
 export default function AnalyticsPage() {
   const [password, setPassword] = useState<string | null>(null);
-  const [tab, setTab] = useState<"dashboard" | "journal">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "journal" | "pricing">("dashboard");
 
   if (!password) {
     return <PasswordGate onAuth={setPassword} />;
@@ -1143,11 +1563,22 @@ export default function AnalyticsPage() {
           >
             📋 Journal
           </button>
+          <button
+            onClick={() => setTab("pricing")}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
+              tab === "pricing"
+                ? "border-purple-500 text-white"
+                : "border-transparent text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            🧠 Hypothèses & Simulation
+          </button>
         </div>
       </div>
 
       {tab === "dashboard" && <Dashboard password={password} />}
       {tab === "journal" && <Journal password={password} />}
+      {tab === "pricing" && <PricingLab password={password} />}
     </div>
   );
 }
