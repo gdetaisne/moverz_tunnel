@@ -23,6 +23,8 @@ import {
  */
 
 const FORMULES = ["ECONOMIQUE", "STANDARD", "PREMIUM"] as const;
+const BAN_TIMEOUT_MS = 1800;
+const OSRM_TIMEOUT_MS = 1800;
 
 const EstimateQuerySchema = z.object({
   originPostalCode: z
@@ -55,11 +57,14 @@ const EstimateQuerySchema = z.object({
 async function geocodePostalCode(
   postalCode: string
 ): Promise<[number, number] | null> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
   try {
     const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
       postalCode
     )}&type=municipality&limit=1`;
-    const res = await fetch(url, { cache: "no-store" });
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), BAN_TIMEOUT_MS);
+    const res = await fetch(url, { cache: "no-store", signal: controller.signal });
     if (!res.ok) return null;
     const data = (await res.json()) as {
       features?: { geometry?: { coordinates?: [number, number] } }[];
@@ -73,6 +78,8 @@ async function geocodePostalCode(
     return null;
   } catch {
     return null;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 
@@ -86,11 +93,15 @@ async function osrmDistanceKm(
   destLat: number,
   destLon: number
 ): Promise<number | null> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
   try {
     const url = `https://router.project-osrm.org/route/v1/driving/${originLon},${originLat};${destLon},${destLat}?overview=false&alternatives=false&steps=false`;
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), OSRM_TIMEOUT_MS);
     const res = await fetch(url, {
       headers: { "User-Agent": "moverz-tunnel (estimate)" },
       cache: "no-store",
+      signal: controller.signal,
     });
     if (!res.ok) return null;
     const data = (await res.json()) as {
@@ -101,6 +112,8 @@ async function osrmDistanceKm(
     return Math.max(1, Math.round(distanceM / 1000));
   } catch {
     return null;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 

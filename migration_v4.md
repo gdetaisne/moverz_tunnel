@@ -1,5 +1,23 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Hardening API estimate: timeout court BAN/OSRM + fallback rapide
+
+**Constat** :
+- Sur la home (`/api/estimate`), certains appels externes BAN/OSRM pouvaient dépasser la fenêtre client (~5s), provoquant un timeout côté front et des erreurs JS associées.
+
+**Fix** :
+- `app/api/estimate/route.ts`
+  - ajout de timeouts explicites via `AbortController` :
+    - `BAN_TIMEOUT_MS = 1800`
+    - `OSRM_TIMEOUT_MS = 1800`
+  - en cas de timeout/échec BAN ou OSRM, l'API reste non bloquante et retombe sur la distance heuristique.
+
+**Impact** :
+- L'endpoint répond plus vite et de façon plus stable sous latence réseau externe.
+- Moins de timeouts client sur la home pour l'estimation initiale.
+
+---
+
 ## 2026-02-17 — Fix BO: `pricingSnapshot.byFormule` aligné sur le panier final Step 3
 
 **Constat** :
