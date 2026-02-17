@@ -424,6 +424,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
               <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
                 Un accès mal déclaré peut générer 150 à 500 € de frais supplémentaires.
               </p>
+              <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                ⏱ 1 minute pour sécuriser votre estimation
+              </p>
             </div>
 
             <input

@@ -1,5 +1,16 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Copy Step 4: ajout d'une promesse temps
+
+**Demande** :
+- Ajouter sous le sous-texte : `⏱ 1 minute pour sécuriser votre estimation`.
+
+**Implémentation** :
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - ajout d'une ligne de copy sous le message de risque.
+
+---
+
 ## 2026-02-17 — Step 4: champ "Précision manuelle" commun sous les 3 cartes
 
 **Demande** :
