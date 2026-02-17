@@ -1,5 +1,18 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Fix build TS: `originIsBox` non défini (Step 3 pricing cart)
+
+**Erreur build** :
+- `app/devis-gratuits-v3/page.tsx:1301`
+- `Cannot find name 'originIsBox'`.
+
+**Fix** :
+- ajout des constantes locales dans le scope `v2PricingCart` :
+  - `const originIsBox = isBoxType(state.originHousingType);`
+  - `const destIsBox = isBoxType(state.destinationHousingType);`
+
+---
+
 ## 2026-02-17 — Fix build Turbopack (analytics page JSX text)
 
 **Erreur build** :

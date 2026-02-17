@@ -1226,6 +1226,8 @@ function DevisGratuitsV3Content() {
     // 5) Accès (2 groupes): logement/étage ET contraintes d'accès
     const originIsHouse = isHouseType(state.originHousingType);
     const destIsHouse = isHouseType(state.destinationHousingType);
+    const originIsBox = isBoxType(state.originHousingType);
+    const destIsBox = isBoxType(state.destinationHousingType);
     const originHousingComplete = (state.originHousingType || "").trim().length > 0;
     const destinationHousingComplete = state.destinationUnknown
       ? true
