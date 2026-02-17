@@ -1,5 +1,19 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Fix build TypeScript StepContactPhotosV4
+
+**Erreur build** :
+- `./components/tunnel/v2/StepContactPhotosV4.tsx:347:19`
+- `Type error: Cannot find name 'setActiveEnrichmentTab'.`
+
+**Correction** :
+- suppression de l'appel résiduel `setActiveEnrichmentTab("notes")` après refonte en cartes.
+
+**Impact** :
+- correction compile uniquement, aucune modification fonctionnelle supplémentaire.
+
+---
+
 ## 2026-02-17 — Refonte enrichissement Step 4 en 3 cartes (slider mobile)
 
 **Demande** :

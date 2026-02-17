@@ -344,7 +344,6 @@ ${OBJECTS_BLOCK_END}`;
                 type="button"
                 onClick={() => {
                   setEnrichmentMode("menu");
-                  setActiveEnrichmentTab("notes");
                   setSaveMessage(null);
                   onStartEnrichment?.();
                 }}
