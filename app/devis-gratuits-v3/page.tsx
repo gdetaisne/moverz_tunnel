@@ -2207,9 +2207,11 @@ function DevisGratuitsV3Content() {
 
         // Formule & Prix
         formule: state.formule,
-        estimatedPriceMin: activePricing?.prixMin ?? undefined,
-        estimatedPriceAvg: activePricing?.prixFinal ?? undefined,
-        estimatedPriceMax: activePricing?.prixMax ?? undefined,
+        // BO doit refléter le même montant que le "Budget affiné" affiché au client.
+        // `activePricing` = calcul brut par formule; `v2PricingCart` = pipeline final (provision + deltas + add-ons).
+        estimatedPriceMin: v2PricingCart?.refinedMinEur ?? activePricing?.prixMin ?? undefined,
+        estimatedPriceAvg: v2PricingCart?.refinedCenterEur ?? activePricing?.prixFinal ?? undefined,
+        estimatedPriceMax: v2PricingCart?.refinedMaxEur ?? activePricing?.prixMax ?? undefined,
 
         // Logement origine
         originHousingType: state.originHousingType || undefined,

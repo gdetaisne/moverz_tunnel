@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Fix BO: `estimatedPrice*` alignés sur le "Budget affiné" Step 3
+
+**Constat** :
+- En reprise/édition d'un lead, les champs BO `estimatedPriceMin/Avg/Max` pouvaient diverger du montant affiché dans le panier client (`Budget affiné`), car ils utilisaient le calcul brut `activePricing`.
+
+**Fix** :
+- `app/devis-gratuits-v3/page.tsx` (`handleSubmitAccessV2`)
+  - mapping BO de prix basculé vers `v2PricingCart.refinedMinEur/refinedCenterEur/refinedMaxEur` (pipeline final Step 3),
+  - fallback conservé vers `activePricing.*` si `v2PricingCart` indisponible.
+
+**Impact** :
+- Les montants stockés en BO (`estimatedPriceMin/Avg/Max`) sont désormais cohérents avec le "Budget affiné" visible dans le tunnel pour le lead soumis.
+
+---
+
 ## 2026-02-17 — Fix build TS: `originIsBox` non défini (Step 3 pricing cart)
 
 **Erreur build** :
