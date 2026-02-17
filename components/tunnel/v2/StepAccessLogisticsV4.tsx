@@ -326,7 +326,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     const locationLabel = prefix === "origin" ? "Départ" : "Arrivée";
     return (
       <div className="space-y-2">
-        <div className="flex items-center justify-between gap-3">
+        <div
+          className="flex items-center justify-between gap-3 sm:rounded-lg sm:border sm:px-2 sm:py-2"
+          style={{
+            borderColor: "var(--color-border)",
+            background: "var(--color-bg)",
+          }}
+        >
           <span className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
             Logement · {locationLabel}
           </span>
@@ -385,7 +391,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     setElevator: (v: string) => void
   ) => (
     <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
+      <div
+        className="flex items-center justify-between gap-3 sm:rounded-lg sm:border sm:px-2 sm:py-2"
+        style={{
+          borderColor: "var(--color-border)",
+          background: "var(--color-bg)",
+        }}
+      >
             <span
               className="text-xs font-semibold uppercase tracking-wide"
               style={{ color: "var(--color-text-muted)" }}
@@ -414,7 +426,13 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
               ))}
             </div>
           </div>
-      <div className="flex items-center justify-between gap-3">
+      <div
+        className="flex items-center justify-between gap-3 sm:rounded-lg sm:border sm:px-2 sm:py-2"
+        style={{
+          borderColor: "var(--color-border)",
+          background: "var(--color-bg)",
+        }}
+      >
         <span
           className="text-xs font-semibold uppercase tracking-wide"
           style={{ color: "var(--color-text-muted)" }}

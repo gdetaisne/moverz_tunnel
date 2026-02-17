@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Ajustement visuel desktop: séparation légère Logement / Étage / Ascenseur
+
+**Demande** :
+- Mieux structurer visuellement les lignes `Logement`, `Étage`, `Ascenseur` dans le bloc `Votre trajet` sur desktop.
+
+**Implémentation** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - ajout de conteneurs visuels légers par ligne (bordure + fond discret) avec classes `sm:*`,
+  - pas d'impact mobile ni logique métier.
+
+**Impact** :
+- Meilleure lisibilité desktop sans changer les champs ni les validations.
+
+---
+
 ## 2026-02-17 — Hotfix UX "Votre trajet" (desktop)
 
 **Problème remonté** :
