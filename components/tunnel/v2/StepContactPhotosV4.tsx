@@ -9,7 +9,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, Mail, Clock, Camera, MessageSquare, ListChecks, Upload } from "lucide-react";
+import { CheckCircle2, Mail, Camera, MessageSquare, ListChecks, Upload } from "lucide-react";
 import { CardV4 } from "@/components/tunnel-v4";
 import { uploadLeadPhotos } from "@/lib/api/client";
 
@@ -185,7 +185,7 @@ export function StepContactPhotosV4({
           </h1>
 
           <p className="text-base sm:text-lg" style={{ color: "var(--color-text-secondary)" }}>
-            Votre demande de devis a bien été enregistrée
+            Votre demande est bien enregistrée.
           </p>
         </div>
       </CardV4>
@@ -212,7 +212,7 @@ export function StepContactPhotosV4({
               )}
             </p>
             <p className="text-sm mb-3" style={{ color: "var(--color-text-secondary)" }}>
-              Un email de confirmation vous a été envoyé. Cliquez sur le lien reçu pour valider votre adresse.
+              Cliquez sur le lien reçu pour activer votre dossier.
             </p>
 
             {confirmationState.status === "sent" && (
@@ -231,57 +231,16 @@ export function StepContactPhotosV4({
         </div>
       </CardV4>
 
-      {/* Timeline */}
-      <CardV4 padding="md">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5" style={{ color: "var(--color-accent)" }} />
-            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-              Ce qui se passe maintenant
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              "1. Vous validez votre mail",
-              "2. Nous contactons les meilleurs déménageurs",
-              "3. Nous centralisons toutes les réponses / devis",
-              "4. On vous fait un récap dans 5 à 7 jours",
-            ].map((text, idx) => (
-              <div key={text} className="flex items-start gap-3">
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
-                  style={{
-                    background: idx === 0 ? "var(--color-accent)" : "var(--color-accent-light)",
-                    color: idx === 0 ? "#fff" : "var(--color-accent)",
-                    border: idx === 0 ? "none" : "1px solid var(--color-accent)",
-                  }}
-                >
-                  {idx + 1}
-                </div>
-                <p
-                  className="text-sm"
-                  style={{
-                    color: idx === 0 ? "var(--color-text)" : "var(--color-text-secondary)",
-                    fontWeight: idx === 0 ? 600 : 400,
-                  }}
-                >
-                  {text}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CardV4>
-
       {/* Enrichissement du dossier */}
       <CardV4 padding="md">
         {enrichmentMode === "idle" ? (
           <div className="space-y-4">
             <h2 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
-              Vous pouvez maintenant nous parler des détails qui aideront votre déménageur
-              à préparer au mieux votre dossier.
+              Souhaitez-vous enrichir votre dossier ?
             </h2>
+            <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              Ajoutez un commentaire, des photos ou des contraintes utiles.
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
@@ -305,14 +264,14 @@ export function StepContactPhotosV4({
                   border: "2px solid var(--color-border)",
                 }}
               >
-                Pas maintenant, finaliser mon dossier
+                Pas maintenant
               </button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-              Génial ! Pour enrichir votre dossier vous pouvez :
+              Comment souhaitez-vous enrichir votre dossier ?
             </p>
             {access_type === "constrained" && (
               <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
@@ -477,7 +436,7 @@ export function StepContactPhotosV4({
                   border: "2px solid var(--color-border)",
                 }}
               >
-                Pas maintenant, finaliser mon dossier
+                Pas maintenant
               </button>
             </div>
             {saveMessage && (

@@ -1,5 +1,25 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Step 4 simplification (Option A)
+
+**Décision** :
+- Simplifier fortement la page de confirmation pour réduire la charge cognitive.
+
+**Implémentation** :
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - suppression de la carte timeline `Ce qui se passe maintenant`,
+  - copy email raccourcie (`activez votre dossier`),
+  - bloc enrichissement compact:
+    - titre court `Souhaitez-vous enrichir votre dossier ?`
+    - CTA `Enrichir mon dossier` / `Pas maintenant`,
+    - wording des étapes d'enrichissement simplifié.
+
+**Impact** :
+- Écran Step 4 plus court et plus lisible.
+- Aucun changement de logique/payload Back Office.
+
+---
+
 ## 2026-02-17 — Option 1 conversion: déplacer "Ajouter des précisions" en Step 4
 
 **Contexte** :
