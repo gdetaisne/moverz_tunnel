@@ -90,6 +90,7 @@ function DevisGratuitsV3Content() {
   const [aiPhotoInsights, setAiPhotoInsights] = useState<string[]>([]);
   const [densityAiNote, setDensityAiNote] = useState("");
   const [collapseStep3OnEnterToken, setCollapseStep3OnEnterToken] = useState(0);
+  const [isSavingStep4Enrichment, setIsSavingStep4Enrichment] = useState(false);
   const [lastImpactDetailId, setLastImpactDetailId] = useState<
     | "distance"
     | "date"
@@ -2126,6 +2127,37 @@ function DevisGratuitsV3Content() {
     }
   }
 
+  const handleSaveStep4Enrichment = async () => {
+    if (!state.leadId) return;
+    setIsSavingStep4Enrichment(true);
+    try {
+      await updateBackofficeLead(state.leadId, {
+        tunnelOptions: {
+          accessV2: {
+            access_type: state.access_type ?? "simple",
+            narrow_access: !!state.narrow_access,
+            long_carry: !!state.long_carry,
+            difficult_parking: !!state.difficult_parking,
+            lift_required: !!state.lift_required,
+            access_details: state.access_details || undefined,
+          },
+          notes: (() => {
+            const userNotes = (state.specificNotes || "").trim();
+            const aiNotes = aiPhotoInsights
+              .filter((v) => typeof v === "string" && v.trim().length > 0)
+              .map((v) => `- ${v.trim()}`);
+            const aiBlock = aiNotes.length > 0 ? `[Analyse IA photos]\n${aiNotes.join("\n")}` : "";
+            const densityBlock = densityAiNote.trim().length > 0 ? `[Analyse IA densité]\n${densityAiNote.trim()}` : "";
+            const merged = [userNotes, aiBlock, densityBlock].filter((v) => v.length > 0).join("\n\n");
+            return merged || undefined;
+          })(),
+        },
+      });
+    } finally {
+      setIsSavingStep4Enrichment(false);
+    }
+  };
+
   return (
       <main className="tunnel-v3-force-light min-h-screen bg-bg-secondary text-text-primary">
         <div className={containerClassName}>
@@ -2262,6 +2294,7 @@ function DevisGratuitsV3Content() {
                 phone={state.phone}
                 specificNotes={state.specificNotes}
                 collapseAllOnEnterToken={collapseStep3OnEnterToken}
+                showOptionalDetailsBlock={false}
                 onBlockEntered={(blockId) => {
                   // Map step3 sections to block IDs
                   const blockMap: Record<string, string> = {
@@ -2317,6 +2350,15 @@ function DevisGratuitsV3Content() {
                 estimateMaxEur={activePricing?.prixMax ?? null}
                 estimateIsIndicative={estimateIsIndicative}
                 email={state.email}
+                specificNotes={state.specificNotes}
+                access_type={state.access_type ?? "simple"}
+                access_details={state.access_details ?? ""}
+                onFieldChange={handleStep3FieldChange}
+                onStartEnrichment={() => {
+                  trackBlock("optional_details", "THANK_YOU", "confirmation_v2");
+                }}
+                onSaveEnrichment={handleSaveStep4Enrichment}
+                isSavingEnrichment={isSavingStep4Enrichment}
               />
             </div>
           )}

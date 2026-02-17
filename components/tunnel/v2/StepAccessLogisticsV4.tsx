@@ -93,6 +93,7 @@ interface StepAccessLogisticsV4Props {
     PREMIUM: { priceMin: number; priceMax: number };
   } | null;
   collapseAllOnEnterToken?: number;
+  showOptionalDetailsBlock?: boolean;
   /** Called when user enters a new block/section */
   onBlockEntered?: (blockId: string) => void;
 }
@@ -244,6 +245,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [densityAiNote, setDensityAiNote] = useState("");
   const [densityPhotoStatus, setDensityPhotoStatus] =
     useState<"idle" | "analyzing" | "done" | "error">("idle");
+  const showOptionalDetailsBlock = props.showOptionalDetailsBlock ?? true;
   const [fallbackUploadLeadId, setFallbackUploadLeadId] = useState<string | null>(null);
   const [isDragOverPhotos, setIsDragOverPhotos] = useState(false);
   const [mobileRouteOpen, setMobileRouteOpen] = useState<"origin" | "destination">("origin");
@@ -905,7 +907,8 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       autoAdvanceTimerRef.current = window.setTimeout(() => {
         const currentIndex = sectionOrder.indexOf(newlyValidated);
         const following = sectionOrder.find((k, idx) => idx > currentIndex && !next[k]);
-        const shouldOpenMissingInfo = newlyValidated === "contact" && !isMissingInfoLocked;
+        const shouldOpenMissingInfo =
+          showOptionalDetailsBlock && newlyValidated === "contact" && !isMissingInfoLocked;
         setOpenSections((state) => ({
           ...state,
           [newlyValidated]: false,
@@ -985,6 +988,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
     isMissingInfoLocked,
     missingInfoPanelOpen,
     activeSection,
+    showOptionalDetailsBlock,
   ]);
 
   useEffect(() => {
@@ -1682,6 +1686,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       </div>
 
       {/* Informations complémentaires (dépliant) */}
+      {showOptionalDetailsBlock && (
       <div
         className="order-6 space-y-1 rounded-2xl border p-1.5 transition-colors duration-200"
         style={sectionFrameStyle(activeSection === "missingInfo")}
@@ -2142,6 +2147,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
       </CardV4>
           </AnimatedSection>
       </div>
+      )}
 
       {/* Formule */}
       {props.pricingByFormule && (

@@ -1,5 +1,35 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Option 1 conversion: déplacer "Ajouter des précisions" en Step 4
+
+**Contexte** :
+- Attrition forte (~3 clients sur 4) sur le bloc `Ajouter des précisions` en Step 3.
+- Décision: protéger la conversion primaire et proposer l'enrichissement après validation (Step 4).
+
+**Implémentation** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - bloc `Ajouter des précisions` masqué en Step 3 via prop `showOptionalDetailsBlock={false}`.
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - ajout d'un écran d'enrichissement post-validation avec:
+    - CTA 1 `Enrichir mon dossier`
+    - CTA 2 `Pas maintenant, finaliser mon dossier`
+  - puis 3 modes:
+    - `Laisser un commentaire`
+    - `Ajouter des photos`
+    - `Choisir parmi une liste` (contraintes Départ/Arrivée)
+  - bouton d'enregistrement explicite des précisions.
+- `app/devis-gratuits-v3/page.tsx`
+  - passage des champs Step 3 vers Step 4 (`specificNotes`, `access_*`),
+  - sauvegarde BO dédiée (`onSaveEnrichment`) sur le lead existant,
+  - tracking du bloc `optional_details` sur `THANK_YOU / confirmation_v2`.
+
+**Impact** :
+- Réduction de friction en Step 3.
+- Enrichissement conservé, déplacé à un moment de meilleure intention utilisateur.
+- Aucun champ supprimé du tunnel, aucun changement DB/Prisma.
+
+---
+
 ## 2026-02-17 — Step 3: fermeture auto des blocs adoucie
 
 **Demande** :
