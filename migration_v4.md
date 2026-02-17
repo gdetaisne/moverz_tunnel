@@ -1,5 +1,26 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Déplacement pur du bloc enrichissement: Step 4 -> fin Step 3
+
+**Décision validée** :
+- Option "Déplacement pur (recommandé)" appliquée.
+
+**Implémentation** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - remplacement du contenu du bloc `Ajouter des précisions (facultatif)` par la version cartes validée (ordre: objets -> départ -> arrivée),
+  - conservation des CTA secondaires photo par carte,
+  - champ `Précision manuelle (commune)` sous les 3 cartes,
+  - persistance de `Objets spécifiques` + `note commune` dans `specificNotes` via blocs structurés internes.
+- `components/tunnel/v2/StepContactPhotosV4.tsx`
+  - retrait du bloc enrichissement,
+  - Step 4 revient à un écran de confirmation (Bravo + email).
+
+**Impact** :
+- Le parcours d'enrichissement revient en fin de Step 3 comme demandé.
+- Step 4 redevient court, orienté confirmation.
+
+---
+
 ## 2026-02-17 — Step 4: réordonnancement des 3 cartes enrichissement
 
 **Demande** :
