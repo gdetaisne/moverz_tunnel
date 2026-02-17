@@ -186,6 +186,48 @@ function DevisGratuitsV3Content() {
     };
   };
 
+  const stripTaggedBlock = (raw: string, startTag: string, endTag: string): string => {
+    const start = raw.indexOf(startTag);
+    const end = raw.indexOf(endTag);
+    if (start === -1 || end === -1 || end < start) return raw.trim();
+    const before = raw.slice(0, start).trim();
+    const after = raw.slice(end + endTag.length).trim();
+    return [before, after].filter(Boolean).join("\n\n").trim();
+  };
+
+  const parseExtraNoteFromSpecificNotes = (raw: string | null | undefined): string => {
+    const note = raw || "";
+    const startTag = "[[ENRICHISSEMENT_NOTES_V4_START]]";
+    const endTag = "[[ENRICHISSEMENT_NOTES_V4_END]]";
+    const start = note.indexOf(startTag);
+    const end = note.indexOf(endTag);
+    if (start === -1 || end === -1 || end < start) return "";
+    const block = note.slice(start + startTag.length, end);
+    const m = /^note:(.*)$/m.exec(block);
+    if (!m?.[1]) return "";
+    try {
+      return decodeURIComponent(m[1]).trim();
+    } catch {
+      return m[1].trim();
+    }
+  };
+
+  const getCleanSpecificNotesForBackoffice = (raw: string | null | undefined): string => {
+    const note = raw || "";
+    const withoutObjects = stripTaggedBlock(
+      note,
+      "[[OBJETS_SPECIFIQUES_V4_START]]",
+      "[[OBJETS_SPECIFIQUES_V4_END]]"
+    );
+    const base = stripTaggedBlock(
+      withoutObjects,
+      "[[ENRICHISSEMENT_NOTES_V4_START]]",
+      "[[ENRICHISSEMENT_NOTES_V4_END]]"
+    );
+    const extraNote = parseExtraNoteFromSpecificNotes(note);
+    return [base, extraNote].filter((v) => v.trim().length > 0).join("\n\n").trim();
+  };
+
   // Formatter utilisé dans le rendu (sidebar Step 3, etc.)
   const fmtEur = (n: number) =>
     new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -1929,7 +1971,7 @@ function DevisGratuitsV3Content() {
           access_details: state.access_details || undefined,
         },
         notes: (() => {
-          const userNotes = (state.specificNotes || "").trim();
+          const userNotes = getCleanSpecificNotesForBackoffice(state.specificNotes);
           return userNotes || undefined;
         })(),
       },
@@ -2274,7 +2316,7 @@ function DevisGratuitsV3Content() {
             piano: state.servicePiano !== "none" ? state.servicePiano : undefined,
           },
           notes: (() => {
-            const userNotes = (state.specificNotes || "").trim();
+            const userNotes = getCleanSpecificNotesForBackoffice(state.specificNotes);
             const aiNotes = aiPhotoInsights
               .filter((v) => typeof v === "string" && v.trim().length > 0)
               .map((v) => `- ${v.trim()}`);
@@ -2355,7 +2397,7 @@ function DevisGratuitsV3Content() {
             access_details: state.access_details || undefined,
           },
           notes: (() => {
-            const userNotes = (state.specificNotes || "").trim();
+            const userNotes = getCleanSpecificNotesForBackoffice(state.specificNotes);
             const aiNotes = aiPhotoInsights
               .filter((v) => typeof v === "string" && v.trim().length > 0)
               .map((v) => `- ${v.trim()}`);
@@ -2397,7 +2439,7 @@ function DevisGratuitsV3Content() {
             access_details: state.access_details || undefined,
           },
           notes: (() => {
-            const userNotes = (state.specificNotes || "").trim();
+            const userNotes = getCleanSpecificNotesForBackoffice(state.specificNotes);
             const aiNotes = aiPhotoInsights
               .filter((v) => typeof v === "string" && v.trim().length > 0)
               .map((v) => `- ${v.trim()}`);

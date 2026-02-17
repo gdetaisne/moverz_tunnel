@@ -1,5 +1,26 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Fix BO: nettoyage du champ "notes" Step 3 (suppression blocs techniques + décodage)
+
+**Constat** :
+- Le champ "Notes / précisions du client" pouvait remonter avec des marqueurs techniques (`[[ENRICHISSEMENT_NOTES_V4_*]]`) et du texte URL-encodé (`%20`, `%C3%A9`, etc.).
+
+**Cause** :
+- Le payload BO utilisait `state.specificNotes` brut, qui contient des blocs internes sérialisés pour le tunnel.
+
+**Fix** :
+- `app/devis-gratuits-v3/page.tsx`
+  - ajout d'un nettoyage dédié avant envoi BO :
+    - suppression des blocs internes `[[OBJETS_SPECIFIQUES_V4_*]]` et `[[ENRICHISSEMENT_NOTES_V4_*]]`,
+    - décodage de la note enrichissement (`decodeURIComponent`) avec fallback robuste,
+    - fusion `base + note enrichissement` en texte lisible.
+  - application de ce nettoyage sur tous les payloads BO qui alimentent `tunnelOptions.notes` (précréation, submit Step 3, submit contact, save enrichissement Step 4).
+
+**Impact** :
+- Le BO reçoit désormais un texte propre, lisible, sans artefacts techniques d'encodage/sérialisation.
+
+---
+
 ## 2026-02-17 — Fix BO: `estimatedPrice*` alignés sur le "Budget affiné" Step 3
 
 **Constat** :
