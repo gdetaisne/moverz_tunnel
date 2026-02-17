@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Fix autocomplete villes: éviter les suggestions sans code postal
+
+**Problème** :
+- Certaines suggestions de villes s'affichaient sans code postal, puis le tunnel bloquait à la validation (CP requis).
+
+**Correction** :
+- `components/tunnel/AddressAutocomplete.tsx`
+  - en mode `kind="city"`, on priorise les suggestions avec code postal,
+  - si au moins un résultat a un CP, les résultats sans CP sont écartés,
+  - à la sélection, un enrichissement tente de récupérer automatiquement un CP manquant avant `onSelect`.
+
+**Impact** :
+- Moins de faux blocages sur l'étape villes.
+- Aucun changement de payload / logique pricing.
+
+---
+
 ## 2026-02-17 — Mobile UX: puces Étage/Ascenseur sur une ligne
 
 **Demande** :

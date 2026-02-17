@@ -257,6 +257,12 @@ export function AddressAutocomplete({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cacheRef = useRef<Record<string, AddressSuggestion[]>>({});
   const lastSelectionRef = useRef<AddressSuggestion | null>(null);
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
 
   useEffect(() => {
     setInput(initialValue ?? "");
@@ -281,13 +287,6 @@ export function AddressAutocomplete({
       city: contextCity,
       countryCode: contextCountryCode,
     };
-    const normalize = (s: string) =>
-      s
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim();
-
     const dedupeKey = (s: AddressSuggestion) =>
       [
         normalize(s.city ?? s.label ?? ""),
@@ -341,7 +340,7 @@ export function AddressAutocomplete({
       if (!map.has(key)) map.set(key, item);
     }
 
-    return Array.from(map.values()).sort((a, b) => {
+    const ranked = Array.from(map.values()).sort((a, b) => {
       const ra = rankCity(a);
       const rb = rankCity(b);
       if (ra !== rb) return ra - rb;
@@ -351,6 +350,13 @@ export function AddressAutocomplete({
       if (aIsFr !== bIsFr) return aIsFr ? -1 : 1;
       return (a.label ?? "").localeCompare(b.label ?? "", "fr");
     });
+
+    // Évite de proposer des villes "sans code postal" quand on a des résultats exploitables.
+    if (kind === "city") {
+      const withPostal = ranked.filter((s) => !!(s.postalCode || "").trim());
+      if (withPostal.length > 0) return withPostal;
+    }
+    return ranked;
   };
 
   const runSearch = async (query: string) => {
@@ -399,8 +405,44 @@ export function AddressAutocomplete({
     }
   };
 
+  const ensureCityPostalCode = async (s: AddressSuggestion): Promise<AddressSuggestion> => {
+    if (kind !== "city") return s;
+    if ((s.postalCode || "").trim()) return s;
+    const cityLike = (s.city ?? s.label ?? "").trim();
+    if (cityLike.length < 2) return s;
+    try {
+      const list = await fetchSuggestionsForQuery(cityLike);
+      const sameCityWithPostal = list.find((item) => {
+        const itemCity = normalize(item.city ?? item.label ?? "");
+        return itemCity === normalize(cityLike) && !!(item.postalCode || "").trim();
+      });
+      if (sameCityWithPostal) {
+        return {
+          ...sameCityWithPostal,
+          // On garde le label saisi/affiché pour éviter les sauts de texte inutiles.
+          label: s.label || sameCityWithPostal.label,
+        };
+      }
+      const firstWithPostal = list.find((item) => !!(item.postalCode || "").trim());
+      if (firstWithPostal) {
+        return {
+          ...s,
+          postalCode: firstWithPostal.postalCode,
+          countryCode: s.countryCode ?? firstWithPostal.countryCode,
+          city: s.city ?? firstWithPostal.city,
+          lat: s.lat ?? firstWithPostal.lat,
+          lon: s.lon ?? firstWithPostal.lon,
+        };
+      }
+      return s;
+    } catch {
+      return s;
+    }
+  };
+
   const commitSelection = async (s: AddressSuggestion) => {
-    const resolved = await ensureCoords(s);
+    const withPostal = await ensureCityPostalCode(s);
+    const resolved = await ensureCoords(withPostal);
     lastSelectionRef.current = resolved;
     onSelect(resolved);
     setInput(resolved.addressLine ?? resolved.label);
