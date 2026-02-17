@@ -1190,11 +1190,20 @@ function PricingLab({ password }: { password: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hypotheses, setHypotheses] = useState<PricingSimulatorHypotheses | null>(null);
-  const [simulating, setSimulating] = useState(false);
-  const [simulation, setSimulation] = useState<PricingSimulatorResponse | null>(null);
-  const [form, setForm] = useState({
+  const [simulatingStep2, setSimulatingStep2] = useState(false);
+  const [simulatingStep3, setSimulatingStep3] = useState(false);
+  const [step2Simulation, setStep2Simulation] = useState<PricingSimulatorResponse | null>(null);
+  const [step3Simulation, setStep3Simulation] = useState<PricingSimulatorResponse | null>(null);
+  const [step2Form, setStep2Form] = useState({
     surfaceM2: 60,
-    distanceKm: 120,
+    cityDistanceKm: 120,
+    bufferKm: 15,
+    formule: "STANDARD",
+    density: "dense",
+    kitchenApplianceCount: 3,
+  });
+  const [step3Form, setStep3Form] = useState({
+    distanceKm: 135,
     formule: "STANDARD",
     density: "dense",
     seasonFactor: 1,
@@ -1245,50 +1254,100 @@ function PricingLab({ password }: { password: string }) {
     }
   }, [password]);
 
-  const runSimulation = useCallback(async () => {
-    setSimulating(true);
-    setError(null);
-    try {
+  const postSimulation = useCallback(
+    async (payload: Record<string, unknown>): Promise<PricingSimulatorResponse | null> => {
       const res = await fetch(
         `/api/analytics/pricing-simulator?password=${encodeURIComponent(password)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            surfaceM2: form.surfaceM2,
-            distanceKm: form.distanceKm,
-            formule: form.formule,
-            density: form.density,
-            seasonFactor: form.seasonFactor,
-            originFloor: form.originFloor,
-            originElevator: form.originElevator,
-            destinationFloor: form.destinationFloor,
-            destinationElevator: form.destinationElevator,
-            longCarry: form.longCarry,
-            tightAccess: form.tightAccess,
-            difficultParking: form.difficultParking,
-            extraVolumeM3: form.extraVolumeM3,
-            services: {
-              monteMeuble: form.monteMeuble,
-              piano: form.piano === "none" ? null : form.piano,
-              debarras: form.debarras,
-            },
-          }),
+          body: JSON.stringify(payload),
         }
       );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setError(body.error || "Simulation impossible");
-        return;
+        return null;
       }
-      const json = (await res.json()) as PricingSimulatorResponse;
-      setSimulation(json);
+      return (await res.json()) as PricingSimulatorResponse;
+    },
+    [password]
+  );
+
+  const runStep2Simulation = useCallback(async () => {
+    setSimulatingStep2(true);
+    setError(null);
+    try {
+      const payload = {
+        surfaceM2: step2Form.surfaceM2,
+        distanceKm: Math.max(0, step2Form.cityDistanceKm + step2Form.bufferKm),
+        formule: step2Form.formule,
+        density: step2Form.density,
+        seasonFactor: 1,
+        originFloor: 0,
+        originElevator: "yes",
+        destinationFloor: 0,
+        destinationElevator: "yes",
+        longCarry: false,
+        tightAccess: false,
+        difficultParking: false,
+        extraVolumeM3: Math.max(0, step2Form.kitchenApplianceCount) * 0.6,
+        services: {
+          monteMeuble: false,
+          piano: null,
+          debarras: false,
+        },
+      };
+      const json = await postSimulation(payload);
+      if (json) {
+        setStep2Simulation(json);
+        setStep3Form((prev) => ({
+          ...prev,
+          distanceKm: payload.distanceKm,
+          formule: payload.formule,
+          density: payload.density,
+          extraVolumeM3: payload.extraVolumeM3,
+        }));
+      }
     } catch {
       setError("Erreur réseau");
     } finally {
-      setSimulating(false);
+      setSimulatingStep2(false);
     }
-  }, [password, form]);
+  }, [step2Form, postSimulation]);
+
+  const runStep3Simulation = useCallback(async () => {
+    setSimulatingStep3(true);
+    setError(null);
+    try {
+      const payload = {
+        surfaceM2: step2Form.surfaceM2,
+        distanceKm: step3Form.distanceKm,
+        formule: step3Form.formule,
+        density: step3Form.density,
+        seasonFactor: step3Form.seasonFactor,
+        originFloor: step3Form.originFloor,
+        originElevator: step3Form.originElevator,
+        destinationFloor: step3Form.destinationFloor,
+        destinationElevator: step3Form.destinationElevator,
+        longCarry: step3Form.longCarry,
+        tightAccess: step3Form.tightAccess,
+        difficultParking: step3Form.difficultParking,
+        extraVolumeM3: step3Form.extraVolumeM3,
+        services: {
+          monteMeuble: step3Form.monteMeuble,
+          piano: step3Form.piano === "none" ? null : step3Form.piano,
+          debarras: step3Form.debarras,
+        },
+      };
+      const json = await postSimulation(payload);
+      if (json) setStep3Simulation(json);
+    } catch {
+      setError("Erreur réseau");
+    } finally {
+      setSimulatingStep3(false);
+    }
+  }, [step2Form.surfaceM2, step3Form, postSimulation]);
 
   useEffect(() => {
     fetchHypotheses();
@@ -1323,277 +1382,176 @@ function PricingLab({ password }: { password: string }) {
         {error && <div className="bg-red-900/30 text-red-300 p-4 rounded-xl">{error}</div>}
 
         {hypotheses && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <h2 className="text-sm font-semibold text-gray-300 mb-4">Hypothèses globales</h2>
-              <div className="space-y-2 text-sm">
-                <p><span className="text-gray-500">Centre affiché :</span> <span className="font-semibold">{fmtPct(hypotheses.displayCenterBias)}</span></p>
-                <p><span className="text-gray-500">Buffer distance baseline :</span> <span className="font-semibold">+{hypotheses.baselineDistanceBufferKm} km</span></p>
-                <p><span className="text-gray-500">Décote :</span> <span className="font-semibold">{fmtPct(hypotheses.decote)}</span></p>
-                <p><span className="text-gray-500">Socle minimum :</span> <span className="font-semibold">{fmtEur(hypotheses.prixMinSocle)}</span></p>
-                <p><span className="text-gray-500">Provision Moverz :</span> <span className="font-semibold">{hypotheses.moverzFeeProvisionRule}</span></p>
+          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-4">
+            <h2 className="text-base font-semibold text-white">1) Calculs Step 2 — hypothèses + simulation</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-gray-400 uppercase tracking-wide">
+              <div>Hypothèse</div>
+              <div>Règle</div>
+              <div>Simulation</div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm border-t border-gray-800 pt-3">
+              <div>Surface</div>
+              <div className="text-gray-400">Volume base = 0,4 × m² (profil T2 baseline)</div>
+              <input type="number" value={step2Form.surfaceM2} onChange={(e) => setStep2Form((p) => ({ ...p, surfaceM2: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+              <div>Distance villes</div>
+              <div className="text-gray-400">Distance OSRM ville-à-ville</div>
+              <input type="number" value={step2Form.cityDistanceKm} onChange={(e) => setStep2Form((p) => ({ ...p, cityDistanceKm: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+              <div>Buffer distance</div>
+              <div className="text-gray-400">Par défaut: +{hypotheses.baselineDistanceBufferKm} km</div>
+              <input type="number" value={step2Form.bufferKm} onChange={(e) => setStep2Form((p) => ({ ...p, bufferKm: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+              <div>Formule</div>
+              <div className="text-gray-400">Impacte la conversion €/m³</div>
+              <select value={step2Form.formule} onChange={(e) => setStep2Form((p) => ({ ...p, formule: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
+                <option value="ECONOMIQUE">Économique</option>
+                <option value="STANDARD">Standard</option>
+                <option value="PREMIUM">Premium</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+              <div>Densité (préselection)</div>
+              <div className="text-gray-400">Défaut Step 2: {hypotheses.step2Defaults.density}</div>
+              <select value={step2Form.density} onChange={(e) => setStep2Form((p) => ({ ...p, density: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
+                <option value="light">Peu meublé</option>
+                <option value="normal">Normal</option>
+                <option value="dense">Très meublé</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+              <div>Cuisine (préselection)</div>
+              <div className="text-gray-400">Défaut: {hypotheses.step2Defaults.kitchenApplianceCount} équipements</div>
+              <input type="number" min={0} value={step2Form.kitchenApplianceCount} onChange={(e) => setStep2Form((p) => ({ ...p, kitchenApplianceCount: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-gray-500">Décote: {fmtPct(hypotheses.decote)} · Socle min: {fmtEur(hypotheses.prixMinSocle)} · Centre: {fmtPct(hypotheses.displayCenterBias)}</p>
+              <button onClick={runStep2Simulation} disabled={simulatingStep2} className="rounded-lg px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-sm font-semibold">
+                {simulatingStep2 ? "Simulation..." : "Simuler Step 2"}
+              </button>
+            </div>
+
+            {step2Simulation && (
+              <div className="mt-2 rounded-xl border border-gray-800 bg-gray-950/50 p-4 text-sm space-y-1">
+                <p><span className="text-gray-500">Distance calculée:</span> {step2Simulation.input.distanceKm} km</p>
+                <p><span className="text-gray-500">Centre avant provision:</span> {fmtEur(step2Simulation.baseline.step2CenterBeforeProvisionEur)}</p>
+                <p><span className="text-gray-500">Provision:</span> {fmtEur(step2Simulation.baseline.moverzFeeProvisionEur)}</p>
+                <p><span className="text-gray-500">Centre après provision:</span> {fmtEur(step2Simulation.baseline.step2CenterAfterProvisionEur)}</p>
+                <p><span className="text-gray-500">Fourchette Step 2:</span> {fmtEur(step2Simulation.baseline.prixMin)} → {fmtEur(step2Simulation.baseline.prixMax)}</p>
               </div>
-            </div>
-
-            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <h2 className="text-sm font-semibold text-gray-300 mb-4">Majos accès</h2>
-              <div className="space-y-2 text-sm">
-                <p><span className="text-gray-500">Portage &gt; 10m :</span> <span className="font-semibold">+5%</span></p>
-                <p><span className="text-gray-500">Petit ascenseur / passage étroit :</span> <span className="font-semibold">+5%</span></p>
-                <p><span className="text-gray-500">Stationnement compliqué :</span> <span className="font-semibold">+3%</span></p>
-                <p><span className="text-gray-500">Sans ascenseur :</span> <span className="font-semibold">1er +5% · 2e +10% · 3e+ +15%</span></p>
-                <p><span className="text-gray-500">Petit ascenseur :</span> <span className="font-semibold">1er +2% · 2e +6% · 3e+ +10%</span></p>
-              </div>
-            </div>
-
-            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <h2 className="text-sm font-semibold text-gray-300 mb-4">Step 2 — champs préselectionnés</h2>
-              <div className="space-y-2 text-sm">
-                <p><span className="text-gray-500">Densité (défaut) :</span> <span className="font-semibold">{hypotheses.step2Defaults.density}</span></p>
-                <p><span className="text-gray-500">Cuisine (défaut) :</span> <span className="font-semibold">{hypotheses.step2Defaults.kitchenIncluded} ({hypotheses.step2Defaults.kitchenApplianceCount} équipements)</span></p>
-                <p><span className="text-gray-500">Volume extra cuisine :</span> <span className="font-semibold">{hypotheses.step2Defaults.extraVolumeM3} m³</span></p>
-                <p><span className="text-gray-500">Facteur saison :</span> <span className="font-semibold">×{hypotheses.step2Defaults.seasonFactor}</span></p>
-                <p><span className="text-gray-500">Étages/ascenseurs :</span> <span className="font-semibold">0 / 0 · yes / yes</span></p>
-                <p><span className="text-gray-500">Contraintes :</span> <span className="font-semibold">aucune par défaut</span></p>
-              </div>
-            </div>
-
-            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <h2 className="text-sm font-semibold text-gray-300 mb-4">Densité</h2>
-              <DataTable
-                headers={["Profil", "Coefficient"]}
-                rows={Object.entries(hypotheses.densityCoefficients).map(([k, v]) => [k, v])}
-              />
-            </div>
-
-            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <h2 className="text-sm font-semibold text-gray-300 mb-4">Services fixes</h2>
-              <DataTable
-                headers={["Service", "Montant"]}
-                rows={Object.entries(hypotheses.servicesPricesEur).map(([k, v]) => [k, fmtEur(v)])}
-              />
-            </div>
+            )}
           </div>
         )}
 
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-5">
-          <h2 className="text-sm font-semibold text-gray-300">Simulateur Step 3 (budget affiné)</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <input
-              type="number"
-              value={form.surfaceM2}
-              onChange={(e) => setForm((prev) => ({ ...prev, surfaceM2: Number(e.target.value) }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-              placeholder="Surface m²"
-            />
-            <input
-              type="number"
-              value={form.distanceKm}
-              onChange={(e) => setForm((prev) => ({ ...prev, distanceKm: Number(e.target.value) }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-              placeholder="Distance km"
-            />
-            <input
-              type="number"
-              step="0.01"
-              value={form.seasonFactor}
-              onChange={(e) => setForm((prev) => ({ ...prev, seasonFactor: Number(e.target.value) }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-              placeholder="Facteur saison"
-            />
-            <input
-              type="number"
-              step="0.1"
-              value={form.extraVolumeM3}
-              onChange={(e) => setForm((prev) => ({ ...prev, extraVolumeM3: Number(e.target.value) }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-              placeholder="Volume extra m³"
-            />
+        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-4">
+          <h2 className="text-base font-semibold text-white">2) Calculs Step 3 — majorations + date + affinage</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-gray-400 uppercase tracking-wide">
+            <div>Champ</div>
+            <div>Règle</div>
+            <div>Input simulation</div>
+          </div>
 
-            <select
-              value={form.formule}
-              onChange={(e) => setForm((prev) => ({ ...prev, formule: e.target.value }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="ECONOMIQUE">Économique</option>
-              <option value="STANDARD">Standard</option>
-              <option value="PREMIUM">Premium</option>
-            </select>
-            <select
-              value={form.density}
-              onChange={(e) => setForm((prev) => ({ ...prev, density: e.target.value }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-            >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm border-t border-gray-800 pt-3">
+            <div>Distance réelle</div>
+            <div className="text-gray-400">Distance utilisée en Step 3</div>
+            <input type="number" value={step3Form.distanceKm} onChange={(e) => setStep3Form((p) => ({ ...p, distanceKm: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Date / saison</div>
+            <div className="text-gray-400">Facteur saison/urgence</div>
+            <input type="number" step="0.01" value={step3Form.seasonFactor} onChange={(e) => setStep3Form((p) => ({ ...p, seasonFactor: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Densité</div>
+            <div className="text-gray-400">Light/normal/dense</div>
+            <select value={step3Form.density} onChange={(e) => setStep3Form((p) => ({ ...p, density: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
               <option value="light">Peu meublé</option>
               <option value="normal">Normal</option>
               <option value="dense">Très meublé</option>
             </select>
-            <select
-              value={form.originElevator}
-              onChange={(e) => setForm((prev) => ({ ...prev, originElevator: e.target.value }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="yes">Ascenseur départ: oui</option>
-              <option value="partial">Ascenseur départ: petit</option>
-              <option value="no">Ascenseur départ: non</option>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Cuisine / volume extra</div>
+            <div className="text-gray-400">Ajout m³</div>
+            <input type="number" step="0.1" value={step3Form.extraVolumeM3} onChange={(e) => setStep3Form((p) => ({ ...p, extraVolumeM3: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Étage / ascenseur départ</div>
+            <div className="text-gray-400">Majoration accès départ</div>
+            <div className="grid grid-cols-2 gap-2">
+              <input type="number" value={step3Form.originFloor} onChange={(e) => setStep3Form((p) => ({ ...p, originFloor: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
+              <select value={step3Form.originElevator} onChange={(e) => setStep3Form((p) => ({ ...p, originElevator: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
+                <option value="yes">oui</option>
+                <option value="partial">petit</option>
+                <option value="no">non</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Étage / ascenseur arrivée</div>
+            <div className="text-gray-400">Majoration accès arrivée</div>
+            <div className="grid grid-cols-2 gap-2">
+              <input type="number" value={step3Form.destinationFloor} onChange={(e) => setStep3Form((p) => ({ ...p, destinationFloor: Number(e.target.value) }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" />
+              <select value={step3Form.destinationElevator} onChange={(e) => setStep3Form((p) => ({ ...p, destinationElevator: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
+                <option value="yes">oui</option>
+                <option value="partial">petit</option>
+                <option value="no">non</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Majos accès</div>
+            <div className="text-gray-400">Portage +5% · Étroit +5% · Parking +3%</div>
+            <div className="flex flex-wrap gap-3 text-xs">
+              <label><input type="checkbox" checked={step3Form.longCarry} onChange={(e) => setStep3Form((p) => ({ ...p, longCarry: e.target.checked }))} /> Portage</label>
+              <label><input type="checkbox" checked={step3Form.tightAccess} onChange={(e) => setStep3Form((p) => ({ ...p, tightAccess: e.target.checked }))} /> Étroit</label>
+              <label><input type="checkbox" checked={step3Form.difficultParking} onChange={(e) => setStep3Form((p) => ({ ...p, difficultParking: e.target.checked }))} /> Parking</label>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Services</div>
+            <div className="text-gray-400">Monte-meuble / Piano / Débarras</div>
+            <div className="grid grid-cols-3 gap-2">
+              <label className="text-xs"><input type="checkbox" checked={step3Form.monteMeuble} onChange={(e) => setStep3Form((p) => ({ ...p, monteMeuble: e.target.checked }))} /> Monte</label>
+              <select value={step3Form.piano} onChange={(e) => setStep3Form((p) => ({ ...p, piano: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs">
+                <option value="none">Piano: non</option>
+                <option value="droit">droit</option>
+                <option value="quart">quart</option>
+              </select>
+              <label className="text-xs"><input type="checkbox" checked={step3Form.debarras} onChange={(e) => setStep3Form((p) => ({ ...p, debarras: e.target.checked }))} /> Débarras</label>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-sm">
+            <div>Formule Step 3</div>
+            <div className="text-gray-400">Delta de formule</div>
+            <select value={step3Form.formule} onChange={(e) => setStep3Form((p) => ({ ...p, formule: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
+              <option value="ECONOMIQUE">Économique</option>
+              <option value="STANDARD">Standard</option>
+              <option value="PREMIUM">Premium</option>
             </select>
-            <select
-              value={form.destinationElevator}
-              onChange={(e) => setForm((prev) => ({ ...prev, destinationElevator: e.target.value }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="yes">Ascenseur arrivée: oui</option>
-              <option value="partial">Ascenseur arrivée: petit</option>
-              <option value="no">Ascenseur arrivée: non</option>
-            </select>
+          </div>
 
-            <input
-              type="number"
-              value={form.originFloor}
-              onChange={(e) => setForm((prev) => ({ ...prev, originFloor: Number(e.target.value) }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-              placeholder="Étage départ"
-            />
-            <input
-              type="number"
-              value={form.destinationFloor}
-              onChange={(e) => setForm((prev) => ({ ...prev, destinationFloor: Number(e.target.value) }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-              placeholder="Étage arrivée"
-            />
-            <select
-              value={form.piano}
-              onChange={(e) => setForm((prev) => ({ ...prev, piano: e.target.value }))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="none">Piano: non</option>
-              <option value="droit">Piano droit</option>
-              <option value="quart">Piano quart</option>
-            </select>
-            <button
-              onClick={runSimulation}
-              disabled={simulating}
-              className="rounded-lg px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-sm font-semibold"
-            >
-              {simulating ? "Simulation..." : "Lancer la simulation"}
+          <div className="flex justify-end pt-1">
+            <button onClick={runStep3Simulation} disabled={simulatingStep3} className="rounded-lg px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-sm font-semibold">
+              {simulatingStep3 ? "Simulation..." : "Simuler Step 3"}
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-3 text-xs text-gray-300">
-            <label className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.longCarry}
-                onChange={(e) => setForm((prev) => ({ ...prev, longCarry: e.target.checked }))}
-              />
-              Portage &gt; 10m
-            </label>
-            <label className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.tightAccess}
-                onChange={(e) => setForm((prev) => ({ ...prev, tightAccess: e.target.checked }))}
-              />
-              Petit ascenseur / passage étroit
-            </label>
-            <label className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.difficultParking}
-                onChange={(e) => setForm((prev) => ({ ...prev, difficultParking: e.target.checked }))}
-              />
-              Stationnement compliqué
-            </label>
-            <label className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.monteMeuble}
-                onChange={(e) => setForm((prev) => ({ ...prev, monteMeuble: e.target.checked }))}
-              />
-              Monte-meuble
-            </label>
-            <label className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.debarras}
-                onChange={(e) => setForm((prev) => ({ ...prev, debarras: e.target.checked }))}
-              />
-              Débarras
-            </label>
-          </div>
+          {step3Simulation && (
+            <div className="mt-2 rounded-xl border border-gray-800 bg-gray-950/50 p-4 text-sm space-y-1">
+              <p><span className="text-gray-500">Prix brut (centre):</span> {fmtEur(step3Simulation.detailed.raw.prixFinal)}</p>
+              <p><span className="text-gray-500">Provision:</span> {fmtEur(step3Simulation.detailed.withProvision.provisionEur)}</p>
+              <p><span className="text-gray-500">Centre après provision:</span> {fmtEur(step3Simulation.detailed.withProvision.centerAfterProvisionEur)}</p>
+              <p><span className="text-gray-500">Fourchette Step 3:</span> {fmtEur(step3Simulation.detailed.withProvision.prixMin)} → {fmtEur(step3Simulation.detailed.withProvision.prixMax)}</p>
+              <p><span className="text-gray-500">Comparatif baseline Step 2:</span> {fmtEur(step3Simulation.baseline.step2CenterAfterProvisionEur)}</p>
+            </div>
+          )}
         </div>
-
-        {simulation && (
-          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-6">
-            <h3 className="text-sm font-semibold text-gray-300">Step 3 vs Step 2 — détail des calculs</h3>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Entrées de simulation</p>
-                <ul className="space-y-1.5 text-sm">
-                  <li><span className="text-gray-500">Surface:</span> {simulation.input.surfaceM2} m²</li>
-                  <li><span className="text-gray-500">Distance:</span> {simulation.input.distanceKm} km</li>
-                  <li><span className="text-gray-500">Formule:</span> {simulation.input.formule}</li>
-                  <li><span className="text-gray-500">Densité:</span> {simulation.input.density}</li>
-                  <li><span className="text-gray-500">Saison:</span> ×{simulation.input.seasonFactor}</li>
-                  <li><span className="text-gray-500">Étages:</span> départ {simulation.input.originFloor} / arrivée {simulation.input.destinationFloor}</li>
-                  <li><span className="text-gray-500">Ascenseurs:</span> départ {simulation.input.originElevator} / arrivée {simulation.input.destinationElevator}</li>
-                  <li><span className="text-gray-500">Volume extra:</span> {simulation.input.extraVolumeM3} m³</li>
-                </ul>
-              </div>
-
-              <div>
-                <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Contraintes & services</p>
-                <ul className="space-y-1.5 text-sm">
-                  <li><span className="text-gray-500">Portage &gt; 10m:</span> {simulation.input.longCarry ? "oui" : "non"}</li>
-                  <li><span className="text-gray-500">Passage étroit / petit asc.:</span> {simulation.input.tightAccess ? "oui" : "non"}</li>
-                  <li><span className="text-gray-500">Stationnement compliqué:</span> {simulation.input.difficultParking ? "oui" : "non"}</li>
-                  <li><span className="text-gray-500">Monte-meuble:</span> {simulation.input.services.monteMeuble ? "oui" : "non"}</li>
-                  <li><span className="text-gray-500">Piano:</span> {simulation.input.services.piano || "non"}</li>
-                  <li><span className="text-gray-500">Débarras:</span> {simulation.input.services.debarras ? "oui" : "non"}</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-gray-800">
-              <p className="text-xs uppercase tracking-wider text-purple-300 mb-2">Step 3 (affiné)</p>
-            </div>
-
-            <div>
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Calcul détaillé (avant provision)</p>
-              <ul className="space-y-1.5 text-sm">
-                <li><span className="text-gray-500">Volume calculé:</span> {simulation.detailed.raw.volumeM3} m³</li>
-                <li><span className="text-gray-500">Prix base (hors services):</span> {fmtEur(simulation.detailed.raw.prixBase)}</li>
-                <li><span className="text-gray-500">Coeff étage appliqué:</span> ×{simulation.detailed.raw.coeffEtage.toFixed(2)}</li>
-                <li><span className="text-gray-500">Prix avec formule/accès:</span> {fmtEur(simulation.detailed.raw.prixAvecFormule)}</li>
-                <li><span className="text-gray-500">Total services:</span> {fmtEur(simulation.detailed.raw.servicesTotal)}</li>
-                <li><span className="text-gray-500">Prix final centre:</span> {fmtEur(simulation.detailed.raw.prixFinal)}</li>
-                <li><span className="text-gray-500">Fourchette:</span> {fmtEur(simulation.detailed.raw.prixMin)} → {fmtEur(simulation.detailed.raw.prixMax)}</li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Provision Moverz (interne)</p>
-              <ul className="space-y-1.5 text-sm">
-                <li><span className="text-gray-500">Centre avant provision:</span> {fmtEur(simulation.detailed.withProvision.centerBeforeProvisionEur)}</li>
-                <li><span className="text-gray-500">Provision appliquée:</span> {fmtEur(simulation.detailed.withProvision.provisionEur)}</li>
-                <li><span className="text-gray-500">Centre après provision:</span> {fmtEur(simulation.detailed.withProvision.centerAfterProvisionEur)}</li>
-                <li><span className="text-gray-500">Fourchette après provision:</span> {fmtEur(simulation.detailed.withProvision.prixMin)} → {fmtEur(simulation.detailed.withProvision.prixMax)}</li>
-              </ul>
-            </div>
-
-            <div className="pt-2 border-t border-gray-800">
-              <p className="text-xs uppercase tracking-wider text-emerald-300 mb-2">Step 2 / Home (baseline figée)</p>
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Baseline Step 2 / Home (référence)</p>
-              <ul className="space-y-1.5 text-sm">
-                <li><span className="text-gray-500">Centre avant provision:</span> {fmtEur(simulation.baseline.step2CenterBeforeProvisionEur)}</li>
-                <li><span className="text-gray-500">Provision baseline:</span> {fmtEur(simulation.baseline.moverzFeeProvisionEur)}</li>
-                <li><span className="text-gray-500">Centre après provision:</span> {fmtEur(simulation.baseline.step2CenterAfterProvisionEur)}</li>
-                <li><span className="text-gray-500">Fourchette baseline:</span> {fmtEur(simulation.baseline.prixMin)} → {fmtEur(simulation.baseline.prixMax)}</li>
-              </ul>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

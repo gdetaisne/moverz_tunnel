@@ -80,6 +80,32 @@
 
 ---
 
+## 2026-02-17 — Analytics: refonte lisibilité en mode "champ -> règle -> input"
+
+**Demande** :
+- Vue trop dense/illisible.
+- Besoin d'isoler clairement:
+  1. calculs Step 2 (hypothèses + simulation),
+  2. calculs Step 3 (majors accès, date, etc.),
+  avec un input de simulation en face de chaque champ.
+
+**Implémentation** :
+- `app/analytics/page.tsx`
+  - refonte complète de l'onglet `Hypothèses & Simulation` en 2 blocs:
+    - `1) Calculs Step 2 — hypothèses + simulation`
+    - `2) Calculs Step 3 — majorations + date + affinage`
+  - rendu en grille lisible `Champ | Règle | Input simulation`,
+  - séparation des états et actions:
+    - `step2Form` + bouton `Simuler Step 2`,
+    - `step3Form` + bouton `Simuler Step 3`,
+  - résultats affichés séparément par section.
+
+**Impact** :
+- Lecture métier beaucoup plus directe.
+- Aucune modification du moteur de pricing, seulement la présentation Analytics.
+
+---
+
 ## 2026-02-17 — Fix affichage Step 3: bloc enrichissement non visible
 
 **Problème** :
