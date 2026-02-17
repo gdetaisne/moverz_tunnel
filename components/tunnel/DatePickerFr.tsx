@@ -30,6 +30,28 @@ function formatFr(value: string): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+function parseFrToIso(value: string): string | null {
+  const cleaned = value.trim();
+  if (!cleaned) return "";
+  const m = cleaned.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if (!m) return null;
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  const year = Number(m[3]);
+  if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > 2100) {
+    return null;
+  }
+  const dt = new Date(Date.UTC(year, month - 1, day));
+  if (
+    dt.getUTCFullYear() !== year ||
+    dt.getUTCMonth() !== month - 1 ||
+    dt.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return toIsoDate(dt);
+}
+
 function isBeforeIso(a: string, b: string): boolean {
   return a < b;
 }
@@ -89,6 +111,8 @@ export function DatePickerFr({
   error?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [manualInput, setManualInput] = useState("");
+  const [manualError, setManualError] = useState<string | null>(null);
   // "months" = sélection mois, "days" = sélection jour
   const [phase, setPhase] = useState<"months" | "days">("months");
   const [selectedYear, setSelectedYear] = useState<number>(() => new Date().getFullYear());
@@ -97,6 +121,10 @@ export function DatePickerFr({
 
   const minIso = (min || "").trim() || null;
   const minDate = minIso ? parseIsoDate(minIso) : null;
+
+  useEffect(() => {
+    setManualInput(value ? formatFr(value) : "");
+  }, [value]);
 
   // Quand on ouvre, reset à la bonne phase
   useEffect(() => {
@@ -200,6 +228,25 @@ export function DatePickerFr({
     return !isBeforeIso(iso, minIso);
   };
 
+  const commitManualInput = () => {
+    const parsed = parseFrToIso(manualInput);
+    if (parsed === "") {
+      setManualError(null);
+      onChange("");
+      return;
+    }
+    if (!parsed) {
+      setManualError("Format invalide. Utilisez jj/mm/aaaa.");
+      return;
+    }
+    if (minIso && isBeforeIso(parsed, minIso)) {
+      setManualError("Date trop proche. Minimum: 15 jours.");
+      return;
+    }
+    setManualError(null);
+    onChange(parsed);
+  };
+
   const todayIso = useMemo(() => {
     const now = new Date();
     return toIsoDate(new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())));
@@ -216,27 +263,57 @@ export function DatePickerFr({
 
   return (
     <div ref={rootRef} className="relative">
-      {/* Bouton trigger */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
+      {/* Champ manuel + bouton calendrier */}
+      <div
         className={[
-          "w-full rounded-xl border-2 bg-white px-4 py-3 text-left text-base transition-all",
-          error
-            ? "border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/15"
-            : "border-[#E3E5E8] hover:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20",
+          "w-full rounded-xl border-2 bg-white px-3 py-2.5 transition-all flex items-center gap-2",
+          error || manualError
+            ? "border-[#EF4444] focus-within:ring-2 focus-within:ring-[#EF4444]/15"
+            : "border-[#E3E5E8] hover:border-[#6BCFCF] focus-within:ring-2 focus-within:ring-[#6BCFCF]/20",
         ].join(" ")}
-        aria-haspopup="dialog"
-        aria-expanded={open}
       >
-        <span className={displayValue ? "text-[#0F172A]" : "text-[#1E293B]/40"}>
-          {displayValue || "Choisir un mois puis un jour"}
-        </span>
-      </button>
+        <input
+          id={id}
+          type="text"
+          inputMode="numeric"
+          value={manualInput}
+          onChange={(e) => {
+            setManualError(null);
+            setManualInput(e.target.value);
+          }}
+          onBlur={commitManualInput}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitManualInput();
+              setOpen(false);
+            }
+          }}
+          placeholder="Choisir un mois puis un jour"
+          className="flex-1 bg-transparent text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:outline-none"
+          aria-invalid={Boolean(error || manualError)}
+          aria-describedby={manualError ? `${id}-manual-error` : undefined}
+        />
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#0F172A]/75 hover:bg-[#F8F9FA]"
+          aria-label="Ouvrir le calendrier"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+        >
+          Calendrier
+        </button>
+      </div>
+      {(manualError || (error && !displayValue)) && (
+        <p id={`${id}-manual-error`} className="mt-1 text-xs text-[#EF4444]">
+          {manualError || "Date requise"}
+        </p>
+      )}
 
       {/* Input natif caché (accessibilité + formulaire) */}
       <input
-        id={id}
+        id={`${id}-native`}
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -396,6 +473,8 @@ export function DatePickerFr({
                       disabled={disabled}
                       onClick={() => {
                         onChange(iso);
+                        setManualInput(formatFr(iso));
+                        setManualError(null);
                         setOpen(false);
                       }}
                       className={[

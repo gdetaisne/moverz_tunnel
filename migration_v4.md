@@ -1,5 +1,51 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — DatePicker: saisie manuelle `jj/mm/aaaa`
+
+**Demande** :
+- Permettre aux clients de saisir la date de déménagement au clavier (pas uniquement via le calendrier).
+
+**Implémentation** :
+- `components/tunnel/DatePickerFr.tsx`
+  - ajout d'une saisie texte (`inputMode="numeric"`) + bouton `Calendrier`,
+  - parsing robuste `jj/mm/aaaa` (accepte `/`, `.` et `-`) vers ISO,
+  - validation au blur / Entrée,
+  - conservation de la règle `min` (date mini),
+  - message d'erreur clair si format invalide ou date trop proche.
+
+**Impact** :
+- UX plus fluide pour les utilisateurs qui préfèrent taper directement la date.
+- Aucune modification des données envoyées (`onChange` reste en ISO `yyyy-mm-dd`).
+
+---
+
+## 2026-02-17 — Step 3 "Votre trajet": Desktop + Mobile A (fluidification appartement)
+
+**Objectif UX** :
+- Simplifier le parcours quand `Logement = Appartement` sans perdre d'information ni de validation.
+
+**Desktop (>= sm)** :
+- Bloc `Votre trajet` réorganisé en **2 colonnes** :
+  - gauche : `Départ` + `Arrivée` (adresse + type de logement),
+  - droite : panneau contextuel `Détails accès — Départ/Arrivée` (Étage + Ascenseur).
+- Ajout d'un résumé compact par sous-bloc (ex: `Étage: 3e · Ascenseur: Oui mais petit`).
+
+**Mobile (< sm) — option A** :
+- Accordéon séquentiel : un seul sous-bloc ouvert à la fois (`Départ` ou `Arrivée`).
+- En-tête de sous-bloc avec résumé compact et statut (`En cours` / `Complet`).
+- Contenu d'un sous-bloc : adresse + type + accès (étage/ascenseur).
+
+**Fichier modifié** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+
+**Stabilité / données** :
+- Aucun champ supprimé.
+- Aucune modification du payload Back Office.
+- Aucune modification DB/Prisma.
+- Validations métier conservées (adresse, type, étage, ascenseur).
+
+---
+
 ## 2026-02-16 — Analytics: funnel détaillé par bloc avec durées
 
 **Contexte** : le funnel macro (PROJECT / RECAP / CONTACT / THANK_YOU) est trop simplifié.
