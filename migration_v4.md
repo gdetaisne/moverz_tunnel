@@ -1,5 +1,24 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Step 3 précisions: retrait CTA de validation explicite
+
+**Demande** :
+- Retirer le CTA `Valider ces précisions`.
+- Le client doit pouvoir lancer sa demande sans action dans ce bloc (pré-rempli `Rien à déclarer`).
+
+**Implémentation** :
+- `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+  - suppression du bouton `Valider ces précisions`,
+  - header du bloc en mode pré-rempli (`Pré-rempli : rien à déclarer`),
+  - badge fermé ajusté en `Pré-rempli`.
+- `app/devis-gratuits-v3/page.tsx`
+  - suppression du blocage `handleSubmitAccessV2` qui exigeait une validation explicite du bloc précisions.
+
+**Impact** :
+- Le bloc reste éditable mais n'impose plus d'action supplémentaire pour continuer.
+
+---
+
 ## 2026-02-17 — Step 3 précisions: titre final + étape obligatoire
 
 **Demande** :

@@ -109,7 +109,6 @@ const OBJECTS_BLOCK_START = "[[OBJETS_SPECIFIQUES_V4_START]]";
 const OBJECTS_BLOCK_END = "[[OBJETS_SPECIFIQUES_V4_END]]";
 const EXTRA_NOTES_BLOCK_START = "[[ENRICHISSEMENT_NOTES_V4_START]]";
 const EXTRA_NOTES_BLOCK_END = "[[ENRICHISSEMENT_NOTES_V4_END]]";
-const ENRICHMENT_CONFIRMED_TOKEN = "[[ENRICHISSEMENT_CONFIRMED_V4]]";
 
 type ObjectsState = {
   piano: boolean;
@@ -631,7 +630,6 @@ ${EXTRA_NOTES_BLOCK_END}`;
   );
 
   const destinationUnknown = !!props.destinationUnknown;
-  const missingInfoConfirmed = (props.specificNotes || "").includes(ENRICHMENT_CONFIRMED_TOKEN);
   const accessSides = parseAccessSides();
   const originRas = questions.every((q) => !accessSides[q.key]?.origin);
   const destinationRas = questions.every((q) => !accessSides[q.key]?.destination);
@@ -1863,33 +1861,27 @@ ${EXTRA_NOTES_BLOCK_END}`;
               </p>
               {!missingInfoPanelOpen && (
                 <p className="text-xs truncate mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
-                  {missingInfoValidated || missingInfoConfirmed ? "Précisions validées" : "Photos / contraintes / notes"}
+                  Pré-rempli : rien à déclarer
                 </p>
               )}
             </div>
             <div className="shrink-0 flex items-center gap-2" aria-hidden>
-              {(!(missingInfoValidated || missingInfoConfirmed) || isMissingInfoLocked) && (
-                <span
-                  className="text-xs font-semibold"
-                  style={{
-                    color: isMissingInfoLocked
-                      ? "var(--color-text-muted)"
-                      : missingInfoPanelOpen
-                      ? "var(--color-accent)"
-                      : "var(--color-text-muted)",
-                  }}
-                >
-                  {isMissingInfoLocked ? "Verrouillé" : missingInfoPanelOpen ? "En cours" : "Obligatoire"}
-            </span>
-              )}
-              {missingInfoValidated || missingInfoConfirmed ? (
-                <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
-              ) : (
+              <span
+                className="text-xs font-semibold"
+                style={{
+                  color: isMissingInfoLocked
+                    ? "var(--color-text-muted)"
+                    : missingInfoPanelOpen
+                    ? "var(--color-accent)"
+                    : "var(--color-text-muted)",
+                }}
+              >
+                {isMissingInfoLocked ? "Verrouillé" : missingInfoPanelOpen ? "En cours" : "Pré-rempli"}
+              </span>
               <ChevronDown
                 className={`w-4 h-4 transition-transform ${missingInfoPanelOpen ? "rotate-180" : ""}`}
                 style={{ color: "var(--color-text-muted)" }}
               />
-              )}
             </div>
           </button>
           {isMissingInfoLocked && (
@@ -2165,27 +2157,6 @@ ${EXTRA_NOTES_BLOCK_END}`;
                   {activeUploadedPhotos.length} photo(s) ajoutée(s) au dossier.
                 </p>
               )}
-              <button
-                type="button"
-                onClick={() => {
-                  if (!(props.specificNotes || "").includes(ENRICHMENT_CONFIRMED_TOKEN)) {
-                    const normalized = (props.specificNotes || "").trim();
-                    props.onFieldChange(
-                      "specificNotes",
-                      [normalized, ENRICHMENT_CONFIRMED_TOKEN].filter(Boolean).join("\n\n")
-                    );
-                  }
-                  setMissingInfoValidated(true);
-                  setShowMissingInfoPanel(false);
-                }}
-                className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold"
-                style={{
-                  background: "var(--color-accent)",
-                  color: "#FFFFFF",
-                }}
-              >
-                Valider ces précisions
-              </button>
         </div>
       </CardV4>
           </AnimatedSection>
