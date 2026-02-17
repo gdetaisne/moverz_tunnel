@@ -1,5 +1,22 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-17 — Pré-création lead BO en Step 3 dès contact valide
+
+**Demande** :
+- Quand un email est renseigné, créer le lead Back Office avant l'étape "Précisions".
+
+**Implémentation** :
+- `app/devis-gratuits-v3/page.tsx`
+  - ajout d'une pré-création silencieuse du lead en Step 3 dès `prénom + email` valides,
+  - garde-fous anti-doublon via refs (`attemptKey` + promesse en cours),
+  - réutilisation du lead pré-créé dans `handleSubmitAccessV2` si la promesse est encore en vol.
+
+**Impact** :
+- Le lead existe plus tôt côté Back Office, avant la validation des précisions.
+- Pas de double création en cas d'actions rapides utilisateur.
+
+---
+
 ## 2026-02-17 — Fix affichage Step 3: bloc enrichissement non visible
 
 **Problème** :
@@ -6941,3 +6958,29 @@ KPIs, tendance quotidienne, funnel + drop-off, sources, temps/étape, device, pa
 - Payload Back Office : strictement identique.
 - **Champs / Inputs tunnel** : aucun changement.
 - **Back Office payload** : aucun changement.
+
+## 2026-02-17 — Analytics: onglet "Hypothèses & Simulation"
+
+### Objectif
+Ajouter dans `/analytics` une vue dédiée pour:
+- lire clairement toutes les hypothèses pricing actives,
+- simuler un cas avec les mêmes règles de calcul que le tunnel.
+
+### Implémentation
+- **Nouvel endpoint sécurisé**: `app/api/analytics/pricing-simulator/route.ts`
+  - `GET`: expose les hypothèses pricing (coefficients, socle, décote, règle de provision Moverz, règles accès).
+  - `POST`: exécute une simulation détaillée (`calculatePricing`) + version avec provision + baseline Step 2/Home (`computeBaselineEstimate`).
+  - Protection identique aux autres routes analytics via `ANALYTICS_PASSWORD`.
+- **UI Analytics**: `app/analytics/page.tsx`
+  - ajout d'un 3e onglet `🧠 Hypothèses & Simulation`,
+  - panneau "hypothèses globales" lisible,
+  - formulaire de simulation (surface, distance, formule, densité, saison, étages/ascenseurs, contraintes, services),
+  - restitution des résultats:
+    - détaillé sans provision,
+    - détaillé avec provision,
+    - baseline Step 2/Home (avec centres avant/après provision).
+
+### Impacts
+- Aucun impact tunnel client (`/devis-gratuits-v3`) ou tracking métier.
+- Aucun changement Prisma/DB tunnel.
+- Aucun changement Back Office payload.

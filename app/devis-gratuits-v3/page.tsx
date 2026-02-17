@@ -91,6 +91,8 @@ function DevisGratuitsV3Content() {
   const [densityAiNote, setDensityAiNote] = useState("");
   const [collapseStep3OnEnterToken, setCollapseStep3OnEnterToken] = useState(0);
   const [isSavingStep4Enrichment, setIsSavingStep4Enrichment] = useState(false);
+  const precreateLeadPromiseRef = useRef<Promise<string | null> | null>(null);
+  const precreateLeadAttemptKeyRef = useRef<string>("");
   const [lastImpactDetailId, setLastImpactDetailId] = useState<
     | "distance"
     | "date"
@@ -1741,6 +1743,72 @@ function DevisGratuitsV3Content() {
     if (mapped) setLastImpactDetailId(mapped);
   };
 
+  useEffect(() => {
+    const isStep3 = state.currentStep === 3;
+    const hasLead = Boolean(state.leadId);
+    const firstName = state.firstName.trim();
+    const email = state.email.trim().toLowerCase();
+    const isFirstNameValid = firstName.length >= 2;
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!isStep3 || hasLead || !isFirstNameValid || !isEmailValid) return;
+
+    const attemptKey = `${firstName}|${email}`;
+    if (precreateLeadAttemptKeyRef.current === attemptKey) return;
+    if (precreateLeadPromiseRef.current) return;
+    precreateLeadAttemptKeyRef.current = attemptKey;
+
+    const payload = {
+      firstName,
+      email,
+      phone: state.phone.trim() || undefined,
+      source,
+      estimationMethod: "FORM" as const,
+      tunnelOptions: {
+        accessV2: {
+          access_type: state.access_type ?? "simple",
+          narrow_access: !!state.narrow_access,
+          long_carry: !!state.long_carry,
+          difficult_parking: !!state.difficult_parking,
+          lift_required: !!state.lift_required,
+          access_details: state.access_details || undefined,
+        },
+        notes: (() => {
+          const userNotes = (state.specificNotes || "").trim();
+          return userNotes || undefined;
+        })(),
+      },
+    };
+
+    precreateLeadPromiseRef.current = (async () => {
+      try {
+        const { id: backofficeLeadId } = await createBackofficeLead(payload);
+        updateFields({ leadId: backofficeLeadId, linkingCode: null });
+        return backofficeLeadId;
+      } catch (err) {
+        precreateLeadAttemptKeyRef.current = "";
+        console.error("Precreate lead on Step 3 contact validation failed:", err);
+        return null;
+      } finally {
+        precreateLeadPromiseRef.current = null;
+      }
+    })();
+  }, [
+    source,
+    state.currentStep,
+    state.leadId,
+    state.firstName,
+    state.email,
+    state.phone,
+    state.access_type,
+    state.narrow_access,
+    state.long_carry,
+    state.difficult_parking,
+    state.lift_required,
+    state.access_details,
+    state.specificNotes,
+    updateFields,
+  ]);
+
   const handleSubmitAccessV2 = async () => {
     // Validation adresses (requis) + complétude ville/CP/pays
     const isOriginAddrValid = state.originAddress.trim().length >= 5;
@@ -2040,9 +2108,17 @@ function DevisGratuitsV3Content() {
         },
       };
 
-      if (state.leadId) {
+      const precreatedLeadId = !state.leadId && precreateLeadPromiseRef.current
+        ? await precreateLeadPromiseRef.current
+        : null;
+      const leadIdToUse = state.leadId || precreatedLeadId || null;
+
+      if (leadIdToUse) {
         try {
-          await updateBackofficeLead(state.leadId, payload);
+          await updateBackofficeLead(leadIdToUse, payload);
+          if (!state.leadId && precreatedLeadId) {
+            updateFields({ leadId: precreatedLeadId, linkingCode: null });
+          }
         } catch (err: any) {
           if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
             const { id: backofficeLeadId } = await createBackofficeLead(payload);
