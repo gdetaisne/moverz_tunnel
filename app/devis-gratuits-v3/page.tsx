@@ -33,6 +33,7 @@ import {
   DENSITY_COEFFICIENTS,
   DECOTE,
   FORMULE_MULTIPLIERS,
+  OBJETS_SPECIFIQUES_PRIX,
   PRIX_MIN_SOCLE,
   TYPE_COEFFICIENTS,
   getDistanceBand,
@@ -1425,14 +1426,12 @@ function DevisGratuitsV3Content() {
       : 0;
 
     const objectsState = parseObjectsFromSpecificNotes(state.specificNotes);
-    // Tant qu'on n'a pas la granularité complète en UI (piano droit/queue, coffre léger/lourd),
-    // on branche les coûts fixes sur la variante standard demandée.
     const objectsFixedAddonEur =
-      (objectsState.piano ? 150 : 0) +
-      (objectsState.coffreFort ? 150 : 0) +
-      (objectsState.aquarium ? 100 : 0) +
-      (objectsState.objetsFragilesVolumineux ? 80 : 0) +
-      Math.max(0, objectsState.meublesTresLourdsCount) * 100;
+      (objectsState.piano ? OBJETS_SPECIFIQUES_PRIX.piano : 0) +
+      (objectsState.coffreFort ? OBJETS_SPECIFIQUES_PRIX.coffreFort : 0) +
+      (objectsState.aquarium ? OBJETS_SPECIFIQUES_PRIX.aquarium : 0) +
+      (objectsState.objetsFragilesVolumineux ? OBJETS_SPECIFIQUES_PRIX.objetsFragilesVolumineux : 0) +
+      Math.max(0, objectsState.meublesTresLourdsCount) * OBJETS_SPECIFIQUES_PRIX.meublesTresLourd;
 
     const inputSelectedFormule = {
       ...inputAccessConstraints,
@@ -1690,7 +1689,7 @@ function DevisGratuitsV3Content() {
   });
 
   const step3Progress = useMemo(() => {
-    const TOTAL_SECONDS = 180;
+    const TOTAL_SECONDS = 150;
 
     const blocs: Array<{ done: boolean; seconds: number }> = [
       { done: true, seconds: 15 },                          // Arrivée Step 3
@@ -1699,7 +1698,7 @@ function DevisGratuitsV3Content() {
       { done: sectionValidity.volume, seconds: 25 },        // Volume & densité
       { done: sectionValidity.formule, seconds: 20 },       // Formule
       { done: sectionValidity.contact, seconds: 15 },       // Coordonnées
-      { done: sectionValidity.precision, seconds: 60 },     // Ajouter des précisions
+      { done: sectionValidity.precision, seconds: 30 },     // Ajouter des précisions
     ];
 
     const savedSeconds = blocs.filter((b) => b.done).reduce((s, b) => s + b.seconds, 0);
