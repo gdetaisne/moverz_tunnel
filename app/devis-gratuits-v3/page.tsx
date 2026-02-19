@@ -2056,8 +2056,8 @@ function DevisGratuitsV3Content() {
         const kitchenCountBoAS = originIsBoxAS ? undefined
           : s.kitchenIncluded === "" ? 3
           : kitchenIncAS === "appliances" ? kitchenCountAS : undefined;
-        const densityBoAS = (d: string) => d === "light" ? "LIGHT" : d === "normal" ? "MEDIUM" : d === "dense" ? "HEAVY" : undefined;
-        const elevBoAS = (e: string) => {
+        const densityBoAS = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" | undefined => d === "light" ? "LIGHT" : d === "normal" ? "MEDIUM" : d === "dense" ? "HEAVY" : undefined;
+        const elevBoAS = (e: string): "OUI" | "NON" | "PARTIEL" => {
           const p = toPricingElevator(e);
           return p === "yes" ? "OUI" : p === "partial" ? "PARTIEL" : "NON";
         };
