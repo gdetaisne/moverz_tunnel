@@ -436,12 +436,58 @@ function DevisGratuitsV3Content() {
   const hydratedFromUrlRef = useRef(false);
   useEffect(() => {
     if (hydratedFromUrlRef.current) return;
+    if (urlLeadId) return; // Reprise dossier BO prioritaire: ne pas écraser l'état hydraté serveur
     const stepParam = searchParams.get("step");
     if (stepParam !== "3") return;
 
     hydratedFromUrlRef.current = true;
 
-    const next: Partial<typeof state> = {};
+    const formuleParam = searchParams.get("formule")?.trim().toUpperCase();
+    const formuleFromUrl =
+      formuleParam === "ECONOMIQUE" || formuleParam === "STANDARD" || formuleParam === "PREMIUM"
+        ? (formuleParam as "ECONOMIQUE" | "STANDARD" | "PREMIUM")
+        : "STANDARD";
+
+    // Entrée Step 3 depuis moverz.fr: repartir d'une base propre pour éviter
+    // qu'un ancien localStorage ne pollue le calcul (formule, contraintes, baseline figé, etc.).
+    const next: Partial<typeof state> = {
+      currentStep: 3,
+      enteredAtStep: 3,
+      formule: formuleFromUrl,
+      movingDate: "",
+      dateFlexible: false,
+      density: "",
+      kitchenIncluded: "",
+      kitchenApplianceCount: "",
+      originAddress: "",
+      destinationAddress: "",
+      originHousingType: "",
+      destinationHousingType: "",
+      originFloor: "0",
+      destinationFloor: "0",
+      originElevator: "none",
+      destinationElevator: "none",
+      originBoxVolumeM3: "",
+      originHousingTypeTouched: false,
+      originFloorTouched: false,
+      originElevatorTouched: false,
+      destinationHousingTypeTouched: false,
+      destinationFloorTouched: false,
+      destinationElevatorTouched: false,
+      serviceDebarras: false,
+      servicePiano: "none",
+      narrow_access: false,
+      long_carry: false,
+      difficult_parking: false,
+      lift_required: false,
+      access_type: "simple",
+      access_details: "",
+      specificNotes: "",
+      rewardBaselineMinEur: null,
+      rewardBaselineMaxEur: null,
+      rewardBaselineDistanceKm: null,
+      rewardBaselineFormule: null,
+    };
 
     const oPC = searchParams.get("originPostalCode")?.trim();
     if (oPC) next.originPostalCode = oPC;
@@ -458,15 +504,14 @@ function DevisGratuitsV3Content() {
     const surfParam = searchParams.get("surfaceM2")?.trim();
     if (surfParam && Number.isFinite(Number(surfParam)) && Number(surfParam) >= 10) {
       next.surfaceM2 = surfParam;
+      next.surfaceTouched = true;
     }
 
     if (Object.keys(next).length > 0) {
-      next.currentStep = 3;
-      next.enteredAtStep = 3; // Marque l'entrée directe en Step 3 (depuis moverz.fr)
       updateFields(next);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [urlLeadId]);
 
   // Assurer des coordonnées même si l'adresse provient d'un lien / BO.
   useEffect(() => {
@@ -2007,6 +2052,136 @@ function DevisGratuitsV3Content() {
     updateFields,
   ]);
 
+  const handleContactValidated = async () => {
+    const firstName = state.firstName.trim();
+    const email = state.email.trim().toLowerCase();
+    if (firstName.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+
+    try {
+      const originIsBoxCV = isBoxType(state.originHousingType);
+      const kitchenAppliancesCountCV =
+        Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+      const kitchenExtraVolumeM3CV = (() => {
+        if (originIsBoxCV) return 0;
+        const kitchenTouched =
+          state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
+        if (!kitchenTouched) return 3 * 0.6;
+        if (state.kitchenIncluded === "full") return 6;
+        if (state.kitchenIncluded === "appliances") return Math.max(0, kitchenAppliancesCountCV) * 0.6;
+        return 0;
+      })();
+      const kitchenIncludedForBoCV = originIsBoxCV ? "none" : state.kitchenIncluded || "appliances";
+      const kitchenApplianceCountForBoCV =
+        originIsBoxCV
+          ? undefined
+          : state.kitchenIncluded === ""
+          ? 3
+          : kitchenIncludedForBoCV === "appliances"
+          ? kitchenAppliancesCountCV
+          : undefined;
+      const densityToBOCV = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" | undefined => {
+        if (d === "light") return "LIGHT";
+        if (d === "normal") return "MEDIUM";
+        if (d === "dense") return "HEAVY";
+        return undefined;
+      };
+      const elevatorToBOCV = (e: string): "OUI" | "NON" | "PARTIEL" => {
+        const p = toPricingElevator(e);
+        if (p === "yes") return "OUI";
+        if (p === "partial") return "PARTIEL";
+        return "NON";
+      };
+      const originIsHouseCV = isHouseType(state.originHousingType);
+      const destIsHouseCV = isHouseType(state.destinationHousingType);
+
+      const payload = {
+        firstName,
+        email,
+        phone: state.phone.trim() || undefined,
+        source,
+        estimationMethod: "FORM" as const,
+        originAddress: state.originAddress || undefined,
+        originCity: state.originCity || undefined,
+        originPostalCode: state.originPostalCode || undefined,
+        originCountryCode: state.originCountryCode || undefined,
+        destAddress: state.destinationAddress || undefined,
+        destCity: state.destinationCity || undefined,
+        destPostalCode: state.destinationPostalCode || undefined,
+        destCountryCode: state.destinationCountryCode || undefined,
+        surfaceM2: parseInt(state.surfaceM2) || undefined,
+        estimatedVolume: activePricing?.volumeM3 ?? undefined,
+        density: densityToBOCV(state.density || "dense"),
+        formule: state.formule || undefined,
+        estimatedPriceMin: v2PricingCart?.refinedMinEur ?? activePricing?.prixMin ?? undefined,
+        estimatedPriceAvg: v2PricingCart?.refinedCenterEur ?? activePricing?.prixFinal ?? undefined,
+        estimatedPriceMax: v2PricingCart?.refinedMaxEur ?? activePricing?.prixMax ?? undefined,
+        originHousingType: state.originHousingType || undefined,
+        originFloor: originIsHouseCV
+          ? undefined
+          : Math.max(0, parseInt(state.originFloor || "0", 10) || 0),
+        originElevator: state.originElevator ? elevatorToBOCV(state.originElevator) : undefined,
+        destHousingType: state.destinationHousingType || undefined,
+        destFloor: destIsHouseCV
+          ? undefined
+          : Math.max(0, parseInt(state.destinationFloor || "0", 10) || 0),
+        destElevator: state.destinationElevator ? elevatorToBOCV(state.destinationElevator) : undefined,
+        movingDate: state.movingDate ? toIsoDate(state.movingDate) : undefined,
+        dateFlexible: state.dateFlexible,
+        tunnelOptions: {
+          pricing: {
+            distanceKm: routeDistanceKm ?? undefined,
+            distanceProvider: routeDistanceProvider ?? undefined,
+          },
+          accessV2: {
+            access_type: state.access_type ?? "simple",
+            narrow_access: !!state.narrow_access,
+            long_carry: !!state.long_carry,
+            difficult_parking: !!state.difficult_parking,
+            lift_required: !!state.lift_required,
+            access_details: state.access_details || undefined,
+          },
+          volumeAdjustments: {
+            kitchenIncluded: kitchenIncludedForBoCV,
+            kitchenApplianceCount: kitchenApplianceCountForBoCV,
+            extraVolumeM3: kitchenExtraVolumeM3CV,
+          },
+          notes: (() => {
+            const userNotes = getCleanSpecificNotesForBackoffice(state.specificNotes);
+            return userNotes || undefined;
+          })(),
+        },
+      };
+
+      const precreatedLeadId = !state.leadId && precreateLeadPromiseRef.current
+        ? await precreateLeadPromiseRef.current
+        : null;
+      const leadIdToUse = state.leadId || precreatedLeadId || null;
+
+      if (leadIdToUse) {
+        try {
+          await updateBackofficeLead(leadIdToUse, payload);
+          if (!state.leadId && precreatedLeadId) {
+            updateFields({ leadId: precreatedLeadId, linkingCode: null });
+          }
+        } catch (err: any) {
+          if (err instanceof Error && err.message === "LEAD_NOT_FOUND") {
+            const { id: backofficeLeadId } = await createBackofficeLead(payload);
+            updateFields({ leadId: backofficeLeadId, linkingCode: null });
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        const { id: backofficeLeadId } = await createBackofficeLead(payload);
+        updateFields({ leadId: backofficeLeadId, linkingCode: null });
+      }
+
+      trackBlock("contact_info", "PROJECT", "acces_v2");
+    } catch (err: any) {
+      console.error("Error creating/updating lead on contact validation:", err);
+    }
+  };
+
   const handleSubmitAccessV2 = async () => {
     // Validation adresses (requis) + complétude ville/CP/pays
     const isOriginAddrValid = state.originAddress.trim().length >= 5;
@@ -2626,8 +2801,8 @@ function DevisGratuitsV3Content() {
                 specificNotes={state.specificNotes}
                 collapseAllOnEnterToken={collapseStep3OnEnterToken}
                 showOptionalDetailsBlock={true}
+                onContactValidated={handleContactValidated}
                 onBlockEntered={(blockId) => {
-                  // Map step3 sections to block IDs
                   const blockMap: Record<string, string> = {
                     trajet: "route_housing",
                     date: "moving_date",

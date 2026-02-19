@@ -97,6 +97,8 @@ interface StepAccessLogisticsV4Props {
   showOptionalDetailsBlock?: boolean;
   /** Called when user enters a new block/section */
   onBlockEntered?: (blockId: string) => void;
+  /** Called when user clicks "Valider les coordonnées" and email check passes */
+  onContactValidated?: () => void;
 }
 
 const questions: Array<{ key: QuestionKey; label: string }> = [
@@ -2608,6 +2610,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
                   setContactValidated(true);
                   setEmailCheckState("valid");
                   setEmailCheckMessage(check.message);
+                  props.onContactValidated?.();
                 } else {
                   setContactValidated(false);
                   setEmailCheckState("invalid");

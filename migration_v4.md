@@ -7553,3 +7553,31 @@ Permettre de comparer les métriques du dashboard avec une période précédente
 - Aucun impact tunnel client (`/devis-gratuits-v3`) ou tracking métier.
 - Aucun changement Prisma/DB.
 - Aucun changement Back Office payload.
+
+## 2026-02-19 — Tunnel: création lead dès "Valider les coordonnées"
+
+### Problème
+4 clients entrent leurs coordonnées en Step 3 mais seulement 2 terminent. Le lead n'était créé avec le payload complet qu'à la toute fin de Step 3 (validation finale). Les 2 abandons étaient "perdus".
+
+### Solution
+Le bouton **"Valider les coordonnées"** (dans StepAccessLogisticsV4, section Contact) crée/met à jour le lead Back Office immédiatement avec **toutes les données disponibles** :
+- Contact (prénom, email, téléphone)
+- Adresses (origine/destination)
+- Volume, densité, surface
+- Formule, pricing estimé
+- Logement (type, étage, ascenseur)
+- Date de déménagement
+- Options d'accès
+- Notes
+
+### Implémentation
+- `StepAccessLogisticsV4.tsx` : nouvelle prop `onContactValidated?: () => void`, appelée quand le check email passe.
+- `page.tsx` : nouveau handler `handleContactValidated()` qui construit un payload riche (même structure que `handleSubmitAccessV2`) et appelle `createBackofficeLead` / `updateBackofficeLead`.
+- Le precreate automatique (useEffect) reste en place comme filet de sécurité.
+- La validation finale de Step 3 (`handleSubmitAccessV2`) continue de fonctionner et met à jour le lead avec les données finales.
+
+### Impacts
+- **Champs / Inputs tunnel** : aucun changement.
+- **Back Office payload** : strictement identique (même structure, même mappings).
+- **Tracking** : aucun changement.
+- **Gain métier** : les leads sont capturés plus tôt → récupération possible des abandons post-contact.
