@@ -2684,7 +2684,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
         </button>
 
         <p className="text-xs text-center font-medium" style={{ color: "var(--color-text-muted)" }}>
-          ~30 sec restantes
+          Gratuit · Sans engagement
         </p>
       </div>
     </div>

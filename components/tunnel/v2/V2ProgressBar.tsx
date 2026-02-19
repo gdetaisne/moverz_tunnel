@@ -8,7 +8,7 @@ interface V2ProgressBarProps {
 const timeText: Record<1 | 2 | 3 | 4, string> = {
   1: "~2 min",
   2: "~2 min",
-  3: "~30 sec",
+  3: "",
   4: "Dernière étape",
 };
 

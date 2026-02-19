@@ -248,15 +248,15 @@ export function SmartCart({
           </motion.div>
         </AnimatePresence>
 
-        {/* Barre de progression temps */}
+        {/* Barre de progression temps (0% → 100% = 3 min) */}
         <div className="mt-5 space-y-2">
           <div className={`flex items-center justify-between ${isMobile && drawerOpen ? "text-sm" : "text-xs"}`}>
             <span className="font-medium" style={{ color: "var(--color-text-muted)" }}>
-              {remainingLabel
-                ? computedPrecisionScore >= 100
-                  ? "Terminé"
-                  : `Encore ~${remainingLabel}`
-                : `${computedProgressCompleted}/${computedProgressTotal}`}
+              {computedPrecisionScore >= 100
+                ? "Estimation finalisée"
+                : remainingLabel
+                  ? `Encore ~${remainingLabel}`
+                  : `${computedProgressCompleted}/${computedProgressTotal}`}
             </span>
             <span className="font-bold" style={{ color: "var(--color-accent)" }}>
               {computedPrecisionScore}%
@@ -273,14 +273,6 @@ export function SmartCart({
               animate={{ width: `${computedPrecisionScore}%` }}
               transition={{ duration: 0.3, ease: "easeOut" }}
             />
-          </div>
-          <div className={`flex items-center justify-between ${isMobile && drawerOpen ? "text-sm" : "text-xs"}`}>
-            <span style={{ color: "var(--color-text-muted)" }}>
-              Min {fmtEur(displayedEstimate.min)}
-            </span>
-            <span style={{ color: "var(--color-text-muted)" }}>
-              Max {fmtEur(displayedEstimate.max)}
-            </span>
           </div>
         </div>
       </div>
