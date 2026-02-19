@@ -33,6 +33,14 @@ export const SERVICES_PRIX = {
   debarras: 100,
 } as const;
 
+export const OBJETS_SPECIFIQUES_PRIX = {
+  piano: 200,
+  coffreFort: 150,
+  aquarium: 100,
+  objetsFragilesVolumineux: 80,
+  meublesTresLourd: 100,
+} as const;
+
 // Décote globale (pricing base). -0.2 => -20% (factor 0.8).
 // Option A: appliquée à `rateEurPerM3` + `COEF_DISTANCE` uniquement (pas au socle, ni aux services).
 export const DECOTE = -0.2 as const;
