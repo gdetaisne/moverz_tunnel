@@ -248,8 +248,20 @@ export function SmartCart({
           </motion.div>
         </AnimatePresence>
 
-        {/* Progress bar dans fourchette */}
-        <div className="mt-5 space-y-2.5">
+        {/* Barre de progression temps */}
+        <div className="mt-5 space-y-2">
+          <div className={`flex items-center justify-between ${isMobile && drawerOpen ? "text-sm" : "text-xs"}`}>
+            <span className="font-medium" style={{ color: "var(--color-text-muted)" }}>
+              {remainingLabel
+                ? computedPrecisionScore >= 100
+                  ? "Terminé"
+                  : `Encore ~${remainingLabel}`
+                : `${computedProgressCompleted}/${computedProgressTotal}`}
+            </span>
+            <span className="font-bold" style={{ color: "var(--color-accent)" }}>
+              {computedPrecisionScore}%
+            </span>
+          </div>
           <div
             className={isMobile && drawerOpen ? "h-2.5 rounded-full overflow-hidden" : "h-2 rounded-full overflow-hidden"}
             style={{ background: "var(--color-border-light)" }}
@@ -258,7 +270,7 @@ export function SmartCart({
               className="h-full rounded-full"
               style={{ background: "var(--color-accent)" }}
               initial={{ width: 0 }}
-              animate={{ width: `${rangePercent}%` }}
+              animate={{ width: `${computedPrecisionScore}%` }}
               transition={{ duration: 0.3, ease: "easeOut" }}
             />
           </div>
