@@ -59,6 +59,7 @@ export interface SmartCartProps {
   progressCompleted?: number;
   progressTotal?: number;
   precisionScore?: number;
+  remainingSeconds?: number;
   preferredImpactId?: string | null;
 }
 
@@ -75,6 +76,7 @@ export function SmartCart({
   progressCompleted,
   progressTotal,
   precisionScore,
+  remainingSeconds,
   preferredImpactId = null,
 }: SmartCartProps) {
   const [isMobile, setIsMobile] = useState(false);
@@ -196,6 +198,17 @@ export function SmartCart({
     if (typeof precisionScore === "number") return Math.max(0, Math.min(100, precisionScore));
     return Math.round((computedProgressCompleted / computedProgressTotal) * 100);
   }, [precisionScore, computedProgressCompleted, computedProgressTotal]);
+
+  const remainingLabel = useMemo(() => {
+    if (remainingSeconds == null) return null;
+    const secs = Math.max(0, remainingSeconds);
+    if (secs === 0) return "Terminé";
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    if (m > 0 && s > 0) return `${m} min ${s}s`;
+    if (m > 0) return `${m} min`;
+    return `${s}s`;
+  }, [remainingSeconds]);
 
   // Cart content (réutilisé desktop + drawer)
   const CartContent = () => (
@@ -513,10 +526,10 @@ export function SmartCart({
           <div className="flex-1 min-w-0 space-y-1.5">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
-                Progression {computedProgressCompleted}/{computedProgressTotal}
+                {remainingLabel ? `Encore ${remainingLabel}` : `${computedProgressCompleted}/${computedProgressTotal}`}
               </span>
               <span className="text-xs font-bold" style={{ color: "var(--color-accent)" }}>
-                {computedPrecisionScore}% précis
+                {computedPrecisionScore}%
               </span>
             </div>
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--color-border-light)" }}>
@@ -643,9 +656,11 @@ export function SmartCart({
                   }}
                 >
                   <div className="flex items-center justify-between gap-2 text-xs">
-                    <span style={{ color: "var(--color-text-muted)" }}>Dossier complété</span>
+                    <span style={{ color: "var(--color-text-muted)" }}>
+                      {remainingLabel ? `Encore ${remainingLabel}` : "Dossier complété"}
+                    </span>
                     <span className="font-bold" style={{ color: "var(--color-accent)" }}>
-                      {computedProgressCompleted}/{computedProgressTotal}
+                      {computedPrecisionScore}%
                     </span>
                   </div>
                   <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--color-border-light)" }}>

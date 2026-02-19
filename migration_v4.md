@@ -7604,3 +7604,36 @@ Contact, adresses, surface/volume/densité, formule, prix estimé, logement (typ
 - **Back Office payload** : strictement identique (même structure, même mappings).
 - **Tracking** : aucun changement.
 - **Gain métier** : le lead est toujours à jour en DB, même si le client abandonne en cours de saisie.
+
+## 2026-02-19 — SmartCart: barre de progression basée sur le temps (180 s)
+
+### Objectif
+Remplacer l'ancien score de précision (5 blocs, pondération égale) par une logique basée sur le **temps estimé de complétion** (3 minutes au total). Chaque bloc rempli "économise" un nombre de secondes fixe ; le % et le temps restant sont affichés dans le panier.
+
+### Blocs et pondération
+| # | Bloc | Condition | Secondes |
+|---|------|-----------|----------|
+| 1 | Arrivée Step 3 | Toujours vrai (ville + m² déjà saisis) | 15 s |
+| 2 | Trajet | Adresses valides + distance OSRM | 30 s |
+| 3 | Date | Date de déménagement remplie et valide | 15 s |
+| 4 | Volume | Densité + cuisine sélectionnées | 25 s |
+| 5 | Formule | Formule choisie | 20 s |
+| 6 | Coordonnées | Prénom ≥ 2 chars + email valide | 15 s |
+| 7 | Précision | Type logement origin + destination remplis | 60 s |
+| | **Total** | | **180 s** |
+
+### Calcul
+- `savedSeconds` = somme des secondes des blocs complétés
+- `remainingSeconds` = 180 − savedSeconds
+- `score` = round(savedSeconds / 180 × 100) %
+
+### Affichage SmartCart
+- **Dock mobile** : "Encore X min Ys" à gauche, "XX%" à droite, barre de progression proportionnelle.
+- **Drawer mobile** : même logique dans le header du drawer.
+- **Desktop** : pas de changement structurel (même barre, même %).
+- Quand 100% → label "Terminé".
+
+### Impacts
+- **Champs / Inputs tunnel** : aucun changement.
+- **Back Office payload** : aucun changement.
+- **Tracking** : aucun changement (score interne uniquement, pas envoyé en event).
