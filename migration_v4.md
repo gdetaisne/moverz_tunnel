@@ -7509,3 +7509,21 @@ Ajouter dans `/analytics` une vue dédiée pour:
 - Aucun impact tunnel client (`/devis-gratuits-v3`) ou tracking métier.
 - Aucun changement Prisma/DB tunnel.
 - Aucun changement Back Office payload.
+
+## 2026-02-19 — Analytics: filtre par dates (presets + personnalisé)
+
+### Objectif
+Remplacer le sélecteur "N jours" du Dashboard Analytics par un filtre temporel plus précis avec des presets utiles.
+
+### Implémentation
+- **API** `app/api/analytics/dashboard/route.ts` : accepte désormais `from` et `to` (ISO) en plus du `days` (fallback).
+- **neon.ts** `lib/analytics/neon.ts` : `getDashboardData()` et `getBlockFunnel()` acceptent `periodStartIso`/`periodEndIso` au lieu de `daysBack`. Toutes les requêtes SQL filtrent avec `>= from AND <= to`.
+- **Frontend** `app/analytics/page.tsx` :
+  - Nouveau sélecteur dropdown avec presets : Aujourd'hui, **Hier** (défaut), 3 derniers jours, 15 derniers jours, Personnalisé.
+  - Le mode "Personnalisé" affiche deux inputs `type="date"` (from / to).
+  - Les dates sont calculées en timezone Europe/Paris pour coller au comportement métier.
+
+### Impacts
+- Aucun impact tunnel client (`/devis-gratuits-v3`) ou tracking métier.
+- Aucun changement Prisma/DB.
+- Aucun changement Back Office payload.

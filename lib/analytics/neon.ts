@@ -307,13 +307,11 @@ export interface BlockDurationRow {
 }
 
 export async function getBlockFunnel(
-  daysBack: number = 30,
+  periodStartIso: string,
+  periodEndIso: string,
   excludeTests: boolean = true
 ): Promise<{ funnel: BlockFunnelRow[]; durations: BlockDurationRow[] }> {
   const sql = getSQL();
-  const periodStart = new Date();
-  periodStart.setDate(periodStart.getDate() - daysBack);
-  const periodStartIso = periodStart.toISOString();
 
   // Block funnel: distinct sessions per block
   const funnelRows = await sql`
@@ -322,6 +320,7 @@ export async function getBlockFunnel(
       COUNT(DISTINCT session_id) as sessions
     FROM tunnel_events
     WHERE created_at >= ${periodStartIso}
+      AND created_at <= ${periodEndIso}
       AND event_type = 'BLOCK_ENTERED'
       AND extra->>'blockId' IS NOT NULL
       AND (${!excludeTests} OR is_test_user = false)
@@ -339,6 +338,7 @@ export async function getBlockFunnel(
       PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY (extra->>'prevDurationMs')::numeric) as p90_duration_ms
     FROM tunnel_events
     WHERE created_at >= ${periodStartIso}
+      AND created_at <= ${periodEndIso}
       AND event_type = 'BLOCK_ENTERED'
       AND extra->>'prevDurationMs' IS NOT NULL
       AND (extra->>'prevDurationMs')::numeric > 0
@@ -364,15 +364,11 @@ export async function getBlockFunnel(
 }
 
 export async function getDashboardData(
-  daysBack: number = 30,
+  periodStartIso: string,
+  periodEndIso: string,
   excludeTests: boolean = true
 ): Promise<DashboardData> {
   const sql = getSQL();
-  const testFilter = excludeTests ? true : false;
-
-  const periodStart = new Date();
-  periodStart.setDate(periodStart.getDate() - daysBack);
-  const periodStartIso = periodStart.toISOString();
 
   // KPIs from sessions (exclude bot sessions)
   const kpiRows = await sql`
@@ -385,6 +381,7 @@ export async function getDashboardData(
       ROUND(AVG(total_duration_ms) FILTER (WHERE total_duration_ms IS NOT NULL)) as avg_duration_ms
     FROM tunnel_sessions ts
     WHERE ts.created_at >= ${periodStartIso}
+      AND ts.created_at <= ${periodEndIso}
       AND (${!excludeTests} OR ts.is_test_user = false)
       AND NOT EXISTS (
         SELECT 1 FROM tunnel_events te
@@ -401,6 +398,7 @@ export async function getDashboardData(
       COUNT(DISTINCT session_id) as sessions
     FROM tunnel_events
     WHERE created_at >= ${periodStartIso}
+      AND created_at <= ${periodEndIso}
       AND event_type = 'TUNNEL_STEP_VIEWED'
       AND logical_step IS NOT NULL
       AND (${!excludeTests} OR is_test_user = false)
@@ -420,6 +418,7 @@ export async function getDashboardData(
       ) as conversion_rate
     FROM tunnel_sessions ts
     WHERE ts.created_at >= ${periodStartIso}
+      AND ts.created_at <= ${periodEndIso}
       AND (${!excludeTests} OR ts.is_test_user = false)
       AND NOT EXISTS (
         SELECT 1 FROM tunnel_events te
@@ -440,6 +439,7 @@ export async function getDashboardData(
       ROUND(COUNT(*)::numeric / NULLIF(SUM(COUNT(*)) OVER (), 0) * 100, 1) as pct
     FROM tunnel_sessions ts
     WHERE ts.created_at >= ${periodStartIso}
+      AND ts.created_at <= ${periodEndIso}
       AND (${!excludeTests} OR ts.is_test_user = false)
       AND NOT EXISTS (
         SELECT 1 FROM tunnel_events te
@@ -459,6 +459,7 @@ export async function getDashboardData(
       ROUND(COUNT(*)::numeric / NULLIF(SUM(COUNT(*)) OVER (), 0) * 100, 1) as pct
     FROM tunnel_sessions ts
     WHERE ts.created_at >= ${periodStartIso}
+      AND ts.created_at <= ${periodEndIso}
       AND (${!excludeTests} OR ts.is_test_user = false)
       AND NOT EXISTS (
         SELECT 1 FROM tunnel_events te
@@ -482,6 +483,7 @@ export async function getDashboardData(
       ) as conversion_rate
     FROM tunnel_sessions ts
     WHERE ts.created_at >= ${periodStartIso}
+      AND ts.created_at <= ${periodEndIso}
       AND (${!excludeTests} OR ts.is_test_user = false)
       AND NOT EXISTS (
         SELECT 1 FROM tunnel_events te
@@ -502,6 +504,7 @@ export async function getDashboardData(
       PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY (extra->>'durationMs')::numeric) as p90_duration_ms
     FROM tunnel_events
     WHERE created_at >= ${periodStartIso}
+      AND created_at <= ${periodEndIso}
       AND event_type = 'TUNNEL_STEP_CHANGED'
       AND extra->>'durationMs' IS NOT NULL
       AND (${!excludeTests} OR is_test_user = false)
@@ -520,7 +523,7 @@ export async function getDashboardData(
   const stepDurationArr = stepDurationRows as unknown as any[];
 
   // Block-level funnel + durations
-  const blockData = await getBlockFunnel(daysBack, excludeTests);
+  const blockData = await getBlockFunnel(periodStartIso, periodEndIso, excludeTests);
 
   const kpi = kpiArr[0] || { total_sessions: 0, total_completions: 0, conversion_rate: 0, avg_duration_ms: 0 };
 
@@ -568,7 +571,7 @@ export async function getDashboardData(
     blockDurations: blockData.durations,
 
     periodStart: periodStartIso,
-    periodEnd: new Date().toISOString(),
+    periodEnd: periodEndIso,
   };
 }
 

@@ -374,18 +374,64 @@ function BreakdownBars({ items, colorClass }: { items: { label: string; pct: num
 // Main Dashboard
 // ============================================================
 
+type DatePreset = "today" | "yesterday" | "3days" | "15days" | "custom";
+
+function getDateRange(preset: DatePreset, customFrom: string, customTo: string): { from: string; to: string } {
+  const nowParis = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Paris" }));
+  const todayStr = `${nowParis.getFullYear()}-${String(nowParis.getMonth() + 1).padStart(2, "0")}-${String(nowParis.getDate()).padStart(2, "0")}`;
+
+  const addDays = (dateStr: string, d: number) => {
+    const dt = new Date(dateStr + "T00:00:00+01:00");
+    dt.setDate(dt.getDate() + d);
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+  };
+
+  switch (preset) {
+    case "today":
+      return { from: todayStr + "T00:00:00+01:00", to: new Date().toISOString() };
+    case "yesterday": {
+      const y = addDays(todayStr, -1);
+      return { from: y + "T00:00:00+01:00", to: todayStr + "T00:00:00+01:00" };
+    }
+    case "3days": {
+      const d = addDays(todayStr, -2);
+      return { from: d + "T00:00:00+01:00", to: new Date().toISOString() };
+    }
+    case "15days": {
+      const d = addDays(todayStr, -14);
+      return { from: d + "T00:00:00+01:00", to: new Date().toISOString() };
+    }
+    case "custom":
+      return {
+        from: customFrom ? customFrom + "T00:00:00+01:00" : new Date().toISOString(),
+        to: customTo ? customTo + "T23:59:59+01:00" : new Date().toISOString(),
+      };
+  }
+}
+
+const PRESET_LABELS: Record<DatePreset, string> = {
+  today: "Aujourd'hui",
+  yesterday: "Hier",
+  "3days": "3 derniers jours",
+  "15days": "15 derniers jours",
+  custom: "Personnalisé",
+};
+
 function Dashboard({ password }: { password: string }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [days, setDays] = useState(30);
+  const [preset, setPreset] = useState<DatePreset>("yesterday");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      const { from, to } = getDateRange(preset, customFrom, customTo);
       const res = await fetch(
-        `/api/analytics/dashboard?password=${encodeURIComponent(password)}&days=${days}&includeTests=false`
+        `/api/analytics/dashboard?password=${encodeURIComponent(password)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&includeTests=false`
       );
       if (res.status === 401) {
         setError("Mot de passe incorrect");
@@ -405,11 +451,12 @@ function Dashboard({ password }: { password: string }) {
     } finally {
       setLoading(false);
     }
-  }, [password, days]);
+  }, [password, preset, customFrom, customTo]);
 
   useEffect(() => {
+    if (preset === "custom" && (!customFrom || !customTo)) return;
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, preset, customFrom, customTo]);
 
   if (loading) {
     return (
@@ -443,17 +490,33 @@ function Dashboard({ password }: { password: string }) {
               {new Date(data.periodStart).toLocaleDateString("fr-FR")} → {new Date(data.periodEnd).toLocaleDateString("fr-FR")}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <select
-              value={days}
-              onChange={(e) => setDays(Number(e.target.value))}
+              value={preset}
+              onChange={(e) => setPreset(e.target.value as DatePreset)}
               className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
             >
-              <option value={7}>7 jours</option>
-              <option value={14}>14 jours</option>
-              <option value={30}>30 jours</option>
-              <option value={90}>90 jours</option>
+              {(Object.keys(PRESET_LABELS) as DatePreset[]).map((k) => (
+                <option key={k} value={k}>{PRESET_LABELS[k]}</option>
+              ))}
             </select>
+            {preset === "custom" && (
+              <>
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
+                />
+                <span className="text-gray-500 text-sm">→</span>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
+                />
+              </>
+            )}
             <button
               onClick={fetchData}
               className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition"
