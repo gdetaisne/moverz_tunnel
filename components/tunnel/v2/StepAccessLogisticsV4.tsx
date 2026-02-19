@@ -2125,13 +2125,13 @@ ${EXTRA_NOTES_BLOCK_END}`;
             <div className="space-y-4">
               <div className="space-y-1">
                 <h3 className="text-xl sm:text-2xl font-bold" style={{ color: "var(--color-text)" }}>
-                  Derniere étape, 1 minute pour éviter les imprévus
+                  Dernière étape, 30 secondes pour éviter les imprévus
                 </h3>
                 <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
                   Un accès mal déclaré peut générer 150 à 500 € de frais supplémentaires.
                 </p>
                       <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                  ⏱ 1 minute pour sécuriser votre estimation
+                  ⏱ 30 secondes pour sécuriser votre estimation
                         </p>
                       </div>
 
