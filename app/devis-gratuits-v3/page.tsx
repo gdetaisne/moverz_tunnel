@@ -12,7 +12,7 @@
 
 'use client';
 
-import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ga4Event } from "@/lib/analytics/ga4";
 import {
@@ -93,6 +93,7 @@ function DevisGratuitsV3Content() {
   const [isSavingStep4Enrichment, setIsSavingStep4Enrichment] = useState(false);
   const precreateLeadPromiseRef = useRef<Promise<string | null> | null>(null);
   const precreateLeadAttemptKeyRef = useRef<string>("");
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [lastImpactDetailId, setLastImpactDetailId] = useState<
     | "distance"
     | "date"
@@ -1980,10 +1981,121 @@ function DevisGratuitsV3Content() {
     return null;
   };
 
+  // --- Auto-save: refs holding latest values for debounced timeout reads ---
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const activePricingRef = useRef(activePricing);
+  activePricingRef.current = activePricing;
+  const v2PricingCartRef = useRef(v2PricingCart);
+  v2PricingCartRef.current = v2PricingCart;
+  const routeDistanceKmRef = useRef(routeDistanceKm);
+  routeDistanceKmRef.current = routeDistanceKm;
+  const routeDistanceProviderRef = useRef(routeDistanceProvider);
+  routeDistanceProviderRef.current = routeDistanceProvider;
+
+  const scheduleAutoSave = useCallback(() => {
+    if (!stateRef.current.leadId || stateRef.current.currentStep !== 3) return;
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const s = stateRef.current;
+      if (!s.leadId || s.currentStep !== 3) return;
+      const ap = activePricingRef.current;
+      const cart = v2PricingCartRef.current;
+      const distKm = routeDistanceKmRef.current;
+      const distProv = routeDistanceProviderRef.current;
+
+      try {
+        const originIsBoxAS = isBoxType(s.originHousingType);
+        const kitchenCountAS = Number.parseInt(String(s.kitchenApplianceCount || "").trim(), 10) || 0;
+        const kitchenExtraAS = (() => {
+          if (originIsBoxAS) return 0;
+          const touched = s.kitchenIncluded !== "" || (s.kitchenApplianceCount || "").trim().length > 0;
+          if (!touched) return 3 * 0.6;
+          if (s.kitchenIncluded === "full") return 6;
+          if (s.kitchenIncluded === "appliances") return Math.max(0, kitchenCountAS) * 0.6;
+          return 0;
+        })();
+        const kitchenIncAS = originIsBoxAS ? "none" : s.kitchenIncluded || "appliances";
+        const kitchenCountBoAS = originIsBoxAS ? undefined
+          : s.kitchenIncluded === "" ? 3
+          : kitchenIncAS === "appliances" ? kitchenCountAS : undefined;
+        const densityBoAS = (d: string) => d === "light" ? "LIGHT" : d === "normal" ? "MEDIUM" : d === "dense" ? "HEAVY" : undefined;
+        const elevBoAS = (e: string) => {
+          const p = toPricingElevator(e);
+          return p === "yes" ? "OUI" : p === "partial" ? "PARTIEL" : "NON";
+        };
+        const originIsHouseAS = isHouseType(s.originHousingType);
+        const destIsHouseAS = isHouseType(s.destinationHousingType);
+
+        const payload = {
+          firstName: s.firstName.trim(),
+          email: s.email.trim().toLowerCase(),
+          phone: s.phone.trim() || undefined,
+          source,
+          estimationMethod: "FORM" as const,
+          originAddress: s.originAddress || undefined,
+          originCity: s.originCity || undefined,
+          originPostalCode: s.originPostalCode || undefined,
+          originCountryCode: s.originCountryCode || undefined,
+          destAddress: s.destinationAddress || undefined,
+          destCity: s.destinationCity || undefined,
+          destPostalCode: s.destinationPostalCode || undefined,
+          destCountryCode: s.destinationCountryCode || undefined,
+          surfaceM2: parseInt(s.surfaceM2) || undefined,
+          estimatedVolume: ap?.volumeM3 ?? undefined,
+          density: densityBoAS(s.density || "dense"),
+          formule: s.formule || undefined,
+          estimatedPriceMin: cart?.refinedMinEur ?? ap?.prixMin ?? undefined,
+          estimatedPriceAvg: cart?.refinedCenterEur ?? ap?.prixFinal ?? undefined,
+          estimatedPriceMax: cart?.refinedMaxEur ?? ap?.prixMax ?? undefined,
+          originHousingType: s.originHousingType || undefined,
+          originFloor: originIsHouseAS ? undefined : Math.max(0, parseInt(s.originFloor || "0", 10) || 0),
+          originElevator: s.originElevator ? elevBoAS(s.originElevator) : undefined,
+          destHousingType: s.destinationHousingType || undefined,
+          destFloor: destIsHouseAS ? undefined : Math.max(0, parseInt(s.destinationFloor || "0", 10) || 0),
+          destElevator: s.destinationElevator ? elevBoAS(s.destinationElevator) : undefined,
+          movingDate: s.movingDate ? toIsoDate(s.movingDate) : undefined,
+          dateFlexible: s.dateFlexible,
+          tunnelOptions: {
+            pricing: { distanceKm: distKm ?? undefined, distanceProvider: distProv ?? undefined },
+            accessV2: {
+              access_type: s.access_type ?? "simple",
+              narrow_access: !!s.narrow_access,
+              long_carry: !!s.long_carry,
+              difficult_parking: !!s.difficult_parking,
+              lift_required: !!s.lift_required,
+              access_details: s.access_details || undefined,
+            },
+            volumeAdjustments: {
+              kitchenIncluded: kitchenIncAS,
+              kitchenApplianceCount: kitchenCountBoAS,
+              extraVolumeM3: kitchenExtraAS,
+            },
+            notes: (() => {
+              const n = getCleanSpecificNotesForBackoffice(s.specificNotes);
+              return n || undefined;
+            })(),
+          },
+        };
+
+        await updateBackofficeLead(s.leadId!, payload);
+      } catch (err) {
+        console.error("Auto-save step 3 field change:", err);
+      }
+    }, 2000);
+  }, [source]);
+
+  useEffect(() => {
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  }, []);
+
   const handleStep3FieldChange = (field: string, value: any) => {
     updateField(field as any, value);
     const mapped = mapStep3FieldToImpactId(field);
     if (mapped) setLastImpactDetailId(mapped);
+    scheduleAutoSave();
   };
 
   useEffect(() => {
@@ -2315,6 +2427,9 @@ function DevisGratuitsV3Content() {
         access_details: "",
       });
     }
+
+    // Cancel any pending auto-save — the final submit sends the complete payload
+    if (autoSaveTimerRef.current) { clearTimeout(autoSaveTimerRef.current); autoSaveTimerRef.current = null; }
 
     // Création / MAJ lead Back Office à la fin de Step 3 (avant les photos)
     try {
@@ -2770,6 +2885,7 @@ function DevisGratuitsV3Content() {
                 onFormuleChange={(v) => {
                   updateField("formule", v);
                   setLastImpactDetailId("formule");
+                  scheduleAutoSave();
                 }}
                 pricingByFormule={
                   v2PricingCart?.formuleRanges

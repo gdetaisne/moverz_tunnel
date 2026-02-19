@@ -7581,3 +7581,26 @@ Le bouton **"Valider les coordonnées"** (dans StepAccessLogisticsV4, section Co
 - **Back Office payload** : strictement identique (même structure, même mappings).
 - **Tracking** : aucun changement.
 - **Gain métier** : les leads sont capturés plus tôt → récupération possible des abandons post-contact.
+
+## 2026-02-19 — Tunnel: auto-save live des champs Step 3 après création lead
+
+### Objectif
+Une fois le lead créé (via "Valider les coordonnées"), chaque changement de champ en Step 3 doit être envoyé au Back Office en temps réel (debounce 2 s).
+
+### Implémentation
+- **Refs d'état** : `stateRef`, `activePricingRef`, `v2PricingCartRef`, `routeDistanceKmRef`, `routeDistanceProviderRef` — tiennent toujours la dernière valeur pour lecture depuis le timeout debounce.
+- **`scheduleAutoSave()`** : fonction useCallback qui annule le timer précédent et programme un `updateBackofficeLead` dans 2 s. Lit l'état depuis les refs (toujours frais).
+- **Points d'appel** :
+  - `handleStep3FieldChange` (tous les champs Step 3 : adresses, logement, volume, date, accès, contact, notes)
+  - `onFormuleChange` (changement de formule)
+- **Annulation** : le timer est annulé dans `handleSubmitAccessV2` (validation finale) pour éviter qu'un auto-save stale n'écrase le payload complet final.
+- **Cleanup** : le timer est nettoyé au unmount du composant.
+
+### Données sauvées en live
+Contact, adresses, surface/volume/densité, formule, prix estimé, logement (type/étage/ascenseur), date, options d'accès, notes.
+
+### Impacts
+- **Champs / Inputs tunnel** : aucun changement.
+- **Back Office payload** : strictement identique (même structure, même mappings).
+- **Tracking** : aucun changement.
+- **Gain métier** : le lead est toujours à jour en DB, même si le client abandonne en cours de saisie.
