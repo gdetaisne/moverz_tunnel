@@ -7527,3 +7527,29 @@ Remplacer le sélecteur "N jours" du Dashboard Analytics par un filtre temporel 
 - Aucun impact tunnel client (`/devis-gratuits-v3`) ou tracking métier.
 - Aucun changement Prisma/DB.
 - Aucun changement Back Office payload.
+
+## 2026-02-19 — Analytics: bouton "Comparer" (période vs période)
+
+### Objectif
+Permettre de comparer les métriques du dashboard avec une période précédente.
+
+### Logique de comparaison
+- **Aujourd'hui** → vs hier
+- **Hier** → vs avant-hier
+- **3 derniers jours** → vs les 3 jours précédents
+- **15 derniers jours** → vs les 15 jours précédents
+- **Personnalisé** → 2 paires de date pickers (analyse from/to + comparaison from/to)
+
+### Implémentation
+- `getComparisonRange()` : calcule la période de comparaison (même durée, décalée avant).
+- État `comparing` + `compareData` : fetch parallèle de la période de comparaison.
+- `KpiCard` : affiche le delta (%) en vert/rouge + valeur de la période précédente.
+- `FunnelBar` : affiche le delta (%) par step quand la comparaison est active.
+- Funnel détaillé par bloc : idem, delta affiché en dernière colonne.
+- Bouton toggle "⇄ Comparer" / "✕ Comparaison" dans le header.
+- En mode custom, ligne supplémentaire avec 2 date pickers pour la période de comparaison.
+
+### Impacts
+- Aucun impact tunnel client (`/devis-gratuits-v3`) ou tracking métier.
+- Aucun changement Prisma/DB.
+- Aucun changement Back Office payload.

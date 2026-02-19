@@ -230,11 +230,32 @@ function PasswordGate({ onAuth }: { onAuth: (pw: string) => void }) {
 // KPI Card
 // ============================================================
 
-function KpiCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function KpiCard({ label, value, sub, prev }: { label: string; value: string | number; sub?: string; prev?: string | number | null }) {
+  const delta = (() => {
+    if (prev == null) return null;
+    const cur = typeof value === "string" ? parseFloat(value) : value;
+    const prv = typeof prev === "string" ? parseFloat(prev) : prev;
+    if (isNaN(cur) || isNaN(prv)) return null;
+    if (prv === 0) return cur > 0 ? { pct: "+∞", positive: true } : { pct: "—", positive: null };
+    const pctChange = ((cur - prv) / Math.abs(prv)) * 100;
+    const sign = pctChange >= 0 ? "+" : "";
+    return { pct: `${sign}${pctChange.toFixed(1)}%`, positive: pctChange >= 0 };
+  })();
+
   return (
     <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
       <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-bold text-white">{value}</p>
+      <div className="flex items-end gap-2">
+        <p className="text-2xl font-bold text-white">{value}</p>
+        {delta && (
+          <span className={`text-xs font-semibold pb-0.5 ${delta.positive === true ? "text-green-400" : delta.positive === false ? "text-red-400" : "text-gray-500"}`}>
+            {delta.pct}
+          </span>
+        )}
+      </div>
+      {prev != null && (
+        <p className="text-gray-600 text-[10px] mt-1">Période préc. : {prev}</p>
+      )}
       {sub && <p className="text-gray-500 text-xs mt-1">{sub}</p>}
     </div>
   );
@@ -244,7 +265,7 @@ function KpiCard({ label, value, sub }: { label: string; value: string | number;
 // Funnel bar
 // ============================================================
 
-function FunnelBar({ step, sessions, maxSessions }: { step: string; sessions: number; maxSessions: number }) {
+function FunnelBar({ step, sessions, maxSessions, prevSessions }: { step: string; sessions: number; maxSessions: number; prevSessions?: number }) {
   const pct = maxSessions > 0 ? (sessions / maxSessions) * 100 : 0;
   const colors: Record<string, string> = {
     ENTRY: "bg-blue-500",
@@ -253,6 +274,11 @@ function FunnelBar({ step, sessions, maxSessions }: { step: string; sessions: nu
     CONTACT: "bg-pink-500",
     THANK_YOU: "bg-green-500",
   };
+
+  const delta = prevSessions != null && prevSessions > 0
+    ? ((sessions - prevSessions) / prevSessions * 100).toFixed(1)
+    : null;
+  const deltaPositive = delta != null ? Number(delta) >= 0 : null;
 
   return (
     <div className="flex items-center gap-3">
@@ -265,6 +291,11 @@ function FunnelBar({ step, sessions, maxSessions }: { step: string; sessions: nu
           <span className="text-white text-xs font-semibold">{sessions}</span>
         </div>
       </div>
+      {delta != null && (
+        <span className={`text-[11px] font-semibold w-16 text-right flex-shrink-0 ${deltaPositive ? "text-green-400" : "text-red-400"}`}>
+          {deltaPositive ? "+" : ""}{delta}%
+        </span>
+      )}
     </div>
   );
 }
@@ -409,6 +440,27 @@ function getDateRange(preset: DatePreset, customFrom: string, customTo: string):
   }
 }
 
+function getComparisonRange(
+  preset: DatePreset,
+  analysisFrom: string,
+  analysisTo: string,
+  compareCustomFrom: string,
+  compareCustomTo: string,
+): { from: string; to: string } {
+  if (preset === "custom") {
+    return {
+      from: compareCustomFrom ? compareCustomFrom + "T00:00:00+01:00" : analysisFrom,
+      to: compareCustomTo ? compareCustomTo + "T23:59:59+01:00" : analysisTo,
+    };
+  }
+  const fromMs = new Date(analysisFrom).getTime();
+  const toMs = new Date(analysisTo).getTime();
+  const durationMs = toMs - fromMs;
+  const compTo = new Date(fromMs).toISOString();
+  const compFrom = new Date(fromMs - durationMs).toISOString();
+  return { from: compFrom, to: compTo };
+}
+
 const PRESET_LABELS: Record<DatePreset, string> = {
   today: "Aujourd'hui",
   yesterday: "Hier",
@@ -419,39 +471,60 @@ const PRESET_LABELS: Record<DatePreset, string> = {
 
 function Dashboard({ password }: { password: string }) {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [compareData, setCompareData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [preset, setPreset] = useState<DatePreset>("yesterday");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [comparing, setComparing] = useState(false);
+  const [compareCustomFrom, setCompareCustomFrom] = useState("");
+  const [compareCustomTo, setCompareCustomTo] = useState("");
+
+  const fetchDashboard = useCallback(async (from: string, to: string): Promise<DashboardData | null> => {
+    const res = await fetch(
+      `/api/analytics/dashboard?password=${encodeURIComponent(password)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&includeTests=false`
+    );
+    if (res.status === 401) {
+      setError("Mot de passe incorrect");
+      sessionStorage.removeItem("analytics_pw");
+      return null;
+    }
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error || "Erreur serveur");
+      return null;
+    }
+    sessionStorage.setItem("analytics_pw", password);
+    return res.json();
+  }, [password]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const { from, to } = getDateRange(preset, customFrom, customTo);
-      const res = await fetch(
-        `/api/analytics/dashboard?password=${encodeURIComponent(password)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&includeTests=false`
-      );
-      if (res.status === 401) {
-        setError("Mot de passe incorrect");
-        sessionStorage.removeItem("analytics_pw");
-        return;
+      const mainData = await fetchDashboard(from, to);
+      if (!mainData) return;
+      setData(mainData);
+
+      if (comparing) {
+        const compRange = getComparisonRange(preset, from, to, compareCustomFrom, compareCustomTo);
+        if (preset === "custom" && (!compareCustomFrom || !compareCustomTo)) {
+          setCompareData(null);
+        } else {
+          const compData = await fetchDashboard(compRange.from, compRange.to);
+          setCompareData(compData);
+        }
+      } else {
+        setCompareData(null);
       }
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setError(body.error || "Erreur serveur");
-        return;
-      }
-      const json = await res.json();
-      setData(json);
-      sessionStorage.setItem("analytics_pw", password);
     } catch (e) {
       setError("Erreur réseau");
     } finally {
       setLoading(false);
     }
-  }, [password, preset, customFrom, customTo]);
+  }, [password, preset, customFrom, customTo, comparing, compareCustomFrom, compareCustomTo, fetchDashboard]);
 
   useEffect(() => {
     if (preset === "custom" && (!customFrom || !customTo)) return;
@@ -479,61 +552,107 @@ function Dashboard({ password }: { password: string }) {
   const funnel = sortFunnel(data.funnel);
   const maxFunnel = Math.max(...funnel.map((f) => f.sessions), 1);
 
+  const compareFunnelMap: Record<string, number> = {};
+  if (compareData) {
+    for (const f of compareData.funnel) compareFunnelMap[f.logical_step] = f.sessions;
+  }
+
+  const compareBlockMap: Record<string, number> = {};
+  if (compareData?.blockFunnel) {
+    for (const b of compareData.blockFunnel) compareBlockMap[b.block_id] = b.sessions;
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
       <div className="border-b border-gray-800 px-4 sm:px-8 py-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold">📊 Tunnel Analytics</h1>
-            <p className="text-gray-400 text-sm">
-              {new Date(data.periodStart).toLocaleDateString("fr-FR")} → {new Date(data.periodEnd).toLocaleDateString("fr-FR")}
-            </p>
+        <div className="max-w-7xl mx-auto space-y-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-bold">📊 Tunnel Analytics</h1>
+              <p className="text-gray-400 text-sm">
+                {new Date(data.periodStart).toLocaleDateString("fr-FR")} → {new Date(data.periodEnd).toLocaleDateString("fr-FR")}
+                {comparing && compareData && (
+                  <span className="text-gray-600 ml-2">
+                    vs {new Date(compareData.periodStart).toLocaleDateString("fr-FR")} → {new Date(compareData.periodEnd).toLocaleDateString("fr-FR")}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <select
+                value={preset}
+                onChange={(e) => setPreset(e.target.value as DatePreset)}
+                className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              >
+                {(Object.keys(PRESET_LABELS) as DatePreset[]).map((k) => (
+                  <option key={k} value={k}>{PRESET_LABELS[k]}</option>
+                ))}
+              </select>
+              {preset === "custom" && (
+                <>
+                  <input
+                    type="date"
+                    value={customFrom}
+                    onChange={(e) => setCustomFrom(e.target.value)}
+                    className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
+                  />
+                  <span className="text-gray-500 text-sm">→</span>
+                  <input
+                    type="date"
+                    value={customTo}
+                    onChange={(e) => setCustomTo(e.target.value)}
+                    className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
+                  />
+                </>
+              )}
+              <button
+                onClick={() => setComparing((v) => !v)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  comparing
+                    ? "bg-purple-600 text-white hover:bg-purple-700"
+                    : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white"
+                }`}
+              >
+                {comparing ? "✕ Comparaison" : "⇄ Comparer"}
+              </button>
+              <button
+                onClick={fetchData}
+                className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition"
+              >
+                ↻ Refresh
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <select
-              value={preset}
-              onChange={(e) => setPreset(e.target.value as DatePreset)}
-              className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
-            >
-              {(Object.keys(PRESET_LABELS) as DatePreset[]).map((k) => (
-                <option key={k} value={k}>{PRESET_LABELS[k]}</option>
-              ))}
-            </select>
-            {preset === "custom" && (
-              <>
-                <input
-                  type="date"
-                  value={customFrom}
-                  onChange={(e) => setCustomFrom(e.target.value)}
-                  className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
-                />
-                <span className="text-gray-500 text-sm">→</span>
-                <input
-                  type="date"
-                  value={customTo}
-                  onChange={(e) => setCustomTo(e.target.value)}
-                  className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
-                />
-              </>
-            )}
-            <button
-              onClick={fetchData}
-              className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition"
-            >
-              ↻ Refresh
-            </button>
-          </div>
+
+          {comparing && preset === "custom" && (
+            <div className="flex items-center gap-3 flex-wrap pl-0 sm:pl-2">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Comparaison :</span>
+              <input
+                type="date"
+                value={compareCustomFrom}
+                onChange={(e) => setCompareCustomFrom(e.target.value)}
+                className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              />
+              <span className="text-gray-500 text-sm">→</span>
+              <input
+                type="date"
+                value={compareCustomTo}
+                onChange={(e) => setCompareCustomTo(e.target.value)}
+                className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+          )}
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 space-y-8">
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <KpiCard label="Sessions" value={data.totalSessions} />
-          <KpiCard label="Conversions" value={data.totalCompletions} />
-          <KpiCard label="Taux conversion" value={formatPct(data.conversionRate)} />
-          <KpiCard label="Durée moyenne" value={formatDuration(data.avgDurationMs)} />
+          <KpiCard label="Sessions" value={data.totalSessions} prev={compareData?.totalSessions ?? undefined} />
+          <KpiCard label="Conversions" value={data.totalCompletions} prev={compareData?.totalCompletions ?? undefined} />
+          <KpiCard label="Taux conversion" value={formatPct(data.conversionRate)} prev={compareData ? formatPct(compareData.conversionRate) : undefined} />
+          <KpiCard label="Durée moyenne" value={formatDuration(data.avgDurationMs)} prev={compareData ? formatDuration(compareData.avgDurationMs) : undefined} />
         </div>
 
         {/* Daily trend */}
@@ -559,6 +678,7 @@ function Dashboard({ password }: { password: string }) {
                   step={f.logical_step}
                   sessions={f.sessions}
                   maxSessions={maxFunnel}
+                  prevSessions={compareFunnelMap[f.logical_step]}
                 />
               ))}
             </div>
@@ -613,6 +733,11 @@ function Dashboard({ password }: { password: string }) {
                   const dropoff = prevBlock && prevBlock.sessions > 0
                     ? ((prevBlock.sessions - b.sessions) / prevBlock.sessions * 100).toFixed(1)
                     : null;
+                  const compSessions = compareBlockMap[b.block_id];
+                  const compDelta = compSessions != null && compSessions > 0
+                    ? ((b.sessions - compSessions) / compSessions * 100).toFixed(1)
+                    : null;
+                  const compPositive = compDelta != null ? Number(compDelta) >= 0 : null;
 
                   return (
                     <div key={b.block_id} className="flex items-center gap-3">
@@ -643,6 +768,13 @@ function Dashboard({ password }: { password: string }) {
                           <span className="text-[10px] text-gray-600">—</span>
                         )}
                       </div>
+                      {compDelta != null && (
+                        <div className="w-16 text-right flex-shrink-0">
+                          <span className={`text-[10px] font-semibold ${compPositive ? "text-green-400" : "text-red-400"}`}>
+                            {compPositive ? "+" : ""}{compDelta}%
+                          </span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
