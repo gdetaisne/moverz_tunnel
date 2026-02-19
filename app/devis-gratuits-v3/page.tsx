@@ -1475,6 +1475,89 @@ function DevisGratuitsV3Content() {
           )
         : 0;
 
+    // ── PIPELINE MOVER (base neutre, sans provision) ──
+    // Même résultat final (refinedCenterEur) mais décomposé depuis une base
+    // "déménageur" : distance réelle, densité normale, 0 cuisine, pas de commission.
+    const moverNeutralInput: Parameters<typeof calculatePricing>[0] = {
+      ...baselineInput,
+      distanceKm: refinedDistanceKm,
+      density: (densityTouched ? "normal" : "dense") as "light" | "normal" | "dense",
+      extraVolumeM3: kitchenTouched ? 0 : baselineKitchenExtraVolumeM3,
+    };
+    const sMoverNeutral = calculatePricing(moverNeutralInput);
+    const moverBasePriceEur = Math.round(
+      centerEur(sMoverNeutral.prixMin, sMoverNeutral.prixMax)
+    );
+
+    const moverDeltaDistanceEur = 0;
+
+    const moverInputDensity = { ...moverNeutralInput, density: effectiveDensity };
+    const sMoverDensity = calculatePricing(moverInputDensity);
+    const moverDeltaDensityEur = densityTouched
+      ? formatDelta(
+          centerEur(sMoverDensity.prixMin, sMoverDensity.prixMax) -
+            centerEur(sMoverNeutral.prixMin, sMoverNeutral.prixMax)
+        )
+      : 0;
+
+    const moverInputKitchen = { ...moverInputDensity, extraVolumeM3: kitchenExtraVolumeM3 };
+    const sMoverKitchen = calculatePricing(moverInputKitchen);
+    const moverDeltaKitchenEur = kitchenTouched
+      ? formatDelta(
+          centerEur(sMoverKitchen.prixMin, sMoverKitchen.prixMax) -
+            centerEur(sMoverDensity.prixMin, sMoverDensity.prixMax)
+        )
+      : 0;
+
+    const moverInputDate = { ...moverInputKitchen, seasonFactor };
+    const sMoverDate = calculatePricing(moverInputDate);
+    const moverDeltaDateEur = formatDelta(
+      centerEur(sMoverDate.prixMin, sMoverDate.prixMax) -
+        centerEur(sMoverKitchen.prixMin, sMoverKitchen.prixMax)
+    );
+
+    const moverInputAccessHousing = (() => {
+      if (!accessHousingConfirmed) return moverInputDate;
+      return {
+        ...moverInputDate,
+        originFloor: accessMeta.originFloor,
+        originElevator: accessMeta.originElevator,
+        destinationFloor: accessMeta.destinationFloor,
+        destinationElevator: accessMeta.destinationElevator,
+        services: {
+          ...moverInputDate.services,
+          monteMeuble: accessMeta.inferredMonteMeuble,
+        },
+      };
+    })();
+    const sMoverAccessHousing = calculatePricing(moverInputAccessHousing);
+    const moverAccessHousingRawDelta = formatDelta(
+      centerEur(sMoverAccessHousing.prixMin, sMoverAccessHousing.prixMax) -
+        centerEur(sMoverDate.prixMin, sMoverDate.prixMax)
+    );
+    const moverDeltaAccessHousingEur = accessHousingConfirmed
+      ? formatDelta(moverAccessHousingRawDelta - accessHousingDiscountEur)
+      : 0;
+
+    const moverDeltaAccessConstraintsEur = accessConstraintsConfirmed
+      ? accessFixedAddonEur
+      : 0;
+
+    const moverInputSelectedFormule = {
+      ...moverInputAccessHousing,
+      formule: selectedFormule,
+    };
+    const sMoverSelectedFormule = calculatePricing(moverInputSelectedFormule);
+    const moverDeltaFormuleEur =
+      selectedFormule === baselineFormule
+        ? 0
+        : formatDelta(
+            centerEur(sMoverSelectedFormule.prixMin, sMoverSelectedFormule.prixMax) -
+              centerEur(sMoverAccessHousing.prixMin, sMoverAccessHousing.prixMax)
+          );
+
+    const moverDeltaObjectsEur = objectsFixedAddonEur > 0 ? objectsFixedAddonEur : 0;
+
     const refinedCenterEur = centerEur(sFinal.prixMin, sFinal.prixMax);
 
     const densityLabel =
@@ -1533,6 +1616,7 @@ function DevisGratuitsV3Content() {
       label: string;
       status: string;
       amountEur: number;
+      moverAmountEur: number;
       confirmed: boolean;
     }> = [];
 
@@ -1543,6 +1627,7 @@ function DevisGratuitsV3Content() {
         label: `Distance (${realDistanceKmLabel})`,
         status: "adresses validées",
         amountEur: deltaDistanceEur,
+        moverAmountEur: moverDeltaDistanceEur,
         confirmed: true,
       });
     }
@@ -1552,6 +1637,7 @@ function DevisGratuitsV3Content() {
         label: "Acces - étages",
         status: accessHousingLabel,
         amountEur: deltaAccessHousingEur,
+        moverAmountEur: moverDeltaAccessHousingEur,
         confirmed: true,
       });
     }
@@ -1561,6 +1647,7 @@ function DevisGratuitsV3Content() {
         label: "Accès · Contraintes",
         status: accessConstraintsLabel,
         amountEur: deltaAccessConstraintsEur,
+        moverAmountEur: moverDeltaAccessConstraintsEur,
         confirmed: true,
       });
     }
@@ -1570,6 +1657,7 @@ function DevisGratuitsV3Content() {
         label: "Date",
         status: "confirmée",
         amountEur: deltaDateEur,
+        moverAmountEur: moverDeltaDateEur,
         confirmed: true,
       });
     }
@@ -1579,6 +1667,7 @@ function DevisGratuitsV3Content() {
         label: "Densité",
         status: densityLabel,
         amountEur: deltaDensityEur,
+        moverAmountEur: moverDeltaDensityEur,
         confirmed: true,
       });
     }
@@ -1588,6 +1677,7 @@ function DevisGratuitsV3Content() {
         label: "Cuisine",
         status: kitchenLabel,
         amountEur: deltaKitchenEur,
+        moverAmountEur: moverDeltaKitchenEur,
         confirmed: true,
       });
     }
@@ -1597,6 +1687,7 @@ function DevisGratuitsV3Content() {
         label: "Objets spécifiques",
         status: "déclarés",
         amountEur: deltaObjectsEur,
+        moverAmountEur: moverDeltaObjectsEur,
         confirmed: true,
       });
     }
@@ -1605,8 +1696,23 @@ function DevisGratuitsV3Content() {
       label: "Formule",
       status: formuleLabel,
       amountEur: deltaFormuleEur,
+      moverAmountEur: moverDeltaFormuleEur,
       confirmed: true,
     });
+
+    // Invariant : moverBasePriceEur + Σ moverAmountEur + provision = refinedCenterEur
+    const moverTotal =
+      moverBasePriceEur +
+      lines.reduce((sum, l) => sum + l.moverAmountEur, 0) +
+      fixedProvisionEur;
+    if (Math.abs(moverTotal - refinedCenterEur) > 1) {
+      const msg = `[pricing] Mover breakdown mismatch: ${moverTotal} vs ${refinedCenterEur} (diff ${moverTotal - refinedCenterEur})`;
+      if (process.env.NODE_ENV === "development") {
+        console.error(msg);
+      } else {
+        console.warn(msg);
+      }
+    }
 
     return {
       firstEstimateMinEur,
@@ -1615,6 +1721,7 @@ function DevisGratuitsV3Content() {
       refinedMinEur: sFinal.prixMin,
       refinedMaxEur: sFinal.prixMax,
       refinedCenterEur,
+      moverBasePriceEur,
       lines,
       formuleLabel,
       formuleRanges,
@@ -2495,6 +2602,7 @@ function DevisGratuitsV3Content() {
           refinedMinEur: v2PricingCart.refinedMinEur,
           refinedMaxEur: v2PricingCart.refinedMaxEur,
           refinedCenterEur: v2PricingCart.refinedCenterEur,
+          moverBasePriceEur: v2PricingCart.moverBasePriceEur,
           step2CenterBeforeProvisionEur:
             frozenStep2CenterBeforeProvisionEur ?? undefined,
           moverzFeeProvisionEur: moverzFeeProvisionFromStep2Eur,

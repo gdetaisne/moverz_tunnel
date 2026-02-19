@@ -183,14 +183,11 @@ export function calculatePricing(input: PricingInput): PricingOutput {
   if (input.services.debarras) servicesTotal += SERVICES_PRIX.debarras;
 
   // 7. Prix final
-  const centreNoSeason = centreNoSeasonSansServices + servicesTotal;
   const centreSeasoned = centreSeasonedSansServices + servicesTotal;
   const prixFinal = Math.round(centreSeasoned);
 
-  // 8. Fourchette :
-  // - min ancré sur le prix "hors saison" avec -20 %
-  // - max sur le prix saisonné avec +20 %
-  const prixMin = Math.round(centreNoSeason * 0.8);
+  // 8. Fourchette symétrique ±20 % autour du prix saisonné
+  const prixMin = Math.round(centreSeasoned * 0.8);
   const prixMax = Math.round(centreSeasoned * 1.2);
 
   return {

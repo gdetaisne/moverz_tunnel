@@ -7647,3 +7647,73 @@ Remplacer l'ancien score de précision (5 blocs, pondération égale) par une lo
 - **Champs / Inputs tunnel** : aucun changement.
 - **Back Office payload** : aucun changement.
 - **Tracking** : aucun changement (score interne uniquement, pas envoyé en event).
+
+---
+
+## Correctifs pricing — fourchette symétrique + centralisation forfaits objets
+
+### Fix 4 — Fourchette symétrique (calculate.ts)
+**Avant** : `prixMin` = prix hors saison × 0.8, `prixMax` = prix saisonné × 1.2.
+En basse saison (×0.85), `prixMin` (hors saison × 0.8) pouvait être supérieur au centre saisonné, rendant la fourchette visuellement incohérente.
+**Après** : `prixMin` = prix saisonné × 0.8, `prixMax` = prix saisonné × 1.2. Fourchette toujours symétrique ±20 % autour du `prixFinal`.
+
+### Fix 6 — Centralisation forfaits objets spécifiques (constants.ts + page.tsx)
+**Avant** : les forfaits objets spécifiques (piano 150 €, coffre-fort 150 €, aquarium 100 €, etc.) étaient en dur dans `page.tsx`, divergents des `SERVICES_PRIX` centralisés.
+**Après** : nouvelle constante `OBJETS_SPECIFIQUES_PRIX` dans `constants.ts` (piano 200 €, coffreFort 150 €, aquarium 100 €, objetsFragilesVolumineux 80 €, meublesTresLourd 100 €). Le panier Step 3 (`page.tsx`) consomme ces constantes. Le prix piano passe de 150 € à 200 € (aligné sur `SERVICES_PRIX.pianoDroit`).
+
+### Impacts
+- **Champs / Inputs tunnel** : aucun changement.
+- **Back Office payload** : les prix estimés min/avg/max peuvent légèrement bouger (fourchette symétrique + piano 200 € au lieu de 150 €).
+- **Tracking** : aucun changement.
+
+---
+
+## Pipeline mover — double lecture du pricing (pricingSnapshot)
+
+### Contexte
+Le tunnel affiche des deltas "client" (économies vs baseline conservatrice : distance +15 km, densité "très meublé", 3 appareils cuisine). Du point de vue déménageur, ces deltas négatifs n'ont pas de sens. Le déménageur veut voir des coûts réels positifs depuis une base neutre.
+
+### Nouveaux champs dans `pricingSnapshot`
+| Champ | Description |
+|---|---|
+| `moverBasePriceEur` | Base transport neutre : distance OSRM réelle, densité "normal", 0 cuisine, saison neutre, RDC, **sans commission Moverz** |
+| `lines[].moverAmountEur` | Delta déménageur par ligne (même structure que `amountEur` côté client) |
+
+### Architecture — Pipeline parallèle dans `v2PricingCart`
+Le pipeline mover coexiste avec le pipeline client existant (inchangé). Il part d'une base neutre et calcule des deltas séquentiels indépendants :
+
+```
+moverNeutralInput (distance réelle, density=normal, 0 cuisine)
+  └─ +density (normal → effectif) : 0 si normal, >0 si dense, <0 si light
+       └─ +kitchen (0 → effectif) : toujours ≥0 (charge réelle)
+            └─ +date/saison : identique au client
+                 └─ +étages/ascenseur : même logique, même remise box -20%
+                      └─ +contraintes accès : forfaits fixes identiques
+                           └─ +formule : même delta
+                                └─ +objets spécifiques : forfaits fixes identiques
+```
+
+### Invariant mathématique (vérifié par assertion)
+```
+moverBasePriceEur + Σ(line.moverAmountEur) + moverzFeeProvisionEur = refinedCenterEur
+```
+Assertion exécutée à chaque calcul. Warning en prod, error en dev si écart > 1 €.
+
+### Cas limites
+| Cas | Comportement |
+|---|---|
+| Densité non touchée | Base mover = "dense" (même que baseline client), delta = 0, pas de ligne |
+| Cuisine non touchée | Base mover = 1.8 m³ (même que baseline client), delta = 0, pas de ligne |
+| Adresses non validées OSRM | Base mover utilise `baseDistanceKm` (= ville + 15 km), pas de ligne distance |
+| Box départ/arrivée | Remise étages -20% appliquée au pipeline mover (discount client réutilisé pour garantir l'invariant) |
+
+### Fichiers modifiés
+| Fichier | Modification |
+|---|---|
+| `app/devis-gratuits-v3/page.tsx` | Pipeline mover dans `v2PricingCart`, `moverAmountEur` sur chaque ligne, `moverBasePriceEur` dans le return + snapshot, assertion |
+| `lib/pricing/constants.ts` | (inchangé par cette feature) |
+
+### Impacts
+- **Champs / Inputs tunnel** : aucun changement.
+- **Back Office payload** : `pricingSnapshot` enrichi de `moverBasePriceEur` + `moverAmountEur` par ligne. Rétro-compatible (champs additifs).
+- **Tracking** : aucun changement.
