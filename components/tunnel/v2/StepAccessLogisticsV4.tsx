@@ -99,6 +99,15 @@ interface StepAccessLogisticsV4Props {
   onBlockEntered?: (blockId: string) => void;
   /** Called when user clicks "Valider les coordonnées" and email check passes */
   onContactValidated?: () => void;
+  /** Reports section validity so page can compute progress bar */
+  onSectionProgress?: (sections: {
+    trajet: boolean;
+    date: boolean;
+    volume: boolean;
+    formule: boolean;
+    contact: boolean;
+    precision: boolean;
+  }) => void;
 }
 
 const questions: Array<{ key: QuestionKey; label: string }> = [
@@ -1092,6 +1101,27 @@ ${EXTRA_NOTES_BLOCK_END}`;
   };
   const isMissingInfoLocked = !sectionMeta.contact.valid;
 
+  const sectionProgressPayload = {
+    trajet: sectionMeta.trajet.valid,
+    date: sectionMeta.date.valid,
+    volume: sectionMeta.volume.valid,
+    formule: sectionMeta.formule.valid,
+    contact: sectionMeta.contact.valid,
+    precision: missingInfoValidated,
+  };
+  const sectionProgressRef = useRef(sectionProgressPayload);
+  useEffect(() => {
+    const prev = sectionProgressRef.current;
+    const next = sectionProgressPayload;
+    const changed = (Object.keys(next) as Array<keyof typeof next>).some(
+      (k) => prev[k] !== next[k]
+    );
+    if (changed) {
+      sectionProgressRef.current = next;
+      props.onSectionProgress?.(next);
+    }
+  });
+
   const prevSectionValidityRef = useRef<Record<SectionKey, boolean>>({
     trajet: sectionMeta.trajet.valid,
     date: sectionMeta.date.valid,
@@ -2036,8 +2066,12 @@ ${EXTRA_NOTES_BLOCK_END}`;
               if (isMissingInfoLocked) return;
               setShowMissingInfoPanel((v) => {
                 const next = !v;
-                if (next) setActiveSection("missingInfo");
-                else setActiveSection((prev) => (prev === "missingInfo" ? null : prev));
+                if (next) {
+                  setActiveSection("missingInfo");
+                } else {
+                  setMissingInfoValidated(true);
+                  setActiveSection((prev) => (prev === "missingInfo" ? null : prev));
+                }
                 return next;
               });
             }}
@@ -2652,7 +2686,10 @@ ${EXTRA_NOTES_BLOCK_END}`;
           id="v4-primary-submit-cta"
           type="button"
           disabled={props.isSubmitting}
-          onClick={props.onSubmit}
+          onClick={() => {
+            setMissingInfoValidated(true);
+            props.onSubmit();
+          }}
           className="group relative w-full rounded-xl py-4 text-base font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all duration-300 touch-manipulation overflow-hidden"
           style={{
             background: "var(--color-accent)",

@@ -7610,17 +7610,22 @@ Contact, adresses, surface/volume/densité, formule, prix estimé, logement (typ
 ### Objectif
 Remplacer l'ancien score de précision (5 blocs, pondération égale) par une logique basée sur le **temps estimé de complétion** (3 minutes au total). Chaque bloc rempli "économise" un nombre de secondes fixe ; le % et le temps restant sont affichés dans le panier.
 
-### Blocs et pondération
-| # | Bloc | Condition | Secondes |
-|---|------|-----------|----------|
+### Blocs et pondération (source de vérité = `sectionMeta` de `StepAccessLogisticsV4`)
+| # | Bloc | Condition (sectionMeta) | Secondes |
+|---|------|-------------------------|----------|
 | 1 | Arrivée Step 3 | Toujours vrai (ville + m² déjà saisis) | 15 s |
-| 2 | Trajet | Adresses valides + distance OSRM | 30 s |
-| 3 | Date | Date de déménagement remplie et valide | 15 s |
-| 4 | Volume | Densité + cuisine sélectionnées | 25 s |
-| 5 | Formule | Formule choisie | 20 s |
-| 6 | Coordonnées | Prénom ≥ 2 chars + email valide | 15 s |
-| 7 | Précision | Type logement origin + destination remplis | 60 s |
+| 2 | Trajet & logements | `sectionMeta.trajet.valid` (adresses + housing + étages + ascenseur) | 30 s |
+| 3 | Date | `sectionMeta.date.valid` | 15 s |
+| 4 | Volume & densité | `sectionMeta.volume.valid` (densité + cuisine) | 25 s |
+| 5 | Formule | `sectionMeta.formule.valid` (clic explicite sur une formule) | 20 s |
+| 6 | Coordonnées | `sectionMeta.contact.valid` (prénom + email + validation) | 15 s |
+| 7 | Précision | `missingInfoValidated` (panel fermé ou CTA soumis) | 60 s |
 | | **Total** | | **180 s** |
+
+### Architecture
+- `StepAccessLogisticsV4` expose `onSectionProgress` callback qui reporte la validité des 6 sections (trajet→précision).
+- `page.tsx` stocke cette validité dans `sectionValidity` (useState) et calcule `step3Progress` via useMemo.
+- Le calcul dans `page.tsx` n'essaie plus de dupliquer les conditions de validation — single source of truth = composant.
 
 ### Calcul
 - `savedSeconds` = somme des secondes des blocs complétés
@@ -7628,10 +7633,15 @@ Remplacer l'ancien score de précision (5 blocs, pondération égale) par une lo
 - `score` = round(savedSeconds / 180 × 100) %
 
 ### Affichage SmartCart
-- **Dock mobile** : "Encore X min Ys" à gauche, "XX%" à droite, barre de progression proportionnelle.
-- **Drawer mobile** : même logique dans le header du drawer.
-- **Desktop** : pas de changement structurel (même barre, même %).
-- Quand 100% → label "Terminé".
+- **Barre de progression temps** : "Encore ~X min Ys" + "XX%", barre verte proportionnelle au score.
+- Min/Max prix retirés de la zone progression (n'avaient pas de sens).
+- `~30 sec` statique retiré du header (V2ProgressBar) et du pied de page CTA.
+- Quand 100% → label "Estimation finalisée".
+
+### Bugs corrigés (v2)
+- **blocFormule toujours true** : `state.formule` = `"STANDARD"` par défaut → 20s crédités à tort. Fix : utilise `formuleExplicitChoice` interne au composant.
+- **blocPrecision = housing types** : les housing types font partie de "Trajet & logements", pas de "Précisions". Fix : utilise `missingInfoValidated` (panel fermé après ouverture ou CTA soumis).
+- **blocTrajet incomplet** : ne vérifiait que les adresses, pas housing/étages/ascenseur. Fix : utilise `sectionMeta.trajet.valid` complet.
 
 ### Impacts
 - **Champs / Inputs tunnel** : aucun changement.

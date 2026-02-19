@@ -1679,62 +1679,27 @@ function DevisGratuitsV3Content() {
     state.destinationUnknown,
   ]);
 
+  // Section validity reported by StepAccessLogisticsV4 via onSectionProgress
+  const [sectionValidity, setSectionValidity] = useState({
+    trajet: false,
+    date: false,
+    volume: false,
+    formule: false,
+    contact: false,
+    precision: false,
+  });
+
   const step3Progress = useMemo(() => {
     const TOTAL_SECONDS = 180;
 
-    // Bloc 1 — Arrivée Step 3 (ville + m² déjà renseignés) → 15 s
-    const blocArrivee = true;
-
-    // Bloc 2 — Trajet complet → 30 s
-    const isOriginAddrValid = state.originAddress.trim().length >= 5;
-    const isDestinationAddrValid = state.destinationAddress.trim().length >= 5;
-    const isOriginMetaValid =
-      state.originCity.trim().length >= 2 &&
-      state.originPostalCode.trim().length >= 2 &&
-      state.originCountryCode.trim().length >= 2;
-    const isDestMetaValid =
-      state.destinationCity.trim().length >= 2 &&
-      state.destinationPostalCode.trim().length >= 2 &&
-      state.destinationCountryCode.trim().length >= 2;
-    const isRouteDistanceValid = routeDistanceKm != null && routeDistanceProvider === "osrm";
-    const blocTrajet = isOriginAddrValid && isDestinationAddrValid && isOriginMetaValid && isDestMetaValid && isRouteDistanceValid;
-
-    // Bloc 3 — Date → 15 s
-    const minMovingDateV2 = getMinMovingDateIso();
-    const blocDate = typeof state.movingDate === "string" && state.movingDate.length > 0 && state.movingDate >= minMovingDateV2;
-
-    // Bloc 4 — Volume (densité + cuisine) → 25 s
-    const blocVolume =
-      (state.density === "light" || state.density === "normal" || state.density === "dense") &&
-      (state.kitchenIncluded === "none" ||
-        state.kitchenIncluded === "appliances" ||
-        state.kitchenIncluded === "full") &&
-      (state.kitchenIncluded !== "appliances" ||
-        (Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0) >= 1);
-
-    // Bloc 5 — Formule → 20 s
-    const blocFormule = !!state.formule;
-
-    // Bloc 6 — Coordonnées → 15 s
-    const blocContact =
-      state.firstName.trim().length >= 2 &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim());
-
-    // Bloc 7 — Précision (logement + accès) → 60 s
-    const hasOriginHousing = !!(state.originHousingType && state.originHousingType.trim());
-    const hasDestHousing = state.destinationUnknown
-      ? true
-      : !!(state.destinationHousingType && state.destinationHousingType.trim());
-    const blocPrecision = hasOriginHousing && hasDestHousing;
-
     const blocs: Array<{ done: boolean; seconds: number }> = [
-      { done: blocArrivee, seconds: 15 },
-      { done: blocTrajet, seconds: 30 },
-      { done: blocDate, seconds: 15 },
-      { done: blocVolume, seconds: 25 },
-      { done: blocFormule, seconds: 20 },
-      { done: blocContact, seconds: 15 },
-      { done: blocPrecision, seconds: 60 },
+      { done: true, seconds: 15 },                          // Arrivée Step 3
+      { done: sectionValidity.trajet, seconds: 30 },        // Trajet & logements
+      { done: sectionValidity.date, seconds: 15 },          // Date
+      { done: sectionValidity.volume, seconds: 25 },        // Volume & densité
+      { done: sectionValidity.formule, seconds: 20 },       // Formule
+      { done: sectionValidity.contact, seconds: 15 },       // Coordonnées
+      { done: sectionValidity.precision, seconds: 60 },     // Ajouter des précisions
     ];
 
     const savedSeconds = blocs.filter((b) => b.done).reduce((s, b) => s + b.seconds, 0);
@@ -1744,28 +1709,7 @@ function DevisGratuitsV3Content() {
     const score = Math.round((savedSeconds / TOTAL_SECONDS) * 100);
 
     return { completed, total, score, savedSeconds, remainingSeconds, totalSeconds: TOTAL_SECONDS };
-  }, [
-    state.originAddress,
-    state.destinationAddress,
-    state.originCity,
-    state.destinationCity,
-    state.originPostalCode,
-    state.destinationPostalCode,
-    state.originCountryCode,
-    state.destinationCountryCode,
-    state.movingDate,
-    state.density,
-    state.kitchenIncluded,
-    state.kitchenApplianceCount,
-    state.formule,
-    state.firstName,
-    state.email,
-    state.originHousingType,
-    state.destinationHousingType,
-    state.destinationUnknown,
-    routeDistanceKm,
-    routeDistanceProvider,
-  ]);
+  }, [sectionValidity]);
 
   const activePricingDetails = useMemo(() => {
     if (!activePricing) return null;
@@ -2953,6 +2897,7 @@ function DevisGratuitsV3Content() {
                 collapseAllOnEnterToken={collapseStep3OnEnterToken}
                 showOptionalDetailsBlock={true}
                 onContactValidated={handleContactValidated}
+                onSectionProgress={setSectionValidity}
                 onBlockEntered={(blockId) => {
                   const blockMap: Record<string, string> = {
                     trajet: "route_housing",
