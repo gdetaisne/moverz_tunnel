@@ -480,7 +480,7 @@ function Dashboard({ password }: { password: string }) {
   const [comparing, setComparing] = useState(false);
   const [compareCustomFrom, setCompareCustomFrom] = useState("");
   const [compareCustomTo, setCompareCustomTo] = useState("");
-  const [blockDeviceFilter, setBlockDeviceFilter] = useState<string>("all");
+  const [blockDeviceSplit, setBlockDeviceSplit] = useState(false);
   const [blockEntryFilter, setBlockEntryFilter] = useState<string>("all");
 
   const fetchDashboard = useCallback(async (from: string, to: string): Promise<DashboardData | null> => {
@@ -706,18 +706,24 @@ function Dashboard({ password }: { password: string }) {
 
         {/* Block-level funnel (detailed) */}
         {data.blockFunnel && data.blockFunnel.length > 0 && (() => {
-          // Compute filtered blocks from cross-tab data
-          let effectiveBlockFunnel = data.blockFunnel;
-          if ((blockDeviceFilter !== 'all' || blockEntryFilter !== 'all') && data.blockFunnelCross?.length) {
+          // Helper: build sorted blocks array from raw funnel data
+          const buildBlocks = (raw: { block_id: string; sessions: number }[]) => {
+            const map = new Map(raw.map(b => [b.block_id, b.sessions]));
+            return BLOCK_ORDER.map(id => ({ block_id: id, sessions: map.get(id) ?? 0 }));
+          };
+
+          // Helper: aggregate cross data with filters
+          const aggCross = (deviceFilter?: string) => {
+            if (!data.blockFunnelCross?.length) return data.blockFunnel;
             let filtered = data.blockFunnelCross;
-            if (blockDeviceFilter !== 'all') filtered = filtered.filter(r => r.device === blockDeviceFilter);
+            if (deviceFilter) filtered = filtered.filter(r => r.device === deviceFilter);
             if (blockEntryFilter !== 'all') filtered = filtered.filter(r => r.entry_type === blockEntryFilter);
             const agg = new Map<string, number>();
             for (const r of filtered) agg.set(r.block_id, (agg.get(r.block_id) ?? 0) + r.sessions);
-            effectiveBlockFunnel = Array.from(agg.entries()).map(([block_id, sessions]) => ({ block_id, sessions }));
-          }
+            return Array.from(agg.entries()).map(([block_id, sessions]) => ({ block_id, sessions }));
+          };
 
-          // Entry & device counts for filter labels
+          // Entry counts for filter labels
           let directCount = 0, homeCount = 0;
           const deviceCounts: Record<string, number> = {};
           if (data.blockFunnelCross?.length) {
@@ -740,22 +746,72 @@ function Dashboard({ password }: { password: string }) {
             }
           }
 
-          const blockSessionMap = new Map(effectiveBlockFunnel.map(b => [b.block_id, b.sessions]));
-          const sortedBlocks = BLOCK_ORDER.map(id => ({
-            block_id: id,
-            sessions: blockSessionMap.get(id) ?? 0,
-          }));
-          const maxBlock = Math.max(...sortedBlocks.map((b) => b.sessions), 1);
-
           // Build duration map
           const durationMap: Record<string, { median: number; avg: number; p90: number }> = {};
           (data.blockDurations || []).forEach((d) => {
-            durationMap[d.block_id] = {
-              median: d.median_duration_ms,
-              avg: d.avg_duration_ms,
-              p90: d.p90_duration_ms,
-            };
+            durationMap[d.block_id] = { median: d.median_duration_ms, avg: d.avg_duration_ms, p90: d.p90_duration_ms };
           });
+
+          // Prepare data for each view mode
+          const allBlocks = buildBlocks(blockEntryFilter !== 'all' ? aggCross() : data.blockFunnel);
+          const mobileBlocks = buildBlocks(aggCross('mobile'));
+          const desktopBlocks = buildBlocks(aggCross('desktop'));
+
+          // Render a single funnel column
+          const renderFunnel = (blocks: { block_id: string; sessions: number }[], maxSess: number, compact?: boolean) => (
+            <div className="space-y-1.5">
+              {blocks.map((b, i) => {
+                const info = BLOCK_LABELS[b.block_id] || { emoji: "•", label: b.block_id, color: "bg-gray-500" };
+                const pct = maxSess > 0 ? (b.sessions / maxSess) * 100 : 0;
+                const dur = durationMap[b.block_id];
+                const prev = blocks[i - 1];
+                const dropoff = prev && prev.sessions > 0
+                  ? ((prev.sessions - b.sessions) / prev.sessions * 100).toFixed(1)
+                  : null;
+                const compSessions = compareBlockMap[b.block_id];
+                const compDelta = compSessions != null && compSessions > 0
+                  ? ((b.sessions - compSessions) / compSessions * 100).toFixed(1)
+                  : null;
+                const compPositive = compDelta != null ? Number(compDelta) >= 0 : null;
+
+                return (
+                  <div key={b.block_id} className="flex items-center gap-2">
+                    {!compact && (
+                      <span className="text-gray-400 text-[11px] w-44 text-right truncate flex-shrink-0">
+                        {info.emoji} {info.label}
+                      </span>
+                    )}
+                    <div className="flex-1 bg-gray-800 rounded-full h-6 overflow-hidden relative min-w-0">
+                      <div
+                        className={`h-full ${info.color} rounded-full transition-all duration-500 flex items-center justify-end pr-1.5`}
+                        style={{ width: `${Math.max(pct, b.sessions > 0 ? 8 : 2)}%` }}
+                      >
+                        <span className="text-white text-[10px] font-semibold">{b.sessions}</span>
+                      </div>
+                    </div>
+                    {!compact && dur ? (
+                      <span className="text-[10px] text-gray-400 w-16 text-right flex-shrink-0" title={`Méd: ${formatDuration(dur.median)} | Moy: ${formatDuration(dur.avg)} | P90: ${formatDuration(dur.p90)}`}>
+                        ⏱ {formatDuration(dur.median)}
+                      </span>
+                    ) : !compact ? (
+                      <span className="text-[10px] text-gray-600 w-16 text-right flex-shrink-0">—</span>
+                    ) : null}
+                    <span className={`text-[10px] w-12 text-right flex-shrink-0 ${dropoff && Number(dropoff) > 0 ? 'text-red-400' : 'text-gray-600'}`}>
+                      {dropoff && Number(dropoff) > 0 ? `-${dropoff}%` : '—'}
+                    </span>
+                    {!compact && compDelta != null && (
+                      <span className={`text-[10px] font-semibold w-14 text-right flex-shrink-0 ${compPositive ? "text-green-400" : "text-red-400"}`}>
+                        {compPositive ? "+" : ""}{compDelta}%
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+
+          const allMax = Math.max(...allBlocks.map(b => b.sessions), 1);
+          const splitMax = Math.max(...mobileBlocks.map(b => b.sessions), ...desktopBlocks.map(b => b.sessions), 1);
 
           return (
             <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
@@ -764,25 +820,24 @@ function Dashboard({ password }: { password: string }) {
 
               {/* Segmentation filters */}
               <div className="flex flex-wrap gap-4 mb-4 pb-3 border-b border-gray-800">
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-1.5">
                   <span className="text-[10px] text-gray-500 uppercase tracking-wider">Device:</span>
-                  {[
-                    { id: 'all', label: 'Tous' },
-                    { id: 'mobile', label: `Mobile${deviceCounts.mobile ? ` (${deviceCounts.mobile})` : ''}` },
-                    { id: 'desktop', label: `Desktop${deviceCounts.desktop ? ` (${deviceCounts.desktop})` : ''}` },
-                  ].map(d => (
-                    <button
-                      key={d.id}
-                      onClick={() => setBlockDeviceFilter(d.id)}
-                      className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
-                        blockDeviceFilter === d.id
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                      }`}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
+                  <button
+                    onClick={() => setBlockDeviceSplit(false)}
+                    className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
+                      !blockDeviceSplit ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    Tous
+                  </button>
+                  <button
+                    onClick={() => setBlockDeviceSplit(true)}
+                    className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
+                      blockDeviceSplit ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    Split mobile / desktop
+                  </button>
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[10px] text-gray-500 uppercase tracking-wider">Entrée tunnel:</span>
@@ -806,61 +861,35 @@ function Dashboard({ password }: { password: string }) {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                {sortedBlocks.map((b, i) => {
-                  const info = BLOCK_LABELS[b.block_id] || { emoji: "•", label: b.block_id, color: "bg-gray-500" };
-                  const pct = maxBlock > 0 ? (b.sessions / maxBlock) * 100 : 0;
-                  const dur = durationMap[b.block_id];
-                  const prevBlock = sortedBlocks[i - 1];
-                  const dropoff = prevBlock && prevBlock.sessions > 0
-                    ? ((prevBlock.sessions - b.sessions) / prevBlock.sessions * 100).toFixed(1)
-                    : null;
-                  const compSessions = compareBlockMap[b.block_id];
-                  const compDelta = compSessions != null && compSessions > 0
-                    ? ((b.sessions - compSessions) / compSessions * 100).toFixed(1)
-                    : null;
-                  const compPositive = compDelta != null ? Number(compDelta) >= 0 : null;
-
-                  return (
-                    <div key={b.block_id} className="flex items-center gap-3">
-                      <span className="text-gray-400 text-[11px] w-44 text-right truncate">
-                        {info.emoji} {info.label}
-                      </span>
-                      <div className="flex-1 bg-gray-800 rounded-full h-7 overflow-hidden relative">
-                        <div
-                          className={`h-full ${info.color} rounded-full transition-all duration-500 flex items-center justify-end pr-2`}
-                          style={{ width: `${Math.max(pct, 3)}%` }}
-                        >
-                          <span className="text-white text-[11px] font-semibold">{b.sessions}</span>
+              {!blockDeviceSplit ? (
+                /* Single funnel — Tous */
+                renderFunnel(allBlocks, allMax)
+              ) : (
+                /* Split: Mobile | Desktop side by side */
+                <div className="flex gap-4">
+                  {/* Labels column */}
+                  <div className="flex-shrink-0 space-y-1.5 pt-7">
+                    {BLOCK_ORDER.map(id => {
+                      const info = BLOCK_LABELS[id] || { emoji: "•", label: id };
+                      return (
+                        <div key={id} className="h-6 flex items-center justify-end">
+                          <span className="text-gray-400 text-[10px] text-right truncate w-36">{info.emoji} {info.label}</span>
                         </div>
-                      </div>
-                      <div className="w-24 text-right flex-shrink-0">
-                        {dur ? (
-                          <span className="text-[10px] text-gray-400" title={`Méd: ${formatDuration(dur.median)} | Moy: ${formatDuration(dur.avg)} | P90: ${formatDuration(dur.p90)}`}>
-                            ⏱ {formatDuration(dur.median)}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-gray-600">—</span>
-                        )}
-                      </div>
-                      <div className="w-16 text-right flex-shrink-0">
-                        {dropoff && Number(dropoff) > 0 ? (
-                          <span className="text-[10px] text-red-400">-{dropoff}%</span>
-                        ) : (
-                          <span className="text-[10px] text-gray-600">—</span>
-                        )}
-                      </div>
-                      {compDelta != null && (
-                        <div className="w-16 text-right flex-shrink-0">
-                          <span className={`text-[10px] font-semibold ${compPositive ? "text-green-400" : "text-red-400"}`}>
-                            {compPositive ? "+" : ""}{compDelta}%
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                      );
+                    })}
+                  </div>
+                  {/* Mobile column */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-blue-400 font-semibold mb-1.5">📱 Mobile{deviceCounts.mobile ? ` (${deviceCounts.mobile})` : ''}</p>
+                    {renderFunnel(mobileBlocks, splitMax, true)}
+                  </div>
+                  {/* Desktop column */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-indigo-400 font-semibold mb-1.5">🖥 Desktop{deviceCounts.desktop ? ` (${deviceCounts.desktop})` : ''}</p>
+                    {renderFunnel(desktopBlocks, splitMax, true)}
+                  </div>
+                </div>
+              )}
 
               {/* Block durations table */}
               {data.blockDurations && data.blockDurations.length > 0 && (
