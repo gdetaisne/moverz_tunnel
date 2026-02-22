@@ -480,6 +480,8 @@ function Dashboard({ password }: { password: string }) {
   const [comparing, setComparing] = useState(false);
   const [compareCustomFrom, setCompareCustomFrom] = useState("");
   const [compareCustomTo, setCompareCustomTo] = useState("");
+  const [blockDeviceFilter, setBlockDeviceFilter] = useState<string>("all");
+  const [blockEntryFilter, setBlockEntryFilter] = useState<string>("all");
 
   const fetchDashboard = useCallback(async (from: string, to: string): Promise<DashboardData | null> => {
     const res = await fetch(
@@ -704,8 +706,41 @@ function Dashboard({ password }: { password: string }) {
 
         {/* Block-level funnel (detailed) */}
         {data.blockFunnel && data.blockFunnel.length > 0 && (() => {
-          // Sort blocks by tunnel order
-          const sortedBlocks = [...data.blockFunnel].sort(
+          // Compute filtered blocks from cross-tab data
+          let effectiveBlockFunnel = data.blockFunnel;
+          if ((blockDeviceFilter !== 'all' || blockEntryFilter !== 'all') && data.blockFunnelCross?.length) {
+            let filtered = data.blockFunnelCross;
+            if (blockDeviceFilter !== 'all') filtered = filtered.filter(r => r.device === blockDeviceFilter);
+            if (blockEntryFilter !== 'all') filtered = filtered.filter(r => r.entry_type === blockEntryFilter);
+            const agg = new Map<string, number>();
+            for (const r of filtered) agg.set(r.block_id, (agg.get(r.block_id) ?? 0) + r.sessions);
+            effectiveBlockFunnel = Array.from(agg.entries()).map(([block_id, sessions]) => ({ block_id, sessions }));
+          }
+
+          // Entry & device counts for filter labels
+          let directCount = 0, homeCount = 0;
+          const deviceCounts: Record<string, number> = {};
+          if (data.blockFunnelCross?.length) {
+            const entryBlocks = new Map<string, number>();
+            const devBlocks = new Map<string, number>();
+            for (const r of data.blockFunnelCross) {
+              const ek = `${r.entry_type}|${r.block_id}`;
+              entryBlocks.set(ek, (entryBlocks.get(ek) ?? 0) + r.sessions);
+              const dk = `${r.device}|${r.block_id}`;
+              devBlocks.set(dk, (devBlocks.get(dk) ?? 0) + r.sessions);
+            }
+            for (const [key, s] of entryBlocks) {
+              const et = key.split('|')[0];
+              if (et === 'direct') directCount = Math.max(directCount, s);
+              else homeCount = Math.max(homeCount, s);
+            }
+            for (const [key, s] of devBlocks) {
+              const dev = key.split('|')[0];
+              deviceCounts[dev] = Math.max(deviceCounts[dev] ?? 0, s);
+            }
+          }
+
+          const sortedBlocks = [...effectiveBlockFunnel].sort(
             (a, b) => BLOCK_ORDER.indexOf(a.block_id) - BLOCK_ORDER.indexOf(b.block_id)
           );
           const maxBlock = Math.max(...sortedBlocks.map((b) => b.sessions), 1);
@@ -722,8 +757,53 @@ function Dashboard({ password }: { password: string }) {
 
           return (
             <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <h2 className="text-sm font-semibold text-gray-300 mb-4">🔍 Funnel détaillé par bloc</h2>
+              <h2 className="text-sm font-semibold text-gray-300 mb-1">🔍 Funnel détaillé par bloc</h2>
               <p className="text-xs text-gray-500 mb-4">Chaque section du tunnel, avec drop-off et temps médian.</p>
+
+              {/* Segmentation filters */}
+              <div className="flex flex-wrap gap-4 mb-4 pb-3 border-b border-gray-800">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider">Device:</span>
+                  {[
+                    { id: 'all', label: 'Tous' },
+                    { id: 'mobile', label: `Mobile${deviceCounts.mobile ? ` (${deviceCounts.mobile})` : ''}` },
+                    { id: 'desktop', label: `Desktop${deviceCounts.desktop ? ` (${deviceCounts.desktop})` : ''}` },
+                  ].map(d => (
+                    <button
+                      key={d.id}
+                      onClick={() => setBlockDeviceFilter(d.id)}
+                      className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
+                        blockDeviceFilter === d.id
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider">Entrée tunnel:</span>
+                  {[
+                    { id: 'all', label: 'Tous' },
+                    { id: 'direct', label: `Directe — step 1${directCount ? ` (${directCount})` : ''}` },
+                    { id: 'home_entry', label: `Depuis home — step 3${homeCount ? ` (${homeCount})` : ''}` },
+                  ].map(e => (
+                    <button
+                      key={e.id}
+                      onClick={() => setBlockEntryFilter(e.id)}
+                      className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
+                        blockEntryFilter === e.id
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
+                    >
+                      {e.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-2">
                 {sortedBlocks.map((b, i) => {
                   const info = BLOCK_LABELS[b.block_id] || { emoji: "•", label: b.block_id, color: "bg-gray-500" };

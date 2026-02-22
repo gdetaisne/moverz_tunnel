@@ -7717,3 +7717,33 @@ Assertion exécutée à chaque calcul. Warning en prod, error en dev si écart >
 - **Champs / Inputs tunnel** : aucun changement.
 - **Back Office payload** : `pricingSnapshot` enrichi de `moverBasePriceEur` + `moverAmountEur` par ligne. Rétro-compatible (champs additifs).
 - **Tracking** : aucun changement.
+
+---
+
+## Analytics — Segmentation funnel par device et type d'entrée (23/02/2026)
+
+### Contexte
+L'analyse CRO du funnel détaillé par bloc était faussée par deux biais :
+1. **Mélange des entrées** : les sessions venant de la home (step 1 + estimation déjà vus sur moverz.fr, entrée tunnel en step 3) étaient mélangées avec les sessions entrant directement en step 1.
+2. **Pas de segmentation mobile/desktop** : impossible de savoir si les abandons étaient spécifiques mobile (ex: blocs accordéon non clairs).
+
+### Solution
+Ajout d'une requête cross-tab `block × device × entry_type` dans `getBlockFunnel()`.
+
+**Détection du type d'entrée** :
+- `direct` : le premier `BLOCK_ENTERED` de la session est `cities_surface` (l'utilisateur a commencé en step 1 dans le tunnel).
+- `home_entry` : le premier `BLOCK_ENTERED` est un bloc plus avancé (typiquement `route_housing`, car steps 1 et 2 sont faites sur la home).
+
+**SQL** : CTE `session_first_block` avec `DISTINCT ON (session_id) ORDER BY created_at ASC` pour identifier le premier bloc, puis JOIN avec les événements pour produire le cross-tab.
+
+### Fichiers modifiés
+| Fichier | Modification |
+|---|---|
+| `lib/analytics/neon.ts` | Nouveau type `BlockFunnelCrossRow`, requête cross-tab dans `getBlockFunnel()`, nouveau champ `blockFunnelCross` dans `DashboardData` |
+| `app/analytics/page.tsx` | Filtres "Device" (Tous/Mobile/Desktop) et "Entrée tunnel" (Tous/Directe/Depuis home) dans la section funnel par bloc, compteurs de sessions par filtre |
+
+### Impacts
+- **Champs / Inputs tunnel** : aucun changement.
+- **Back Office payload** : aucun changement.
+- **Tracking** : aucun nouvel événement. Exploite les données `BLOCK_ENTERED` et `device` déjà collectées.
+- **Dashboard analytics** : nouvelle barre de filtres dans le funnel par bloc.
