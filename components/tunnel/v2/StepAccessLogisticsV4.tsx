@@ -292,10 +292,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const sectionOrder: SectionKey[] = ["trajet", "date", "volume", "formule", "contact"];
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
     trajet: true,
-    date: true,
-    volume: true,
-    formule: true,
-    contact: true,
+    date: false,
+    volume: false,
+    formule: false,
+    contact: false,
   });
   const [activeSection, setActiveSection] = useState<SectionKey | "missingInfo" | null>("trajet");
   const [formuleExplicitChoice, setFormuleExplicitChoice] = useState(
@@ -1169,11 +1169,10 @@ ${EXTRA_NOTES_BLOCK_END}`;
       const following = sectionOrder.find((k, idx) => idx > currentIndex && !next[k]);
         const shouldOpenMissingInfo =
           showOptionalDetailsBlock && newlyValidated === "contact" && !isMissingInfoLocked;
-      setOpenSections((state) => ({
-        ...state,
-        [newlyValidated]: false,
+      setOpenSections({
+        trajet: false, date: false, volume: false, formule: false, contact: false,
         ...(following ? { [following]: true } : {}),
-      }));
+      });
         if (shouldOpenMissingInfo) {
           setShowMissingInfoPanel(true);
           setActiveSection("missingInfo");
@@ -1228,6 +1227,18 @@ ${EXTRA_NOTES_BLOCK_END}`;
     sectionMeta.contact.valid,
   ]);
 
+  // Mobile: auto-switch Départ → Arrivée when origin sub-block becomes complete
+  const prevOriginCompleteRef = useRef(false);
+  useEffect(() => {
+    const isOriginComplete = isOriginAddressValid && isOriginHousingValid && isOriginFloorValid && isOriginElevatorValid;
+    const wasComplete = prevOriginCompleteRef.current;
+    prevOriginCompleteRef.current = isOriginComplete;
+    if (!wasComplete && isOriginComplete && mobileRouteOpen === "origin") {
+      const timer = window.setTimeout(() => setMobileRouteOpen("destination"), AUTO_ADVANCE_DELAY_MS);
+      return () => window.clearTimeout(timer);
+    }
+  }, [isOriginAddressValid, isOriginHousingValid, isOriginFloorValid, isOriginElevatorValid, mobileRouteOpen]);
+
   useEffect(() => {
     setOpenSections((state) => ({
       ...state,
@@ -1254,14 +1265,14 @@ ${EXTRA_NOTES_BLOCK_END}`;
   useEffect(() => {
     if (!props.collapseAllOnEnterToken || props.collapseAllOnEnterToken <= 0) return;
     setOpenSections({
-      trajet: false,
+      trajet: true,
       date: false,
       volume: false,
       formule: false,
       contact: false,
     });
     setShowMissingInfoPanel(false);
-    setActiveSection(null);
+    setActiveSection("trajet");
   }, [props.collapseAllOnEnterToken]);
 
   // Track block transitions
@@ -1296,16 +1307,10 @@ ${EXTRA_NOTES_BLOCK_END}`;
               setActiveSection((prev) => (prev === key ? null : prev));
               return { ...state, [key]: false };
             }
-
-            const currentIndex = sectionOrder.indexOf(key);
-            const previousKey = currentIndex > 0 ? sectionOrder[currentIndex - 1] : null;
-            const shouldClosePrevious = previousKey ? sectionMeta[previousKey].valid : false;
             setActiveSection(key);
-
             return {
-              ...state,
+              trajet: false, date: false, volume: false, formule: false, contact: false,
               [key]: true,
-              ...(previousKey && shouldClosePrevious ? { [previousKey]: false } : {}),
             };
           });
         }}

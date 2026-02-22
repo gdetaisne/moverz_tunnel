@@ -7747,3 +7747,38 @@ Ajout d'une requête cross-tab `block × device × entry_type` dans `getBlockFun
 - **Back Office payload** : aucun changement.
 - **Tracking** : aucun nouvel événement. Exploite les données `BLOCK_ENTERED` et `device` déjà collectées.
 - **Dashboard analytics** : nouvelle barre de filtres dans le funnel par bloc.
+
+---
+
+## UX Step 3 — Accordéon mono-bloc + auto-progression (23/02/2026)
+
+### Contexte
+Audit mobile révélant un drop de 66.7% à l'entrée de la step 3 :
+- Tous les blocs fermés à l'arrivée → l'utilisateur ne sait pas quoi faire
+- Plusieurs blocs pouvaient être ouverts simultanément → confusion
+- Sous-blocs Départ/Arrivée sur mobile : pas d'auto-switch quand Départ est complété
+
+### Modifications
+
+**1. État initial et retour en step 3** (`collapseAllOnEnterToken`)
+- Le bloc "Trajet" s'ouvre automatiquement à l'arrivée en step 3
+- `activeSection` initialisé à `"trajet"` (plus `null`)
+
+**2. Un seul bloc ouvert à la fois (accordéon strict)**
+- Au clic sur un header de bloc : ferme TOUS les autres blocs
+- À l'auto-advance (bloc validé → suivant) : ferme TOUS les blocs, n'ouvre que le suivant
+- Avant : seul le bloc précédent (si validé) se fermait
+
+**3. Auto-progression mobile Départ → Arrivée**
+- Nouveau `useEffect` avec ref `prevOriginCompleteRef`
+- Quand les 4 champs origin (adresse, logement, étage, ascenseur) passent de incomplet → complet ET `mobileRouteOpen === "origin"` : bascule automatiquement sur "destination" après 380ms
+
+### Fichier modifié
+| Fichier | Modification |
+|---|---|
+| `components/tunnel/v2/StepAccessLogisticsV4.tsx` | État initial openSections (seul trajet=true), collapseAllOnEnterToken (trajet ouvert), onClick header (ferme tout sauf le cliqué), auto-advance (ferme tout sauf le suivant), nouveau useEffect auto-switch mobile origin→destination |
+
+### Impacts
+- **Champs / Inputs tunnel** : aucun changement.
+- **Back Office payload** : aucun changement.
+- **Tracking** : aucun changement.
