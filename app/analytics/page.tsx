@@ -740,9 +740,11 @@ function Dashboard({ password }: { password: string }) {
             }
           }
 
-          const sortedBlocks = [...effectiveBlockFunnel].sort(
-            (a, b) => BLOCK_ORDER.indexOf(a.block_id) - BLOCK_ORDER.indexOf(b.block_id)
-          );
+          const blockSessionMap = new Map(effectiveBlockFunnel.map(b => [b.block_id, b.sessions]));
+          const sortedBlocks = BLOCK_ORDER.map(id => ({
+            block_id: id,
+            sessions: blockSessionMap.get(id) ?? 0,
+          }));
           const maxBlock = Math.max(...sortedBlocks.map((b) => b.sessions), 1);
 
           // Build duration map
