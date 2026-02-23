@@ -7914,17 +7914,21 @@ Permet de créer des "versions" (nom + date de début) et de filtrer les analyti
 | Choix UI | `kitchenIncluded` | `kitchenApplianceCount` | Volume extra |
 |---|---|---|---|
 | Non | `"none"` | `""` | 0 m³ |
-| Oui → 1-2 | `"appliances"` | `"2"` | 1.2 m³ |
-| Oui → 3+ | `"appliances"` | `"4"` | 2.4 m³ |
+| Oui → stepper (N) | `"appliances"` | `"N"` (1-20) | N × 0.6 m³ |
 | Oui → Toute la cuisine | `"full"` | `""` | 6 m³ |
+
+### Détail UX étape 2 (si Oui)
+- **Stepper** (− / chiffre / +) : précis, de 1 à 20. Valeur par défaut au clic sur "Oui" = 3.
+- **Bouton toggle** "Toute la cuisine (meubles inclus)" : bascule vers `"full"` ; re-clic revient au stepper.
+- Le stepper remplace le champ numérique libre (meilleur UX mobile, moins d'erreurs de saisie).
 
 ### Résumé accordéon mis à jour
 - `"none"` → "Pas d'électroménager"
-- `"appliances"` → "2 appareil(s)" ou "4 appareil(s)"
+- `"appliances"` → "N appareil(s)"
 - `"full"` → "Cuisine complète"
 - Non renseigné → "Électroménager ?"
 
 ### Impacts
 - **Fichier modifié** : `components/tunnel/v2/StepAccessLogisticsV4.tsx`
-- **Pricing / BO / tracking** : aucun changement (mêmes valeurs `kitchenIncluded` + `kitchenApplianceCount`).
+- **Pricing / BO / tracking** : aucun changement (mêmes valeurs `kitchenIncluded` + `kitchenApplianceCount`, même formule `count × 0.6 m³`).
 - **Champs existants** : aucun supprimé, aucun ajouté.

@@ -2126,6 +2126,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
                         props.onFieldChange("kitchenApplianceCount", "");
                       } else {
                         props.onFieldChange("kitchenIncluded", "appliances");
+                        if (!props.kitchenApplianceCount || props.kitchenApplianceCount === "0") {
+                          props.onFieldChange("kitchenApplianceCount", "3");
+                        }
                       }
                     }}
                     className="px-3 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
@@ -2148,49 +2151,86 @@ ${EXTRA_NOTES_BLOCK_END}`;
           </div>
 
           {!isOriginBox && (props.kitchenIncluded === "appliances" || props.kitchenIncluded === "full") && (
-            <div>
+            <div className="space-y-3">
               <label
-                className="block text-sm font-medium mb-2"
+                className="block text-sm font-medium"
                 style={{ color: "var(--color-text)" }}
               >
-                Combien ?
+                Combien d'appareils ?
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { id: "1-2", label: "1-2", count: "2" },
-                  { id: "3+", label: "3+", count: "4" },
-                  { id: "full", label: "Toute la cuisine", count: "" },
-                ].map((k) => {
-                  const isActive =
-                    k.id === "full"
-                      ? props.kitchenIncluded === "full"
-                      : props.kitchenIncluded === "appliances" && props.kitchenApplianceCount === k.count;
-                  return (
-                    <button
-                      key={k.id}
-                      type="button"
-                      onClick={() => {
-                        markTouched("kitchenApplianceCount");
-                        if (k.id === "full") {
-                          props.onFieldChange("kitchenIncluded", "full");
-                          props.onFieldChange("kitchenApplianceCount", "");
-                        } else {
-                          props.onFieldChange("kitchenIncluded", "appliances");
-                          props.onFieldChange("kitchenApplianceCount", k.count);
-                        }
-                      }}
-                      className="px-3 py-2 rounded-xl text-sm font-semibold transition-all"
-                      style={{
-                        background: isActive ? "var(--color-accent)" : "var(--color-surface)",
-                        color: isActive ? "#FFFFFF" : "var(--color-text)",
-                        border: isActive ? "none" : "2px solid var(--color-border)",
-                      }}
-                    >
-                      {k.label}
-                    </button>
-                  );
-                })}
-              </div>
+              {props.kitchenIncluded === "appliances" && (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cur = Number.parseInt(String(props.kitchenApplianceCount || "0").trim(), 10) || 0;
+                      if (cur > 1) {
+                        props.onFieldChange("kitchenApplianceCount", String(cur - 1));
+                      }
+                    }}
+                    className="w-10 h-10 rounded-xl text-lg font-bold flex items-center justify-center transition-all"
+                    style={{
+                      background: "var(--color-surface)",
+                      color: "var(--color-text)",
+                      border: "2px solid var(--color-border)",
+                    }}
+                  >
+                    −
+                  </button>
+                  <span
+                    className="text-2xl font-bold w-10 text-center"
+                    style={{ color: "var(--color-text)" }}
+                  >
+                    {Number.parseInt(String(props.kitchenApplianceCount || "0").trim(), 10) || 0}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      markTouched("kitchenApplianceCount");
+                      const cur = Number.parseInt(String(props.kitchenApplianceCount || "0").trim(), 10) || 0;
+                      if (cur < 20) {
+                        props.onFieldChange("kitchenApplianceCount", String(cur + 1));
+                      }
+                    }}
+                    className="w-10 h-10 rounded-xl text-lg font-bold flex items-center justify-center transition-all"
+                    style={{
+                      background: "var(--color-surface)",
+                      color: "var(--color-text)",
+                      border: "2px solid var(--color-border)",
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+              {shouldShowFieldError("kitchenApplianceCount") && !isKitchenValid && (
+                <p className="text-xs" style={{ color: "var(--color-danger)" }}>
+                  Nombre requis (min 1)
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  markTouched("kitchenApplianceCount");
+                  if (props.kitchenIncluded === "full") {
+                    props.onFieldChange("kitchenIncluded", "appliances");
+                    if (!props.kitchenApplianceCount || props.kitchenApplianceCount === "0") {
+                      props.onFieldChange("kitchenApplianceCount", "1");
+                    }
+                  } else {
+                    props.onFieldChange("kitchenIncluded", "full");
+                    props.onFieldChange("kitchenApplianceCount", "");
+                  }
+                }}
+                className="w-full px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                style={{
+                  background: props.kitchenIncluded === "full" ? "var(--color-accent)" : "var(--color-surface)",
+                  color: props.kitchenIncluded === "full" ? "#FFFFFF" : "var(--color-text)",
+                  border: props.kitchenIncluded === "full" ? "none" : "2px solid var(--color-border)",
+                }}
+              >
+                Toute la cuisine (meubles inclus)
+              </button>
             </div>
           )}
         </div>
