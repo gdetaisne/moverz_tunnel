@@ -402,12 +402,69 @@ function BreakdownBars({ items, colorClass }: { items: { label: string; pct: num
 }
 
 // ============================================================
+// Versions (localStorage)
+// ============================================================
+
+interface AnalyticsVersion {
+  id: string;
+  name: string;
+  startDate: string; // YYYY-MM-DD
+}
+
+const VERSIONS_STORAGE_KEY = "analytics_versions";
+
+function loadVersions(): AnalyticsVersion[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(VERSIONS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (v: any) => v && typeof v.id === "string" && typeof v.name === "string" && typeof v.startDate === "string"
+    );
+  } catch {
+    return [];
+  }
+}
+
+function saveVersions(versions: AnalyticsVersion[]) {
+  localStorage.setItem(VERSIONS_STORAGE_KEY, JSON.stringify(versions));
+}
+
+function getVersionDateRange(
+  versionId: string,
+  versions: AnalyticsVersion[]
+): { from: string; to: string } | null {
+  const sorted = [...versions].sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const idx = sorted.findIndex((v) => v.id === versionId);
+  if (idx === -1) return null;
+  const from = sorted[idx].startDate + "T00:00:00+01:00";
+  const to =
+    idx < sorted.length - 1
+      ? sorted[idx + 1].startDate + "T00:00:00+01:00"
+      : new Date().toISOString();
+  return { from, to };
+}
+
+// ============================================================
 // Main Dashboard
 // ============================================================
 
-type DatePreset = "today" | "yesterday" | "3days" | "15days" | "custom";
+type DatePreset = "today" | "yesterday" | "3days" | "15days" | "custom" | `version:${string}`;
 
-function getDateRange(preset: DatePreset, customFrom: string, customTo: string): { from: string; to: string } {
+function getDateRange(
+  preset: DatePreset,
+  customFrom: string,
+  customTo: string,
+  versions?: AnalyticsVersion[]
+): { from: string; to: string } {
+  if (preset.startsWith("version:") && versions) {
+    const vId = preset.slice("version:".length);
+    const range = getVersionDateRange(vId, versions);
+    if (range) return range;
+  }
+
   const nowParis = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Paris" }));
   const todayStr = `${nowParis.getFullYear()}-${String(nowParis.getMonth() + 1).padStart(2, "0")}-${String(nowParis.getDate()).padStart(2, "0")}`;
 
@@ -437,6 +494,8 @@ function getDateRange(preset: DatePreset, customFrom: string, customTo: string):
         from: customFrom ? customFrom + "T00:00:00+01:00" : new Date().toISOString(),
         to: customTo ? customTo + "T23:59:59+01:00" : new Date().toISOString(),
       };
+    default:
+      return { from: new Date().toISOString(), to: new Date().toISOString() };
   }
 }
 
@@ -482,6 +541,15 @@ function Dashboard({ password }: { password: string }) {
   const [compareCustomTo, setCompareCustomTo] = useState("");
   const [blockDeviceSplit, setBlockDeviceSplit] = useState(false);
   const [blockEntryFilter, setBlockEntryFilter] = useState<string>("all");
+  const [versions, setVersions] = useState<AnalyticsVersion[]>([]);
+  const [showVersionForm, setShowVersionForm] = useState(false);
+  const [showVersionManager, setShowVersionManager] = useState(false);
+  const [newVersionName, setNewVersionName] = useState("");
+  const [newVersionDate, setNewVersionDate] = useState("");
+
+  useEffect(() => {
+    setVersions(loadVersions());
+  }, []);
 
   const fetchDashboard = useCallback(async (from: string, to: string): Promise<DashboardData | null> => {
     const res = await fetch(
@@ -505,7 +573,7 @@ function Dashboard({ password }: { password: string }) {
     setLoading(true);
     setError(null);
     try {
-      const { from, to } = getDateRange(preset, customFrom, customTo);
+      const { from, to } = getDateRange(preset, customFrom, customTo, versions);
       const mainData = await fetchDashboard(from, to);
       if (!mainData) return;
       setData(mainData);
@@ -526,7 +594,7 @@ function Dashboard({ password }: { password: string }) {
     } finally {
       setLoading(false);
     }
-  }, [password, preset, customFrom, customTo, comparing, compareCustomFrom, compareCustomTo, fetchDashboard]);
+  }, [password, preset, customFrom, customTo, comparing, compareCustomFrom, compareCustomTo, fetchDashboard, versions]);
 
   useEffect(() => {
     if (preset === "custom" && (!customFrom || !customTo)) return;
@@ -587,9 +655,20 @@ function Dashboard({ password }: { password: string }) {
                 onChange={(e) => setPreset(e.target.value as DatePreset)}
                 className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
               >
-                {(Object.keys(PRESET_LABELS) as DatePreset[]).map((k) => (
+                {(Object.keys(PRESET_LABELS) as (keyof typeof PRESET_LABELS)[]).map((k) => (
                   <option key={k} value={k}>{PRESET_LABELS[k]}</option>
                 ))}
+                {versions.length > 0 && (
+                  <optgroup label="Versions">
+                    {[...versions]
+                      .sort((a, b) => b.startDate.localeCompare(a.startDate))
+                      .map((v) => (
+                        <option key={v.id} value={`version:${v.id}`}>
+                          {v.name} ({v.startDate.slice(5).replace("-", "/")})
+                        </option>
+                      ))}
+                  </optgroup>
+                )}
               </select>
               {preset === "custom" && (
                 <>
@@ -624,6 +703,27 @@ function Dashboard({ password }: { password: string }) {
               >
                 ↻ Refresh
               </button>
+              <button
+                onClick={() => {
+                  const now = new Date();
+                  setNewVersionDate(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`);
+                  setNewVersionName("");
+                  setShowVersionForm(true);
+                }}
+                className="px-3 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm hover:bg-gray-700 hover:text-white transition"
+                title="Nouvelle version"
+              >
+                + Version
+              </button>
+              {versions.length > 0 && (
+                <button
+                  onClick={() => setShowVersionManager((v) => !v)}
+                  className="px-2 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm hover:bg-gray-700 hover:text-white transition"
+                  title="Gérer les versions"
+                >
+                  ✎
+                </button>
+              )}
             </div>
           </div>
 
@@ -643,6 +743,84 @@ function Dashboard({ password }: { password: string }) {
                 onChange={(e) => setCompareCustomTo(e.target.value)}
                 className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
               />
+            </div>
+          )}
+
+          {showVersionForm && (
+            <div className="flex items-center gap-3 flex-wrap pl-0 sm:pl-2">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Nouvelle version :</span>
+              <input
+                type="text"
+                placeholder="Nom (ex: v4.3 — Cart redesign)"
+                value={newVersionName}
+                onChange={(e) => setNewVersionName(e.target.value)}
+                className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm w-64"
+                autoFocus
+              />
+              <input
+                type="date"
+                value={newVersionDate}
+                onChange={(e) => setNewVersionDate(e.target.value)}
+                className="bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm"
+              />
+              <button
+                onClick={() => {
+                  if (!newVersionName.trim() || !newVersionDate) return;
+                  const v: AnalyticsVersion = {
+                    id: crypto.randomUUID(),
+                    name: newVersionName.trim(),
+                    startDate: newVersionDate,
+                  };
+                  const updated = [...versions, v];
+                  setVersions(updated);
+                  saveVersions(updated);
+                  setShowVersionForm(false);
+                  setPreset(`version:${v.id}`);
+                }}
+                disabled={!newVersionName.trim() || !newVersionDate}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Ajouter
+              </button>
+              <button
+                onClick={() => setShowVersionForm(false)}
+                className="px-3 py-2 text-gray-400 hover:text-white text-sm transition"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {showVersionManager && versions.length > 0 && (
+            <div className="border border-gray-700 rounded-lg p-3 space-y-2">
+              <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Gérer les versions</div>
+              {[...versions]
+                .sort((a, b) => b.startDate.localeCompare(a.startDate))
+                .map((v) => (
+                  <div key={v.id} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-gray-300">
+                      <span className="font-medium text-white">{v.name}</span>
+                      <span className="text-gray-500 ml-2">depuis {v.startDate}</span>
+                    </span>
+                    <button
+                      onClick={() => {
+                        const updated = versions.filter((x) => x.id !== v.id);
+                        setVersions(updated);
+                        saveVersions(updated);
+                        if (preset === `version:${v.id}`) setPreset("yesterday");
+                      }}
+                      className="text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded hover:bg-gray-800 transition"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                ))}
+              <button
+                onClick={() => setShowVersionManager(false)}
+                className="text-gray-500 hover:text-gray-300 text-xs mt-1 transition"
+              >
+                Fermer
+              </button>
             </div>
           )}
         </div>

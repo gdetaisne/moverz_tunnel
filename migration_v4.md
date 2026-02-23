@@ -7871,3 +7871,27 @@ Audit mobile révélant un drop de 66.7% à l'entrée de la step 3 :
 - **Champs / Inputs tunnel** : aucun ajout, aucune suppression.
 - **Back Office payload** : aucun changement.
 - **Tracking** : aucun changement (`logicalStep`, `screenId` inchangés).
+
+---
+
+## Analytics — Filtre par version
+
+### Fonctionnalité
+Permet de créer des "versions" (nom + date de début) et de filtrer les analytics par plage correspondante. La date de fin d'une version = date de début de la version suivante (ou maintenant pour la dernière).
+
+### Stockage
+- **localStorage** clé `analytics_versions`
+- Format : `Array<{ id: string; name: string; startDate: string }>`
+
+### UI ajoutée (`app/analytics/page.tsx`)
+- **Select enrichi** : `<optgroup label="Versions">` sous les presets existants. Chaque version affiche `nom (MM/JJ)`. Valeur = `version:<id>`.
+- **Bouton "+ Version"** : ouvre un formulaire inline (nom + date début, défaut = aujourd'hui). Après ajout, sélectionne automatiquement la nouvelle version.
+- **Bouton "Gérer" (✎)** : affiche la liste des versions avec suppression individuelle.
+
+### Logique
+- `DatePreset` étendu avec `` `version:${string}` ``
+- `getDateRange()` détecte le préfixe `version:`, résout via `getVersionDateRange()` (tri chronologique → plage entre cette version et la suivante).
+
+### Impacts
+- **Fichier modifié** : `app/analytics/page.tsx` uniquement.
+- **Aucun changement backend / DB / tunnel / tracking.**
