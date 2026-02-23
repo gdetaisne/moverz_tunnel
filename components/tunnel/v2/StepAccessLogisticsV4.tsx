@@ -208,8 +208,14 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   };
   const isBox = (t: string) => (t || "").trim().toLowerCase() === "box";
   const showValidation = !!props.showValidation;
-  const isOriginAddressValid = (props.originAddress || "").trim().length >= 5;
-  const isDestinationAddressValid = (props.destinationAddress || "").trim().length >= 5;
+  const isOriginAddressValid =
+    (props.originAddress || "").trim().length >= 5 &&
+    props.originLat != null &&
+    props.originLon != null;
+  const isDestinationAddressValid =
+    (props.destinationAddress || "").trim().length >= 5 &&
+    props.destinationLat != null &&
+    props.destinationLon != null;
   const isFirstNameValid = (props.firstName || "").trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((props.email || "").trim());
   const isMovingDateValid = !!props.movingDate && props.movingDate >= minMovingDate;
@@ -1544,6 +1550,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
               onInputChange={(raw) => {
                 markTouched("originAddress");
                 props.onFieldChange("originAddress", raw);
+                props.onFieldChange("originLat", null);
+                props.onFieldChange("originLon", null);
               }}
               onSelect={(s) => {
                 markTouched("originAddress");
@@ -1638,6 +1646,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
               onInputChange={(raw) => {
                 markTouched("destinationAddress");
                 props.onFieldChange("destinationAddress", raw);
+                props.onFieldChange("destinationLat", null);
+                props.onFieldChange("destinationLon", null);
               }}
               onSelect={(s) => {
                 markTouched("destinationAddress");
@@ -1736,6 +1746,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
                             onInputChange={(raw) => {
                               markTouched("originAddress");
                               props.onFieldChange("originAddress", raw);
+                              props.onFieldChange("originLat", null);
+                              props.onFieldChange("originLon", null);
                             }}
                             onSelect={(s) => {
                               markTouched("originAddress");
@@ -1772,6 +1784,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
                             onInputChange={(raw) => {
                               markTouched("destinationAddress");
                               props.onFieldChange("destinationAddress", raw);
+                              props.onFieldChange("destinationLat", null);
+                              props.onFieldChange("destinationLon", null);
                             }}
                             onSelect={(s) => {
                               markTouched("destinationAddress");
