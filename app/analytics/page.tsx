@@ -173,10 +173,10 @@ const BLOCK_LABELS: Record<string, { emoji: string; label: string; color: string
 
 const STEP_LABELS_EARLY: Record<string, string> = {
   ENTRY:    "🏠 Entrée",
-  PROJECT:  "📦 Projet",
+  PROJECT:  "📦 Formulaire",
   RECAP:    "📋 Récapitulatif",
   CONTACT:  "📞 Contact",
-  THANK_YOU:"🎉 Merci",
+  THANK_YOU:"🎉 Confirmation",
 };
 
 function sortFunnel(rows: { logical_step: string; sessions: number }[]) {
@@ -1194,18 +1194,33 @@ const EVENT_LABELS: Record<string, { emoji: string; label: string; color: string
 
 const STEP_LABELS: Record<string, string> = {
   ENTRY:    "🏠 Entrée",
-  PROJECT:  "📦 Projet",
+  PROJECT:  "📦 Projet (Formulaire)",
   RECAP:    "📋 Récapitulatif",
   CONTACT:  "📞 Contact",
-  THANK_YOU:"🎉 Merci",
+  THANK_YOU:"🎉 Confirmation",
 };
 
 const SCREEN_LABELS: Record<string, string> = {
-  acces_v2:        "Accueil",
-  qualification_v2:"Qualification",
-  estimation_v2:   "Estimation",
-  contact_v3:      "Contact",
-  confirmation_v2: "Confirmation",
+  acces_v2:        "Formulaire détaillé",
+  qualification_v2:"Villes & surface",
+  estimation_v2:   "Estimation prix",
+  contact_v3:      "Coordonnées",
+  confirmation_v2: "Confirmation finale",
+};
+
+const BLOCK_LABELS: Record<string, string> = {
+  cities_surface:   "Villes & surface",
+  estimation_recap: "Estimation prix",
+  route_housing:    "Trajet & logements",
+  moving_date:      "Date déménagement",
+  volume_density:   "Volume & densité",
+  formule:          "Choix formule",
+  contact_info:     "Coordonnées contact",
+  optional_details: "Précisions optionnelles",
+  validate_step1:   "✅ Validation étape 1",
+  validate_step2:   "✅ Validation étape 2",
+  validate_step3:   "✅ Validation étape 3",
+  confirmation:     "Page confirmation",
 };
 
 function getEventInfo(type: string) {
@@ -1607,9 +1622,13 @@ function Journal({ password }: { password: string }) {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <EventBadge type={ev.event_type} />
-                              {ev.logical_step && (
+                              {ev.event_type === "BLOCK_ENTERED" && ev.extra?.blockId ? (
+                                <span className="text-sm text-gray-200 font-medium">
+                                  {BLOCK_LABELS[ev.extra.blockId as string] || (ev.extra.blockId as string)}
+                                </span>
+                              ) : ev.logical_step ? (
                                 <span className="text-sm text-gray-200 font-medium">{getStepLabel(ev.logical_step)}</span>
-                              )}
+                              ) : null}
                               {ev.screen_id && (
                                 <span className="text-xs text-gray-500 bg-gray-800/80 px-1.5 py-0.5 rounded">{getScreenLabel(ev.screen_id)}</span>
                               )}
