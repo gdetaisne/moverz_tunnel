@@ -535,25 +535,30 @@ ${EXTRA_NOTES_BLOCK_END}`;
       return Number.isFinite(n) ? n : 0;
     };
 
-    // Origin
-    if (props.originElevator === "partial" || props.originElevator === "none") {
+    const originIsApt = isApartment(props.originHousingType);
+    const destIsApt = isApartment(props.destinationHousingType);
+    const originIsHouse = (props.originHousingType || "").startsWith("house");
+    const destIsHouse = (props.destinationHousingType || "").startsWith("house");
+
+    // Origin — ascenseur pertinent uniquement pour les appartements
+    if (originIsApt && (props.originElevator === "partial" || props.originElevator === "none")) {
       applyIfNotSet("narrow_access", "origin");
     }
-    if (props.originHousingType === "house") {
+    if (originIsHouse) {
       applyIfNotSet("long_carry", "origin");
     }
-    if ((props.originElevator === "partial" || props.originElevator === "none") && floorNum(props.originFloor) > 1) {
+    if (originIsApt && (props.originElevator === "partial" || props.originElevator === "none") && floorNum(props.originFloor) > 1) {
       applyIfNotSet("lift_required", "origin");
     }
 
     // Destination
-    if (props.destinationElevator === "partial" || props.destinationElevator === "none") {
+    if (destIsApt && (props.destinationElevator === "partial" || props.destinationElevator === "none")) {
       applyIfNotSet("narrow_access", "destination");
     }
-    if (props.destinationHousingType === "house") {
+    if (destIsHouse) {
       applyIfNotSet("long_carry", "destination");
     }
-    if ((props.destinationElevator === "partial" || props.destinationElevator === "none") && floorNum(props.destinationFloor) > 1) {
+    if (destIsApt && (props.destinationElevator === "partial" || props.destinationElevator === "none") && floorNum(props.destinationFloor) > 1) {
       applyIfNotSet("lift_required", "destination");
     }
 
