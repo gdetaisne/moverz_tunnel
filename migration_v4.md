@@ -7895,3 +7895,36 @@ Permet de créer des "versions" (nom + date de début) et de filtrer les analyti
 ### Impacts
 - **Fichier modifié** : `app/analytics/page.tsx` uniquement.
 - **Aucun changement backend / DB / tunnel / tracking.**
+
+---
+
+## CRO — Refonte question cuisine (Option A : binaire + expansion)
+
+### Avant
+- Label : "Cuisine équipée ?"
+- 3 boutons : `Non` / `Oui` / `Complète` (ambigus, la distinction Oui vs Complète n'est pas claire)
+- Si "Oui" : champ numérique libre (nombre d'électroménagers)
+
+### Après
+- Label : **"Électroménager à déménager ?"** + sous-texte exemples (frigo, lave-linge, four…)
+- Étape 1 : 2 boutons `Non` / `Oui` (trivial, zéro friction)
+- Étape 2 (si Oui) : 3 boutons `1-2` / `3+` / `Toute la cuisine` (un seul clic, pas de saisie libre)
+
+### Mapping des valeurs (inchangé côté pricing)
+| Choix UI | `kitchenIncluded` | `kitchenApplianceCount` | Volume extra |
+|---|---|---|---|
+| Non | `"none"` | `""` | 0 m³ |
+| Oui → 1-2 | `"appliances"` | `"2"` | 1.2 m³ |
+| Oui → 3+ | `"appliances"` | `"4"` | 2.4 m³ |
+| Oui → Toute la cuisine | `"full"` | `""` | 6 m³ |
+
+### Résumé accordéon mis à jour
+- `"none"` → "Pas d'électroménager"
+- `"appliances"` → "2 appareil(s)" ou "4 appareil(s)"
+- `"full"` → "Cuisine complète"
+- Non renseigné → "Électroménager ?"
+
+### Impacts
+- **Fichier modifié** : `components/tunnel/v2/StepAccessLogisticsV4.tsx`
+- **Pricing / BO / tracking** : aucun changement (mêmes valeurs `kitchenIncluded` + `kitchenApplianceCount`).
+- **Champs existants** : aucun supprimé, aucun ajouté.

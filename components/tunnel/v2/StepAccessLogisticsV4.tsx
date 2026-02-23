@@ -1144,10 +1144,10 @@ ${EXTRA_NOTES_BLOCK_END}`;
         props.kitchenIncluded === "full"
           ? "Cuisine complète"
           : props.kitchenIncluded === "appliances"
-          ? "Cuisine équipée"
+          ? `${props.kitchenApplianceCount || "?"} appareil(s)`
           : props.kitchenIncluded === "none"
-          ? "Sans cuisine"
-          : "Cuisine ?"
+          ? "Pas d'électroménager"
+          : "Électroménager ?"
       }`,
     },
     formule: {
@@ -2100,83 +2100,97 @@ ${EXTRA_NOTES_BLOCK_END}`;
               className="block text-sm font-medium mb-2"
               style={{ color: "var(--color-text)" }}
             >
-              Cuisine équipée ?
+              Électroménager à déménager ?
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <p className="text-xs mb-2" style={{ color: "var(--color-text-secondary)" }}>
+              Frigo, lave-linge, four, lave-vaisselle…
+            </p>
+            <div className="grid grid-cols-2 gap-2">
               {[
-                { id: "none", label: "Non" },
-                { id: "appliances", label: "Oui" },
-                { id: "full", label: "Complète" },
-              ].map((k) => (
-                <button
-                  key={k.id}
-                  type="button"
-                  disabled={isOriginBox}
-                  onClick={() => {
-                    markTouched("kitchenIncluded");
-                    props.onFieldChange("kitchenIncluded", k.id);
-                  }}
-                  className="px-3 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
-                  style={{
-                    background:
-                      props.kitchenIncluded === k.id
-                        ? "var(--color-accent)"
-                        : "var(--color-surface)",
-                    color:
-                      props.kitchenIncluded === k.id ? "#FFFFFF" : "var(--color-text)",
-                    border:
-                      props.kitchenIncluded === k.id
-                        ? "none"
-                        : "2px solid var(--color-border)",
-                  }}
-                >
-                  {k.label}
-                </button>
-              ))}
+                { id: "no", label: "Non" },
+                { id: "yes", label: "Oui" },
+              ].map((k) => {
+                const isActive =
+                  k.id === "no"
+                    ? props.kitchenIncluded === "none"
+                    : props.kitchenIncluded === "appliances" || props.kitchenIncluded === "full";
+                return (
+                  <button
+                    key={k.id}
+                    type="button"
+                    disabled={isOriginBox}
+                    onClick={() => {
+                      markTouched("kitchenIncluded");
+                      if (k.id === "no") {
+                        props.onFieldChange("kitchenIncluded", "none");
+                        props.onFieldChange("kitchenApplianceCount", "");
+                      } else {
+                        props.onFieldChange("kitchenIncluded", "appliances");
+                      }
+                    }}
+                    className="px-3 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                    style={{
+                      background: isActive ? "var(--color-accent)" : "var(--color-surface)",
+                      color: isActive ? "#FFFFFF" : "var(--color-text)",
+                      border: isActive ? "none" : "2px solid var(--color-border)",
+                    }}
+                  >
+                    {k.label}
+                  </button>
+                );
+              })}
             </div>
             {shouldShowFieldError("kitchenIncluded") && !isKitchenSelectionValid && (
               <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
-                Sélection cuisine requise
+                Sélection requise
               </p>
             )}
           </div>
 
-          {!isOriginBox && props.kitchenIncluded === "appliances" && (
+          {!isOriginBox && (props.kitchenIncluded === "appliances" || props.kitchenIncluded === "full") && (
             <div>
               <label
-                htmlFor="v4-kitchen-count"
                 className="block text-sm font-medium mb-2"
                 style={{ color: "var(--color-text)" }}
               >
-                Nombre d'électroménagers
+                Combien ?
               </label>
-              <input
-                id="v4-kitchen-count"
-                type="number"
-                min={1}
-                max={20}
-                value={props.kitchenApplianceCount}
-                onChange={(e) =>
-                  props.onFieldChange("kitchenApplianceCount", e.target.value)
-                }
-                onBlur={() => markTouched("kitchenApplianceCount")}
-                className="w-full rounded-xl px-4 py-3 text-sm"
-                style={{
-                  background: "var(--color-bg)",
-                  border: `2px solid ${
-                    shouldShowFieldError("kitchenApplianceCount") && !isKitchenValid
-                      ? "var(--color-danger)"
-                      : "var(--color-border)"
-                  }`,
-                  color: "var(--color-text)",
-                }}
-                placeholder="3"
-              />
-              {shouldShowFieldError("kitchenApplianceCount") && !isKitchenValid && (
-                <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
-                  Nombre requis (min 1)
-                </p>
-              )}
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: "1-2", label: "1-2", count: "2" },
+                  { id: "3+", label: "3+", count: "4" },
+                  { id: "full", label: "Toute la cuisine", count: "" },
+                ].map((k) => {
+                  const isActive =
+                    k.id === "full"
+                      ? props.kitchenIncluded === "full"
+                      : props.kitchenIncluded === "appliances" && props.kitchenApplianceCount === k.count;
+                  return (
+                    <button
+                      key={k.id}
+                      type="button"
+                      onClick={() => {
+                        markTouched("kitchenApplianceCount");
+                        if (k.id === "full") {
+                          props.onFieldChange("kitchenIncluded", "full");
+                          props.onFieldChange("kitchenApplianceCount", "");
+                        } else {
+                          props.onFieldChange("kitchenIncluded", "appliances");
+                          props.onFieldChange("kitchenApplianceCount", k.count);
+                        }
+                      }}
+                      className="px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                      style={{
+                        background: isActive ? "var(--color-accent)" : "var(--color-surface)",
+                        color: isActive ? "#FFFFFF" : "var(--color-text)",
+                        border: isActive ? "none" : "2px solid var(--color-border)",
+                      }}
+                    >
+                      {k.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
