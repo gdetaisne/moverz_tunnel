@@ -32,7 +32,7 @@ Avec `DISPLAY_CENTER_BIAS = 0.5`.
 - `formule` (`ECONOMIQUE` | `STANDARD` | `PREMIUM`)
 - Hypotheses fixes:
   - `housingType = "t2"`
-  - `density = "dense"`
+  - `density = "normal"` (coef 1.0 — reference)
   - `seasonFactor = 1`
   - `originFloor = 0`, `destinationFloor = 0`
   - `originElevator = "yes"`, `destinationElevator = "yes"`
@@ -77,6 +77,27 @@ Puis:
 - `prixMaxStep2 = prixMaxBrut + provision`
 
 Le centre Step 2 est ensuite fige pour Step 3.
+
+### 3.4 Coefficients densite (source: `lib/pricing/constants.ts`)
+
+| Densite | Coefficient | Impact vs Normal |
+|---------|------------|------------------|
+| Leger   | 0.85       | -15 %            |
+| Normal  | 1.0        | reference (+0 %) |
+| Dense   | 1.25       | +25 %            |
+
+Le baseline utilise `normal` (coef 1.0). Le volume affiche au client est `surfaceM2 * TYPE_COEFFICIENTS[housingType] * DENSITY_COEFFICIENTS[density]`.
+
+### 3.5 Coefficients type logement (source: `lib/pricing/constants.ts`)
+
+| Type       | Coefficient |
+|------------|------------|
+| studio     | 0.46       |
+| t1, t2, t3 | 0.4025     |
+| t4, t5     | 0.46       |
+| house (*)  | 0.46       |
+
+(*) Variantes `house_1floor`, `house_2floors`, `house_3floors` : meme coefficient.
 
 ## 4) Step 3 (budget affine)
 
