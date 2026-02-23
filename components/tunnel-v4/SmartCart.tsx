@@ -61,6 +61,7 @@ export interface SmartCartProps {
   precisionScore?: number;
   remainingSeconds?: number;
   preferredImpactId?: string | null;
+  allRequiredValid?: boolean;
 }
 
 export function SmartCart({
@@ -78,6 +79,7 @@ export function SmartCart({
   precisionScore,
   remainingSeconds,
   preferredImpactId = null,
+  allRequiredValid = false,
 }: SmartCartProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -502,7 +504,28 @@ export function SmartCart({
   // Mobile : Dock reward + Drawer
   return (
     <>
-      {/* Dock fixe bas d'ecran */}
+      {/* Dock fixe bas d'ecran — CTA sticky quand tout est validé, sinon progression */}
+      {allRequiredValid && onSubmit ? (
+        <motion.button
+          initial={{ y: 16, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.2 }}
+          onClick={() => onSubmit()}
+          disabled={isLoading}
+          className="fixed z-[90] left-3 right-3 rounded-2xl shadow-lg py-4 text-center font-bold text-base transition-all active:scale-[0.98]"
+          style={{
+            bottom: `calc(${mobileFabBottom}px + env(safe-area-inset-bottom, 0px))`,
+            background: "var(--color-accent)",
+            color: "#FFFFFF",
+            boxShadow: "0 4px 20px rgba(14,165,166,0.4)",
+            opacity: drawerOpen ? 0 : isLoading ? 0.6 : 1,
+            pointerEvents: drawerOpen ? "none" : "auto",
+          }}
+          aria-label={ctaLabel}
+        >
+          {isLoading ? "Chargement..." : `${ctaLabel} →`}
+        </motion.button>
+      ) : (
       <motion.button
         initial={{ y: 16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -595,6 +618,7 @@ export function SmartCart({
           </div>
         )}
       </motion.button>
+      )}
 
       {/* Drawer (Bottom Sheet) */}
       <AnimatePresence>

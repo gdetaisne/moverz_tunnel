@@ -2189,8 +2189,10 @@ function DevisGratuitsV3Content() {
     const firstName = state.firstName.trim();
     const email = state.email.trim().toLowerCase();
     const isFirstNameValid = firstName.length >= 2;
-    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
     if (!isStep3 || hasLead || !isFirstNameValid || !isEmailValid) return;
+    const domain = email.split("@")[1] || "";
+    if (["example.com", "test.com", "yopmail.com", "mailinator.com"].includes(domain)) return;
 
     const attemptKey = `${firstName}|${email}`;
     if (precreateLeadAttemptKeyRef.current === attemptKey) return;
@@ -2948,6 +2950,7 @@ function DevisGratuitsV3Content() {
                 destinationFloorTouched={state.destinationFloorTouched}
                 destinationElevator={state.destinationElevator}
                 destinationElevatorTouched={state.destinationElevatorTouched}
+                surfaceM2={state.surfaceM2}
                 density={state.density}
                 kitchenIncluded={state.kitchenIncluded}
                 kitchenApplianceCount={state.kitchenApplianceCount}
@@ -3046,6 +3049,7 @@ function DevisGratuitsV3Content() {
                   precisionScore={step3Progress.score}
                   remainingSeconds={step3Progress.remainingSeconds}
                   preferredImpactId={lastImpactDetailId}
+                  allRequiredValid={sectionValidity.contact}
                 />
               )}
             </div>

@@ -30,6 +30,7 @@ import { AddressAutocomplete } from "@/components/tunnel/AddressAutocomplete";
 import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 import { CardV4 } from "@/components/tunnel-v4";
 import { uploadLeadPhotos, type UploadedPhoto } from "@/lib/api/client";
+import { DENSITY_COEFFICIENTS, TYPE_COEFFICIENTS } from "@/lib/pricing/constants";
 
 type QuestionKey = "narrow_access" | "long_carry" | "difficult_parking" | "lift_required";
 
@@ -61,6 +62,7 @@ interface StepAccessLogisticsV4Props {
   destinationElevator: string;
   destinationElevatorTouched?: boolean;
   // Volume
+  surfaceM2?: string;
   density: "" | "light" | "normal" | "dense";
   kitchenIncluded: "" | "none" | "appliances" | "full";
   kitchenApplianceCount: string;
@@ -311,6 +313,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   }, [props.selectedFormule]);
   const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
   const [missingInfoValidated, setMissingInfoValidated] = useState(false);
+  const [dateFlexibilityChosen, setDateFlexibilityChosen] = useState(false);
   const missingInfoPanelOpen = showMissingInfoPanel;
   const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("photos");
   const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
@@ -510,6 +513,61 @@ ${EXTRA_NOTES_BLOCK_END}`;
     );
     props.onFieldChange("lift_required", Boolean(current.lift_required.origin || current.lift_required.destination));
   };
+
+  // P1b — Auto pré-sélection des contraintes d'accès depuis les données Trajet
+  const constraintsPrefilledRef = useRef(false);
+  useEffect(() => {
+    if (!showMissingInfoPanel || constraintsPrefilledRef.current) return;
+    constraintsPrefilledRef.current = true;
+
+    const current = parseAccessSides();
+    let changed = false;
+
+    const applyIfNotSet = (q: QuestionKey, loc: "origin" | "destination") => {
+      if (!current[q][loc]) {
+        current[q][loc] = true;
+        changed = true;
+      }
+    };
+
+    const floorNum = (floor: string) => {
+      const n = parseInt(floor, 10);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    // Origin
+    if (props.originElevator === "partial" || props.originElevator === "none") {
+      applyIfNotSet("narrow_access", "origin");
+    }
+    if (props.originHousingType === "house") {
+      applyIfNotSet("long_carry", "origin");
+    }
+    if ((props.originElevator === "partial" || props.originElevator === "none") && floorNum(props.originFloor) > 1) {
+      applyIfNotSet("lift_required", "origin");
+    }
+
+    // Destination
+    if (props.destinationElevator === "partial" || props.destinationElevator === "none") {
+      applyIfNotSet("narrow_access", "destination");
+    }
+    if (props.destinationHousingType === "house") {
+      applyIfNotSet("long_carry", "destination");
+    }
+    if ((props.destinationElevator === "partial" || props.destinationElevator === "none") && floorNum(props.destinationFloor) > 1) {
+      applyIfNotSet("lift_required", "destination");
+    }
+
+    if (changed) {
+      const parts: string[] = [];
+      for (const qKey of Object.keys(current) as QuestionKey[]) {
+        if (current[qKey].origin) parts.push(`origin:${qKey}`);
+        if (current[qKey].destination) parts.push(`destination:${qKey}`);
+      }
+      props.onFieldChange("access_details", parts.join("|"));
+      const hasAny = parts.length > 0;
+      props.onFieldChange("access_type", hasAny ? "constrained" : "simple");
+    }
+  }, [showMissingInfoPanel]);
 
   const floorLabel = (value: string) => FLOOR_OPTIONS.find((o) => o.value === value)?.label ?? "Non renseigné";
   const elevatorLabel = (value: string) =>
@@ -1057,7 +1115,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
       summary: `${props.originCity || "Départ"} → ${props.destinationCity || "Arrivée"}`,
     },
     date: {
-      valid: isMovingDateValid,
+      valid: isMovingDateValid && dateFlexibilityChosen,
       summary: props.movingDate ? props.movingDate : "Date à confirmer",
     },
     volume: {
@@ -1814,6 +1872,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
             }}
             min={minMovingDate}
             error={shouldShowFieldError("movingDate") && !isMovingDateValid}
+            defaultOpen
           />
           {shouldShowFieldError("movingDate") && !isMovingDateValid && (
             <p className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
@@ -1821,18 +1880,45 @@ ${EXTRA_NOTES_BLOCK_END}`;
             </p>
           )}
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={props.dateFlexible}
-              onChange={(e) => props.onFieldChange("dateFlexible", e.target.checked)}
-              className="w-4 h-4 rounded"
-              style={{ accentColor: "var(--color-accent)" }}
-            />
-            <span className="text-sm" style={{ color: "var(--color-text)" }}>
-              Mes dates sont flexibles (±3 jours)
-            </span>
-          </label>
+          {isMovingDateValid && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                Dates flexibles ±1 semaine ?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    props.onFieldChange("dateFlexible", true);
+                    setDateFlexibilityChosen(true);
+                  }}
+                  className="flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                  style={{
+                    background: dateFlexibilityChosen && props.dateFlexible ? "var(--color-accent)" : "var(--color-bg)",
+                    color: dateFlexibilityChosen && props.dateFlexible ? "#fff" : "var(--color-text)",
+                    border: `2px solid ${dateFlexibilityChosen && props.dateFlexible ? "var(--color-accent)" : "var(--color-border)"}`,
+                  }}
+                >
+                  Oui, flexible
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    props.onFieldChange("dateFlexible", false);
+                    setDateFlexibilityChosen(true);
+                  }}
+                  className="flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                  style={{
+                    background: dateFlexibilityChosen && !props.dateFlexible ? "var(--color-accent)" : "var(--color-bg)",
+                    color: dateFlexibilityChosen && !props.dateFlexible ? "#fff" : "var(--color-text)",
+                    border: `2px solid ${dateFlexibilityChosen && !props.dateFlexible ? "var(--color-accent)" : "var(--color-border)"}`,
+                  }}
+                >
+                  Non, date fixe
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </CardV4>
       </AnimatedSection>
@@ -1862,6 +1948,19 @@ ${EXTRA_NOTES_BLOCK_END}`;
             >
               Densité de meubles
             </label>
+            {(() => {
+              const m2 = parseInt(props.surfaceM2 || "0", 10);
+              const typeCoef = TYPE_COEFFICIENTS[props.originHousingType as keyof typeof TYPE_COEFFICIENTS] ?? 0.4;
+              if (m2 > 0) {
+                const baseVol = Math.round(m2 * typeCoef);
+                return (
+                  <p className="mb-2 text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                    Volume estimé : ~{baseVol} m³ pour {m2} m² — la densité ajuste ce volume
+                  </p>
+                );
+              }
+              return null;
+            })()}
             {isOriginBox && (
               <p className="mb-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
                 Départ en box : densité fixée automatiquement à "Normal".
@@ -1877,9 +1976,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
             )}
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {[
-                { id: "light", label: "Léger" },
-                { id: "normal", label: "Normal" },
-                { id: "dense", label: "Dense" },
+                { id: "light" as const, label: "Léger", subLabel: `${Math.round((DENSITY_COEFFICIENTS.light - 1) * 100)}%` },
+                { id: "normal" as const, label: "Normal", subLabel: `+${Math.round((DENSITY_COEFFICIENTS.normal - 1) * 100)}%` },
+                { id: "dense" as const, label: "Dense", subLabel: `+${Math.round((DENSITY_COEFFICIENTS.dense - 1) * 100)}%` },
               ].map((d) => (
                 <button
                   key={d.id}
@@ -1889,7 +1988,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
                     markTouched("density");
                     props.onFieldChange("density", d.id);
                   }}
-                  className="px-3 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                  className="px-3 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 flex flex-col items-center gap-0.5"
                   style={{
                     background:
                       props.density === d.id ? "var(--color-accent)" : "var(--color-surface)",
@@ -1898,7 +1997,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       props.density === d.id ? "none" : "2px solid var(--color-border)",
                   }}
                 >
-                  {d.label}
+                  <span>{d.label}</span>
+                  <span className="text-[10px] font-normal opacity-75">{d.subLabel}</span>
                 </button>
               ))}
               <button
@@ -2155,117 +2255,20 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       />
 
               <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible">
+                {!isOriginBox && (
                 <div
                   className="order-1 sm:order-1 min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
                   style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
                 >
                   <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                    1. Objets spécifiques
-                  </p>
-                  {[
-                    { key: "piano", label: "Piano" },
-                    { key: "coffreFort", label: "Coffre-fort" },
-                    { key: "aquarium", label: "Aquarium" },
-                    { key: "objetsFragilesVolumineux", label: "Objets fragiles volumineux" },
-                  ].map((item) => {
-                    const active = Boolean(objectsState[item.key as keyof ObjectsState]);
-                  return (
-                    <button
-                        key={item.key}
-                      type="button"
-                        onClick={() =>
-                          upsertObjectsState({
-                            ...objectsState,
-                            [item.key]: !active,
-                          } as ObjectsState)
-                        }
-                        className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium"
-                      style={{
-                          background: active ? "var(--color-accent-light)" : "var(--color-bg)",
-                          color: "var(--color-text)",
-                          border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
-                        }}
-                      >
-                        {item.label}
-                    </button>
-                  );
-                })}
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
-                      Meuble(s) très lourd(s)
-                  </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={20}
-                      value={objectsState.meublesTresLourdsCount}
-                    onChange={(e) => {
-                        const next = Number.parseInt(e.target.value || "0", 10);
-                        upsertObjectsState({
-                          ...objectsState,
-                          meublesTresLourdsCount: Number.isFinite(next) ? Math.max(0, next) : 0,
-                        });
-                      }}
-                      className="w-full rounded-lg px-3 py-2 text-sm"
-                    style={{
-                      background: "var(--color-bg)",
-                        border: "1px solid var(--color-border)",
-                      color: "var(--color-text)",
-                    }}
-                  />
-                </div>
-                  <div className="mt-auto space-y-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        upsertObjectsState({
-                          piano: false,
-                          coffreFort: false,
-                          meublesTresLourdsCount: 0,
-                          aquarium: false,
-                          objetsFragilesVolumineux: false,
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
-                        style={{
-                        background: objectsRas ? "var(--color-accent)" : "var(--color-bg)",
-                        color: objectsRas ? "#fff" : "var(--color-text)",
-                        border: "1px solid var(--color-border)",
-                      }}
-                    >
-                      Rien à déclarer
-                    </button>
-                      <button
-                        type="button"
-                        onClick={() => photoInputRef.current?.click()}
-                      disabled={isUploadingPhotos || isAnalyzingPhotos}
-                      className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
-                      style={{
-                        background: "transparent",
-                        color: "var(--color-text-secondary)",
-                        border: "1px dashed var(--color-border)",
-                      }}
-                    >
-                      <Camera className="w-3.5 h-3.5 inline mr-1" />
-                      Ajouter une photo (optionnel)
-                      </button>
-                  </div>
-                </div>
-
-                {!isOriginBox && (
-                <div
-                  className="order-2 sm:order-2 min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
-                                style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-                              >
-                  <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                    2. Contraintes au départ
+                    1. Contraintes au départ
                   </p>
                   {questions.map((q) => {
                     const active = Boolean(accessSides[q.key]?.origin);
                     return (
-                                <button
+                      <button
                         key={`origin-${q.key}`}
-                                  type="button"
+                        type="button"
                         onClick={() => toggleSide(q.key, "origin")}
                         className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium"
                         style={{
@@ -2275,9 +2278,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
                         }}
                       >
                         {q.label}
-                                </button>
-                            );
-                          })}
+                      </button>
+                    );
+                  })}
                   <div className="mt-auto space-y-2">
                     <button
                       type="button"
@@ -2305,28 +2308,28 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       <Camera className="w-3.5 h-3.5 inline mr-1" />
                       Ajouter une photo (optionnel)
                     </button>
-                        </div>
-                    </div>
+                  </div>
+                </div>
                 )}
 
-                    {!isDestinationBox && (
-                    <div
-                  className="order-3 sm:order-3 min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
+                {!isDestinationBox && (
+                <div
+                  className="order-2 sm:order-2 min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
                   style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-                    >
-                      <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                    3. Contraintes à l'arrivée
+                >
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                    2. Contraintes à l'arrivée
                   </p>
                   {questions.map((q) => {
                     const active = Boolean(accessSides[q.key]?.destination);
-                            return (
+                    return (
                       <button
                         key={`destination-${q.key}`}
                         type="button"
                         disabled={destinationUnknown}
                         onClick={() => toggleSide(q.key, "destination")}
                         className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-50"
-                                    style={{
+                        style={{
                           background: active ? "var(--color-accent-light)" : "var(--color-bg)",
                           color: "var(--color-text)",
                           border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
@@ -2334,8 +2337,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       >
                         {q.label}
                       </button>
-                            );
-                          })}
+                    );
+                  })}
                   <div className="mt-auto space-y-2">
                     <button
                       type="button"
@@ -2363,9 +2366,106 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       <Camera className="w-3.5 h-3.5 inline mr-1" />
                       Ajouter une photo (optionnel)
                     </button>
-                        </div>
-                        </div>
-                      )}
+                  </div>
+                </div>
+                )}
+
+                <div
+                  className="order-3 sm:order-3 min-w-[85%] sm:min-w-0 snap-start rounded-xl border p-3 flex flex-col gap-3"
+                  style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                >
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                    3. Objets spécifiques
+                  </p>
+                  {[
+                    { key: "piano", label: "Piano" },
+                    { key: "coffreFort", label: "Coffre-fort" },
+                    { key: "aquarium", label: "Aquarium" },
+                    { key: "objetsFragilesVolumineux", label: "Objets fragiles volumineux" },
+                  ].map((item) => {
+                    const active = Boolean(objectsState[item.key as keyof ObjectsState]);
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() =>
+                          upsertObjectsState({
+                            ...objectsState,
+                            [item.key]: !active,
+                          } as ObjectsState)
+                        }
+                        className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium"
+                        style={{
+                          background: active ? "var(--color-accent-light)" : "var(--color-bg)",
+                          color: "var(--color-text)",
+                          border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+                      Meuble(s) très lourd(s)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={20}
+                      value={objectsState.meublesTresLourdsCount}
+                      onChange={(e) => {
+                        const next = Number.parseInt(e.target.value || "0", 10);
+                        upsertObjectsState({
+                          ...objectsState,
+                          meublesTresLourdsCount: Number.isFinite(next) ? Math.max(0, next) : 0,
+                        });
+                      }}
+                      className="w-full rounded-lg px-3 py-2 text-sm"
+                      style={{
+                        background: "var(--color-bg)",
+                        border: "1px solid var(--color-border)",
+                        color: "var(--color-text)",
+                      }}
+                    />
+                  </div>
+                  <div className="mt-auto space-y-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        upsertObjectsState({
+                          piano: false,
+                          coffreFort: false,
+                          meublesTresLourdsCount: 0,
+                          aquarium: false,
+                          objetsFragilesVolumineux: false,
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded-lg text-xs font-semibold"
+                      style={{
+                        background: objectsRas ? "var(--color-accent)" : "var(--color-bg)",
+                        color: objectsRas ? "#fff" : "var(--color-text)",
+                        border: "1px solid var(--color-border)",
+                      }}
+                    >
+                      Rien à déclarer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={isUploadingPhotos || isAnalyzingPhotos}
+                      className="w-full px-3 py-2 rounded-lg text-xs font-medium disabled:opacity-60"
+                      style={{
+                        background: "transparent",
+                        color: "var(--color-text-secondary)",
+                        border: "1px dashed var(--color-border)",
+                      }}
+                    >
+                      <Camera className="w-3.5 h-3.5 inline mr-1" />
+                      Ajouter une photo (optionnel)
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-1">

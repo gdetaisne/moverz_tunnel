@@ -7782,3 +7782,92 @@ Audit mobile révélant un drop de 66.7% à l'entrée de la step 3 :
 - **Champs / Inputs tunnel** : aucun changement.
 - **Back Office payload** : aucun changement.
 - **Tracking** : aucun changement.
+
+---
+
+## CRO Step 3 — Corrections UX restantes (23/02/2026)
+
+6 corrections UX appliquées en une seule itération. Aucun nouveau champ ajouté au tunnel, aucun changement de tracking ni de payload Back Office.
+
+### P0 — CTA sticky mobile "Lancer ma demande de devis"
+
+**Problème** : le CTA final est sous le fold sur mobile quand le bloc Précisions est ouvert.
+
+**Solution** : nouvelle prop `allRequiredValid` dans `SmartCart`. Quand `sectionValidity.contact === true`, le dock mobile se transforme en CTA plein (accent) qui appelle `onSubmit` directement, sans ouvrir le drawer.
+
+| Fichier | Modification |
+|---|---|
+| `components/tunnel-v4/SmartCart.tsx` | Ajout prop `allRequiredValid`, rendu conditionnel du dock mobile |
+| `app/devis-gratuits-v3/page.tsx` | Passage `allRequiredValid={sectionValidity.contact}` à SmartCart |
+
+### P1a — Réordonnement bloc Précisions
+
+**Problème** : "Objets spécifiques" en position 1 occupait tout l'écran mobile pour un besoin rare.
+
+**Solution** : réordonnement → 1. Contraintes départ, 2. Contraintes arrivée, 3. Objets spécifiques.
+
+| Fichier | Modification |
+|---|---|
+| `components/tunnel/v2/StepAccessLogisticsV4.tsx` | Déplacement du JSX des 3 blocs dans le conteneur flex/grid |
+
+### P1b — Pré-sélections intelligentes des contraintes
+
+**Problème** : l'utilisateur re-saisit des infos déjà fournies (ascenseur, type logement, étage).
+
+**Solution** : `useEffect` déclenché à l'ouverture du panel "missingInfo". Pré-coche les contraintes en fonction des données Trajet (ref `constraintsPrefilledRef` pour exécution unique) :
+- `elevator === "partial"|"none"` → `narrow_access`
+- `housingType === "house"` → `long_carry`
+- `elevator === "partial"|"none"` ET `floor > 1` → `lift_required`
+- Appliqué côté origin ET destination.
+
+| Fichier | Modification |
+|---|---|
+| `components/tunnel/v2/StepAccessLogisticsV4.tsx` | Nouveau `useEffect` après `setSideRas` |
+
+### P2a — Calendrier ouvert par défaut + flexibilité Oui/Non
+
+**Problème** : calendrier caché derrière un bouton ; l'auto-advance se déclenche avant le choix de flexibilité.
+
+**Solution** :
+- `DatePickerFr` : nouvelle prop `defaultOpen`, utilisée avec `useState(defaultOpen)`.
+- Passage `defaultOpen` au composant dans StepAccessLogisticsV4.
+- Remplacement de la checkbox "dates flexibles ±3j" par deux boutons "Oui, flexible" / "Non, date fixe".
+- Nouvel état `dateFlexibilityChosen` : `sectionMeta.date.valid` exige désormais `isMovingDateValid && dateFlexibilityChosen`. L'auto-advance ne se déclenche qu'après le choix.
+
+| Fichier | Modification |
+|---|---|
+| `components/tunnel/DatePickerFr.tsx` | Ajout prop `defaultOpen` |
+| `components/tunnel/v2/StepAccessLogisticsV4.tsx` | État `dateFlexibilityChosen`, boutons Oui/Non, validation date modifiée, passage `defaultOpen` |
+
+### P2b — Contextualisation Volume & densité
+
+**Problème** : 3 boutons densité sans contexte, l'utilisateur ne comprend pas l'impact.
+
+**Solution** :
+- Rappel volume estimé affiché au-dessus des boutons : "Volume estimé : ~X m³ pour Y m²" (calculé depuis `surfaceM2` et `TYPE_COEFFICIENTS`).
+- Sous-labels sur chaque bouton densité : "Léger (-10%)", "Normal (+15%)", "Dense (+35%)" (depuis `DENSITY_COEFFICIENTS`).
+- Nouvelle prop `surfaceM2` passée depuis page.tsx.
+- Import de `DENSITY_COEFFICIENTS` et `TYPE_COEFFICIENTS` dans StepAccessLogisticsV4.
+
+| Fichier | Modification |
+|---|---|
+| `components/tunnel/v2/StepAccessLogisticsV4.tsx` | Ajout prop `surfaceM2`, import constants, rappel volume, sous-labels densité |
+| `app/devis-gratuits-v3/page.tsx` | Passage `surfaceM2={state.surfaceM2}` |
+
+### P3 — Fix erreur 400 email
+
+**Problème** : erreur 400 console lors du precreate lead avec des emails à domaine invalide.
+
+**Solution** :
+- `createBackofficeLead` (`lib/api/client.ts`) : `console.warn` au lieu de `console.error` pour les 400 (erreurs de validation attendues).
+- Precreate lead (`page.tsx`) : filtre les domaines de test (example.com, test.com, yopmail.com, mailinator.com) et exige un TLD de 2+ caractères avant d'envoyer le precreate.
+
+| Fichier | Modification |
+|---|---|
+| `lib/api/client.ts` | Log conditionnel warn vs error selon status 400 |
+| `app/devis-gratuits-v3/page.tsx` | Guard domaines de test + regex TLD renforcée |
+
+### Impacts globaux
+- **Champs / Inputs tunnel** : aucun ajout, aucune suppression.
+- **Back Office payload** : aucun changement.
+- **Tracking** : aucun changement (`logicalStep`, `screenId` inchangés).

@@ -103,14 +103,16 @@ export function DatePickerFr({
   onChange,
   min,
   error,
+  defaultOpen = false,
 }: {
   id: string;
   value: string;
   onChange: (v: string) => void;
   min?: string;
   error?: boolean;
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [manualInput, setManualInput] = useState("");
   const [manualError, setManualError] = useState<string | null>(null);
   // "months" = sélection mois, "days" = sélection jour

@@ -302,7 +302,8 @@ export async function createBackofficeLead(
       errorData = { rawResponse: text };
     }
 
-    console.error("❌ Erreur création lead:", {
+    const logLevel = response.status === 400 ? "warn" : "error";
+    console[logLevel](`${logLevel === "error" ? "❌" : "⚠️"} Erreur création lead:`, {
       status: response.status,
       statusText: response.statusText,
       errorData,
