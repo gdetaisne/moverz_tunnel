@@ -1181,11 +1181,11 @@ ${EXTRA_NOTES_BLOCK_END}`;
   });
 
   const prevSectionValidityRef = useRef<Record<SectionKey, boolean>>({
-    trajet: sectionMeta.trajet.valid,
-    date: sectionMeta.date.valid,
-    volume: sectionMeta.volume.valid,
-    formule: sectionMeta.formule.valid,
-    contact: sectionMeta.contact.valid,
+    trajet: false,
+    date: false,
+    volume: false,
+    formule: false,
+    contact: false,
   });
   const lastAutoScrollRef = useRef<{ key: SectionKey | null; at: number }>({
     key: null,
@@ -1324,15 +1324,16 @@ ${EXTRA_NOTES_BLOCK_END}`;
 
   useEffect(() => {
     if (!props.collapseAllOnEnterToken || props.collapseAllOnEnterToken <= 0) return;
+    const firstIncomplete = sectionOrder.find((k) => !sectionMeta[k].valid) ?? "trajet";
     setOpenSections({
-      trajet: true,
-      date: false,
-      volume: false,
-      formule: false,
-      contact: false,
+      trajet: false, date: false, volume: false, formule: false, contact: false,
+      [firstIncomplete]: true,
     });
     setShowMissingInfoPanel(false);
-    setActiveSection("trajet");
+    setActiveSection(firstIncomplete);
+    prevSectionValidityRef.current = {
+      trajet: false, date: false, volume: false, formule: false, contact: false,
+    };
   }, [props.collapseAllOnEnterToken]);
 
   // Track block transitions
