@@ -1952,10 +1952,10 @@ ${EXTRA_NOTES_BLOCK_END}`;
               const m2 = parseInt(props.surfaceM2 || "0", 10);
               const typeCoef = TYPE_COEFFICIENTS[props.originHousingType as keyof typeof TYPE_COEFFICIENTS] ?? 0.4;
               if (m2 > 0) {
-                const baseVol = Math.round(m2 * typeCoef);
+                const baseVol = Math.round(m2 * typeCoef * DENSITY_COEFFICIENTS.normal);
                 return (
                   <p className="mb-2 text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
-                    Volume estimé : ~{baseVol} m³ pour {m2} m² — la densité ajuste ce volume
+                    Volume estimé : ~{baseVol} m³ pour {m2} m²
                   </p>
                 );
               }
@@ -1976,9 +1976,9 @@ ${EXTRA_NOTES_BLOCK_END}`;
             )}
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {[
-                { id: "light" as const, label: "Léger", subLabel: `${Math.round((DENSITY_COEFFICIENTS.light - 1) * 100)}%` },
-                { id: "normal" as const, label: "Normal", subLabel: `+${Math.round((DENSITY_COEFFICIENTS.normal - 1) * 100)}%` },
-                { id: "dense" as const, label: "Dense", subLabel: `+${Math.round((DENSITY_COEFFICIENTS.dense - 1) * 100)}%` },
+                { id: "light" as const, label: "Léger", subLabel: `${Math.round((DENSITY_COEFFICIENTS.light / DENSITY_COEFFICIENTS.normal - 1) * 100)}%` },
+                { id: "normal" as const, label: "Normal", subLabel: "+\u200A0%" },
+                { id: "dense" as const, label: "Dense", subLabel: `+${Math.round((DENSITY_COEFFICIENTS.dense / DENSITY_COEFFICIENTS.normal - 1) * 100)}%` },
               ].map((d) => (
                 <button
                   key={d.id}
