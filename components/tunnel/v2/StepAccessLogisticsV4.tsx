@@ -2793,7 +2793,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
       </AnimatedSection>
       </div>
 
-      {/* CTA */}
+      {/* CTA — masqué quand le sticky SmartCart affiche le CTA */}
+      {!sectionMeta.contact.valid && (
       <div className="order-7 space-y-3">
         <button
           id="v4-primary-submit-cta"
@@ -2837,6 +2838,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
           Gratuit · Sans engagement
         </p>
       </div>
+      )}
     </div>
   );
 }

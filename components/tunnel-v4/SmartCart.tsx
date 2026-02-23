@@ -496,6 +496,20 @@ export function SmartCart({
       >
         <CardV4 padding="md">
           <CartContent />
+          {allRequiredValid && onSubmit && (
+            <button
+              onClick={() => onSubmit()}
+              disabled={isLoading}
+              className="w-full mt-4 py-3.5 rounded-xl font-bold text-base transition-all active:scale-[0.98] shadow-md"
+              style={{
+                background: "var(--color-accent)",
+                color: "#FFFFFF",
+                opacity: isLoading ? 0.5 : 1,
+              }}
+            >
+              {isLoading ? "Chargement..." : `${ctaLabel} →`}
+            </button>
+          )}
         </CardV4>
       </div>
     );
