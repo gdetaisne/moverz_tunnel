@@ -589,7 +589,7 @@ ${EXTRA_NOTES_BLOCK_END}`;
     return (
       <div className="space-y-2">
         <div
-          className="flex items-center justify-between gap-3 sm:rounded-lg sm:border sm:px-2 sm:py-2"
+          className="flex flex-col gap-2 sm:rounded-lg sm:border sm:px-2 sm:py-2"
           style={{
             borderColor: "var(--color-border)",
             background: "var(--color-bg)",
