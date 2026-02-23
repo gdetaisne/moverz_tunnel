@@ -2187,24 +2187,57 @@ function DevisGratuitsV3Content() {
     const hasLead = Boolean(state.leadId);
     const firstName = state.firstName.trim();
     const email = state.email.trim().toLowerCase();
-    const isFirstNameValid = firstName.length >= 2;
     const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-    if (!isStep3 || hasLead || !isFirstNameValid || !isEmailValid) return;
+    if (!isStep3 || hasLead || !isEmailValid) return;
     const domain = email.split("@")[1] || "";
     if (["example.com", "test.com", "yopmail.com", "mailinator.com"].includes(domain)) return;
 
-    const attemptKey = `${firstName}|${email}`;
+    const attemptKey = email;
     if (precreateLeadAttemptKeyRef.current === attemptKey) return;
     if (precreateLeadPromiseRef.current) return;
     precreateLeadAttemptKeyRef.current = attemptKey;
 
-    const payload = {
-      firstName,
+    const originIsBoxPC = isBoxType(state.originHousingType);
+    const originIsHousePC = isHouseType(state.originHousingType);
+    const destIsHousePC = isHouseType(state.destinationHousingType);
+    const elevToBO = (e: string): "OUI" | "NON" | "PARTIEL" => {
+      const p = toPricingElevator(e);
+      return p === "yes" ? "OUI" : p === "partial" ? "PARTIEL" : "NON";
+    };
+    const densityToBO = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" | undefined =>
+      d === "light" ? "LIGHT" : d === "normal" ? "MEDIUM" : d === "dense" ? "HEAVY" : undefined;
+
+    const payload: Parameters<typeof createBackofficeLead>[0] = {
+      firstName: firstName || "Client",
       email,
       phone: state.phone.trim() || undefined,
       source,
       estimationMethod: "FORM" as const,
+      originAddress: state.originAddress || undefined,
+      originCity: state.originCity || undefined,
+      originPostalCode: state.originPostalCode || undefined,
+      originCountryCode: state.originCountryCode || undefined,
+      destAddress: state.destinationAddress || undefined,
+      destCity: state.destinationCity || undefined,
+      destPostalCode: state.destinationPostalCode || undefined,
+      destCountryCode: state.destinationCountryCode || undefined,
+      surfaceM2: parseInt(state.surfaceM2) || undefined,
+      estimatedVolume: activePricing?.volumeM3 ?? undefined,
+      density: densityToBO(state.density || "normal"),
+      formule: state.formule || undefined,
+      estimatedPriceMin: v2PricingCart?.refinedMinEur ?? activePricing?.prixMin ?? undefined,
+      estimatedPriceAvg: v2PricingCart?.refinedCenterEur ?? activePricing?.prixFinal ?? undefined,
+      estimatedPriceMax: v2PricingCart?.refinedMaxEur ?? activePricing?.prixMax ?? undefined,
+      originHousingType: state.originHousingType || undefined,
+      originFloor: originIsHousePC || originIsBoxPC ? undefined : Math.max(0, parseInt(state.originFloor || "0", 10) || 0),
+      originElevator: state.originElevator ? elevToBO(state.originElevator) : undefined,
+      destHousingType: state.destinationHousingType || undefined,
+      destFloor: destIsHousePC ? undefined : Math.max(0, parseInt(state.destinationFloor || "0", 10) || 0),
+      destElevator: state.destinationElevator ? elevToBO(state.destinationElevator) : undefined,
+      movingDate: state.movingDate ? toIsoDate(state.movingDate) : undefined,
+      dateFlexible: state.dateFlexible,
       tunnelOptions: {
+        pricing: { distanceKm: routeDistanceKm ?? undefined, distanceProvider: routeDistanceProvider ?? undefined },
         accessV2: {
           access_type: state.access_type ?? "simple",
           narrow_access: !!state.narrow_access,
@@ -2227,7 +2260,7 @@ function DevisGratuitsV3Content() {
         return backofficeLeadId;
       } catch (err) {
         precreateLeadAttemptKeyRef.current = "";
-        console.error("Precreate lead on Step 3 contact validation failed:", err);
+        console.error("Precreate lead failed:", err);
         return null;
       } finally {
         precreateLeadPromiseRef.current = null;
@@ -2237,16 +2270,7 @@ function DevisGratuitsV3Content() {
     source,
     state.currentStep,
     state.leadId,
-    state.firstName,
     state.email,
-    state.phone,
-    state.access_type,
-    state.narrow_access,
-    state.long_carry,
-    state.difficult_parking,
-    state.lift_required,
-    state.access_details,
-    state.specificNotes,
     updateFields,
   ]);
 

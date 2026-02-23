@@ -271,6 +271,30 @@ export interface CreateLeadPayload {
   source?: string;
   estimationMethod?: "FORM" | "PHOTO" | "MANUAL_ADMIN";
   status?: "NEW" | "CONTACTED" | "CONVERTED" | "ABANDONED";
+  originAddress?: string;
+  originCity?: string;
+  originPostalCode?: string;
+  originCountryCode?: string;
+  destAddress?: string;
+  destCity?: string;
+  destPostalCode?: string;
+  destCountryCode?: string;
+  movingDate?: string;
+  dateFlexible?: boolean;
+  surfaceM2?: number;
+  estimatedVolume?: number;
+  density?: "LIGHT" | "MEDIUM" | "HEAVY";
+  formule?: string;
+  estimatedPriceMin?: number;
+  estimatedPriceAvg?: number;
+  estimatedPriceMax?: number;
+  originHousingType?: string;
+  originFloor?: number;
+  originElevator?: "OUI" | "NON" | "PARTIEL";
+  destHousingType?: string;
+  destFloor?: number;
+  destElevator?: "OUI" | "NON" | "PARTIEL";
+  tunnelOptions?: unknown;
 }
 
 export async function createBackofficeLead(
