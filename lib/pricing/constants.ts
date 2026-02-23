@@ -1,22 +1,21 @@
 export const TYPE_COEFFICIENTS = {
-  // 0,35 pour T1/T2/T3 ; 0,4 pour le reste
-  studio: 0.4,
-  t1: 0.35,
-  t2: 0.35,
-  t3: 0.35,
-  t4: 0.4,
-  t5: 0.4,
-  house: 0.4,
-  // Variantes maison étagée
-  house_1floor: 0.4,
-  house_2floors: 0.4,
-  house_3floors: 0.4,
+  // Anciens × 1.15 pour absorber le rebase densité (normal = 1.0)
+  studio: 0.46,
+  t1: 0.4025,
+  t2: 0.4025,
+  t3: 0.4025,
+  t4: 0.46,
+  t5: 0.46,
+  house: 0.46,
+  house_1floor: 0.46,
+  house_2floors: 0.46,
+  house_3floors: 0.46,
 } as const;
 
 export const DENSITY_COEFFICIENTS = {
-  light: 0.9,  // Peu meublé : -10%
-  normal: 1.15, // Normal : +15%
-  dense: 1.35,  // Très meublé : +35%
+  light: 0.78,   // Peu meublé : -22 % vs normal
+  normal: 1.0,   // Référence
+  dense: 1.17,   // Très meublé : +17 % vs normal
 } as const;
 
 export const FORMULE_MULTIPLIERS = {

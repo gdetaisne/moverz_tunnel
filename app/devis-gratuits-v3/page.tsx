@@ -907,8 +907,7 @@ function DevisGratuitsV3Content() {
     // La surface (m²) est saisie en Step 1; le choix "Maison/Appartement" en Step 3
     // ne doit pas modifier le volume (sinon les prix bougent alors que la surface est déjà connue).
     const housingType = "t2" as const;
-    // UI: pas de pré-sélection en Step 3. Calcul: hypothèse par défaut "très meublé".
-    const density = (state.density || "dense") as "light" | "normal" | "dense";
+    const density = (state.density || "normal") as "light" | "normal" | "dense";
 
     // Exiger une distance route (OSRM). Pas de fallback heuristique.
     if (state.destinationUnknown) return null;
@@ -1066,7 +1065,7 @@ function DevisGratuitsV3Content() {
     const selectedFormule = state.formule as PricingFormuleType;
     const distanceKm = baselineDistanceKm;
     const extraVolumeM3 = 3 * 0.6; // debug Step 2: cuisine=3 équipements
-    const baseVolumeM3 = calculateVolume(surface, "t2", "dense");
+    const baseVolumeM3 = calculateVolume(surface, "t2", "normal");
     const volumeM3 = Math.round((baseVolumeM3 + extraVolumeM3) * 10) / 10;
 
     const band = getDistanceBand(distanceKm);
@@ -1087,7 +1086,7 @@ function DevisGratuitsV3Content() {
     const pricing = calculatePricing({
       surfaceM2: surface,
       housingType: "t2",
-      density: "dense",
+      density: "normal",
       distanceKm,
       seasonFactor: 1,
       originFloor: 0,
@@ -1192,7 +1191,7 @@ function DevisGratuitsV3Content() {
     const baselineInput: Parameters<typeof calculatePricing>[0] = {
       surfaceM2: surface,
       housingType: "t2" as const,
-      density: "dense" as const,
+      density: "normal" as const,
       distanceKm: baseDistanceKm,
       seasonFactor: 1,
       originFloor: 0,
@@ -1264,7 +1263,7 @@ function DevisGratuitsV3Content() {
 
     // 2) Densité (delta vs "Très meublé")
     const densityTouched = state.density !== "";
-    const effectiveDensity = (state.density || "dense") as "light" | "normal" | "dense";
+    const effectiveDensity = (state.density || "normal") as "light" | "normal" | "dense";
     const inputDensity: Parameters<typeof calculatePricing>[0] = {
       ...inputDistance,
       density: effectiveDensity,
@@ -1481,7 +1480,7 @@ function DevisGratuitsV3Content() {
     const moverNeutralInput: Parameters<typeof calculatePricing>[0] = {
       ...baselineInput,
       distanceKm: refinedDistanceKm,
-      density: (densityTouched ? "normal" : "dense") as "light" | "normal" | "dense",
+      density: "normal" as "light" | "normal" | "dense",
       extraVolumeM3: kitchenTouched ? 0 : baselineKitchenExtraVolumeM3,
     };
     const sMoverNeutral = calculatePricing(moverNeutralInput);
@@ -1825,7 +1824,7 @@ function DevisGratuitsV3Content() {
 
     const housingType = "t2" as const;
     const typeCoefficient = TYPE_COEFFICIENTS[housingType];
-    const effectiveDensity = (state.density || "dense") as "light" | "normal" | "dense";
+    const effectiveDensity = (state.density || "normal") as "light" | "normal" | "dense";
     const densityCoefficient = DENSITY_COEFFICIENTS[effectiveDensity];
 
     if (state.destinationUnknown) return null;
@@ -2130,7 +2129,7 @@ function DevisGratuitsV3Content() {
           destCountryCode: s.destinationCountryCode || undefined,
           surfaceM2: parseInt(s.surfaceM2) || undefined,
           estimatedVolume: ap?.volumeM3 ?? undefined,
-          density: densityBoAS(s.density || "dense"),
+          density: densityBoAS(s.density || "normal"),
           formule: s.formule || undefined,
           estimatedPriceMin: cart?.refinedMinEur ?? ap?.prixMin ?? undefined,
           estimatedPriceAvg: cart?.refinedCenterEur ?? ap?.prixFinal ?? undefined,
@@ -2309,7 +2308,7 @@ function DevisGratuitsV3Content() {
         destCountryCode: state.destinationCountryCode || undefined,
         surfaceM2: parseInt(state.surfaceM2) || undefined,
         estimatedVolume: activePricing?.volumeM3 ?? undefined,
-        density: densityToBOCV(state.density || "dense"),
+        density: densityToBOCV(state.density || "normal"),
         formule: state.formule || undefined,
         estimatedPriceMin: v2PricingCart?.refinedMinEur ?? activePricing?.prixMin ?? undefined,
         estimatedPriceAvg: v2PricingCart?.refinedCenterEur ?? activePricing?.prixFinal ?? undefined,
@@ -2650,7 +2649,7 @@ function DevisGratuitsV3Content() {
         // Volume & Surface
         surfaceM2: parseInt(state.surfaceM2) || undefined,
         estimatedVolume: activePricing?.volumeM3 ?? undefined,
-        density: densityToBO(state.density || "dense"),
+        density: densityToBO(state.density || "normal"),
 
         // Formule & Prix
         formule: state.formule,

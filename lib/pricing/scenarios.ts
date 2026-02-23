@@ -78,7 +78,7 @@ export function buildBaselinePricingInput(params: {
   return {
     surfaceM2: params.surfaceM2,
     housingType: "t2",
-    density: "dense",
+    density: "normal",
     distanceKm: params.distanceKm,
     seasonFactor: 1,
     originFloor: 0,

@@ -99,7 +99,7 @@ function toNumber(value: unknown, fallback: number): number {
 
 function sanitizePayload(raw: Partial<SimulatorPayload>): SimulatorPayload {
   const formule = raw.formule === "ECONOMIQUE" || raw.formule === "PREMIUM" ? raw.formule : "STANDARD";
-  const density = raw.density === "light" || raw.density === "normal" ? raw.density : "dense";
+  const density = raw.density === "light" || raw.density === "dense" ? raw.density : "normal";
   const originElevator =
     raw.originElevator === "no" || raw.originElevator === "partial" ? raw.originElevator : "yes";
   const destinationElevator =
@@ -187,7 +187,7 @@ export async function GET(req: NextRequest) {
         displayCenterBias: DISPLAY_CENTER_BIAS,
         baselineDistanceBufferKm: BASELINE_DISTANCE_BUFFER_KM,
         step2Defaults: {
-          density: "dense",
+          density: "normal",
           kitchenIncluded: "appliances",
           kitchenApplianceCount: 3,
           extraVolumeM3: 1.8,
