@@ -13,9 +13,9 @@ export const TYPE_COEFFICIENTS = {
 } as const;
 
 export const DENSITY_COEFFICIENTS = {
-  light: 0.78,   // Peu meublé : -22 % vs normal
+  light: 0.85,   // Peu meublé : -15 % vs normal
   normal: 1.0,   // Référence
-  dense: 1.17,   // Très meublé : +17 % vs normal
+  dense: 1.25,   // Très meublé : +25 % vs normal
 } as const;
 
 export const FORMULE_MULTIPLIERS = {
