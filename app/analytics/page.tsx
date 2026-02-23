@@ -1208,7 +1208,7 @@ const SCREEN_LABELS: Record<string, string> = {
   confirmation_v2: "Confirmation finale",
 };
 
-const BLOCK_LABELS: Record<string, string> = {
+const BLOCK_LABELS_SIMPLE: Record<string, string> = {
   cities_surface:   "Villes & surface",
   estimation_recap: "Estimation prix",
   route_housing:    "Trajet & logements",
@@ -1624,7 +1624,7 @@ function Journal({ password }: { password: string }) {
                               <EventBadge type={ev.event_type} />
                               {ev.event_type === "BLOCK_ENTERED" && ev.extra?.blockId ? (
                                 <span className="text-sm text-gray-200 font-medium">
-                                  {BLOCK_LABELS[ev.extra.blockId as string] || (ev.extra.blockId as string)}
+                                  {BLOCK_LABELS[ev.extra.blockId as string]?.label || (ev.extra.blockId as string)}
                                 </span>
                               ) : ev.logical_step ? (
                                 <span className="text-sm text-gray-200 font-medium">{getStepLabel(ev.logical_step)}</span>

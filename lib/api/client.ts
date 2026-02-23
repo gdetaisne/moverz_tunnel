@@ -585,5 +585,57 @@ export async function saveBackofficeInventory(
   };
 }
 
+export async function requestBackofficeConfirmation(
+  backofficeLeadId: string
+): Promise<{ success: boolean; message: string }> {
+  const API_BASE_URL = getApiBaseUrl();
 
+  const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+  const MAX_ATTEMPTS = 4;
+  const DEFAULT_RETRY_MS = 2000;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const response = await fetch(
+      `${API_BASE_URL}/public/leads/${backofficeLeadId}/request-confirmation`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      }
+    );
+
+    if (!response.ok) {
+      let errorData: any = {};
+      try { errorData = await response.json(); } catch { /* ignore */ }
+
+      if (errorData?.error === "DOCS_NOT_READY" && attempt < MAX_ATTEMPTS) {
+        const retryMs =
+          typeof errorData?.retryAfterMs === "number"
+            ? errorData.retryAfterMs
+            : DEFAULT_RETRY_MS;
+        await sleep(retryMs);
+        continue;
+      }
+
+      console.error("❌ Erreur demande confirmation:", { status: response.status, errorData });
+
+      if (response.status === 404) throw new Error("LEAD_NOT_FOUND");
+      if (response.status === 400 && errorData.error === "Lead email is missing")
+        throw new Error("EMAIL_MISSING");
+      if (errorData?.error === "DOCS_NOT_READY") throw new Error("DOCS_NOT_READY");
+
+      throw new Error(
+        errorData.error || errorData.message || "Failed to request confirmation"
+      );
+    }
+
+    const result = await response.json();
+    return {
+      success: result.success ?? true,
+      message: result.message ?? "Email de confirmation envoyé",
+    };
+  }
+
+  throw new Error("DOCS_NOT_READY");
+}
