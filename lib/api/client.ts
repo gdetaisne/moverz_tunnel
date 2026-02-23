@@ -300,9 +300,7 @@ export interface CreateLeadPayload {
 export async function createBackofficeLead(
   payload: CreateLeadPayload
 ): Promise<{ id: string }> {
-  const API_BASE_URL = getApiBaseUrl();
-
-  const response = await fetch(`${API_BASE_URL}/public/leads`, {
+  const response = await fetch("/api/backoffice/leads", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
