@@ -7932,3 +7932,23 @@ Permet de créer des "versions" (nom + date de début) et de filtrer les analyti
 - **Fichier modifié** : `components/tunnel/v2/StepAccessLogisticsV4.tsx`
 - **Pricing / BO / tracking** : aucun changement (mêmes valeurs `kitchenIncluded` + `kitchenApplianceCount`, même formule `count × 0.6 m³`).
 - **Champs existants** : aucun supprimé, aucun ajouté.
+
+---
+
+## Bug fix — Écart prix moverz.fr vs tunnel (distance heuristique)
+
+### Problème
+Le prix affiché sur moverz.fr (home page) pouvait être très différent du prix du tunnel pour le même trajet. Exemple : Mérignac → Thaas = **2 273 €** sur moverz.fr vs **3 486 €** dans le tunnel.
+
+### Cause racine
+`HeroBudgetCard.tsx` et `HeroV4.tsx` (moverz-fr) appelaient `/api/estimate` **sans les noms de ville** (`originCity`, `destinationCity`). Sans ces paramètres, l'API BAN (api-adresse.data.gouv.fr) ne trouvait pas les coordonnées → fallback heuristique départemental → distance complètement fausse (295 km au lieu de 702 km OSRM).
+
+### Correction
+Ajout de `originCity` et `destinationCity` dans les appels `fetchEstimate()` des deux composants moverz-fr. Maintenant l'API BAN géocode correctement → OSRM distance réelle → prix cohérent avec le tunnel.
+
+### Fichiers modifiés (moverz-fr)
+- `components/HeroBudgetCard.tsx`
+- `components/sections/HeroV4.tsx`
+
+### Impact tunnel
+Aucune modification côté tunnel. L'API `/api/estimate` supportait déjà les paramètres `originCity`/`destinationCity`.
