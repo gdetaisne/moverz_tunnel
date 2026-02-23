@@ -307,9 +307,11 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   });
   const [activeSection, setActiveSection] = useState<SectionKey | "missingInfo" | null>("trajet");
   const [formuleExplicitChoice, setFormuleExplicitChoice] = useState(
-    props.selectedFormule !== "STANDARD"
+    props.selectedFormule !== "STANDARD" || !!props.leadId
   );
-  const [contactValidated, setContactValidated] = useState(false);
+  const [contactValidated, setContactValidated] = useState(
+    !!props.leadId && isFirstNameValid && isEmailValid
+  );
   const [emailCheckState, setEmailCheckState] = useState<"idle" | "checking" | "valid" | "invalid" | "error">("idle");
   const [emailCheckMessage, setEmailCheckMessage] = useState<string | null>(null);
   useEffect(() => {
@@ -319,7 +321,10 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   }, [props.selectedFormule]);
   const [showMissingInfoPanel, setShowMissingInfoPanel] = useState(false);
   const [missingInfoValidated, setMissingInfoValidated] = useState(false);
-  const [dateFlexibilityChosen, setDateFlexibilityChosen] = useState(false);
+  const [dateFlexibilityChosen, setDateFlexibilityChosen] = useState(() => {
+    const d = props.movingDate;
+    return !!d && d >= minMovingDate;
+  });
   const missingInfoPanelOpen = showMissingInfoPanel;
   const [activeMissingInfoTab, setActiveMissingInfoTab] = useState<"constraints" | "notes" | "photos">("photos");
   const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
