@@ -7952,3 +7952,37 @@ Ajout de `originCity` et `destinationCity` dans les appels `fetchEstimate()` des
 
 ### Impact tunnel
 Aucune modification côté tunnel. L'API `/api/estimate` supportait déjà les paramètres `originCity`/`destinationCity`.
+
+---
+
+## A/B Test — Variante "no-cart" (SmartCart masqué en Step 3)
+
+### Hypothèse CRO
+Le SmartCart (panneau latéral "Notre estimation") en Step 3 pourrait créer de la friction (bug UX, distraction, choc tarifaire). Tester une variante sans le panier pour mesurer l'impact sur le taux de complétion.
+
+### Activation
+- **Désactivé par défaut** (variante A = contrôle, SmartCart visible).
+- Pour activer la variante B (no-cart) :
+  - Query param : `?ab=no-cart`
+  - OU localStorage : `ab_nocart=1`
+
+### Variante B — Comportement
+| Élément | Variante A (contrôle) | Variante B (no-cart) |
+|---|---|---|
+| SmartCart desktop (sidebar) | Visible | Masqué |
+| SmartCart mobile (FAB + drawer) | Visible | Masqué |
+| Layout Step 3 | 2 colonnes (form + cart) | 1 colonne centrée (max-w-3xl) |
+| Barre de progression desktop | Dans le SmartCart | Sticky en haut du formulaire |
+| Barre de progression mobile | FAB SmartCart | Barre fixe en bas |
+| CTA mobile (quand tout validé) | Dans le SmartCart | Bouton fixe en bas |
+| Step 4 — Estimation prix | Non affichée | Affichée (centre + min/max + formule) |
+
+### Tracking GA4
+- Event `ab_variant` envoyé au chargement avec `{ variant: "no-cart" }`.
+- Event `form_start` enrichi avec `ab_variant: "no-cart" | "control"`.
+
+### Fichiers modifiés
+- `app/devis-gratuits-v3/page.tsx` — flag A/B, masquage SmartCart, barre de progression standalone, passage pricing à Step 4.
+- `components/tunnel/v2/StepContactPhotosV4.tsx` — nouvelle section estimation prix conditionnelle.
+
+### Aucun champ ajouté/supprimé, pricing et BO inchangés.

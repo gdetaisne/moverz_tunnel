@@ -86,6 +86,18 @@ function DevisGratuitsV3Content() {
   const hydratedLeadRef = useRef<string | null>(null);
   const debugMode = (searchParams.get("debug") || "").trim() === "1" || (searchParams.get("debug") || "").trim() === "true";
 
+  // A/B test "no-cart" : masque le SmartCart en Step 3, affiche le prix en Step 4.
+  // Activation : ?ab=no-cart  OU  localStorage ab_nocart=1
+  // Désactivé par défaut.
+  const abNoCart = useMemo(() => {
+    const param = (searchParams.get("ab") || "").trim().toLowerCase();
+    if (param === "no-cart") return true;
+    if (typeof window !== "undefined") {
+      try { return localStorage.getItem("ab_nocart") === "1"; } catch { /* */ }
+    }
+    return false;
+  }, [searchParams]);
+
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
   const [aiPhotoInsights, setAiPhotoInsights] = useState<string[]>([]);
@@ -662,18 +674,22 @@ function DevisGratuitsV3Content() {
     email: state.email || null,
   });
 
-  // Track initial entry
+  // Track initial entry + A/B variant
   useEffect(() => {
+    if (abNoCart) {
+      ga4Event("ab_variant", { variant: "no-cart" });
+    }
     if (state.currentStep === 1 && !state.leadId) {
       ga4Event("form_start", {
         source,
         from,
         step_name: "CONTACT",
         step_index: 1,
+        ab_variant: abNoCart ? "no-cart" : "control",
       });
       trackStep(1, "CONTACT", "contact_v3");
     }
-  }, [source, from]);
+  }, [source, from, abNoCart]);
 
   // Track step views + block entry
   useEffect(() => {
@@ -2944,9 +2960,64 @@ function DevisGratuitsV3Content() {
           )}
 
           {state.currentStep === 3 && (
-            <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[1fr_420px] lg:gap-8 lg:items-start">
+            <div className={`space-y-6 lg:space-y-0 lg:grid lg:gap-8 lg:items-start ${abNoCart ? "lg:grid-cols-1 max-w-3xl mx-auto" : "lg:grid-cols-[1fr_420px]"}`}>
               {/* Formulaire (colonne gauche) */}
               <div>
+                {/* Barre de progression standalone (variante B no-cart) */}
+                {abNoCart && (
+                  <>
+                    {/* Desktop : sticky en haut du formulaire */}
+                    <div
+                      className="hidden lg:block sticky top-4 z-30 mb-6 rounded-xl border p-4"
+                      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)", boxShadow: "var(--shadow-sm)" }}
+                    >
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <span className="font-medium" style={{ color: "var(--color-text-muted)" }}>
+                          {step3Progress.score >= 100
+                            ? "Estimation finalisée"
+                            : step3Progress.remainingSeconds != null
+                              ? `Encore ~${step3Progress.remainingSeconds >= 60 ? `${Math.floor(step3Progress.remainingSeconds / 60)} min ${step3Progress.remainingSeconds % 60}s` : `${step3Progress.remainingSeconds}s`}`
+                              : `${step3Progress.completed}/${step3Progress.total}`}
+                        </span>
+                        <span className="font-bold" style={{ color: "var(--color-accent)" }}>{step3Progress.score}%</span>
+                      </div>
+                      <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--color-border-light)" }}>
+                        <div
+                          className="h-full rounded-full transition-all duration-300 ease-out"
+                          style={{ background: "var(--color-accent)", width: `${step3Progress.score}%` }}
+                        />
+                      </div>
+                    </div>
+                    {/* Mobile : barre fixe en bas */}
+                    <div
+                      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-4 py-3 border-t"
+                      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}
+                    >
+                      {sectionValidity.contact ? (
+                        <button
+                          type="button"
+                          onClick={handleSubmitAccessV2}
+                          className="w-full rounded-xl py-3 text-sm font-bold text-white"
+                          style={{ background: "var(--color-accent)" }}
+                        >
+                          Lancer ma demande de devis
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--color-border-light)" }}>
+                              <div
+                                className="h-full rounded-full transition-all duration-300 ease-out"
+                                style={{ background: "var(--color-accent)", width: `${step3Progress.score}%` }}
+                              />
+                            </div>
+                          </div>
+                          <span className="text-xs font-bold shrink-0" style={{ color: "var(--color-accent)" }}>{step3Progress.score}%</span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
                 <StepAccessLogisticsV4
                 leadId={state.leadId}
                 originAddress={state.originAddress}
@@ -3046,8 +3117,8 @@ function DevisGratuitsV3Content() {
               />
               </div>
 
-              {/* SmartCart V4 (desktop sticky + mobile FAB + drawer) */}
-              {v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
+              {/* SmartCart V4 (desktop sticky + mobile FAB + drawer) — masqué en variante B (abNoCart) */}
+              {!abNoCart && v2PricingCart && typeof v2PricingCart.refinedCenterEur === "number" && (
                 <SmartCart
                   currentPrice={v2PricingCart.refinedCenterEur}
                   minPrice={v2PricingCart.refinedMinEur ?? 0}
@@ -3091,6 +3162,16 @@ function DevisGratuitsV3Content() {
                 access_type={state.access_type ?? "simple"}
                 access_details={state.access_details ?? ""}
                 onFieldChange={handleStep3FieldChange}
+                showPricingRecap={abNoCart}
+                pricingRecap={abNoCart && v2PricingCart ? {
+                  centerEur: v2PricingCart.refinedCenterEur,
+                  minEur: v2PricingCart.refinedMinEur ?? 0,
+                  maxEur: v2PricingCart.refinedMaxEur ?? 0,
+                  formuleLabel: v2PricingCart.formuleLabel ?? "Standard",
+                  originCity: state.originCity || undefined,
+                  destinationCity: state.destinationCity || undefined,
+                  surfaceM2: state.surfaceM2 || undefined,
+                } : undefined}
                 onStartEnrichment={() => {
                   trackBlock("optional_details", "THANK_YOU", "confirmation_v2");
                 }}
