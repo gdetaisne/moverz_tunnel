@@ -1288,14 +1288,16 @@ ${EXTRA_NOTES_BLOCK_END}`;
   // Mobile: auto-switch Départ → Arrivée when origin sub-block becomes complete
   const prevOriginCompleteRef = useRef(false);
   useEffect(() => {
-    const isOriginComplete = isOriginAddressValid && isOriginHousingValid && isOriginFloorValid && isOriginElevatorValid;
+    const isOriginComplete = isOriginBox
+      ? isOriginAddressValid && isOriginHousingValid && isOriginBoxVolumeValid
+      : isOriginAddressValid && isOriginHousingValid && isOriginFloorValid && isOriginElevatorValid;
     const wasComplete = prevOriginCompleteRef.current;
     prevOriginCompleteRef.current = isOriginComplete;
     if (!wasComplete && isOriginComplete && mobileRouteOpen === "origin") {
       const timer = window.setTimeout(() => setMobileRouteOpen("destination"), AUTO_ADVANCE_DELAY_MS);
       return () => window.clearTimeout(timer);
     }
-  }, [isOriginAddressValid, isOriginHousingValid, isOriginFloorValid, isOriginElevatorValid, mobileRouteOpen]);
+  }, [isOriginAddressValid, isOriginHousingValid, isOriginFloorValid, isOriginElevatorValid, isOriginBox, isOriginBoxVolumeValid, mobileRouteOpen]);
 
   useEffect(() => {
     setOpenSections((state) => ({
