@@ -1,5 +1,32 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-02-24 — AB test UX : version 9-fév (A) vs version actuelle (B)
+
+**Objectif** :
+- Comparer le taux de conversion de la version du tunnel du 9 février (commit `b59755b`) avec la version actuelle.
+- Hypothèse : l'UX plus simple de la version 9-fév convertissait mieux.
+
+**Implémentation** :
+- **Variante A** (ancienne) : `/devis-gratuits-v3a` — page.tsx du 9 fév + 6 composants restaurés (TunnelHero, Step1Contact, Step2ProjectComplete, Step3VolumeServices, ConfirmationPage, TrustSignals) + `requestBackofficeConfirmation`.
+- **Variante B** (actuelle) : `/devis-gratuits-v3` — inchangée.
+- **Split** : redirect `/devis-gratuits` assigne aléatoirement 50/50 via cookie `moverz_ab_variant` (durée 30 jours, persistant = même visiteur voit toujours la même variante).
+- **Tracking** : `ga4Event` injecte automatiquement `ab_variant: "A" | "B"` dans tous les events GA4.
+- **Pricing** : les deux variantes utilisent les constantes de pricing actuelles (pas de snapshot de l'ancien pricing).
+
+**Revert préalable** :
+- Commit `7bd8b5a` (AB test no-cart du 23 fév) revert pour ne pas brouiller l'AB test.
+
+**Fichiers modifiés** :
+- `app/devis-gratuits-v3a/page.tsx` + `layout.tsx` (nouveau)
+- `app/devis-gratuits/redirect.tsx` (split 50/50)
+- `lib/analytics/ga4.ts` (injection ab_variant)
+- `lib/api/client.ts` (restauration `requestBackofficeConfirmation`)
+- 6 composants restaurés dans `components/tunnel/`
+
+**Pour arrêter l'AB test** : remettre `redirect.tsx` à sa version simple (redirect direct vers `/devis-gratuits-v3`).
+
+---
+
 ## 2026-02-17 — API estimate: géocodage aligné tunnel (ville + CP)
 
 **Contexte** :
