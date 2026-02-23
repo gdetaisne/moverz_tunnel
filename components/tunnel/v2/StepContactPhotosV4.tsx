@@ -4,16 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Mail } from "lucide-react";
 import { CardV4 } from "@/components/tunnel-v4";
 
-interface PricingRecap {
-  centerEur: number;
-  minEur: number;
-  maxEur: number;
-  formuleLabel?: string;
-  originCity?: string;
-  destinationCity?: string;
-  surfaceM2?: string;
-}
-
 interface StepContactPhotosV4Props {
   leadId?: string | null;
   linkingCode?: string | null;
@@ -37,14 +27,9 @@ interface StepContactPhotosV4Props {
   onStartEnrichment?: () => void;
   onSaveEnrichment?: () => Promise<void>;
   isSavingEnrichment?: boolean;
-  showPricingRecap?: boolean;
-  pricingRecap?: PricingRecap;
 }
 
-const fmtEur = (n: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
-
-export function StepContactPhotosV4({ leadId, email = null, showPricingRecap = false, pricingRecap }: StepContactPhotosV4Props) {
+export function StepContactPhotosV4({ leadId, email = null }: StepContactPhotosV4Props) {
   const [mounted, setMounted] = useState(false);
   const requestOnceRef = useRef(false);
   const [confirmationState, setConfirmationState] = useState<
@@ -93,36 +78,6 @@ export function StepContactPhotosV4({ leadId, email = null, showPricingRecap = f
           </p>
         </div>
       </CardV4>
-
-      {showPricingRecap && pricingRecap && (
-        <CardV4 padding="lg">
-          <div className="text-center space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-accent)" }}>
-              Votre estimation
-            </p>
-            {pricingRecap.originCity && pricingRecap.destinationCity && (
-              <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                {pricingRecap.originCity} → {pricingRecap.destinationCity}
-                {pricingRecap.surfaceM2 ? ` · ${pricingRecap.surfaceM2} m²` : ""}
-              </p>
-            )}
-            <p
-              className="text-4xl sm:text-5xl font-bold tabular-nums"
-              style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
-            >
-              {fmtEur(pricingRecap.centerEur)}
-            </p>
-            <p className="text-sm tabular-nums" style={{ color: "var(--color-text-muted)" }}>
-              <span style={{ color: "#047857" }}>Min {fmtEur(pricingRecap.minEur)}</span>
-              <span className="mx-2">·</span>
-              <span style={{ color: "#b45309" }}>Max {fmtEur(pricingRecap.maxEur)}</span>
-            </p>
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-              Formule {pricingRecap.formuleLabel || "Standard"} · Estimation non contractuelle
-            </p>
-          </div>
-        </CardV4>
-      )}
 
       <CardV4 padding="md">
         <div className="flex items-start gap-4">
