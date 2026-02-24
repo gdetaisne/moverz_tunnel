@@ -547,14 +547,14 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
             !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          <span>{props.isSubmitting ? "Enregistrement..." : "Continuer vers les photos"}</span>
+          <span>{props.isSubmitting ? "Enregistrement..." : "Valider et obtenir mes devis"}</span>
           {!props.isSubmitting && (
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           )}
         </button>
 
         <p className="text-center text-sm text-[#1E293B]/60">
-          ⏱️ Dernière étape : photos pour des devis précis
+          ⏱️ Dernière étape avant vos devis personnalisés
         </p>
       </form>
     </div>

@@ -47,7 +47,7 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
               <span className="text-[#6BCFCF]">en 3 minutes</span>
             </h1>
             <p className="text-lg text-white/70 mb-8 leading-relaxed">
-              Des déménageurs locaux contrôlés • Estimation par photos • 0 spam
+              Des déménageurs locaux contrôlés • Estimation en ligne • 0 spam
             </p>
           </div>
 

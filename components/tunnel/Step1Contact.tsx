@@ -231,7 +231,7 @@ export default function Step1Contact({
             </h3>
             <p className="text-sm text-[#1E293B]/70">
               {isMobile 
-                ? "Upload photos direct depuis votre mobile" 
+                ? "Demande rapide depuis votre mobile" 
                 : "Vos données sont protégées et ne seront jamais partagées"}
             </p>
           </div>

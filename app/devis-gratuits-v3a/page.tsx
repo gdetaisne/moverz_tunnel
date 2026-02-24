@@ -1244,8 +1244,7 @@ function DevisGratuitsV3Content() {
           }
         }
 
-        // Email de confirmation :
-        // envoyé sur l'écran final (Step 4), plus de dépendance aux photos.
+        // Email de confirmation envoyé sur l'écran final (Step 4).
       }
 
       trackStepChange(3, 4, "RECAP", "THANK_YOU", "confirmation_v3", "forward");
