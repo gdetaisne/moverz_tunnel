@@ -24,6 +24,10 @@ import {
   getDistanceBand,
   LA_POSTE_RATES_EUR_PER_M3,
 } from "@/lib/pricing/constants";
+import {
+  computeMoverzFeeProvision,
+  getDisplayedCenter,
+} from "@/lib/pricing/scenarios";
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import TunnelHero from "@/components/tunnel/TunnelHero";
@@ -1154,6 +1158,113 @@ function DevisGratuitsV3Content() {
           throw new Error("PRICING_NOT_READY");
         }
 
+        const centerBeforeProvision = getDisplayedCenter(
+          pricingForSubmit.prixMin,
+          pricingForSubmit.prixMax
+        );
+        const moverzFeeProvisionEur = computeMoverzFeeProvision(centerBeforeProvision);
+        const refinedCenterEur = centerBeforeProvision + moverzFeeProvisionEur;
+
+        const neutralPricing = (() => {
+          const neutralInput = {
+            surfaceM2: surface,
+            housingType: coerceHousingType(
+              state.originHousingType || state.destinationHousingType
+            ),
+            density: "normal" as const,
+            distanceKm:
+              state.destinationUnknown
+                ? 50
+                : routeDistanceKm ??
+                  estimateDistanceKm(
+                    state.originPostalCode,
+                    state.destinationPostalCode,
+                    state.originLat,
+                    state.originLon,
+                    state.destinationLat,
+                    state.destinationLon
+                  ),
+            seasonFactor: getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate),
+            originFloor: 0,
+            originElevator: "yes" as const,
+            destinationFloor: 0,
+            destinationElevator: "yes" as const,
+            services: {
+              monteMeuble: false,
+              piano: null,
+              debarras: false,
+            },
+            formule: state.formule as PricingFormuleType,
+          };
+          return calculatePricing(neutralInput);
+        })();
+        const moverBasePriceEur = getDisplayedCenter(
+          neutralPricing.prixMin,
+          neutralPricing.prixMax
+        );
+        const deltaFromBase = centerBeforeProvision - moverBasePriceEur;
+
+        const pricingSnapshot = {
+          capturedAt: new Date().toISOString(),
+          formule: state.formule,
+          refinedMinEur: pricingForSubmit.prixMin,
+          refinedMaxEur: pricingForSubmit.prixMax,
+          refinedCenterEur: refinedCenterEur + moverzFeeProvisionEur,
+          moverBasePriceEur,
+          moverzFeeProvisionEur,
+          moverzFeeProvisionRule: "MAX(100;10% du montant estimé)",
+          firstEstimateMinEur: pricingForSubmit.prixMin,
+          firstEstimateMaxEur: pricingForSubmit.prixMax,
+          firstEstimateCenterEur: refinedCenterEur,
+          lines: [
+            {
+              key: "ajustements",
+              label: "Ajustements (densité, étages, accès, formule)",
+              amountEur: deltaFromBase,
+              moverAmountEur: deltaFromBase,
+              confirmed: true,
+            },
+          ],
+          byFormule: pricingByFormule
+            ? {
+                ECONOMIQUE: {
+                  prixMin: pricingByFormule.ECONOMIQUE.prixMin,
+                  prixMax: pricingByFormule.ECONOMIQUE.prixMax,
+                  prixFinal: getDisplayedCenter(
+                    pricingByFormule.ECONOMIQUE.prixMin,
+                    pricingByFormule.ECONOMIQUE.prixMax
+                  ),
+                  volumeM3: pricingForSubmit.volumeM3,
+                },
+                STANDARD: {
+                  prixMin: pricingByFormule.STANDARD.prixMin,
+                  prixMax: pricingByFormule.STANDARD.prixMax,
+                  prixFinal: getDisplayedCenter(
+                    pricingByFormule.STANDARD.prixMin,
+                    pricingByFormule.STANDARD.prixMax
+                  ),
+                  volumeM3: pricingForSubmit.volumeM3,
+                },
+                PREMIUM: {
+                  prixMin: pricingByFormule.PREMIUM.prixMin,
+                  prixMax: pricingByFormule.PREMIUM.prixMax,
+                  prixFinal: getDisplayedCenter(
+                    pricingByFormule.PREMIUM.prixMin,
+                    pricingByFormule.PREMIUM.prixMax
+                  ),
+                  volumeM3: pricingForSubmit.volumeM3,
+                },
+              }
+            : {
+                [state.formule]: {
+                  prixMin: pricingForSubmit.prixMin,
+                  prixMax: pricingForSubmit.prixMax,
+                  prixFinal: centerBeforeProvision,
+                  volumeM3: pricingForSubmit.volumeM3,
+                },
+              },
+        };
+
         const tunnelOptions = {
           pricing: {
             // Stockage indicatif pour debug/analytics (Neon via JSON).
@@ -1214,6 +1325,7 @@ function DevisGratuitsV3Content() {
             over25kg: state.furnitureOver25kg || undefined,
           },
           notes: state.specificNotes || undefined,
+          pricingSnapshot,
         };
 
         const payload = {

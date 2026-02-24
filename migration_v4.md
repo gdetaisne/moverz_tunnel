@@ -25,6 +25,11 @@
 
 **Pour arrêter l'AB test** : remettre `redirect.tsx` à sa version simple (redirect direct vers `/devis-gratuits-v3`).
 
+**2026-02-24 — pricingSnapshot dans v3a** :
+- `tunnelOptions.pricingSnapshot` enrichi avec `moverBasePriceEur`, `moverzFeeProvisionEur`, `lines[]` contenant `moverAmountEur`.
+- Base neutre : distance OSRM réelle, density=normal, RDC, pas de services.
+- `refinedCenterEur` = center avant provision + provision (MAX(100;10%)).
+
 ---
 
 ## 2026-02-17 — API estimate: géocodage aligné tunnel (ville + CP)
