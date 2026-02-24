@@ -16,18 +16,27 @@ function setVariantCookie(variant: string) {
   document.cookie = `${AB_COOKIE_NAME}=${variant}; path=/; max-age=${AB_COOKIE_MAX_AGE}; SameSite=Lax`;
 }
 
+// Split ratio: 1.0 = 100% A, 0.5 = 50/50, 0.0 = 100% B
+const AB_SPLIT_RATIO = 1.0;
+
 function pickVariant(): "A" | "B" {
-  return Math.random() < 0.5 ? "A" : "B";
+  return Math.random() < AB_SPLIT_RATIO ? "A" : "B";
 }
 
 export default function RedirectToV3() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    let variant = getVariantFromCookie();
-    if (variant !== "A" && variant !== "B") {
-      variant = pickVariant();
+    let variant: string;
+    if (AB_SPLIT_RATIO === 1.0 || AB_SPLIT_RATIO === 0.0) {
+      variant = AB_SPLIT_RATIO === 1.0 ? "A" : "B";
       setVariantCookie(variant);
+    } else {
+      variant = getVariantFromCookie() ?? "";
+      if (variant !== "A" && variant !== "B") {
+        variant = pickVariant();
+        setVariantCookie(variant);
+      }
     }
 
     const params = new URLSearchParams(searchParams.toString());
