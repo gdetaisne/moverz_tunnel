@@ -1021,22 +1021,53 @@ function DevisGratuitsV3Content() {
         const destIsHouse = isHouseType(state.destinationHousingType);
 
         const tunnelOptions = {
-          access: {
-            origin: {
-              accessKind: state.originAccess || undefined,
-              furnitureLift: state.originFurnitureLift || undefined,
-              carryDistance: state.originCarryDistance || undefined,
-              tightAccess: state.originTightAccess || undefined,
-            },
-            destination: state.destinationUnknown
-              ? undefined
-              : {
-                  accessKind: state.destinationAccess || undefined,
-                  furnitureLift: state.destinationFurnitureLift || undefined,
-                  carryDistance: state.destinationCarryDistance || undefined,
-                  tightAccess: state.destinationTightAccess || undefined,
-                },
+          pricing: {
+            distanceKm:
+              state.destinationUnknown
+                ? 50
+                : routeDistanceKm ??
+                  estimateDistanceKm(
+                    state.originPostalCode,
+                    state.destinationPostalCode,
+                    state.originLat,
+                    state.originLon,
+                    state.destinationLat,
+                    state.destinationLon
+                  ),
+            distanceProvider: routeDistanceProvider ?? undefined,
           },
+          accessV2: {
+            access_type: state.access_type ?? "simple",
+            narrow_access: !!state.narrow_access,
+            long_carry: !!state.long_carry,
+            difficult_parking: !!state.difficult_parking,
+            lift_required: !!state.lift_required,
+            access_details: state.access_details || undefined,
+          },
+          volumeAdjustments: (() => {
+            const kitchenTouched =
+              state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
+            if (!kitchenTouched) return undefined;
+            const kitchenAppliancesCount =
+              Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+            const extraVolumeM3 = (() => {
+              if (state.kitchenIncluded === "full") return 6;
+              if (state.kitchenIncluded === "appliances") return Math.max(0, kitchenAppliancesCount) * 0.6;
+              return 0;
+            })();
+            const kitchenIncludedForBo = state.kitchenIncluded || "appliances";
+            const kitchenApplianceCountForBo =
+              state.kitchenIncluded === ""
+                ? 3
+                : kitchenIncludedForBo === "appliances"
+                ? kitchenAppliancesCount
+                : undefined;
+            return {
+              kitchenIncluded: kitchenIncludedForBo,
+              kitchenApplianceCount: kitchenApplianceCountForBo,
+              extraVolumeM3,
+            };
+          })(),
         };
 
         const payload = {
@@ -1158,58 +1189,106 @@ function DevisGratuitsV3Content() {
           throw new Error("PRICING_NOT_READY");
         }
 
-        const centerBeforeProvision = getDisplayedCenter(
-          pricingForSubmit.prixMin,
-          pricingForSubmit.prixMax
-        );
+        const distanceKm =
+          state.destinationUnknown
+            ? 50
+            : routeDistanceKm ??
+              estimateDistanceKm(
+                state.originPostalCode,
+                state.destinationPostalCode,
+                state.originLat,
+                state.originLon,
+                state.destinationLat,
+                state.destinationLon
+              );
+        const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
+        const housingType = coerceHousingType(state.originHousingType || state.destinationHousingType);
+        const densityEffective = (state.density || "normal") as "light" | "normal" | "dense";
+        const originIsHouse = isHouseType(state.originHousingType);
+        const destIsHouse = isHouseType(state.destinationHousingType);
+        const originFloor = originIsHouse ? 0 : parseInt(state.originFloor || "0", 10) || 0;
+        const destinationFloor = state.destinationUnknown
+          ? 0
+          : destIsHouse
+          ? 0
+          : parseInt(state.destinationFloor || "0", 10) || 0;
+        const originElevator = toPricingElevator(state.originElevator);
+        const destinationElevator = state.destinationUnknown ? "yes" : toPricingElevator(state.destinationElevator);
+        const monteMeuble = state.originFurnitureLift === "yes" || state.destinationFurnitureLift === "yes";
+        const piano =
+          state.servicePiano === "droit"
+            ? ("droit" as const)
+            : state.servicePiano === "quart"
+            ? ("quart" as const)
+            : null;
+
+        const center = (p: { prixMin: number; prixMax: number }) => getDisplayedCenter(p.prixMin, p.prixMax);
+
+        // Pipeline "mover" simplifié (v3a) : base neutre puis deltas détaillés.
+        const baseNeutralInput = {
+          surfaceM2: surface,
+          housingType,
+          density: "normal" as const,
+          distanceKm,
+          seasonFactor: 1,
+          originFloor: 0,
+          originElevator: "yes" as const,
+          destinationFloor: 0,
+          destinationElevator: "yes" as const,
+          formule: "STANDARD" as const,
+          services: { monteMeuble: false, piano: null, debarras: false },
+        };
+        const sBase = calculatePricing(baseNeutralInput);
+        const sDensity = calculatePricing({ ...baseNeutralInput, density: densityEffective });
+        const sDate = calculatePricing({ ...baseNeutralInput, density: densityEffective, seasonFactor });
+        const sAccess = calculatePricing({
+          ...baseNeutralInput,
+          density: densityEffective,
+          seasonFactor,
+          originFloor,
+          originElevator,
+          destinationFloor,
+          destinationElevator,
+        });
+        const sServices = calculatePricing({
+          ...baseNeutralInput,
+          density: densityEffective,
+          seasonFactor,
+          originFloor,
+          originElevator,
+          destinationFloor,
+          destinationElevator,
+          services: { monteMeuble, piano, debarras: Boolean(state.serviceDebarras) },
+        });
+        const sFormule = calculatePricing({
+          ...baseNeutralInput,
+          density: densityEffective,
+          seasonFactor,
+          originFloor,
+          originElevator,
+          destinationFloor,
+          destinationElevator,
+          services: { monteMeuble, piano, debarras: Boolean(state.serviceDebarras) },
+          formule: state.formule as PricingFormuleType,
+        });
+
+        const moverBasePriceEur = center(sBase);
+        const deltaDensityEur = center(sDensity) - center(sBase);
+        const deltaDateEur = center(sDate) - center(sDensity);
+        const deltaAccessEur = center(sAccess) - center(sDate);
+        const deltaServicesEur = center(sServices) - center(sAccess);
+        const deltaFormuleEur = center(sFormule) - center(sServices);
+
+        const centerBeforeProvision = center(sFormule);
         const moverzFeeProvisionEur = computeMoverzFeeProvision(centerBeforeProvision);
         const refinedCenterEur = centerBeforeProvision + moverzFeeProvisionEur;
-
-        const neutralPricing = (() => {
-          const neutralInput = {
-            surfaceM2: surface,
-            housingType: coerceHousingType(
-              state.originHousingType || state.destinationHousingType
-            ),
-            density: "normal" as const,
-            distanceKm:
-              state.destinationUnknown
-                ? 50
-                : routeDistanceKm ??
-                  estimateDistanceKm(
-                    state.originPostalCode,
-                    state.destinationPostalCode,
-                    state.originLat,
-                    state.originLon,
-                    state.destinationLat,
-                    state.destinationLon
-                  ),
-            seasonFactor: getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate),
-            originFloor: 0,
-            originElevator: "yes" as const,
-            destinationFloor: 0,
-            destinationElevator: "yes" as const,
-            services: {
-              monteMeuble: false,
-              piano: null,
-              debarras: false,
-            },
-            formule: state.formule as PricingFormuleType,
-          };
-          return calculatePricing(neutralInput);
-        })();
-        const moverBasePriceEur = getDisplayedCenter(
-          neutralPricing.prixMin,
-          neutralPricing.prixMax
-        );
-        const deltaFromBase = centerBeforeProvision - moverBasePriceEur;
 
         const pricingSnapshot = {
           capturedAt: new Date().toISOString(),
           formule: state.formule,
           refinedMinEur: pricingForSubmit.prixMin,
           refinedMaxEur: pricingForSubmit.prixMax,
-          refinedCenterEur: refinedCenterEur + moverzFeeProvisionEur,
+          refinedCenterEur,
           moverBasePriceEur,
           moverzFeeProvisionEur,
           moverzFeeProvisionRule: "MAX(100;10% du montant estimé)",
@@ -1218,10 +1297,43 @@ function DevisGratuitsV3Content() {
           firstEstimateCenterEur: refinedCenterEur,
           lines: [
             {
-              key: "ajustements",
-              label: "Ajustements (densité, étages, accès, formule)",
-              amountEur: deltaFromBase,
-              moverAmountEur: deltaFromBase,
+              key: "density",
+              label: "Densité",
+              status: state.density || "normal",
+              amountEur: deltaDensityEur,
+              moverAmountEur: deltaDensityEur,
+              confirmed: true,
+            },
+            {
+              key: "date",
+              label: "Date",
+              status: state.movingDate ? "confirmée" : "à confirmer",
+              amountEur: deltaDateEur,
+              moverAmountEur: deltaDateEur,
+              confirmed: Boolean(state.movingDate),
+            },
+            {
+              key: "access_housing",
+              label: "Accès (étages / ascenseur)",
+              status: "déclarés",
+              amountEur: deltaAccessEur,
+              moverAmountEur: deltaAccessEur,
+              confirmed: true,
+            },
+            {
+              key: "services",
+              label: "Services",
+              status: monteMeuble || piano || state.serviceDebarras ? "sélectionnés" : "aucun",
+              amountEur: deltaServicesEur,
+              moverAmountEur: deltaServicesEur,
+              confirmed: true,
+            },
+            {
+              key: "formule",
+              label: "Formule",
+              status: state.formule,
+              amountEur: deltaFormuleEur,
+              moverAmountEur: deltaFormuleEur,
               confirmed: true,
             },
           ],
@@ -1268,37 +1380,41 @@ function DevisGratuitsV3Content() {
         const tunnelOptions = {
           pricing: {
             // Stockage indicatif pour debug/analytics (Neon via JSON).
-            distanceKm:
-              state.destinationUnknown
-                ? 50
-                : routeDistanceKm ??
-                  estimateDistanceKm(
-                    state.originPostalCode,
-                    state.destinationPostalCode,
-                    state.originLat,
-                    state.originLon,
-                    state.destinationLat,
-                    state.destinationLon
-                  ),
+            distanceKm,
             distanceProvider: routeDistanceProvider ?? undefined,
           },
-          // Important: conserver la structure envoyée en Step 2 (sinon Step 3 écrase et on perd l'accès)
-          access: {
-            origin: {
-              accessKind: state.originAccess || undefined,
-              furnitureLift: state.originFurnitureLift || undefined,
-              carryDistance: state.originCarryDistance || undefined,
-              tightAccess: state.originTightAccess || undefined,
-            },
-            destination: state.destinationUnknown
-              ? undefined
-              : {
-                  accessKind: state.destinationAccess || undefined,
-                  furnitureLift: state.destinationFurnitureLift || undefined,
-                  carryDistance: state.destinationCarryDistance || undefined,
-                  tightAccess: state.destinationTightAccess || undefined,
-                },
+          accessV2: {
+            access_type: state.access_type ?? "simple",
+            narrow_access: !!state.narrow_access,
+            long_carry: !!state.long_carry,
+            difficult_parking: !!state.difficult_parking,
+            lift_required: !!state.lift_required,
+            access_details: state.access_details || undefined,
           },
+          volumeAdjustments: (() => {
+            const kitchenTouched =
+              state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
+            if (!kitchenTouched) return undefined;
+            const kitchenAppliancesCount =
+              Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+            const extraVolumeM3 = (() => {
+              if (state.kitchenIncluded === "full") return 6;
+              if (state.kitchenIncluded === "appliances") return Math.max(0, kitchenAppliancesCount) * 0.6;
+              return 0;
+            })();
+            const kitchenIncludedForBo = state.kitchenIncluded || "appliances";
+            const kitchenApplianceCountForBo =
+              state.kitchenIncluded === ""
+                ? 3
+                : kitchenIncludedForBo === "appliances"
+                ? kitchenAppliancesCount
+                : undefined;
+            return {
+              kitchenIncluded: kitchenIncludedForBo,
+              kitchenApplianceCount: kitchenApplianceCountForBo,
+              extraVolumeM3,
+            };
+          })(),
           services: {
             furnitureStorage: state.serviceFurnitureStorage || undefined,
             cleaning: state.serviceCleaning || undefined,
@@ -1311,11 +1427,6 @@ function DevisGratuitsV3Content() {
             debarras: state.serviceDebarras || undefined,
             dismantling: state.serviceDismantling || undefined,
             piano: state.servicePiano || undefined,
-          },
-          accessDetails: {
-            noElevator: state.accessNoElevator || undefined,
-            smallElevator: state.accessSmallElevator || undefined,
-            truckDifficult: state.accessTruckDifficult || undefined,
           },
           heavyFurniture: {
             americanFridge: state.furnitureAmericanFridge || undefined,

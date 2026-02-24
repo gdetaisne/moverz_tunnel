@@ -26,7 +26,9 @@
 **Pour arrêter l'AB test** : remettre `redirect.tsx` à sa version simple (redirect direct vers `/devis-gratuits-v3`).
 
 **2026-02-24 — pricingSnapshot dans v3a** :
-- `tunnelOptions.pricingSnapshot` enrichi avec `moverBasePriceEur`, `moverzFeeProvisionEur`, `lines[]` contenant `moverAmountEur`.
+- `tunnelOptions.accessV2` envoyé (et non `access`) pour compat BO (`normalizeAccessV2()`).
+- `tunnelOptions.pricingSnapshot` enrichi avec `moverBasePriceEur`, `moverzFeeProvisionEur`, `lines[]` détaillées (density/date/access/services/formule) contenant `moverAmountEur`.
+- `tunnelOptions.volumeAdjustments` envoyé quand la cuisine est renseignée (`kitchenIncluded` / `kitchenApplianceCount`).
 - Base neutre : distance OSRM réelle, density=normal, RDC, pas de services.
 - `refinedCenterEur` = center avant provision + provision (MAX(100;10%)).
 
