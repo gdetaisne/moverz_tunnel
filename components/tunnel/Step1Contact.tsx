@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { Mail, User, ArrowRight, Check, X } from "lucide-react";
+import { Mail, User, ArrowRight, Check, X, Loader2 } from "lucide-react";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 interface Step1ContactProps {
@@ -13,6 +13,28 @@ interface Step1ContactProps {
   isSubmitting: boolean;
   error: string | null;
   showValidation?: boolean;
+}
+
+async function checkEmailApi(email: string): Promise<{ ok: boolean; message: string }> {
+  try {
+    const res = await fetch("/api/email/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) return { ok: true, message: "" };
+    const data = (await res.json()) as {
+      ok?: boolean;
+      verdict?: "valid" | "invalid" | "unknown";
+      reason?: string;
+    };
+    if (data.verdict === "invalid") {
+      return { ok: false, message: data.reason || "Adresse email non recevable." };
+    }
+    return { ok: true, message: data.reason || "" };
+  } catch {
+    return { ok: true, message: "" };
+  }
 }
 
 export default function Step1Contact({
@@ -27,6 +49,8 @@ export default function Step1Contact({
 }: Step1ContactProps) {
   const [firstNameTouched, setFirstNameTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
+  const [emailChecking, setEmailChecking] = useState(false);
+  const [emailApiError, setEmailApiError] = useState<string | null>(null);
   const { isMobile } = useDeviceDetection();
 
   const isFirstNameValid = firstName.trim().length >= 2;
@@ -46,6 +70,25 @@ export default function Step1Contact({
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     if ((el as any).focus) (el as any).focus();
   };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!isFormValid || isSubmitting || emailChecking) return;
+
+    setEmailApiError(null);
+    setEmailChecking(true);
+    const check = await checkEmailApi(email.trim());
+    setEmailChecking(false);
+
+    if (!check.ok) {
+      setEmailApiError(check.message);
+      return;
+    }
+
+    await onSubmit(e);
+  };
+
+  const busy = isSubmitting || emailChecking;
 
   return (
     <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -67,7 +110,7 @@ export default function Step1Contact({
           </p>
         </div>
 
-        <form onSubmit={onSubmit} noValidate className="space-y-5">
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {/* Prénom */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
@@ -121,15 +164,24 @@ export default function Step1Contact({
                 value={email}
                 onChange={(e) => {
                   setEmailTouched(true);
+                  setEmailApiError(null);
                   onEmailChange(e.target.value);
                 }}
-                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 pr-12 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                className={`w-full rounded-xl border-2 bg-white px-4 pr-12 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:outline-none focus:ring-2 transition-all ${
+                  emailApiError
+                    ? "border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/15"
+                    : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:ring-[#6BCFCF]/20"
+                }`}
                 placeholder="vous@email.fr"
                 autoComplete="email"
               />
-              {(emailTouched || showValidation) && (
+              {emailChecking ? (
                 <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
-                  {isEmailValid ? (
+                  <Loader2 className="w-5 h-5 text-[#6BCFCF] animate-spin" />
+                </span>
+              ) : (emailTouched || showValidation) ? (
+                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
+                  {isEmailValid && !emailApiError ? (
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100">
                       <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
                     </span>
@@ -139,11 +191,16 @@ export default function Step1Contact({
                     </span>
                   )}
                 </span>
-              )}
+              ) : null}
             </div>
-            {showEmailError && (
+            {showEmailError && !emailApiError && (
               <p className="text-sm text-red-600">
                 Merci de saisir un email valide
+              </p>
+            )}
+            {emailApiError && (
+              <p className="text-sm text-red-600">
+                {emailApiError}
               </p>
             )}
           </div>
@@ -180,15 +237,24 @@ export default function Step1Contact({
           {/* Submit button */}
           <button
             type="submit"
-            disabled={isSubmitting}
-            aria-disabled={isSubmitting || !isFormValid}
+            disabled={busy}
+            aria-disabled={busy || !isFormValid}
             className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white hover:bg-[#1E293B] transition-all duration-200 ${
-              !isFormValid && !isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+              !isFormValid && !busy ? "opacity-50 cursor-not-allowed" : ""
+            } ${busy ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <span>{isSubmitting ? "Création du dossier..." : "Commencer mon dossier"}</span>
-            {!isSubmitting && (
+            <span>
+              {emailChecking
+                ? "Vérification de l'email..."
+                : isSubmitting
+                ? "Création du dossier..."
+                : "Commencer mon dossier"}
+            </span>
+            {!busy && (
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            )}
+            {emailChecking && (
+              <Loader2 className="w-5 h-5 animate-spin" />
             )}
           </button>
 
@@ -213,18 +279,14 @@ export default function Step1Contact({
       {/* Right: Mockup illustration */}
       <div className="order-2 relative hidden lg:block">
         <div className="relative w-full max-w-[360px] mx-auto">
-          {/* Decorative background */}
           <div className="absolute inset-0 bg-[#6BCFCF]/5 rounded-[3rem] blur-3xl" />
           
-          {/* Card mockup */}
           <div className="relative bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-8 border border-[#E3E5E8]">
             <div className="space-y-6">
-              {/* Icon */}
               <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-[#6BCFCF] mx-auto">
                 <Check className="w-8 h-8 text-white" strokeWidth={3} />
               </div>
 
-              {/* Title */}
           <div className="text-center">
             <h3 className="text-xl font-bold text-[#0F172A] mb-2">
               {isMobile ? "WhatsApp recommandé" : "Rapide et sécurisé"}
@@ -236,7 +298,6 @@ export default function Step1Contact({
             </p>
           </div>
 
-              {/* Benefits */}
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F9FA]">
                   <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-green-100">
@@ -266,7 +327,6 @@ export default function Step1Contact({
                 </div>
               </div>
 
-              {/* Footer */}
               <div className="pt-4 border-t border-[#E3E5E8] text-center">
                 <p className="text-xs text-[#1E293B]/60">
                   Connexion sécurisée • RGPD conforme
@@ -275,7 +335,6 @@ export default function Step1Contact({
             </div>
           </div>
 
-          {/* Floating badge */}
           <div className="absolute -right-4 top-20 bg-white rounded-xl shadow-md px-4 py-2 border border-gray-100">
             <p className="text-xs font-bold text-[#0F172A]">1200+</p>
             <p className="text-xs text-[#1E293B]/60">déménagements</p>
@@ -285,4 +344,3 @@ export default function Step1Contact({
     </div>
   );
 }
-
