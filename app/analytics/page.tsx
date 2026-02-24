@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { DashboardData, JournalResult, JournalEvent } from "@/lib/analytics/neon";
+import type { DashboardData, JournalResult, JournalEvent, AbTestData, AbTestVariantData } from "@/lib/analytics/neon";
 
 // ============================================================
 // Helpers
@@ -2320,12 +2320,252 @@ function PricingLab({ password }: { password: string }) {
 }
 
 // ============================================================
+// AB Test comparison tab
+// ============================================================
+
+const STEP_ORDER_AB = ["CONTACT", "PROJECT", "ESTIMATION", "PRECISION", "COMPLETION"];
+
+function AbTestTab({ password }: { password: string }) {
+  const [data, setData] = useState<AbTestData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [days, setDays] = useState(7);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const to = new Date().toISOString();
+      const from = new Date(Date.now() - days * 86400000).toISOString();
+      const res = await fetch(
+        `/api/analytics/ab-test?password=${encodeURIComponent(password)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&includeTests=false`
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || "Erreur serveur");
+        return;
+      }
+      setData(await res.json());
+    } catch {
+      setError("Erreur réseau");
+    } finally {
+      setLoading(false);
+    }
+  }, [password, days]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  if (loading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-gray-400 animate-pulse">Chargement AB test…</div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-300">{error}</div>
+      </div>
+    );
+  }
+  if (!data) return null;
+
+  const variantA = data.variants.find(v => v.variant === "A");
+  const variantB = data.variants.find(v => v.variant === "B");
+
+  const totalSessions = (variantA?.sessions ?? 0) + (variantB?.sessions ?? 0);
+
+  const sortedFunnel = (funnel: AbTestVariantData["funnel"]) => {
+    return [...funnel].sort((a, b) => {
+      const ia = STEP_ORDER_AB.indexOf(a.logical_step);
+      const ib = STEP_ORDER_AB.indexOf(b.logical_step);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+      {/* Period selector */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-white">AB Test — UX 9-fev (A) vs Actuel (B)</h2>
+        <div className="flex gap-2">
+          {[1, 3, 7, 14, 30].map(d => (
+            <button
+              key={d}
+              onClick={() => setDays(d)}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition ${
+                days === d
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-800 text-gray-400 hover:text-white"
+              }`}
+            >
+              {d}j
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {totalSessions === 0 ? (
+        <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-8 text-center">
+          <p className="text-gray-400 text-lg">Aucune donnée AB test sur cette période.</p>
+          <p className="text-gray-500 text-sm mt-2">Les données apparaîtront une fois le test en production.</p>
+        </div>
+      ) : (
+        <>
+          {/* KPI comparison cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[variantA, variantB].map(v => {
+              if (!v) return null;
+              const label = v.variant === "A" ? "Variante A — UX 9 fév" : "Variante B — Actuel";
+              const color = v.variant === "A" ? "from-blue-600/20 to-blue-800/10 border-blue-700/40" : "from-green-600/20 to-green-800/10 border-green-700/40";
+              const accentColor = v.variant === "A" ? "text-blue-400" : "text-green-400";
+              return (
+                <div key={v.variant} className={`bg-gradient-to-br ${color} border rounded-xl p-6 space-y-4`}>
+                  <div className="flex items-center justify-between">
+                    <h3 className={`font-bold text-lg ${accentColor}`}>{label}</h3>
+                    <span className="text-xs text-gray-500 bg-gray-800/60 px-2 py-1 rounded">
+                      {Math.round((v.sessions / totalSessions) * 100)}% du trafic
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <div className="text-2xl font-bold text-white">{v.sessions}</div>
+                      <div className="text-xs text-gray-400">Sessions</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-white">{v.completions}</div>
+                      <div className="text-xs text-gray-400">Completions</div>
+                    </div>
+                    <div>
+                      <div className={`text-2xl font-bold ${accentColor}`}>{v.conversionRate}%</div>
+                      <div className="text-xs text-gray-400">Conversion</div>
+                    </div>
+                  </div>
+                  {v.avgDurationMs > 0 && (
+                    <div className="text-sm text-gray-400">
+                      Durée moy. : {formatDuration(v.avgDurationMs)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Winner indicator */}
+          {variantA && variantB && variantA.sessions >= 10 && variantB.sessions >= 10 && (
+            <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-4 text-center">
+              {(() => {
+                const diff = variantA.conversionRate - variantB.conversionRate;
+                if (Math.abs(diff) < 0.5) {
+                  return <span className="text-gray-400">Pas de différence significative pour l'instant ({Math.abs(diff).toFixed(1)}pp)</span>;
+                }
+                const winner = diff > 0 ? "A" : "B";
+                const winnerLabel = winner === "A" ? "UX 9 fév" : "Actuel";
+                const winnerColor = winner === "A" ? "text-blue-400" : "text-green-400";
+                return (
+                  <span className="text-gray-300">
+                    Tendance : <span className={`font-bold ${winnerColor}`}>{winnerLabel} ({winner})</span> +{Math.abs(diff).toFixed(1)}pp
+                    <span className="text-gray-500 ml-2">
+                      ({totalSessions} sessions — {totalSessions < 100 ? "pas encore significatif" : totalSessions < 500 ? "tendance à confirmer" : "signal fort"})
+                    </span>
+                  </span>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Funnel comparison */}
+          <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-6">
+            <h3 className="text-white font-bold mb-4">Funnel par étape</h3>
+            <div className="space-y-3">
+              {STEP_ORDER_AB.map(step => {
+                const aVal = variantA?.funnel.find(f => f.logical_step === step)?.sessions ?? 0;
+                const bVal = variantB?.funnel.find(f => f.logical_step === step)?.sessions ?? 0;
+                const maxVal = Math.max(aVal, bVal, 1);
+                return (
+                  <div key={step} className="space-y-1">
+                    <div className="text-sm text-gray-400 font-medium">{step}</div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-blue-400 w-6 text-right">A</span>
+                      <div className="flex-1 bg-gray-800 rounded-full h-5 overflow-hidden">
+                        <div
+                          className="bg-blue-600/70 h-full rounded-full flex items-center justify-end pr-2"
+                          style={{ width: `${(aVal / maxVal) * 100}%`, minWidth: aVal > 0 ? "2rem" : 0 }}
+                        >
+                          <span className="text-xs text-white font-medium">{aVal}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-green-400 w-6 text-right">B</span>
+                      <div className="flex-1 bg-gray-800 rounded-full h-5 overflow-hidden">
+                        <div
+                          className="bg-green-600/70 h-full rounded-full flex items-center justify-end pr-2"
+                          style={{ width: `${(bVal / maxVal) * 100}%`, minWidth: bVal > 0 ? "2rem" : 0 }}
+                        >
+                          <span className="text-xs text-white font-medium">{bVal}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Daily trend */}
+          {(variantA?.daily.length || variantB?.daily.length) ? (
+            <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-6">
+              <h3 className="text-white font-bold mb-4">Sessions / jour</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-gray-500 border-b border-gray-800">
+                      <th className="text-left py-2 pr-4">Jour</th>
+                      <th className="text-right py-2 px-3 text-blue-400">A sess.</th>
+                      <th className="text-right py-2 px-3 text-blue-400">A conv.</th>
+                      <th className="text-right py-2 px-3 text-green-400">B sess.</th>
+                      <th className="text-right py-2 px-3 text-green-400">B conv.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const allDays = new Set<string>();
+                      variantA?.daily.forEach(d => allDays.add(d.day));
+                      variantB?.daily.forEach(d => allDays.add(d.day));
+                      return Array.from(allDays).sort().map(day => {
+                        const aDay = variantA?.daily.find(d => d.day === day);
+                        const bDay = variantB?.daily.find(d => d.day === day);
+                        return (
+                          <tr key={day} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                            <td className="py-2 pr-4 text-gray-300">{new Date(day).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</td>
+                            <td className="text-right px-3 text-gray-300">{aDay?.sessions ?? 0}</td>
+                            <td className="text-right px-3 text-blue-400">{aDay?.conversion_rate ?? 0}%</td>
+                            <td className="text-right px-3 text-gray-300">{bDay?.sessions ?? 0}</td>
+                            <td className="text-right px-3 text-green-400">{bDay?.conversion_rate ?? 0}%</td>
+                          </tr>
+                        );
+                      });
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // Page wrapper with tabs
 // ============================================================
 
 export default function AnalyticsPage() {
   const [password, setPassword] = useState<string | null>(null);
-  const [tab, setTab] = useState<"dashboard" | "journal" | "pricing">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "journal" | "pricing" | "abtest">("dashboard");
 
   if (!password) {
     return <PasswordGate onAuth={setPassword} />;
@@ -2366,12 +2606,23 @@ export default function AnalyticsPage() {
           >
             🧠 Hypothèses & Simulation
           </button>
+          <button
+            onClick={() => setTab("abtest")}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
+              tab === "abtest"
+                ? "border-purple-500 text-white"
+                : "border-transparent text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            🔬 AB Test
+          </button>
         </div>
       </div>
 
       {tab === "dashboard" && <Dashboard password={password} />}
       {tab === "journal" && <Journal password={password} />}
       {tab === "pricing" && <PricingLab password={password} />}
+      {tab === "abtest" && <AbTestTab password={password} />}
     </div>
   );
 }

@@ -626,6 +626,180 @@ export async function getDashboardData(
 }
 
 // ============================================================
+// Read: AB Test comparison (variant A vs B by url_path)
+// ============================================================
+
+export interface AbTestVariantData {
+  variant: string;
+  sessions: number;
+  completions: number;
+  conversionRate: number;
+  avgDurationMs: number;
+  funnel: { logical_step: string; sessions: number }[];
+  daily: { day: string; sessions: number; completions: number; conversion_rate: number }[];
+}
+
+export interface AbTestData {
+  variants: AbTestVariantData[];
+  periodStart: string;
+  periodEnd: string;
+}
+
+export async function getAbTestData(
+  periodStartIso: string,
+  periodEndIso: string,
+  excludeTests: boolean = true
+): Promise<AbTestData> {
+  const sql = getSQL();
+
+  const variantCase = sql`
+    CASE
+      WHEN te_path.url_path LIKE '%v3a%' THEN 'A'
+      WHEN te_path.url_path LIKE '%devis-gratuits-v3%' THEN 'B'
+      ELSE 'unknown'
+    END
+  `;
+
+  // Determine variant per session (from first non-redirect event url_path)
+  const kpiRows = await sql`
+    WITH session_variant AS (
+      SELECT DISTINCT ON (session_id)
+        session_id,
+        CASE
+          WHEN url_path LIKE '%v3a%' THEN 'A'
+          WHEN url_path LIKE '%devis-gratuits-v3%' THEN 'B'
+          ELSE 'unknown'
+        END as variant
+      FROM tunnel_events
+      WHERE created_at >= ${periodStartIso}
+        AND created_at <= ${periodEndIso}
+        AND url_path IS NOT NULL
+        AND url_path LIKE '%devis-gratuits%'
+        AND url_path NOT LIKE '%/devis-gratuits?%'
+        AND url_path != '/devis-gratuits'
+        AND (${!excludeTests} OR is_test_user = false)
+        AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
+      ORDER BY session_id, created_at ASC
+    )
+    SELECT
+      sv.variant,
+      COUNT(*) as sessions,
+      COUNT(*) FILTER (WHERE ts.completed = true) as completions,
+      ROUND(
+        COUNT(*) FILTER (WHERE ts.completed = true)::numeric / NULLIF(COUNT(*), 0) * 100, 1
+      ) as conversion_rate,
+      ROUND(AVG(ts.total_duration_ms) FILTER (WHERE ts.total_duration_ms IS NOT NULL)) as avg_duration_ms
+    FROM session_variant sv
+    JOIN tunnel_sessions ts ON ts.session_id = sv.session_id
+    WHERE sv.variant IN ('A', 'B')
+    GROUP BY sv.variant
+    ORDER BY sv.variant
+  ` as unknown as any[];
+
+  // Funnel per variant
+  const funnelRows = await sql`
+    WITH session_variant AS (
+      SELECT DISTINCT ON (session_id)
+        session_id,
+        CASE
+          WHEN url_path LIKE '%v3a%' THEN 'A'
+          WHEN url_path LIKE '%devis-gratuits-v3%' THEN 'B'
+          ELSE 'unknown'
+        END as variant
+      FROM tunnel_events
+      WHERE created_at >= ${periodStartIso}
+        AND created_at <= ${periodEndIso}
+        AND url_path IS NOT NULL
+        AND url_path LIKE '%devis-gratuits%'
+        AND url_path NOT LIKE '%/devis-gratuits?%'
+        AND url_path != '/devis-gratuits'
+        AND (${!excludeTests} OR is_test_user = false)
+        AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
+      ORDER BY session_id, created_at ASC
+    )
+    SELECT
+      sv.variant,
+      te.logical_step,
+      COUNT(DISTINCT te.session_id) as sessions
+    FROM tunnel_events te
+    JOIN session_variant sv ON sv.session_id = te.session_id
+    WHERE te.created_at >= ${periodStartIso}
+      AND te.created_at <= ${periodEndIso}
+      AND te.event_type = 'TUNNEL_STEP_VIEWED'
+      AND te.logical_step IS NOT NULL
+      AND sv.variant IN ('A', 'B')
+      AND (${!excludeTests} OR te.is_test_user = false)
+      AND (te.user_agent IS NULL OR te.user_agent !~* ${BOT_UA_SQL_PATTERN})
+    GROUP BY sv.variant, te.logical_step
+    ORDER BY sv.variant, sessions DESC
+  ` as unknown as any[];
+
+  // Daily per variant
+  const dailyRows = await sql`
+    WITH session_variant AS (
+      SELECT DISTINCT ON (session_id)
+        session_id,
+        CASE
+          WHEN url_path LIKE '%v3a%' THEN 'A'
+          WHEN url_path LIKE '%devis-gratuits-v3%' THEN 'B'
+          ELSE 'unknown'
+        END as variant
+      FROM tunnel_events
+      WHERE created_at >= ${periodStartIso}
+        AND created_at <= ${periodEndIso}
+        AND url_path IS NOT NULL
+        AND url_path LIKE '%devis-gratuits%'
+        AND url_path NOT LIKE '%/devis-gratuits?%'
+        AND url_path != '/devis-gratuits'
+        AND (${!excludeTests} OR is_test_user = false)
+        AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
+      ORDER BY session_id, created_at ASC
+    )
+    SELECT
+      sv.variant,
+      DATE(ts.created_at AT TIME ZONE 'Europe/Paris') as day,
+      COUNT(*) as sessions,
+      COUNT(*) FILTER (WHERE ts.completed = true) as completions,
+      ROUND(
+        COUNT(*) FILTER (WHERE ts.completed = true)::numeric / NULLIF(COUNT(*), 0) * 100, 1
+      ) as conversion_rate
+    FROM session_variant sv
+    JOIN tunnel_sessions ts ON ts.session_id = sv.session_id
+    WHERE sv.variant IN ('A', 'B')
+    GROUP BY sv.variant, DATE(ts.created_at AT TIME ZONE 'Europe/Paris')
+    ORDER BY sv.variant, day ASC
+  ` as unknown as any[];
+
+  const kpiArr = kpiRows as unknown as any[];
+  const funnelArr = funnelRows as unknown as any[];
+  const dailyArr = dailyRows as unknown as any[];
+
+  const buildVariant = (v: string): AbTestVariantData => ({
+    variant: v,
+    sessions: Number(kpiArr.find((r: any) => r.variant === v)?.sessions ?? 0),
+    completions: Number(kpiArr.find((r: any) => r.variant === v)?.completions ?? 0),
+    conversionRate: Number(kpiArr.find((r: any) => r.variant === v)?.conversion_rate ?? 0),
+    avgDurationMs: Number(kpiArr.find((r: any) => r.variant === v)?.avg_duration_ms ?? 0),
+    funnel: funnelArr.filter((r: any) => r.variant === v).map((r: any) => ({
+      logical_step: r.logical_step,
+      sessions: Number(r.sessions),
+    })),
+    daily: dailyArr.filter((r: any) => r.variant === v).map((r: any) => ({
+      day: r.day,
+      sessions: Number(r.sessions),
+      completions: Number(r.completions),
+      conversion_rate: Number(r.conversion_rate),
+    })),
+  });
+
+  return {
+    variants: [buildVariant("A"), buildVariant("B")],
+    periodStart: periodStartIso,
+    periodEnd: periodEndIso,
+  };
+}
+
+// ============================================================
 // Read: Journal — raw events list (paginated, filterable)
 // ============================================================
 
