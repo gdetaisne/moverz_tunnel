@@ -36,18 +36,18 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
           {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold mb-4 md:mb-6 backdrop-blur-sm">
             <span className="h-2 w-2 rounded-full bg-[#6BCFCF] animate-pulse" />
-            <span>Demande de devis gratuite</span>
+            <span>Gratuit • Sans engagement</span>
           </div>
 
           {/* Marketing copy (desktop only) */}
           <div className="hidden md:block">
             <h1 className="text-5xl font-bold mb-4 leading-tight">
-              3 à 5 devis comparables
+              Votre dossier de mise
               <br />
-              <span className="text-[#6BCFCF]">en 3 minutes</span>
+              <span className="text-[#6BCFCF]">en concurrence</span>
             </h1>
             <p className="text-lg text-white/70 mb-8 leading-relaxed">
-              Des déménageurs locaux contrôlés • Estimation en ligne • 0 spam
+              2 minutes pour constituer votre dossier • Des déménageurs locaux contrôlés • 0 spam
             </p>
           </div>
 

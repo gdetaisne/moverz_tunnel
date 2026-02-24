@@ -379,11 +379,11 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
         </div>
 
         <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] mb-3 md:mb-4 leading-tight">
-          Votre trajet & logements
+          Décrivez votre déménagement
         </h2>
         
         <p className="hidden md:block text-lg text-[#1E293B]/70 leading-relaxed">
-          Pour un devis précis basé sur vos accès et la configuration.
+          Ces informations permettent aux déménageurs de vous faire des devis comparables.
         </p>
       </div>
 
@@ -829,7 +829,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          <span>{props.isSubmitting ? "Enregistrement..." : "Continuer"}</span>
+          <span>{props.isSubmitting ? "Enregistrement..." : "Compléter mon dossier"}</span>
           {!props.isSubmitting && (
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           )}

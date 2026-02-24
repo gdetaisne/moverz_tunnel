@@ -34,10 +34,10 @@ import ConfirmationPage from "@/components/tunnel/ConfirmationPage";
 import TrustSignals from "@/components/tunnel/TrustSignals";
 
 const STEPS = [
-  { id: 1, label: "Contact" },
-  { id: 2, label: "Projet" },
-  { id: 3, label: "Formules" },
-  { id: 4, label: "Confirmation" },
+  { id: 1, label: "Coordonnées" },
+  { id: 2, label: "Votre projet" },
+  { id: 3, label: "Formule & budget" },
+  { id: 4, label: "Dossier envoyé" },
 ] as const;
 
 function DevisGratuitsV3Content() {

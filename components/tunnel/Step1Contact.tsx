@@ -58,11 +58,11 @@ export default function Step1Contact({
           </div>
 
           <h2 className="text-3xl md:text-5xl font-black text-[#0F172A] mb-3 md:mb-4 leading-tight">
-            Vos infos de contact
+            Constituez votre dossier
           </h2>
           
           <p className="hidden md:block text-lg text-[#1E293B]/70 leading-relaxed">
-            Pour vous envoyer vos devis et suivre votre dossier.{" "}
+            On a besoin de vos coordonnées pour vous transmettre les devis.{" "}
             <span className="text-[#1E293B] font-medium">Jamais partagé ni revendu.</span>
           </p>
         </div>
@@ -186,7 +186,7 @@ export default function Step1Contact({
               !isFormValid && !isSubmitting ? "opacity-50 cursor-not-allowed" : ""
             } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <span>{isSubmitting ? "Création en cours..." : "Commencer ma demande"}</span>
+            <span>{isSubmitting ? "Création du dossier..." : "Commencer mon dossier"}</span>
             {!isSubmitting && (
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             )}

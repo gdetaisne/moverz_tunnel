@@ -196,7 +196,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
         </div>
 
         <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] mb-3 md:mb-4 leading-tight">
-          Volume, formule & services
+          Choisissez votre niveau de service
         </h2>
         
         <p className="hidden md:block text-lg text-[#1E293B]/70 leading-relaxed">
@@ -547,14 +547,14 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
             !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          <span>{props.isSubmitting ? "Enregistrement..." : "Valider et obtenir mes devis"}</span>
+          <span>{props.isSubmitting ? "Envoi du dossier..." : "Envoyer mon dossier"}</span>
           {!props.isSubmitting && (
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           )}
         </button>
 
         <p className="text-center text-sm text-[#1E293B]/60">
-          ⏱️ Dernière étape avant vos devis personnalisés
+          Votre dossier sera transmis à des déménageurs sélectionnés
         </p>
       </form>
     </div>

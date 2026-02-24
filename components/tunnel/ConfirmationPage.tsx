@@ -128,8 +128,11 @@ export default function ConfirmationPage({
         </div>
 
         <h1 className="text-3xl md:text-5xl font-black text-[#0F172A] leading-[1.1]">
-          Bravo{firstName?.trim() ? ` ${firstName.trim()}` : ""}
+          Dossier envoyé{firstName?.trim() ? `, ${firstName.trim()}` : ""} !
         </h1>
+        <p className="text-lg text-[#1E293B]/70">
+          Votre dossier de mise en concurrence est entre les mains des déménageurs.
+        </p>
       </div>
 
       <div className="rounded-2xl border border-[#E3E5E8] bg-white p-5 md:p-6">
