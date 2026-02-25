@@ -1731,7 +1731,7 @@ function DevisGratuitsV3Content() {
               destinationUnknown={state.destinationUnknown}
               movingDate={state.movingDate}
               dateFlexible={state.dateFlexible}
-              access_details={state.access_details}
+              access_details={state.access_details || ""}
               onFieldChange={(field, value) => updateField(field as any, value)}
               onSubmit={handleSubmitStep2}
               isSubmitting={false}
