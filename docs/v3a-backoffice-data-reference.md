@@ -387,13 +387,13 @@ scale = clamp((V/10)^(-0.15), 0.75, 1.05)
 
 Les gros volumes bénéficient d'un €/m³ légèrement plus bas.
 
-### Provision Moverz
+### Commission Moverz
 
 ```
-fee = max(100€, 10% du prix centre)
+fee = max(100€, 10% du centre de la formule choisie hors commission)
 ```
 
-Le prix affiché au client inclut la provision Moverz. Le `moverBasePriceEur` dans le snapshot est le prix **hors** provision.
+**Les prix affichés au client incluent la commission Moverz** (min, centre, max). Le `moverBasePriceEur` dans le snapshot est le prix déménageur **hors** commission. La fee est calculée par formule : chaque formule a sa propre fee basée sur son propre centre.
 
 ---
 

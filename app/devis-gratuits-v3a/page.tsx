@@ -880,9 +880,18 @@ function DevisGratuitsV3Content() {
     };
 
     const formules: PricingFormuleType[] = ["ECONOMIQUE", "STANDARD", "PREMIUM"];
-    return formules.reduce<Record<PricingFormuleType, ReturnType<typeof calculatePricing>>>(
+    return formules.reduce<Record<PricingFormuleType, ReturnType<typeof calculatePricing> & { moverzFeeEur: number }>>(
       (acc, formule) => {
-        acc[formule] = calculatePricing({ ...baseInput, formule });
+        const raw = calculatePricing({ ...baseInput, formule });
+        const centerBeforeFee = getDisplayedCenter(raw.prixMin, raw.prixMax);
+        const fee = computeMoverzFeeProvision(centerBeforeFee);
+        acc[formule] = {
+          ...raw,
+          prixMin: raw.prixMin + fee,
+          prixFinal: raw.prixFinal + fee,
+          prixMax: raw.prixMax + fee,
+          moverzFeeEur: fee,
+        };
         return acc;
       },
       {} as any
@@ -1613,9 +1622,9 @@ function DevisGratuitsV3Content() {
         const deltaServicesEur = center(sServices) - center(sKitchen);
         const deltaFormuleEur = center(sFormule) - center(sServices);
 
-        const centerBeforeProvision = center(sFormule);
-        const moverzFeeProvisionEur = computeMoverzFeeProvision(centerBeforeProvision);
-        const refinedCenterEur = centerBeforeProvision + moverzFeeProvisionEur;
+        const centerMoverPrice = center(sFormule);
+        const moverzFeeProvisionEur = pricingForSubmit.moverzFeeEur;
+        const refinedCenterEur = centerMoverPrice + moverzFeeProvisionEur;
 
         const pricingSnapshot = {
           capturedAt: new Date().toISOString(),
@@ -1654,7 +1663,7 @@ function DevisGratuitsV3Content() {
           refinedCenterEur,
           moverBasePriceEur,
           moverzFeeProvisionEur,
-          moverzFeeProvisionRule: "MAX(100;10% du montant estimé)",
+          moverzFeeProvisionRule: "MAX(100;10% du centre formule choisie)",
           firstEstimateMinEur: pricingForSubmit.prixMin,
           firstEstimateMaxEur: pricingForSubmit.prixMax,
           firstEstimateCenterEur: refinedCenterEur,
@@ -1764,7 +1773,7 @@ function DevisGratuitsV3Content() {
                 [state.formule]: {
                   prixMin: pricingForSubmit.prixMin,
                   prixMax: pricingForSubmit.prixMax,
-                  prixFinal: centerBeforeProvision,
+                  prixFinal: refinedCenterEur,
                   volumeM3: pricingForSubmit.volumeM3,
                 },
               },
