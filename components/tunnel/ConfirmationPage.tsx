@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Mail, RotateCcw, Pencil } from "lucide-react";
+import { Mail, RotateCcw, Pencil } from "lucide-react";
 import { requestBackofficeConfirmation, updateBackofficeLead } from "@/lib/api/client";
 
 interface ConfirmationPageProps {
@@ -122,16 +122,16 @@ export default function ConfirmationPage({
   return (
     <div className="max-w-3xl mx-auto">
       <div className="text-center space-y-4 mb-10">
-        <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
-          <Check className="w-3.5 h-3.5" strokeWidth={3} />
-          Dossier créé
+        <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+          <Mail className="w-3.5 h-3.5" strokeWidth={3} />
+          Validation email requise
         </div>
 
         <h1 className="text-3xl md:text-5xl font-black text-[#0F172A] leading-[1.1]">
-          Dossier envoyé{firstName?.trim() ? `, ${firstName.trim()}` : ""} !
+          Plus qu'une étape{firstName?.trim() ? `, ${firstName.trim()}` : ""} !
         </h1>
         <p className="text-lg text-[#1E293B]/70">
-          Votre dossier de mise en concurrence est entre les mains des déménageurs.
+          Confirmez votre email pour que votre dossier soit transmis aux déménageurs.
         </p>
       </div>
 

@@ -32,6 +32,21 @@
 - Base neutre : distance OSRM réelle, density=normal, RDC, pas de services.
 - `refinedCenterEur` = center avant provision + provision (MAX(100;10%)).
 
+**2026-02-24 — v3a Step2 (accès/date/box) + pricing “comme v3”** :
+- **Étages (appartement)** : options `RDC, 1er, 2e, 3e, 4e, 5e, 6e et plus`.
+- **Ascenseur et accès** (Départ + Arrivée) :
+  - Appartement et étage > RDC : `Ascenseur > 3 places`, `Petit ascenseur`, `Pas d’ascenseur`, `Autre`.
+  - Maison / RDC / Box : `Accès simple`, `Accès compliqué`, `Autre`.
+  - `Autre` affiche un champ global **obligatoire** “Décrivez les contraintes d’accès” (min 10 caractères) et alimente `access_details` (dans `accessV2`).
+  - Sync automatique vers `accessV2` (`access_type`, `narrow_access`, `long_carry`, `difficult_parking`, `lift_required`).
+- **Box** : choix “Box” disponible départ + arrivée; si **Box départ**, un input **volume exact** (m³) est requis.
+- **DatePickerFr (v3a uniquement)** : ouverture au clic sur le champ et démarrage systématique en vue “mois”.
+- **Pricing v3a aligné v3** :
+  - `calculatePricing` reçoit `longCarry`, `difficultParking`, `tightAccess` depuis `accessV2`.
+  - Cuisine : `extraVolumeM3` (baseline 3 équipements si non renseigné, delta si renseigné), et `volumeAdjustments` envoyé si l’utilisateur a touché la cuisine.
+  - Box : surface effective dérivée du volume exact (comme v3) et archivage `boxExactVolumeM3` dans `volumeAdjustments`.
+  - `pricingSnapshot.lines[]` inclut aussi des lignes **Cuisine** (delta) et **Box** (statut).
+
 ---
 
 ## 2026-02-17 — API estimate: géocodage aligné tunnel (ville + CP)

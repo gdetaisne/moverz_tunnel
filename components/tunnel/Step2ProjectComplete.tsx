@@ -13,6 +13,7 @@ interface Step2ProjectCompleteProps {
   originLat: number | null;
   originLon: number | null;
   originHousingType: string;
+  originBoxVolumeM3: string;
   originFloor: string;
   originElevator: string;
   originAccess: string;
@@ -40,6 +41,9 @@ interface Step2ProjectCompleteProps {
   // Date
   movingDate: string;
   dateFlexible: boolean;
+
+  // Accès V2 (global) + description (si "Autre")
+  access_details: string;
   
   onFieldChange: (field: string, value: any) => void;
   onSubmit: (e: FormEvent) => void;
@@ -64,7 +68,10 @@ const FLOOR_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "0", label: "RDC" },
   { value: "1", label: "1er" },
   { value: "2", label: "2e" },
-  { value: "3", label: "Au‑delà" }, // 3+ étages
+  { value: "3", label: "3e" },
+  { value: "4", label: "4e" },
+  { value: "5", label: "5e" },
+  { value: "6", label: "6e et plus" },
 ];
 
 export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
@@ -77,221 +84,102 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.destinationUnknown]);
 
-  // Si l'accès n'est pas "Contraint", on s'assure que les options "monte-meuble" ne restent pas
-  // activées par erreur (session restaurée / aller-retour), car elles ne sont pas visibles.
-  useEffect(() => {
-    if (props.originAccess !== "constrained" && props.originFurnitureLift === "yes") {
-      props.onFieldChange("originFurnitureLift", "no");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.originAccess, props.originFurnitureLift]);
-
-  useEffect(() => {
-    if (
-      props.destinationAccess !== "constrained" &&
-      props.destinationFurnitureLift === "yes"
-    ) {
-      props.onFieldChange("destinationFurnitureLift", "no");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.destinationAccess, props.destinationFurnitureLift]);
-
-  const renderConstrainedOptions = (which: "origin" | "destination") => {
-    const prefix = which === "origin" ? "origin" : "destination";
-    const access = which === "origin" ? props.originAccess : props.destinationAccess;
-    const furnitureLift =
-      which === "origin" ? props.originFurnitureLift : props.destinationFurnitureLift;
-    const carryDistance =
-      which === "origin" ? props.originCarryDistance : props.destinationCarryDistance;
-    const parkingAuth =
-      which === "origin" ? props.originParkingAuth : props.destinationParkingAuth;
-    const tightAccess =
-      which === "origin" ? props.originTightAccess : props.destinationTightAccess;
-    const housingType =
-      which === "origin" ? props.originHousingType : props.destinationHousingType;
-    const isHouse = housingType === "house";
-    const floor = which === "origin" ? props.originFloor : props.destinationFloor;
-    const elevator = which === "origin" ? props.originElevator : props.destinationElevator;
-
-    if (access !== "constrained") return null;
-
-    const portageEnabled = carryDistance !== "";
-    const monteMeubleEnabled = furnitureLift === "yes";
-
-    const YesNo = (props2: {
-      value: boolean;
-      onChange: (v: boolean) => void;
-      yesLabel?: string;
-      noLabel?: string;
-    }) => (
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => props2.onChange(false)}
-          className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-            props2.value === false
-              ? "bg-[#0F172A] text-white"
-              : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-          }`}
-        >
-          {props2.noLabel ?? "Non"}
-        </button>
-        <button
-          type="button"
-          onClick={() => props2.onChange(true)}
-          className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-            props2.value === true
-              ? "bg-[#6BCFCF] text-white"
-              : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-          }`}
-        >
-          {props2.yesLabel ?? "Oui"}
-        </button>
-      </div>
-    );
-
-    return (
-      <div className="mt-4 space-y-4 rounded-xl border border-[#E3E5E8] bg-white p-4">
-        <div>
-          <p className="text-sm font-semibold text-[#0F172A]">Détails d’accès</p>
-          <p className="text-xs text-[#1E293B]/60">
-            Uniquement si l’accès est difficile (pour affiner le devis).
-          </p>
-        </div>
-
-        {/* 1 option par ligne */}
-        <div className="space-y-3">
-          {/* Appartement: ordre demandé */}
-          {!isHouse && (
-            <>
-              {/* Petit ascenseur / passages serrés */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">
-                    Petit ascenseur / passages serrés
-                  </p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={Boolean(tightAccess)}
-                    onChange={(v) => props.onFieldChange(`${prefix}TightAccess`, v)}
-                  />
-                </div>
-              </div>
-
-              {/* Monte-meuble (ouvre seulement si passages serrés = Oui) */}
-              {tightAccess && (
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#0F172A]">Besoin d’un monte‑meuble</p>
-                  </div>
-                  <div className="w-44">
-                    <YesNo
-                      value={monteMeubleEnabled}
-                      onChange={(v) =>
-                        props.onFieldChange(`${prefix}FurnitureLift`, v ? "yes" : "no")
-                      }
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Portage > 10m */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Portage &gt; 10 m</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={portageEnabled}
-                    onChange={(v) =>
-                      props.onFieldChange(`${prefix}CarryDistance`, v ? CARRY_DISTANCE_ON_VALUE : "")
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Stationnement compliqué */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Stationnement compliqué</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={Boolean(parkingAuth)}
-                    onChange={(v) => props.onFieldChange(`${prefix}ParkingAuth`, v)}
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Maison: ordre demandé */}
-          {isHouse && (
-            <>
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Portage &gt; 10 m</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={portageEnabled}
-                    onChange={(v) =>
-                      props.onFieldChange(`${prefix}CarryDistance`, v ? CARRY_DISTANCE_ON_VALUE : "")
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Stationnement compliqué</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={Boolean(parkingAuth)}
-                    onChange={(v) => props.onFieldChange(`${prefix}ParkingAuth`, v)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Passages serrés</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={Boolean(tightAccess)}
-                    onChange={(v) => props.onFieldChange(`${prefix}TightAccess`, v)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A]">Besoin d’un monte‑meuble</p>
-                </div>
-                <div className="w-44">
-                  <YesNo
-                    value={monteMeubleEnabled}
-                    onChange={(v) =>
-                      props.onFieldChange(`${prefix}FurnitureLift`, v ? "yes" : "no")
-                    }
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
 
   function markTouched(field: string) {
     setTouchedFields((prev) => new Set(prev).add(field));
   }
+
+  const normalizeAccessChoice = (raw: string): "simple" | "complicated" | "other" => {
+    if (raw === "constrained") return "complicated";
+    if (raw === "easy") return "simple";
+    if (raw === "simple" || raw === "complicated" || raw === "other") return raw;
+    return "simple";
+  };
+
+  const computeAccessV2FromUi = (params: {
+    originAccess: string;
+    destinationAccess: string;
+    originHousingType: string;
+    destinationHousingType: string;
+    originFloor: string;
+    destinationFloor: string;
+    originElevator: string;
+    destinationElevator: string;
+  }) => {
+    const originAccessChoice = normalizeAccessChoice(params.originAccess);
+    const destinationAccessChoice = normalizeAccessChoice(params.destinationAccess);
+    const originFloorNum = Number.parseInt(params.originFloor || "0", 10) || 0;
+    const destinationFloorNum = Number.parseInt(params.destinationFloor || "0", 10) || 0;
+    const originIsHouseLike = params.originHousingType === "house" || params.originHousingType === "box" || originFloorNum === 0;
+    const destIsHouseLike = params.destinationHousingType === "house" || params.destinationHousingType === "box" || destinationFloorNum === 0;
+
+    const originElevatorIsSmall = params.originElevator === "small" || params.originElevator === "partial";
+    const destElevatorIsSmall = params.destinationElevator === "small" || params.destinationElevator === "partial";
+
+    const anyOther =
+      originAccessChoice === "other" ||
+      destinationAccessChoice === "other" ||
+      params.originElevator === "other" ||
+      params.destinationElevator === "other";
+
+    const anyComplicated =
+      originAccessChoice === "complicated" || destinationAccessChoice === "complicated";
+
+    // Heuristique simple: on bascule en "constrained" si un accès est compliqué / autre, ou si petit ascenseur.
+    const access_type = anyComplicated || anyOther || originElevatorIsSmall || destElevatorIsSmall ? "constrained" : "simple";
+    const narrow_access = Boolean(originElevatorIsSmall || destElevatorIsSmall || (anyComplicated && (originIsHouseLike || destIsHouseLike)));
+    const long_carry = Boolean(anyComplicated && (originIsHouseLike || destIsHouseLike));
+    const difficult_parking = Boolean(anyComplicated);
+    const lift_required = Boolean(
+      (!originIsHouseLike && originFloorNum >= 4 && params.originElevator === "no") ||
+      (!destIsHouseLike && destinationFloorNum >= 4 && params.destinationElevator === "no")
+    );
+
+    return { access_type, narrow_access, long_carry, difficult_parking, lift_required, anyOther };
+  };
+
+  const syncAccessV2 = (overrides?: Partial<{
+    originAccess: string;
+    destinationAccess: string;
+    originHousingType: string;
+    destinationHousingType: string;
+    originFloor: string;
+    destinationFloor: string;
+    originElevator: string;
+    destinationElevator: string;
+  }>) => {
+    const next = {
+      originAccess: overrides?.originAccess ?? props.originAccess,
+      destinationAccess: overrides?.destinationAccess ?? props.destinationAccess,
+      originHousingType: overrides?.originHousingType ?? props.originHousingType,
+      destinationHousingType: overrides?.destinationHousingType ?? props.destinationHousingType,
+      originFloor: overrides?.originFloor ?? props.originFloor,
+      destinationFloor: overrides?.destinationFloor ?? props.destinationFloor,
+      originElevator: overrides?.originElevator ?? props.originElevator,
+      destinationElevator: overrides?.destinationElevator ?? props.destinationElevator,
+    };
+    const v2 = computeAccessV2FromUi(next);
+    props.onFieldChange("access_type", v2.access_type);
+    props.onFieldChange("narrow_access", v2.narrow_access);
+    props.onFieldChange("long_carry", v2.long_carry);
+    props.onFieldChange("difficult_parking", v2.difficult_parking);
+    props.onFieldChange("lift_required", v2.lift_required);
+
+    // Auto: si 4e+ sans ascenseur => monte-meuble requis (on garde le champ existant pour pricing/payload)
+    const originFloorNum = Number.parseInt(next.originFloor || "0", 10) || 0;
+    const destFloorNum = Number.parseInt(next.destinationFloor || "0", 10) || 0;
+    const originNeedsLift = originFloorNum >= 4 && next.originElevator === "no" && next.originHousingType !== "house" && next.originHousingType !== "box";
+    const destNeedsLift = destFloorNum >= 4 && next.destinationElevator === "no" && next.destinationHousingType !== "house" && next.destinationHousingType !== "box";
+    if (originNeedsLift) props.onFieldChange("originFurnitureLift", "yes");
+    if (destNeedsLift) props.onFieldChange("destinationFurnitureLift", "yes");
+  };
+
+  // Init: reflète l'état UI dans accessV2 (global) dès l'arrivée sur l'étape.
+  useEffect(() => {
+    syncAccessV2();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const MIN_DAYS_AHEAD = 14;
   const minMovingDate = (() => {
@@ -305,8 +193,12 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
   // Avec l'autocomplete adresse (FR + Europe), on valide d'abord l'adresse + le logement.
   // Le CP/ville peuvent être absents/incomplets (cas étranger) sans bloquer le parcours.
+  const originBoxVolumeOk =
+    !originIsBox || (Number.parseFloat(String(props.originBoxVolumeM3 || "")) > 0);
   const isOriginValid =
-    props.originAddress.trim().length >= 5 && props.originHousingType.length > 0;
+    props.originAddress.trim().length >= 5 &&
+    props.originHousingType.length > 0 &&
+    originBoxVolumeOk;
     
   const isDestinationValid =
     props.destinationAddress.trim().length >= 5 &&
@@ -316,12 +208,14 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   const isFormValid = isOriginValid && isDestinationValid && isDateValid;
   const originIsHouse = props.originHousingType === "house";
   const destinationIsHouse = props.destinationHousingType === "house";
-  const originIsApartment = !originIsHouse && !!props.originHousingType;
-  const destinationIsApartment = !destinationIsHouse && !!props.destinationHousingType;
+  const originIsBox = props.originHousingType === "box";
+  const destinationIsBox = props.destinationHousingType === "box";
+  const originIsApartment = !originIsHouse && !originIsBox && !!props.originHousingType;
+  const destinationIsApartment = !destinationIsHouse && !destinationIsBox && !!props.destinationHousingType;
 
   const setHousingCategory = (
     which: "origin" | "destination",
-    category: "apartment" | "house"
+    category: "apartment" | "house" | "box"
   ) => {
     const prefix = which === "origin" ? "origin" : "destination";
     const current =
@@ -339,9 +233,20 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
       return;
     }
 
+    if (category === "box") {
+      markTouched(`${prefix}HousingType`);
+      props.onFieldChange(`${prefix}HousingType`, "box");
+      props.onFieldChange(`${prefix}Floor`, "");
+      props.onFieldChange(`${prefix}Elevator`, "none");
+      props.onFieldChange(`${prefix}FurnitureLift`, "no");
+      props.onFieldChange(`${prefix}TightAccess`, false);
+      syncAccessV2(which === "origin" ? { originHousingType: "box" } : { destinationHousingType: "box" });
+      return;
+    }
+
     // apartment
     markTouched(`${prefix}HousingType`);
-    if (current && current !== "house") return; // on conserve la taille si déjà choisie
+    if (current && current !== "house" && current !== "box") return; // on conserve la taille si déjà choisie
     // Valeur par défaut (rapide) si on bascule depuis Maison / vide
     props.onFieldChange(`${prefix}HousingType`, "t2");
   };
@@ -349,11 +254,27 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   const missingFields: Array<{ id: string; label: string }> = [];
   if (props.originAddress.trim().length < 5) missingFields.push({ id: "origin-address", label: "Adresse départ" });
   if (!props.originHousingType) missingFields.push({ id: "origin-housingType", label: "Logement départ" });
+  if (originIsBox && !originBoxVolumeOk) missingFields.push({ id: "origin-box-volume", label: "Volume box départ" });
   if (!props.destinationUnknown) {
     if (props.destinationAddress.trim().length < 5) missingFields.push({ id: "destination-address", label: "Adresse arrivée" });
     if (!props.destinationHousingType) missingFields.push({ id: "destination-housingType", label: "Logement arrivée" });
   }
   if (!isDateValid) missingFields.push({ id: "movingDate", label: "Date" });
+  {
+    const v2 = computeAccessV2FromUi({
+      originAccess: props.originAccess,
+      destinationAccess: props.destinationAccess,
+      originHousingType: props.originHousingType,
+      destinationHousingType: props.destinationHousingType,
+      originFloor: props.originFloor,
+      destinationFloor: props.destinationFloor,
+      originElevator: props.originElevator,
+      destinationElevator: props.destinationElevator,
+    });
+    if (v2.anyOther && (props.access_details || "").trim().length < 10) {
+      missingFields.push({ id: "access-details", label: "Contraintes d’accès" });
+    }
+  }
 
   const showErrors = Boolean(props.showValidation);
 
@@ -440,7 +361,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             <label className="block text-sm font-medium text-[#0F172A] mb-2">Type de logement *</label>
 
             {/* Catégorie */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => setHousingCategory("origin", "apartment")}
@@ -463,10 +384,21 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               >
                 Maison
               </button>
+              <button
+                type="button"
+                onClick={() => setHousingCategory("origin", "box")}
+                className={`px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
+                  originIsBox
+                    ? "bg-[#6BCFCF] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                }`}
+              >
+                Box
+              </button>
             </div>
 
             {/* Taille (appartement) */}
-            {!originIsHouse && (
+            {originIsApartment && (
               <div className="mt-3 grid grid-cols-3 gap-2">
                 {HOUSING_TYPES.map((type) => (
                   <button
@@ -496,75 +428,114 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             )}
           </div>
 
-          {/* Étage + Ascenseur (Appartement uniquement) */}
-          {!originIsHouse && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
-                <select
-                  value={props.originFloor || "0"}
-                  onChange={(e) => props.onFieldChange("originFloor", e.target.value)}
-                  className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                >
-                  {FLOOR_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
-                <select
-                  value={props.originElevator}
-                  onChange={(e) => props.onFieldChange("originElevator", e.target.value)}
-                  className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                >
-                  <option value="none">Non renseigné</option>
-                  <option value="yes">Oui</option>
-                  <option value="no">Non</option>
-                </select>
-              </div>
+          {/* Box (départ): volume exact */}
+          {originIsBox && (
+            <div id="origin-box-volume">
+              <label className="block text-sm font-medium text-[#0F172A] mb-2">
+                Volume exact du box (m³) *
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={1}
+                step={0.1}
+                value={props.originBoxVolumeM3 || ""}
+                onChange={(e) => {
+                  markTouched("originBoxVolumeM3");
+                  props.onFieldChange("originBoxVolumeM3", e.target.value);
+                }}
+                placeholder="Ex: 8"
+                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+              />
+              {(showErrors || touchedFields.has("originBoxVolumeM3")) &&
+                (!props.originBoxVolumeM3 ||
+                  Number.parseFloat(String(props.originBoxVolumeM3)) <= 0) && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    Volume obligatoire
+                  </p>
+                )}
             </div>
           )}
 
-          {/* Accès */}
-          <div>
-            <label className="block text-sm font-medium text-[#0F172A] mb-2">Accès</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  // Reset immédiat des options "accès contraint" (sinon elles restent actives mais invisibles)
-                  props.onFieldChange("originAccess", "easy");
-                  props.onFieldChange("originFurnitureLift", "no");
-                  props.onFieldChange("originCarryDistance", "");
-                  props.onFieldChange("originParkingAuth", false);
-                  props.onFieldChange("originTightAccess", false);
-                }}
-                className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  props.originAccess === "easy"
-                    ? "bg-[#6BCFCF] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                }`}
-              >
-                Facile
-              </button>
-              <button
-                type="button"
-                onClick={() => props.onFieldChange("originAccess", "constrained")}
-                className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  props.originAccess === "constrained"
-                    ? "bg-[#6BCFCF] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                }`}
-              >
-                Contraint
-              </button>
-            </div>
+          {/* Étage + Ascenseur et accès */}
+          {(() => {
+            const originIsBox = props.originHousingType === "box";
+            const originIsApartmentEffective = !originIsHouse && !originIsBox && !!props.originHousingType;
+            const originFloorNum = Number.parseInt(props.originFloor || "0", 10) || 0;
+            const showFloor = originIsApartmentEffective;
+            const showElevatorChoices = originIsApartmentEffective && originFloorNum > 0;
+            const showAccessChoices = originIsHouse || originIsBox || (originIsApartmentEffective && originFloorNum === 0);
+            const originAccessChoice = normalizeAccessChoice(props.originAccess);
 
-            {renderConstrainedOptions("origin")}
-          </div>
+            return (
+              <div className="space-y-3">
+                {showFloor && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
+                    <select
+                      value={props.originFloor || "0"}
+                      onChange={(e) => {
+                        const nextFloor = e.target.value;
+                        props.onFieldChange("originFloor", nextFloor);
+                        // Si on passe à RDC, l'ascenseur n'est plus pertinent
+                        if ((Number.parseInt(nextFloor || "0", 10) || 0) === 0) {
+                          props.onFieldChange("originElevator", "none");
+                        }
+                        syncAccessV2({ originFloor: nextFloor, originElevator: (Number.parseInt(nextFloor || "0", 10) || 0) === 0 ? "none" : props.originElevator });
+                      }}
+                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                    >
+                      {FLOOR_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur et accès</label>
+
+                  {showElevatorChoices ? (
+                    <select
+                      value={props.originElevator || "none"}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        props.onFieldChange("originElevator", next);
+                        // Auto: 4e+ sans ascenseur => monte-meuble requis
+                        const f = Number.parseInt(props.originFloor || "0", 10) || 0;
+                        if (next === "no" && f >= 4) props.onFieldChange("originFurnitureLift", "yes");
+                        else props.onFieldChange("originFurnitureLift", "no");
+                        syncAccessV2({ originElevator: next });
+                      }}
+                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                    >
+                      <option value="yes">Ascenseur &gt; 3 places</option>
+                      <option value="small">Petit ascenseur</option>
+                      <option value="no">Pas d’ascenseur</option>
+                      <option value="other">Autre</option>
+                    </select>
+                  ) : showAccessChoices ? (
+                    <select
+                      value={originAccessChoice}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        props.onFieldChange("originAccess", next);
+                        syncAccessV2({ originAccess: next });
+                      }}
+                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                    >
+                      <option value="simple">Accès simple</option>
+                      <option value="complicated">Accès compliqué</option>
+                      <option value="other">Autre</option>
+                    </select>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* === ARRIVÉE === */}
@@ -619,7 +590,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 <label className="block text-sm font-medium text-[#0F172A] mb-2">Type de logement *</label>
 
                 {/* Catégorie */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <button
                     type="button"
                     onClick={() => setHousingCategory("destination", "apartment")}
@@ -642,10 +613,21 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   >
                     Maison
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setHousingCategory("destination", "box")}
+                    className={`px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
+                      destinationIsBox
+                        ? "bg-[#6BCFCF] text-white"
+                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    }`}
+                  >
+                    Box
+                  </button>
                 </div>
 
                 {/* Taille (appartement) */}
-                {!destinationIsHouse && (
+            {destinationIsApartment && (
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {HOUSING_TYPES.map((type) => (
                       <button
@@ -676,76 +658,149 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   )}
               </div>
 
-              {/* Étage + Ascenseur (Appartement uniquement) */}
-              {!destinationIsHouse && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
-                    <select
-                      value={props.destinationFloor || "0"}
-                      onChange={(e) => props.onFieldChange("destinationFloor", e.target.value)}
-                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                    >
-                      {FLOOR_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur</label>
-                    <select
-                      value={props.destinationElevator}
-                      onChange={(e) => props.onFieldChange("destinationElevator", e.target.value)}
-                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                    >
-                      <option value="none">Non renseigné</option>
-                      <option value="yes">Oui</option>
-                      <option value="no">Non</option>
-                    </select>
-                  </div>
-                </div>
-              )}
+              {/* Étage + Ascenseur et accès */}
+              {(() => {
+                const destinationIsBox = props.destinationHousingType === "box";
+                const destinationIsApartmentEffective =
+                  !destinationIsHouse && !destinationIsBox && !!props.destinationHousingType;
+                const destinationFloorNum = Number.parseInt(props.destinationFloor || "0", 10) || 0;
+                const showFloor = destinationIsApartmentEffective;
+                const showElevatorChoices = destinationIsApartmentEffective && destinationFloorNum > 0;
+                const showAccessChoices =
+                  destinationIsHouse ||
+                  destinationIsBox ||
+                  (destinationIsApartmentEffective && destinationFloorNum === 0);
+                const destinationAccessChoice = normalizeAccessChoice(props.destinationAccess);
 
-              {/* Accès */}
-              <div>
-                <label className="block text-sm font-medium text-[#0F172A] mb-2">Accès</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      props.onFieldChange("destinationAccess", "easy");
-                      props.onFieldChange("destinationFurnitureLift", "no");
-                      props.onFieldChange("destinationCarryDistance", "");
-                      props.onFieldChange("destinationParkingAuth", false);
-                      props.onFieldChange("destinationTightAccess", false);
-                    }}
-                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      props.destinationAccess === "easy"
-                        ? "bg-[#6BCFCF] text-white"
-                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                    }`}
-                  >
-                    Facile
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => props.onFieldChange("destinationAccess", "constrained")}
-                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      props.destinationAccess === "constrained"
-                        ? "bg-[#6BCFCF] text-white"
-                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                    }`}
-                  >
-                    Contraint
-                  </button>
-                </div>
+                return (
+                  <div className="space-y-3">
+                    {showFloor && (
+                      <div>
+                        <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
+                        <select
+                          value={props.destinationFloor || "0"}
+                          onChange={(e) => {
+                            const nextFloor = e.target.value;
+                            props.onFieldChange("destinationFloor", nextFloor);
+                            if ((Number.parseInt(nextFloor || "0", 10) || 0) === 0) {
+                              props.onFieldChange("destinationElevator", "none");
+                            }
+                            syncAccessV2({
+                              destinationFloor: nextFloor,
+                              destinationElevator:
+                                (Number.parseInt(nextFloor || "0", 10) || 0) === 0
+                                  ? "none"
+                                  : props.destinationElevator,
+                            });
+                          }}
+                          className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                        >
+                          {FLOOR_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
-                {renderConstrainedOptions("destination")}
-              </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur et accès</label>
+
+                      {showElevatorChoices ? (
+                        <select
+                          value={props.destinationElevator || "none"}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            props.onFieldChange("destinationElevator", next);
+                            const f = Number.parseInt(props.destinationFloor || "0", 10) || 0;
+                            if (next === "no" && f >= 4) props.onFieldChange("destinationFurnitureLift", "yes");
+                            else props.onFieldChange("destinationFurnitureLift", "no");
+                            syncAccessV2({ destinationElevator: next });
+                          }}
+                          className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                        >
+                          <option value="yes">Ascenseur &gt; 3 places</option>
+                          <option value="small">Petit ascenseur</option>
+                          <option value="no">Pas d’ascenseur</option>
+                          <option value="other">Autre</option>
+                        </select>
+                      ) : showAccessChoices ? (
+                        <select
+                          value={destinationAccessChoice}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            props.onFieldChange("destinationAccess", next);
+                            syncAccessV2({ destinationAccess: next });
+                          }}
+                          className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                        >
+                          <option value="simple">Accès simple</option>
+                          <option value="complicated">Accès compliqué</option>
+                          <option value="other">Autre</option>
+                        </select>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })()}
           </>
         </div>
+
+        {/* Autre: contraintes d'accès (global) */}
+        {(() => {
+          const v2 = computeAccessV2FromUi({
+            originAccess: props.originAccess,
+            destinationAccess: props.destinationAccess,
+            originHousingType: props.originHousingType,
+            destinationHousingType: props.destinationHousingType,
+            originFloor: props.originFloor,
+            destinationFloor: props.destinationFloor,
+            originElevator: props.originElevator,
+            destinationElevator: props.destinationElevator,
+          });
+          if (!v2.anyOther) return null;
+
+          const placeholder = [
+            "Exemples :",
+            "- Maison : « portail < 2,5 m, portage > 10 m, accès camion compliqué »",
+            "- Appartement : « il faut prévoir un camion 30 m³ pour bloquer une rue, impossible de se garer devant »",
+          ].join("\n");
+
+          const needsDetails =
+            v2.anyOther && (props.access_details || "").trim().length < 10;
+
+          return (
+            <div className="pt-6 border-t border-[#E3E5E8] space-y-3 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
+              <div className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-[#6BCFCF]" />
+                <h3 className="text-lg font-bold text-[#0F172A]">Contraintes d’accès</h3>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#0F172A] mb-2">
+                  Décrivez les contraintes d’accès *
+                </label>
+                <textarea
+                  id="access-details"
+                  value={props.access_details || ""}
+                  onChange={(e) => {
+                    markTouched("access_details");
+                    props.onFieldChange("access_details", e.target.value);
+                  }}
+                  rows={4}
+                  placeholder={placeholder}
+                  className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/50 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                />
+                {(showErrors || touchedFields.has("access_details")) && needsDetails && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    Merci de préciser (au moins 10 caractères).
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* === DATE === */}
         <div className="pt-6 border-t border-[#E3E5E8] space-y-4 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
@@ -766,6 +821,8 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               min={minMovingDate}
               error={(showErrors || touchedFields.has("movingDate")) && !isDateValid}
               defaultOpen={false}
+              startPhase="months"
+              openOnFieldClick
             />
           </div>
 

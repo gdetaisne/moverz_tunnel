@@ -104,6 +104,8 @@ export function DatePickerFr({
   min,
   error,
   defaultOpen = false,
+  startPhase = "months",
+  openOnFieldClick = false,
 }: {
   id: string;
   value: string;
@@ -111,6 +113,8 @@ export function DatePickerFr({
   min?: string;
   error?: boolean;
   defaultOpen?: boolean;
+  startPhase?: "months" | "days";
+  openOnFieldClick?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [manualInput, setManualInput] = useState("");
@@ -131,23 +135,18 @@ export function DatePickerFr({
   // Quand on ouvre, reset à la bonne phase
   useEffect(() => {
     if (open) {
-      if (value) {
-        const dt = parseIsoDate(value);
-        if (dt) {
-          setSelectedYear(dt.getUTCFullYear());
-          setSelectedMonth0(dt.getUTCMonth());
-          setPhase("days");
-          return;
-        }
-      }
-      // Pas de valeur → commencer par les mois
-      const base = minDate ?? new Date();
+      const fromValue = value ? parseIsoDate(value) : null;
+      const base = fromValue ?? minDate ?? new Date();
       setSelectedYear(base.getUTCFullYear());
-      setSelectedMonth0(null);
-      setPhase("months");
+      if (startPhase === "days") {
+        setSelectedMonth0(base.getUTCMonth());
+        setPhase("days");
+      } else {
+        setSelectedMonth0(null);
+        setPhase("months");
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, value, minDate, startPhase]);
 
   // Fermeture au clic extérieur
   useEffect(() => {
@@ -273,6 +272,13 @@ export function DatePickerFr({
             ? "border-[#EF4444] focus-within:ring-2 focus-within:ring-[#EF4444]/15"
             : "border-[#E3E5E8] hover:border-[#6BCFCF] focus-within:ring-2 focus-within:ring-[#6BCFCF]/20",
         ].join(" ")}
+        onClick={
+          openOnFieldClick
+            ? () => {
+                setOpen(true);
+              }
+            : undefined
+        }
       >
         <input
           id={id}
@@ -298,7 +304,10 @@ export function DatePickerFr({
         />
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((v) => !v);
+          }}
           className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#0F172A]/75 hover:bg-[#F8F9FA]"
           aria-label="Ouvrir le calendrier"
           aria-haspopup="dialog"
