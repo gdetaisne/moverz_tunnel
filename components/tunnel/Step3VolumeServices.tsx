@@ -208,7 +208,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
         {/* Surface */}
         <div className="md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
           <label className="block text-sm font-medium text-[#0F172A] mb-2">
-            Surface approximative (m²) *
+            Surface du point de départ, garages et dépendances inclus (m²) *
           </label>
           <div className="relative">
             <input

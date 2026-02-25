@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
-import { MapPin, Home, Calendar, Building2, Layers, ArrowRight, Check, AlertCircle } from "lucide-react";
+import { MapPin, Home, Calendar, Building2, Layers, ArrowRight, Check, AlertCircle, X } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { DatePickerFr } from "./DatePickerFr";
 
@@ -89,6 +89,29 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   function markTouched(field: string) {
     setTouchedFields((prev) => new Set(prev).add(field));
   }
+
+  const BLOCK_ORDER = ["origin-addr", "origin-housing", "dest-addr", "dest-housing", "access", "date"];
+
+  const [visitedBlocks, setVisitedBlocks] = useState<Set<string>>(new Set());
+
+  const markVisitedUpTo = (blockId: string) => {
+    const idx = BLOCK_ORDER.indexOf(blockId);
+    if (idx <= 0) return;
+    setVisitedBlocks((prev) => {
+      const next = new Set(prev);
+      for (let i = 0; i < idx; i++) next.add(BLOCK_ORDER[i]);
+      if (next.size === prev.size) return prev;
+      return next;
+    });
+  };
+
+  const markAllVisited = () => {
+    setVisitedBlocks((prev) => {
+      const next = new Set(BLOCK_ORDER);
+      if (next.size === prev.size) return prev;
+      return next;
+    });
+  };
 
   const normalizeAccessChoice = (raw: string): "simple" | "complicated" | "other" => {
     if (raw === "constrained") return "complicated";
@@ -212,6 +235,58 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   const isDateValid = props.movingDate.length > 0 && !isMovingDateTooSoon;
   const isFormValid = isOriginValid && isDestinationValid && isDateValid;
 
+  const getBlockStatus = (blockId: string): { valid: boolean; errorMsg: string } | null => {
+    if (!visitedBlocks.has(blockId)) return null;
+    switch (blockId) {
+      case "origin-addr":
+        return props.originAddress.trim().length >= 5
+          ? { valid: true, errorMsg: "" }
+          : { valid: false, errorMsg: "Adresse de départ manquante" };
+      case "origin-housing":
+        if (!props.originHousingType) return { valid: false, errorMsg: "Type de logement manquant" };
+        if (originIsBox && !originBoxVolumeOk) return { valid: false, errorMsg: "Volume du box manquant" };
+        return { valid: true, errorMsg: "" };
+      case "dest-addr":
+        return props.destinationAddress.trim().length >= 5
+          ? { valid: true, errorMsg: "" }
+          : { valid: false, errorMsg: "Adresse d'arrivée manquante" };
+      case "dest-housing":
+        return props.destinationHousingType.length > 0
+          ? { valid: true, errorMsg: "" }
+          : { valid: false, errorMsg: "Type de logement manquant" };
+      case "access":
+        return (props.access_details || "").trim().length >= 10
+          ? { valid: true, errorMsg: "" }
+          : { valid: false, errorMsg: "Précisez les contraintes (min. 10 car.)" };
+      case "date":
+        if (!props.movingDate) return { valid: false, errorMsg: "Date manquante" };
+        if (isMovingDateTooSoon) return { valid: false, errorMsg: `Date trop proche (min. ${MIN_DAYS_AHEAD}j)` };
+        return { valid: true, errorMsg: "" };
+      default:
+        return null;
+    }
+  };
+
+  const BlockBadge = ({ blockId }: { blockId: string }) => {
+    const status = getBlockStatus(blockId);
+    if (!status) return null;
+    if (status.valid) {
+      return (
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 shrink-0">
+          <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 shrink-0">
+          <X className="w-4 h-4 text-red-600" strokeWidth={3} />
+        </span>
+        <span className="text-xs text-red-600">{status.errorMsg}</span>
+      </span>
+    );
+  };
+
   const setHousingCategory = (
     which: "origin" | "destination",
     category: "apartment" | "house" | "box"
@@ -236,7 +311,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
       markTouched(`${prefix}HousingType`);
       props.onFieldChange(`${prefix}HousingType`, "box");
       props.onFieldChange(`${prefix}Floor`, "");
-      props.onFieldChange(`${prefix}Elevator`, "none");
+      props.onFieldChange(`${prefix}Elevator`, "");
       props.onFieldChange(`${prefix}FurnitureLift`, "no");
       props.onFieldChange(`${prefix}TightAccess`, false);
       syncAccessV2(which === "origin" ? { originHousingType: "box" } : { destinationHousingType: "box" });
@@ -318,6 +393,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           {/* Adresse (1 champ) */}
           <AddressAutocomplete
             label="Adresse de départ *"
+            labelSuffix={<BlockBadge blockId="origin-addr" />}
             placeholder="10 rue de la Paix, 33000 Bordeaux"
             inputId="origin-address"
             initialValue={
@@ -356,8 +432,11 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           )}
 
           {/* Type de logement */}
-          <div id="origin-housingType">
-            <label className="block text-sm font-medium text-[#0F172A] mb-2">Type de logement *</label>
+          <div id="origin-housingType" onFocusCapture={() => markVisitedUpTo("origin-housing")}>
+            <div className="flex items-center gap-2 mb-2">
+              <label className="text-sm font-medium text-[#0F172A]">Type de logement *</label>
+              <BlockBadge blockId="origin-housing" />
+            </div>
 
             {/* Catégorie */}
             <div className="grid grid-cols-3 gap-3">
@@ -429,7 +508,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
           {/* Box (départ): volume exact */}
           {originIsBox && (
-            <div id="origin-box-volume">
+            <div id="origin-box-volume" onFocusCapture={() => markVisitedUpTo("origin-housing")}>
               <label className="block text-sm font-medium text-[#0F172A] mb-2">
                 Volume exact du box (m³) *
               </label>
@@ -468,23 +547,23 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             const originAccessChoice = normalizeAccessChoice(props.originAccess);
 
             return (
-              <div className="space-y-3">
+              <div className="space-y-3" onFocusCapture={() => markVisitedUpTo("dest-addr")}>
                 {showFloor && (
                   <div>
                     <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
                     <select
-                      value={props.originFloor || "0"}
+                      value={props.originFloor}
                       onChange={(e) => {
                         const nextFloor = e.target.value;
                         props.onFieldChange("originFloor", nextFloor);
-                        // Si on passe à RDC, l'ascenseur n'est plus pertinent
                         if ((Number.parseInt(nextFloor || "0", 10) || 0) === 0) {
-                          props.onFieldChange("originElevator", "none");
+                          props.onFieldChange("originElevator", "");
                         }
-                        syncAccessV2({ originFloor: nextFloor, originElevator: (Number.parseInt(nextFloor || "0", 10) || 0) === 0 ? "none" : props.originElevator });
+                        syncAccessV2({ originFloor: nextFloor, originElevator: (Number.parseInt(nextFloor || "0", 10) || 0) === 0 ? "" : props.originElevator });
                       }}
                       className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
                     >
+                      <option value="" disabled>Sélectionnez</option>
                       {FLOOR_OPTIONS.map((o) => (
                         <option key={o.value} value={o.value}>
                           {o.label}
@@ -499,11 +578,10 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
                   {showElevatorChoices ? (
                     <select
-                      value={props.originElevator || "none"}
+                      value={props.originElevator}
                       onChange={(e) => {
                         const next = e.target.value;
                         props.onFieldChange("originElevator", next);
-                        // Auto: 4e+ sans ascenseur => monte-meuble requis
                         const f = Number.parseInt(props.originFloor || "0", 10) || 0;
                         if (next === "no" && f >= 4) props.onFieldChange("originFurnitureLift", "yes");
                         else props.onFieldChange("originFurnitureLift", "no");
@@ -511,6 +589,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                       }}
                       className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
                     >
+                      <option value="" disabled>Sélectionnez</option>
                       <option value="yes">Ascenseur &gt; 3 places</option>
                       <option value="small">Petit ascenseur</option>
                       <option value="no">Pas d’ascenseur</option>
@@ -518,7 +597,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     </select>
                   ) : showAccessChoices ? (
                     <select
-                      value={originAccessChoice}
+                      value={props.originAccess}
                       onChange={(e) => {
                         const next = e.target.value;
                         props.onFieldChange("originAccess", next);
@@ -526,6 +605,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                       }}
                       className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
                     >
+                      <option value="" disabled>Sélectionnez</option>
                       <option value="simple">Accès simple</option>
                       <option value="complicated">Accès compliqué</option>
                       <option value="other">Autre</option>
@@ -545,8 +625,10 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           </div>
 
           <>
+              <div onFocusCapture={() => markVisitedUpTo("dest-addr")}>
               <AddressAutocomplete
                 label="Adresse d'arrivée *"
+                labelSuffix={<BlockBadge blockId="dest-addr" />}
                 placeholder="20 place Bellecour, 69002 Lyon"
                 inputId="destination-address"
                 initialValue={
@@ -583,10 +665,14 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   {props.destinationLat != null && props.destinationLon != null ? " · coords OK" : " · coords manquantes"}
                 </p>
               )}
+              </div>
 
               {/* Type de logement */}
-              <div id="destination-housingType">
-                <label className="block text-sm font-medium text-[#0F172A] mb-2">Type de logement *</label>
+              <div id="destination-housingType" onFocusCapture={() => markVisitedUpTo("dest-housing")}>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="text-sm font-medium text-[#0F172A]">Type de logement *</label>
+                  <BlockBadge blockId="dest-housing" />
+                </div>
 
                 {/* Catégorie */}
                 <div className="grid grid-cols-3 gap-3">
@@ -672,28 +758,29 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 const destinationAccessChoice = normalizeAccessChoice(props.destinationAccess);
 
                 return (
-                  <div className="space-y-3">
+                  <div className="space-y-3" onFocusCapture={() => markVisitedUpTo("access")}>
                     {showFloor && (
                       <div>
                         <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
                         <select
-                          value={props.destinationFloor || "0"}
+                          value={props.destinationFloor}
                           onChange={(e) => {
                             const nextFloor = e.target.value;
                             props.onFieldChange("destinationFloor", nextFloor);
                             if ((Number.parseInt(nextFloor || "0", 10) || 0) === 0) {
-                              props.onFieldChange("destinationElevator", "none");
+                              props.onFieldChange("destinationElevator", "");
                             }
                             syncAccessV2({
                               destinationFloor: nextFloor,
                               destinationElevator:
                                 (Number.parseInt(nextFloor || "0", 10) || 0) === 0
-                                  ? "none"
+                                  ? ""
                                   : props.destinationElevator,
                             });
                           }}
                           className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
                         >
+                          <option value="" disabled>Sélectionnez</option>
                           {FLOOR_OPTIONS.map((o) => (
                             <option key={o.value} value={o.value}>
                               {o.label}
@@ -708,7 +795,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
                       {showElevatorChoices ? (
                         <select
-                          value={props.destinationElevator || "none"}
+                          value={props.destinationElevator}
                           onChange={(e) => {
                             const next = e.target.value;
                             props.onFieldChange("destinationElevator", next);
@@ -719,6 +806,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                           }}
                           className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
                         >
+                          <option value="" disabled>Sélectionnez</option>
                           <option value="yes">Ascenseur &gt; 3 places</option>
                           <option value="small">Petit ascenseur</option>
                           <option value="no">Pas d’ascenseur</option>
@@ -726,7 +814,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                         </select>
                       ) : showAccessChoices ? (
                         <select
-                          value={destinationAccessChoice}
+                          value={props.destinationAccess}
                           onChange={(e) => {
                             const next = e.target.value;
                             props.onFieldChange("destinationAccess", next);
@@ -734,6 +822,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                           }}
                           className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
                         >
+                          <option value="" disabled>Sélectionnez</option>
                           <option value="simple">Accès simple</option>
                           <option value="complicated">Accès compliqué</option>
                           <option value="other">Autre</option>
@@ -770,10 +859,11 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             v2.anyOther && (props.access_details || "").trim().length < 10;
 
           return (
-            <div className="pt-6 border-t border-[#E3E5E8] space-y-3 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
+            <div className="pt-6 border-t border-[#E3E5E8] space-y-3 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]" onFocusCapture={() => markVisitedUpTo("access")}>
               <div className="flex items-center gap-2">
                 <Layers className="w-5 h-5 text-[#6BCFCF]" />
                 <h3 className="text-lg font-bold text-[#0F172A]">Contraintes d’accès</h3>
+                <BlockBadge blockId="access" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#0F172A] mb-2">
@@ -802,10 +892,11 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
         })()}
 
         {/* === DATE === */}
-        <div className="pt-6 border-t border-[#E3E5E8] space-y-4 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
+        <div className="pt-6 border-t border-[#E3E5E8] space-y-4 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]" onFocusCapture={() => markVisitedUpTo("date")}>
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-[#6BCFCF]" />
             <h3 className="text-lg font-bold text-[#0F172A]">Date souhaitée</h3>
+            <BlockBadge blockId="date" />
           </div>
 
           <div>
@@ -881,6 +972,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           type="submit"
           disabled={props.isSubmitting}
           aria-disabled={props.isSubmitting || !isFormValid}
+          onFocus={() => markAllVisited()}
           className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white hover:bg-[#1E293B] transition-all duration-200 ${
             !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}

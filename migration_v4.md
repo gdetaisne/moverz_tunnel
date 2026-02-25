@@ -8001,3 +8001,49 @@ Ajout de `originCity` et `destinationCity` dans les appels `fetchEstimate()` des
 
 ### Impact tunnel
 Aucune modification côté tunnel. L'API `/api/estimate` supportait déjà les paramètres `originCity`/`destinationCity`.
+
+---
+
+## 2026-02-25 — Step2 validation progressive par bloc (v3a)
+
+### Objectif
+Feedback visuel immédiat : quand l'utilisateur passe au bloc suivant dans Step2, le bloc précédent affiche un **check vert** (valide) ou une **croix rouge + message** (invalide).
+
+### Blocs validés (dans l'ordre)
+| # | Bloc | Condition valide |
+|---|------|-----------------|
+| 1 | Adresse départ | `originAddress.trim().length >= 5` |
+| 2 | Type logement départ | `originHousingType` renseigné + si box, volume > 0 |
+| 3 | Adresse arrivée | `destinationAddress.trim().length >= 5` |
+| 4 | Type logement arrivée | `destinationHousingType` renseigné |
+| 5 | Contraintes d'accès (conditionnel) | `access_details.trim().length >= 10` |
+| 6 | Date | `movingDate` renseigné et pas trop proche (14j) |
+
+Étage / Ascenseur / Accès ont des valeurs par défaut : pas de validation dessus.
+
+### Mécanisme
+- **Détection** : `onFocusCapture` sur chaque bloc. Quand l'utilisateur focus un champ du bloc N, tous les blocs 0..N-1 sont marqués "visités".
+- **State** : `visitedBlocks: Set<string>` (ids: origin-addr, origin-housing, dest-addr, dest-housing, access, date).
+- **Rendu** : composant `BlockBadge` inline avec le label de chaque bloc.
+- **Submit** : `onFocus` sur le bouton Submit marque tous les blocs comme visités.
+
+### Fichiers modifiés
+- `components/tunnel/Step2ProjectComplete.tsx` : logique visitedBlocks, BlockBadge, onFocusCapture sur chaque zone.
+- `components/tunnel/AddressAutocomplete.tsx` : ajout prop `labelSuffix?: React.ReactNode` pour afficher le badge inline avec le label.
+
+### Pas de nouveau champ/input ajouté. Pas de modification du payload.
+
+---
+
+## Scroll to top + focus surface (m²) — Step 2 → Step 3
+
+### Problème
+Quand l'utilisateur valide l'étape 2, l'étape 3 s'affiche au milieu de la page au lieu du haut.
+
+### Correction
+- `app/devis-gratuits-v3a/page.tsx` — après `goToStep(3)` : ajout `window.scrollTo({ top: 0, behavior: "instant" })` + `requestAnimationFrame` pour focus sur `#surfaceM2`.
+- Le curseur se retrouve directement dans le champ m² à l'arrivée sur l'étape 3.
+
+### Label surface corrigé
+- `components/tunnel/Step3VolumeServices.tsx` : "Surface approximative (m²)" → "Surface du point de départ, garages et dépendances inclus (m²)".
+- `components/tunnel/v2/StepQualificationV2.tsx` : "inclues" → "inclus" (correction orthographique).

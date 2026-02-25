@@ -1234,6 +1234,10 @@ function DevisGratuitsV3Content() {
       trackStepChange(2, 3, "PROJECT", "RECAP", "formules_v3", "forward");
       setShowValidationStep2(false);
       goToStep(3);
+      window.scrollTo({ top: 0, behavior: "instant" });
+      requestAnimationFrame(() => {
+        (document.getElementById("surfaceM2") as HTMLInputElement | null)?.focus();
+      });
     } catch (err: any) {
       console.error("Error updating lead:", err);
       trackError("API_ERROR", err.message || "Failed to update lead", 2, "PROJECT", "project_v3");

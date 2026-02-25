@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export type AddressSuggestion = {
   label: string;
@@ -14,6 +14,7 @@ export type AddressSuggestion = {
 
 export interface AddressAutocompleteProps {
   label: string;
+  labelSuffix?: React.ReactNode;
   placeholder?: string;
   initialValue?: string;
   onSelect: (value: AddressSuggestion) => void;
@@ -230,6 +231,7 @@ async function fetchNominatimSuggestions(
 
 export function AddressAutocomplete({
   label,
+  labelSuffix,
   placeholder,
   initialValue,
   onSelect,
@@ -499,9 +501,12 @@ export function AddressAutocomplete({
   return (
     <div ref={containerRef} className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <label className="block text-sm font-medium text-[#0F172A]" htmlFor={inputId}>
-          {label}
-        </label>
+        <span className="flex items-center gap-2">
+          <label className="text-sm font-medium text-[#0F172A]" htmlFor={inputId}>
+            {label}
+          </label>
+          {labelSuffix}
+        </span>
         {required && (
           <span className="text-[11px] font-semibold text-[#1E293B]/50">Requis</span>
         )}

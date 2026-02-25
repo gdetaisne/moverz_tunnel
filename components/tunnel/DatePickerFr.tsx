@@ -367,14 +367,6 @@ export function DatePickerFr({
                     bgClass = "bg-[#6BCFCF]";
                     textClass = "text-white";
                     borderClass = "border-[#6BCFCF]";
-                  } else if (mo.season === "haute") {
-                    bgClass = "bg-red-50 hover:bg-red-100";
-                    textClass = "text-red-700";
-                    borderClass = "border-red-200";
-                  } else if (mo.season === "basse") {
-                    bgClass = "bg-green-50 hover:bg-green-100";
-                    textClass = "text-green-700";
-                    borderClass = "border-green-200";
                   } else {
                     bgClass = "bg-white hover:bg-[#F8F9FA]";
                     textClass = "text-[#0F172A]";
@@ -406,17 +398,6 @@ export function DatePickerFr({
                 })}
               </div>
 
-              {/* Légende */}
-              <div className="mt-3 flex items-center justify-center gap-4 text-[11px] text-[#1E293B]/60">
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-200" />
-                  Moins cher
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-200" />
-                  Plus cher
-                </span>
-              </div>
             </div>
           )}
 
@@ -438,23 +419,6 @@ export function DatePickerFr({
                 </div>
               </div>
 
-              {/* Badge saison */}
-              {(() => {
-                const season = getMonthSeason(dayGrid.m0 + 1);
-                if (season === "haute")
-                  return (
-                    <div className="mb-3 rounded-lg bg-red-50 px-3 py-1.5 text-center text-xs font-medium text-red-600">
-                      📈 Haute saison — tarifs majorés
-                    </div>
-                  );
-                if (season === "basse")
-                  return (
-                    <div className="mb-3 rounded-lg bg-green-50 px-3 py-1.5 text-center text-xs font-medium text-green-600">
-                      📉 Basse saison — tarifs réduits
-                    </div>
-                  );
-                return null;
-              })()}
 
               {/* Jours de la semaine */}
               <div className="grid grid-cols-7 gap-1 px-1 pb-1">

@@ -129,7 +129,7 @@ export function StepQualificationV2({
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
             <label className="block text-sm font-medium text-[#0F172A]" htmlFor="v2-surface-m2">
-              Surface approximative, garages et dépendances inclues (m2)
+              Surface approximative, garages et dépendances inclus (m²)
             </label>
             <span className="text-[11px] font-semibold text-[#1E293B]/50">Requis</span>
           </div>
