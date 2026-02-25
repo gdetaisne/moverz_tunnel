@@ -8141,3 +8141,68 @@ Ajouté au payload Step 3, partageable avec le déménageur :
 
 ### Fichiers modifiés
 - `app/devis-gratuits-v3a/page.tsx` : live sync useEffect + helpers déplacés + calculationDetails dans pricingSnapshot
+
+---
+
+## Design System — Migration couleurs hardcodées → tokens (fév. 2026)
+
+### Contexte
+Le système de tokens existait (`styles/tokens.css` + `tailwind.config.ts`) mais les composants du tunnel utilisaient des couleurs hex hardcodées (`#0F172A`, `#6BCFCF`, `#1E293B`, etc.) et des classes Tailwind vanilla (`bg-green-100`, `text-emerald-500`, etc.).
+
+### Tokens ajoutés à `styles/tokens.css`
+- `--color-text-body: #1E293B` — texte corps (slate-800)
+- `--color-btn-primary: #0F172A` — bouton primary background
+- `--color-btn-primary-hover: #1E293B` — bouton primary hover
+- `--color-surface-alt: #F8F9FA` — surface secondaire légère
+- `--color-neutral: #D1D5DB` — neutre (gris-300)
+- `--color-success-light: #DCFCE7` — fond vert clair (anciennement bg-green-100)
+- `--color-danger-light: #FEE2E2` — fond rouge clair (anciennement bg-red-100)
+- `--color-warning-light: #FEF3C7` — fond orange clair
+- `--color-warning-fg: #B45309` — texte warning foncé (amber-700)
+- `--color-info: #1D4ED8` — bleu info
+- `--color-info-light: #DBEAFE` — fond bleu clair
+- `--color-gradient-panel-from: #A8E6D8` — gradient panneau estimation (teal clair)
+- `--color-gradient-panel-to: #A78BFA` — gradient panneau estimation (violet clair)
+- Mise à jour : `--color-text-primary` de `#0B0F19` → `#0F172A` (unification avec l'usage réel)
+
+### Correspondances Tailwind ajoutées dans `tailwind.config.ts`
+- `text.body`, `surface.alt`, `btn.primary`, `btn.primary-hover`
+- `success` → objet `{ DEFAULT, light }` (était une string)
+- `danger` → objet `{ DEFAULT, light }`
+- `warning` → objet `{ DEFAULT, light, fg }`
+- `info` → objet `{ DEFAULT, light }`
+- `neutral`, `gradient.panel-from`, `gradient.panel-to`
+
+### Composants migrés
+| Fichier | Couleurs remplacées |
+|---|---|
+| `components/tunnel/Step1Contact.tsx` | `#6BCFCF` → `turquoise`, `#0F172A` → `text-text-primary`, `#1E293B` → `text-text-body`, `bg-green-100` → `bg-success-light`, `bg-red-100` → `bg-danger-light`, `bg-[#0F172A]` → `bg-btn-primary`, `border-[#E3E5E8]` → `border-border`, etc. |
+| `components/tunnel/ConfirmationPage.tsx` | `bg-amber-50` → `bg-warning-light`, `text-amber-700` → `text-warning-fg`, `bg-green-100` → `bg-success-light`, `bg-blue-100` → `bg-info-light`, `bg-btn-primary`, `border-border`, etc. |
+| `components/tunnel/PriceRangeInline.tsx` | `text-emerald-500` → `text-success`, `text-rose-400` → `text-danger`, hex → tokens |
+| `components/tunnel/v2/LiveEstimatePanel.tsx` | Gradient → `from-gradient-panel-from via-turquoise to-gradient-panel-to`, prix min/max → `text-success`/`text-danger`, dots → `bg-danger`/`bg-success`/`bg-neutral`, `shadow-[#6BCFCF]` → `shadow-glow-turquoise`, etc. |
+
+### Principe de modification de charte
+Pour changer la charte graphique, **une seule source de vérité** : `styles/tokens.css`.
+- Accent brand (turquoise) → `--color-accent` et `--color-turquoise-legacy`
+- Boutons dark → `--color-btn-primary` et `--color-btn-primary-hover`
+- Succès/erreur/warning → `--color-success`, `--color-danger`, `--color-warning` (+ variantes light/fg)
+- Gradient panneau estimation → `--color-gradient-panel-from` et `--color-gradient-panel-to`
+
+---
+
+## 2026-02-25 — Popup réassurance déménageurs (Step2, variante A)
+
+**Objectif CRO** : augmenter la confiance du client juste après avoir rempli le bloc "Départ", moment clé où l'engagement est encore fragile.
+
+**Déclencheur** : `isOriginBlockComplete` → true pour la première fois (adresse + type de logement + accès entièrement remplis). S'affiche une seule fois par session (garde `popupShownRef`).
+
+**Contenu** :
+- Nombre aléatoire entre 7 et 20 déménageurs (généré 1× à l'init du composant).
+- 3 badges critères : Note > 4,5/5 · 100+ avis · Score Moverz ≥ 80.
+- Auto-close après 5 secondes avec barre de progression animée.
+- Fermeture manuelle possible (bouton ×, CTA "Continuer mon dossier", backdrop).
+- Design : bottom sheet mobile, modal centré desktop (backdrop blur).
+
+**Fichier modifié** : `components/tunnel/Step2ProjectComplete.tsx`
+
+**Champs envoyés au BO** : aucun nouveau champ. Popup purement UI/réassurance.

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
-import { MapPin, Home, Calendar, Building2, ArrowRight, Check, AlertCircle, X } from "lucide-react";
+import { useEffect, useRef, useState, FormEvent } from "react";
+import { MapPin, Home, Calendar, Building2, ArrowRight, Check, AlertCircle, X, Star, Users, Shield } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { DatePickerFr } from "./DatePickerFr";
 
@@ -86,6 +86,12 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   }, [props.destinationUnknown]);
 
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+  const [showMoversPopup, setShowMoversPopup] = useState(false);
+  const [moversCount] = useState(() => Math.floor(Math.random() * 14) + 7);
+  const [popupProgress, setPopupProgress] = useState(100);
+  const popupShownRef = useRef(false);
+  const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const popupIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function markTouched(field: string) {
     setTouchedFields((prev) => new Set(prev).add(field));
@@ -236,6 +242,53 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   const isDateValid = props.movingDate.length > 0 && !isMovingDateTooSoon;
   const isFormValid = isOriginValid && isDestinationValid && isDateValid;
 
+  // Critère complet pour le départ (adresse + type + détails d'accès)
+  const originFloorNum = Number.parseInt(props.originFloor || "0", 10) || 0;
+  const originNeedsElevator = originIsApartment && originFloorNum > 0;
+  const originNeedsAccess = originIsHouse || originIsBox || (originIsApartment && originFloorNum === 0);
+  const originIsOtherAccess = props.originElevator === "other" || normalizeAccessChoice(props.originAccess) === "other";
+  const isOriginBlockComplete =
+    props.originAddress.trim().length >= 5 &&
+    props.originHousingType.length > 0 &&
+    originBoxVolumeOk &&
+    (!originIsApartment || !!props.originFloor) &&
+    (!originNeedsElevator || !!props.originElevator) &&
+    (!originNeedsAccess || !!props.originAccess) &&
+    (!originIsOtherAccess || (props.originAccessDetails || "").trim().length >= 10);
+
+  // Déclencher la popup une seule fois quand le bloc départ est complet
+  useEffect(() => {
+    if (isOriginBlockComplete && !popupShownRef.current) {
+      popupShownRef.current = true;
+      setShowMoversPopup(true);
+      setPopupProgress(100);
+
+      const DURATION = 5000;
+      const TICK = 50;
+      let elapsed = 0;
+      popupIntervalRef.current = setInterval(() => {
+        elapsed += TICK;
+        setPopupProgress(Math.max(0, 100 - (elapsed / DURATION) * 100));
+      }, TICK);
+
+      popupTimerRef.current = setTimeout(() => {
+        clearInterval(popupIntervalRef.current!);
+        setShowMoversPopup(false);
+      }, DURATION);
+    }
+    return () => {
+      if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+      if (popupIntervalRef.current) clearInterval(popupIntervalRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOriginBlockComplete]);
+
+  const closePopup = () => {
+    if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+    if (popupIntervalRef.current) clearInterval(popupIntervalRef.current);
+    setShowMoversPopup(false);
+  };
+
   const getBlockStatus = (blockId: string): { valid: boolean; errorMsg: string } | null => {
     if (!visitedBlocks.has(blockId)) return null;
     switch (blockId) {
@@ -384,6 +437,90 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
   return (
     <div className="space-y-8">
+      {/* === POPUP RÉASSURANCE DÉMÉNAGEURS === */}
+      {showMoversPopup && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+            onClick={closePopup}
+          />
+
+          {/* Panel : bottom sheet mobile, modal centré desktop */}
+          <div className="fixed z-50 bottom-0 left-0 right-0 md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-md md:w-full px-4 pb-safe md:px-0">
+            <div className="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
+              {/* Barre de progression auto-close */}
+              <div className="h-1 bg-[#E3E5E8]">
+                <div
+                  className="h-full bg-[#6BCFCF] transition-all ease-linear"
+                  style={{ width: `${popupProgress}%`, transitionDuration: "50ms" }}
+                />
+              </div>
+
+              <div className="p-6 pt-5">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 shrink-0">
+                      <Check className="w-5 h-5 text-green-600" strokeWidth={3} />
+                    </div>
+                    <p className="text-sm font-semibold text-green-700">Bonne nouvelle !</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closePopup}
+                    className="text-[#1E293B]/40 hover:text-[#1E293B] transition-colors p-1 -mr-1"
+                    aria-label="Fermer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Chiffre principal */}
+                <div className="mb-4 text-center">
+                  <div className="flex items-baseline justify-center gap-2 mb-1">
+                    <span className="text-7xl font-black text-[#0F172A] leading-none tabular-nums">
+                      {moversCount}
+                    </span>
+                    <span className="text-lg font-bold text-[#0F172A]/60 leading-tight mt-2">
+                      déménageurs<br />disponibles
+                    </span>
+                  </div>
+                  <p className="text-sm text-[#1E293B]/60">
+                    correspondront à votre déménagement
+                  </p>
+                </div>
+
+                {/* Critères */}
+                <div className="flex flex-wrap gap-2 justify-center mb-5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-800">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    Note &gt; 4,5 / 5
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-800">
+                    <Users className="w-3.5 h-3.5 text-blue-500" />
+                    100+ avis clients
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6BCFCF]/10 border border-[#6BCFCF]/30 px-3 py-1.5 text-xs font-semibold text-[#0F172A]">
+                    <Shield className="w-3.5 h-3.5 text-[#6BCFCF]" />
+                    Score Moverz ≥ 80
+                  </span>
+                </div>
+
+                {/* CTA */}
+                <button
+                  type="button"
+                  onClick={closePopup}
+                  className="w-full rounded-full bg-[#0F172A] px-6 py-3.5 text-sm font-semibold text-white hover:bg-[#1E293B] transition-colors"
+                >
+                  Continuer mon dossier
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       <div>
         <div className="hidden md:inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
           <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
