@@ -712,7 +712,7 @@ function DevisGratuitsV3Content() {
       destinationCountryCode: state.destinationCountryCode,
       surfaceM2: state.surfaceM2,
       density: state.density,
-      formule: state.formule,
+      formule: (state.formule || "STANDARD") as "ECONOMIQUE" | "STANDARD" | "PREMIUM",
       movingDate: state.movingDate,
       originHousingType: state.originHousingType,
       destinationHousingType: state.destinationHousingType,
@@ -1146,13 +1146,13 @@ function DevisGratuitsV3Content() {
     const baseline = computeBaselineEstimate({
       surfaceM2: surface,
       distanceKm: baselineDistanceKm,
-      formule: state.formule as PricingFormuleType,
+      formule: (state.formule || "STANDARD") as PricingFormuleType,
     });
     updateFields({
       rewardBaselineMinEur: baseline.prixMin ?? null,
       rewardBaselineMaxEur: baseline.prixMax ?? null,
       rewardBaselineDistanceKm: baselineDistanceKm,
-      rewardBaselineFormule: state.formule,
+      rewardBaselineFormule: (state.formule || "STANDARD") as "ECONOMIQUE" | "STANDARD" | "PREMIUM",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -2001,7 +2001,7 @@ function DevisGratuitsV3Content() {
         rewardBaselineMinEur: activePricingStep2.prixMin ?? null,
         rewardBaselineMaxEur: activePricingStep2.prixMax ?? null,
         rewardBaselineDistanceKm: baselineDistanceKm,
-        rewardBaselineFormule: state.formule,
+        rewardBaselineFormule: (state.formule || "STANDARD") as "ECONOMIQUE" | "STANDARD" | "PREMIUM",
       });
     }
     trackBlock("validate_step2", "RECAP", "estimation_v2");
@@ -2622,7 +2622,7 @@ function DevisGratuitsV3Content() {
         })();
         return {
           capturedAt: new Date().toISOString(),
-          formule: state.formule,
+          formule: (state.formule || "STANDARD") as "ECONOMIQUE" | "STANDARD" | "PREMIUM",
           // Résultat final pour la formule sélectionnée
           refinedMinEur: v2PricingCart.refinedMinEur,
           refinedMaxEur: v2PricingCart.refinedMaxEur,
@@ -2676,7 +2676,7 @@ function DevisGratuitsV3Content() {
         density: densityToBO(state.density || "normal"),
 
         // Formule & Prix
-        formule: state.formule,
+        formule: (state.formule || "STANDARD") as "ECONOMIQUE" | "STANDARD" | "PREMIUM",
         // BO doit refléter le même montant que le "Budget affiné" affiché au client.
         // `activePricing` = calcul brut par formule; `v2PricingCart` = pipeline final (provision + deltas + add-ons).
         estimatedPriceMin: v2PricingCart?.refinedMinEur ?? activePricing?.prixMin ?? undefined,

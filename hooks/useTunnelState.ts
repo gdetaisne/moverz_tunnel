@@ -60,7 +60,7 @@ export interface TunnelFormState {
   surfaceTouched: boolean; // V2 behavior: ne pas écraser la surface si l'utilisateur l'a modifiée
   // "" = non choisi (UI), mais le calcul peut appliquer une hypothèse par défaut
   density: "" | "light" | "normal" | "dense";
-  formule: "ECONOMIQUE" | "STANDARD" | "PREMIUM";
+  formule: "" | "ECONOMIQUE" | "STANDARD" | "PREMIUM";
 
   // Cuisine (NOUVEAU) — utilisé pour ajuster le volume/prix + archivé dans tunnelOptions (BO)
   // "" = non choisi (UI), mais le calcul peut appliquer une hypothèse par défaut
@@ -179,7 +179,7 @@ const INITIAL_STATE: TunnelFormState = {
   surfaceM2: "",
   surfaceTouched: false,
   density: "",
-  formule: "STANDARD",
+  formule: "",
 
   kitchenIncluded: "",
   kitchenApplianceCount: "",

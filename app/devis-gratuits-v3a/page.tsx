@@ -787,6 +787,51 @@ function DevisGratuitsV3Content() {
     return pricingByFormule[state.formule as PricingFormuleType] ?? null;
   }, [pricingByFormule, state.formule]);
 
+  // Auto-select options liées à la formule
+  const prevFormuleRef = useRef(state.formule);
+  useEffect(() => {
+    const prev = prevFormuleRef.current;
+    prevFormuleRef.current = state.formule;
+    if (!state.formule || state.formule === prev) return;
+
+    const FORMULE_OPTIONS: Record<string, Record<string, boolean>> = {
+      ECONOMIQUE: {
+        serviceFullPacking: false,
+        serviceCleaning: false,
+        serviceInsurance: false,
+        serviceWasteRemoval: false,
+      },
+      STANDARD: {
+        serviceFullPacking: false,
+        serviceCleaning: false,
+        serviceInsurance: false,
+        serviceWasteRemoval: false,
+      },
+      PREMIUM: {
+        serviceFullPacking: true,
+        serviceCleaning: true,
+        serviceInsurance: true,
+        serviceWasteRemoval: true,
+      },
+    };
+
+    const opts = FORMULE_OPTIONS[state.formule];
+    if (opts) updateFields(opts as any);
+  }, [state.formule]);
+
+  // Auto-select "Aide sans camion" si même adresse départ/arrivée
+  const sameAddress = useMemo(() => {
+    const o = (state.originAddress || "").trim().toLowerCase();
+    const d = (state.destinationAddress || "").trim().toLowerCase();
+    return o.length >= 5 && d.length >= 5 && o === d;
+  }, [state.originAddress, state.destinationAddress]);
+
+  useEffect(() => {
+    if (sameAddress && !state.serviceHelpWithoutTruck) {
+      updateField("serviceHelpWithoutTruck", true);
+    }
+  }, [sameAddress]);
+
   const estimateRange = useMemo(() => {
     if (!pricingByFormule) return null;
     const values = Object.values(pricingByFormule);
@@ -1270,16 +1315,21 @@ function DevisGratuitsV3Content() {
       return;
     }
 
+    if (!state.formule) {
+      setShowValidationStep3(true);
+      requestAnimationFrame(() => {
+        document.getElementById("formule-select")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      trackError("VALIDATION_ERROR", "No formule selected", 3, "RECAP", "formules_v3");
+      return;
+    }
+
     try {
       const effectiveLeadId = await ensureBackofficeLeadId();
-      // Safety: si on vient de créer le lead, on s'assure que l'état reflète bien l'id
-      // avant de tracker la complétion (sinon TUNNEL_COMPLETED part avec leadId=null).
       if (effectiveLeadId && state.leadId !== effectiveLeadId) {
         updateFields({ leadId: effectiveLeadId });
       }
       if (effectiveLeadId) {
-        // Important: on reprend la pricing courante au moment du submit
-        // (évite tout risque de valeur stale si l'utilisateur change vite de formule).
         const pricingForSubmit =
           (pricingByFormule
             ? pricingByFormule[state.formule as PricingFormuleType]

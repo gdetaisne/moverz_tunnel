@@ -8081,3 +8081,26 @@ Un seul bloc global "Contraintes d'accès" s'affichait en bas du formulaire quan
 - `app/devis-gratuits-v3a/page.tsx` : passage nouvelles props, merge `access_details` au submit.
 
 ### Pas de champ supprimé. Le BO reçoit toujours `access_details` (fusionné).
+
+---
+
+## Formule non pré-sélectionnée + options auto-liées
+
+### Formule
+- `useTunnelState.ts` : `formule` passe de `"STANDARD"` → `""` (type élargi à `"" | "ECONOMIQUE" | "STANDARD" | "PREMIUM"`).
+- `Step3VolumeServices.tsx` : validation ajoutée — le bouton submit est disabled si aucune formule n'est sélectionnée + message d'erreur.
+- `page.tsx` (v3a) : guard de validation dans `handleSubmitStep3` si `!state.formule`.
+
+### Auto-sélection options liées à la formule
+Mapping formule → options (useEffect dans page.tsx v3a) :
+- **Éco** : désactive emballage, nettoyage, assurance, déchets
+- **Standard** : active emballage complet
+- **Premium** : active emballage complet, nettoyage, assurance renforcée, évacuation déchets
+
+Tag "inclus" affiché à côté des services liés à la formule sélectionnée.
+
+### Aide sans camion
+Auto-sélectionné si adresse départ = adresse arrivée (même string normalisée).
+
+### SERVICES réordonnés
+Options liées aux formules en premier (emballage, nettoyage, assurance, déchets), puis les options indépendantes.

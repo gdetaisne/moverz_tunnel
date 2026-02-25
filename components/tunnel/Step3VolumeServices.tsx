@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Package, Home, Sparkles, ArrowRight, Check } from "lucide-react";
 
-type FormuleType = "ECONOMIQUE" | "STANDARD" | "PREMIUM";
+type FormuleType = "" | "ECONOMIQUE" | "STANDARD" | "PREMIUM";
 
 type PricingDetails = {
   surfaceM2: number;
@@ -112,13 +112,17 @@ const FORMULES: Array<{
   },
 ];
 
-const SERVICES = [
+const SERVICES: Array<{
+  key: string;
+  label: string;
+  includedIn?: FormuleType[];
+}> = [
+  { key: "serviceFullPacking", label: "Emballage complet", includedIn: ["PREMIUM"] },
+  { key: "serviceCleaning", label: "Nettoyage / débarras", includedIn: ["PREMIUM"] },
+  { key: "serviceInsurance", label: "Assurance renforcée", includedIn: ["PREMIUM"] },
+  { key: "serviceWasteRemoval", label: "Évacuation déchets", includedIn: ["PREMIUM"] },
   { key: "serviceFurnitureStorage", label: "Garde-meuble" },
-  { key: "serviceCleaning", label: "Nettoyage / débarras" },
-  { key: "serviceFullPacking", label: "Emballage complet" },
   { key: "serviceFurnitureAssembly", label: "Montage meubles neufs" },
-  { key: "serviceInsurance", label: "Assurance renforcée" },
-  { key: "serviceWasteRemoval", label: "Évacuation déchets" },
   { key: "serviceHelpWithoutTruck", label: "Aide sans camion" },
   { key: "serviceSpecificSchedule", label: "Horaires spécifiques" },
 ];
@@ -128,11 +132,20 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
   const isSurfaceValid = surface >= 10 && surface <= 500;
   const [showDetails, setShowDetails] = useState(false);
   const showErrors = Boolean(props.showValidation);
-  const isFormValid = isSurfaceValid;
+  const isFormuleSelected = !!props.formule;
+  const isFormValid = isSurfaceValid && isFormuleSelected;
   const [showOptions, setShowOptions] = useState(false);
+
+  useEffect(() => {
+    const anySelected = SERVICES.some(
+      (s) => props[s.key as keyof Step3VolumeServicesProps] as boolean
+    );
+    if (anySelected && !showOptions) setShowOptions(true);
+  }, [props.formule]);
 
   const missingFields: Array<{ id: string; label: string }> = [];
   if (!isSurfaceValid) missingFields.push({ id: "surfaceM2", label: "Surface" });
+  if (!isFormuleSelected) missingFields.push({ id: "formule-select", label: "Formule" });
 
   const selectedOptionsCount = useMemo(() => {
     let n = 0;
@@ -389,8 +402,11 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
         </div>
 
         {/* Formules */}
-        <div>
+        <div id="formule-select">
           <h3 className="text-lg font-bold text-[#0F172A] mb-4">Choisissez votre formule *</h3>
+          {showErrors && !isFormuleSelected && (
+            <p className="text-sm text-red-600 mb-3">Veuillez sélectionner une formule</p>
+          )}
           
           <div className="grid gap-4">
             {FORMULES.map((f) => (
@@ -485,9 +501,17 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                 <div className="mt-3 space-y-3">
                   {SERVICES.map((service) => {
                     const value = props[service.key as keyof Step3VolumeServicesProps] as boolean;
+                    const isIncluded = !!service.includedIn && !!props.formule && service.includedIn.includes(props.formule as FormuleType);
                     return (
                       <div key={service.key} className="flex items-center justify-between gap-4">
-                        <p className="text-sm font-medium text-[#0F172A]">{service.label}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-[#0F172A]">{service.label}</p>
+                          {isIncluded && (
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[#6BCFCF] bg-[#6BCFCF]/10 px-1.5 py-0.5 rounded">
+                              inclus
+                            </span>
+                          )}
+                        </div>
                         <YesNo onChange={(v) => props.onFieldChange(service.key, v)} value={value} />
                       </div>
                     );
