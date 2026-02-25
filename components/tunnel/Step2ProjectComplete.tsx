@@ -277,24 +277,26 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     }
   };
 
+  const ValidBadge = () => (
+    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 shrink-0">
+      <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+    </span>
+  );
+  const InvalidBadge = () => (
+    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-100 shrink-0">
+      <X className="w-4 h-4 text-red-600" strokeWidth={3} />
+    </span>
+  );
+
   const BlockBadge = ({ blockId }: { blockId: string }) => {
     const status = getBlockStatus(blockId);
     if (!status) return null;
-    if (status.valid) {
-      return (
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 shrink-0">
-          <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1.5">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 shrink-0">
-          <X className="w-4 h-4 text-red-600" strokeWidth={3} />
-        </span>
-        <span className="text-xs text-red-600">{status.errorMsg}</span>
-      </span>
-    );
+    return status.valid ? <ValidBadge /> : <InvalidBadge />;
+  };
+
+  const FieldBadge = ({ visible, valid }: { visible: boolean; valid: boolean }) => {
+    if (!visible) return null;
+    return valid ? <ValidBadge /> : <InvalidBadge />;
   };
 
   const setHousingCategory = (
@@ -561,11 +563,16 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             const showAccessChoices = originIsHouse || originIsBox || (originIsApartmentEffective && originFloorNum === 0);
             const originAccessChoice = normalizeAccessChoice(props.originAccess);
 
+            const originBlockVisited = visitedBlocks.has("origin-housing");
+
             return (
               <div className="space-y-3" onFocusCapture={() => markVisitedUpTo("dest-addr")}>
                 {showFloor && (
                   <div>
-                    <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="text-sm font-medium text-[#0F172A]">Étage</label>
+                      <FieldBadge visible={originBlockVisited && showFloor} valid={!!props.originFloor} />
+                    </div>
                     <select
                       value={props.originFloor}
                       onChange={(e) => {
@@ -589,7 +596,13 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur et accès</label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <label className="text-sm font-medium text-[#0F172A]">Ascenseur et accès</label>
+                    <FieldBadge
+                      visible={originBlockVisited && (showElevatorChoices || showAccessChoices)}
+                      valid={showElevatorChoices ? !!props.originElevator : showAccessChoices ? !!props.originAccess : true}
+                    />
+                  </div>
 
                   {showElevatorChoices ? (
                     <select
@@ -798,12 +811,16 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   destinationIsBox ||
                   (destinationIsApartmentEffective && destinationFloorNum === 0);
                 const destinationAccessChoice = normalizeAccessChoice(props.destinationAccess);
+                const destBlockVisited = visitedBlocks.has("dest-housing");
 
                 return (
                   <div className="space-y-3" onFocusCapture={() => markVisitedUpTo("access")}>
                     {showFloor && (
                       <div>
-                        <label className="block text-sm font-medium text-[#0F172A] mb-2">Étage</label>
+                        <div className="flex items-center gap-2 mb-2">
+                          <label className="text-sm font-medium text-[#0F172A]">Étage</label>
+                          <FieldBadge visible={destBlockVisited && showFloor} valid={!!props.destinationFloor} />
+                        </div>
                         <select
                           value={props.destinationFloor}
                           onChange={(e) => {
@@ -833,7 +850,13 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     )}
 
                     <div>
-                      <label className="block text-sm font-medium text-[#0F172A] mb-2">Ascenseur et accès</label>
+                      <div className="flex items-center gap-2 mb-2">
+                        <label className="text-sm font-medium text-[#0F172A]">Ascenseur et accès</label>
+                        <FieldBadge
+                          visible={destBlockVisited && (showElevatorChoices || showAccessChoices)}
+                          valid={showElevatorChoices ? !!props.destinationElevator : showAccessChoices ? !!props.destinationAccess : true}
+                        />
+                      </div>
 
                       {showElevatorChoices ? (
                         <select
