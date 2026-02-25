@@ -1115,7 +1115,7 @@ function DevisGratuitsV3Content() {
             long_carry: !!state.long_carry,
             difficult_parking: !!state.difficult_parking,
             lift_required: !!state.lift_required,
-            access_details: state.access_details || undefined,
+            access_details: [state.originAccessDetails, state.destinationAccessDetails].filter(Boolean).join(" | ") || undefined,
           },
           volumeAdjustments: (() => {
             const originIsBox = isBoxType(state.originHousingType);
@@ -1572,7 +1572,7 @@ function DevisGratuitsV3Content() {
             long_carry: !!state.long_carry,
             difficult_parking: !!state.difficult_parking,
             lift_required: !!state.lift_required,
-            access_details: state.access_details || undefined,
+            access_details: [state.originAccessDetails, state.destinationAccessDetails].filter(Boolean).join(" | ") || undefined,
           },
           volumeAdjustments: (() => {
             const originIsBox = isBoxType(state.originHousingType);
@@ -1735,7 +1735,8 @@ function DevisGratuitsV3Content() {
               destinationUnknown={state.destinationUnknown}
               movingDate={state.movingDate}
               dateFlexible={state.dateFlexible}
-              access_details={state.access_details || ""}
+              originAccessDetails={state.originAccessDetails || ""}
+              destinationAccessDetails={state.destinationAccessDetails || ""}
               onFieldChange={(field, value) => updateField(field as any, value)}
               onSubmit={handleSubmitStep2}
               isSubmitting={false}

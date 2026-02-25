@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
-import { MapPin, Home, Calendar, Building2, Layers, ArrowRight, Check, AlertCircle, X } from "lucide-react";
+import { MapPin, Home, Calendar, Building2, ArrowRight, Check, AlertCircle, X } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { DatePickerFr } from "./DatePickerFr";
 
@@ -42,8 +42,9 @@ interface Step2ProjectCompleteProps {
   movingDate: string;
   dateFlexible: boolean;
 
-  // Accès V2 (global) + description (si "Autre")
-  access_details: string;
+  // Accès V2 — descriptions inline par lieu
+  originAccessDetails: string;
+  destinationAccessDetails: string;
   
   onFieldChange: (field: string, value: any) => void;
   onSubmit: (e: FormEvent) => void;
@@ -90,7 +91,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     setTouchedFields((prev) => new Set(prev).add(field));
   }
 
-  const BLOCK_ORDER = ["origin-addr", "origin-housing", "dest-addr", "dest-housing", "access", "date"];
+  const BLOCK_ORDER = ["origin-addr", "origin-housing", "dest-addr", "dest-housing", "date"];
 
   const [visitedBlocks, setVisitedBlocks] = useState<Set<string>>(new Set());
 
@@ -242,22 +243,31 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
         return props.originAddress.trim().length >= 5
           ? { valid: true, errorMsg: "" }
           : { valid: false, errorMsg: "Adresse de départ manquante" };
-      case "origin-housing":
+      case "origin-housing": {
         if (!props.originHousingType) return { valid: false, errorMsg: "Type de logement manquant" };
         if (originIsBox && !originBoxVolumeOk) return { valid: false, errorMsg: "Volume du box manquant" };
+        if (originIsApartment && !props.originFloor) return { valid: false, errorMsg: "Étage manquant" };
+        const oFloor = Number.parseInt(props.originFloor || "0", 10) || 0;
+        if (originIsApartment && oFloor > 0 && !props.originElevator) return { valid: false, errorMsg: "Ascenseur et accès manquant" };
+        if ((originIsHouse || originIsBox || (originIsApartment && oFloor === 0)) && !props.originAccess) return { valid: false, errorMsg: "Accès manquant" };
+        const originIsOther = props.originElevator === "other" || normalizeAccessChoice(props.originAccess) === "other";
+        if (originIsOther && (props.originAccessDetails || "").trim().length < 10) return { valid: false, errorMsg: "Précisez les contraintes (min. 10 car.)" };
         return { valid: true, errorMsg: "" };
+      }
       case "dest-addr":
         return props.destinationAddress.trim().length >= 5
           ? { valid: true, errorMsg: "" }
           : { valid: false, errorMsg: "Adresse d'arrivée manquante" };
-      case "dest-housing":
-        return props.destinationHousingType.length > 0
-          ? { valid: true, errorMsg: "" }
-          : { valid: false, errorMsg: "Type de logement manquant" };
-      case "access":
-        return (props.access_details || "").trim().length >= 10
-          ? { valid: true, errorMsg: "" }
-          : { valid: false, errorMsg: "Précisez les contraintes (min. 10 car.)" };
+      case "dest-housing": {
+        if (!props.destinationHousingType) return { valid: false, errorMsg: "Type de logement manquant" };
+        const dFloor = Number.parseInt(props.destinationFloor || "0", 10) || 0;
+        if (destinationIsApartment && !props.destinationFloor) return { valid: false, errorMsg: "Étage manquant" };
+        if (destinationIsApartment && dFloor > 0 && !props.destinationElevator) return { valid: false, errorMsg: "Ascenseur et accès manquant" };
+        if ((destinationIsHouse || destinationIsBox || (destinationIsApartment && dFloor === 0)) && !props.destinationAccess) return { valid: false, errorMsg: "Accès manquant" };
+        const destIsOther = props.destinationElevator === "other" || normalizeAccessChoice(props.destinationAccess) === "other";
+        if (destIsOther && (props.destinationAccessDetails || "").trim().length < 10) return { valid: false, errorMsg: "Précisez les contraintes (min. 10 car.)" };
+        return { valid: true, errorMsg: "" };
+      }
       case "date":
         if (!props.movingDate) return { valid: false, errorMsg: "Date manquante" };
         if (isMovingDateTooSoon) return { valid: false, errorMsg: `Date trop proche (min. ${MIN_DAYS_AHEAD}j)` };
@@ -345,8 +355,13 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
       originElevator: props.originElevator,
       destinationElevator: props.destinationElevator,
     });
-    if (v2.anyOther && (props.access_details || "").trim().length < 10) {
-      missingFields.push({ id: "access-details", label: "Contraintes d’accès" });
+    const originIsOtherAccess = props.originElevator === "other" || normalizeAccessChoice(props.originAccess) === "other";
+    const destIsOtherAccess = props.destinationElevator === "other" || normalizeAccessChoice(props.destinationAccess) === "other";
+    if (originIsOtherAccess && (props.originAccessDetails || "").trim().length < 10) {
+      missingFields.push({ id: "origin-access-details", label: "Contraintes d’accès (départ)" });
+    }
+    if (destIsOtherAccess && (props.destinationAccessDetails || "").trim().length < 10) {
+      missingFields.push({ id: "dest-access-details", label: "Contraintes d’accès (arrivée)" });
     }
   }
 
@@ -611,6 +626,33 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                       <option value="other">Autre</option>
                     </select>
                   ) : null}
+
+                  {(props.originElevator === "other" || originAccessChoice === "other") && (
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-[#0F172A] mb-2">
+                        Décrivez les contraintes d'accès (départ) *
+                      </label>
+                      <textarea
+                        value={props.originAccessDetails || ""}
+                        onChange={(e) => {
+                          markTouched("originAccessDetails");
+                          props.onFieldChange("originAccessDetails", e.target.value);
+                        }}
+                        rows={3}
+                        placeholder={originIsHouse
+                          ? "Ex : portail < 2,5 m, portage > 10 m, accès camion compliqué"
+                          : "Ex : il faut prévoir de bloquer la rue, impossible de se garer devant"}
+                        className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/50 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                      />
+                      {(showErrors || touchedFields.has("originAccessDetails")) &&
+                        (props.originAccessDetails || "").trim().length < 10 && (
+                        <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" />
+                          Merci de préciser (au moins 10 caractères).
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -828,68 +870,39 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                           <option value="other">Autre</option>
                         </select>
                       ) : null}
+
+                      {(props.destinationElevator === "other" || destinationAccessChoice === "other") && (
+                        <div className="mt-3">
+                          <label className="block text-sm font-medium text-[#0F172A] mb-2">
+                            Décrivez les contraintes d’accès (arrivée) *
+                          </label>
+                          <textarea
+                            value={props.destinationAccessDetails || ""}
+                            onChange={(e) => {
+                              markTouched("destinationAccessDetails");
+                              props.onFieldChange("destinationAccessDetails", e.target.value);
+                            }}
+                            rows={3}
+                            placeholder={destinationIsHouse
+                              ? "Ex : portail < 2,5 m, portage > 10 m, accès camion compliqué"
+                              : "Ex : il faut prévoir de bloquer la rue, impossible de se garer devant"}
+                            className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/50 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                          />
+                          {(showErrors || touchedFields.has("destinationAccessDetails")) &&
+                            (props.destinationAccessDetails || "").trim().length < 10 && (
+                            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                              <AlertCircle className="w-4 h-4" />
+                              Merci de préciser (au moins 10 caractères).
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
               })()}
           </>
         </div>
-
-        {/* Autre: contraintes d'accès (global) */}
-        {(() => {
-          const v2 = computeAccessV2FromUi({
-            originAccess: props.originAccess,
-            destinationAccess: props.destinationAccess,
-            originHousingType: props.originHousingType,
-            destinationHousingType: props.destinationHousingType,
-            originFloor: props.originFloor,
-            destinationFloor: props.destinationFloor,
-            originElevator: props.originElevator,
-            destinationElevator: props.destinationElevator,
-          });
-          if (!v2.anyOther) return null;
-
-          const placeholder = [
-            "Exemples :",
-            "- Maison : « portail < 2,5 m, portage > 10 m, accès camion compliqué »",
-            "- Appartement : « il faut prévoir un camion 30 m³ pour bloquer une rue, impossible de se garer devant »",
-          ].join("\n");
-
-          const needsDetails =
-            v2.anyOther && (props.access_details || "").trim().length < 10;
-
-          return (
-            <div className="pt-6 border-t border-[#E3E5E8] space-y-3 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]" onFocusCapture={() => markVisitedUpTo("access")}>
-              <div className="flex items-center gap-2">
-                <Layers className="w-5 h-5 text-[#6BCFCF]" />
-                <h3 className="text-lg font-bold text-[#0F172A]">Contraintes d’accès</h3>
-                <BlockBadge blockId="access" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#0F172A] mb-2">
-                  Décrivez les contraintes d’accès *
-                </label>
-                <textarea
-                  id="access-details"
-                  value={props.access_details || ""}
-                  onChange={(e) => {
-                    markTouched("access_details");
-                    props.onFieldChange("access_details", e.target.value);
-                  }}
-                  rows={4}
-                  placeholder={placeholder}
-                  className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/50 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
-                />
-                {(showErrors || touchedFields.has("access_details")) && needsDetails && (
-                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    Merci de préciser (au moins 10 caractères).
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })()}
 
         {/* === DATE === */}
         <div className="pt-6 border-t border-[#E3E5E8] space-y-4 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]" onFocusCapture={() => markVisitedUpTo("date")}>

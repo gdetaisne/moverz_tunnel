@@ -8047,3 +8047,37 @@ Quand l'utilisateur valide l'étape 2, l'étape 3 s'affiche au milieu de la page
 ### Label surface corrigé
 - `components/tunnel/Step3VolumeServices.tsx` : "Surface approximative (m²)" → "Surface du point de départ, garages et dépendances inclus (m²)".
 - `components/tunnel/v2/StepQualificationV2.tsx` : "inclues" → "inclus" (correction orthographique).
+
+---
+
+## Validation progressive — étage, ascenseur et accès
+
+### Problème
+Le badge de validation "origin-housing" ne vérifiait que le type de logement et le volume box. Les champs étage, ascenseur et accès n'étaient pas contrôlés, donc aucun warning ne s'affichait quand l'utilisateur passait au bloc suivant sans les renseigner.
+
+### Correction (`Step2ProjectComplete.tsx`)
+- **origin-housing** : valide aussi étage (si appartement), ascenseur (si appartement étage > 0), accès (si maison/box/RDC).
+- **dest-housing** : même logique côté arrivée.
+- **access** : bloc global supprimé (voir section suivante).
+
+---
+
+## Textarea "Contraintes d'accès" inline par lieu
+
+### Avant
+Un seul bloc global "Contraintes d'accès" s'affichait en bas du formulaire quand "Autre" était sélectionné (départ ou arrivée). Un seul champ `access_details`.
+
+### Après
+- Textarea inline sous le select "Ascenseur et accès" de **chaque lieu** (départ / arrivée) quand "Autre" est sélectionné.
+- Deux nouveaux champs state : `originAccessDetails`, `destinationAccessDetails` dans `useTunnelState.ts`.
+- Au submit (`page.tsx`), les deux sont mergés dans `access_details` avec un séparateur ` | `.
+- Le bloc global "Contraintes d'accès" avec `BlockBadge blockId="access"` est supprimé.
+- `BLOCK_ORDER` passe de 6 à 5 blocs (suppression de "access").
+- Validation intégrée dans "origin-housing" et "dest-housing" : si "autre" sélectionné et détails < 10 car. → erreur.
+
+### Fichiers modifiés
+- `hooks/useTunnelState.ts` : ajout `originAccessDetails`, `destinationAccessDetails`.
+- `components/tunnel/Step2ProjectComplete.tsx` : textareas inline, suppression bloc global, adaptation BLOCK_ORDER et validation.
+- `app/devis-gratuits-v3a/page.tsx` : passage nouvelles props, merge `access_details` au submit.
+
+### Pas de champ supprimé. Le BO reçoit toujours `access_details` (fusionné).

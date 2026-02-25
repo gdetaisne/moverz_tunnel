@@ -133,10 +133,11 @@ export function DatePickerFr({
   }, [value]);
 
   // Quand on ouvre, reset à la bonne phase
+  // deps: minIso (string) au lieu de minDate (objet) pour éviter les re-triggers
   useEffect(() => {
     if (open) {
       const fromValue = value ? parseIsoDate(value) : null;
-      const base = fromValue ?? minDate ?? new Date();
+      const base = fromValue ?? (minIso ? parseIsoDate(minIso) : null) ?? new Date();
       setSelectedYear(base.getUTCFullYear());
       if (startPhase === "days") {
         setSelectedMonth0(base.getUTCMonth());
@@ -146,7 +147,8 @@ export function DatePickerFr({
         setPhase("months");
       }
     }
-  }, [open, value, minDate, startPhase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, startPhase]);
 
   // Fermeture au clic extérieur
   useEffect(() => {

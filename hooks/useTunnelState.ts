@@ -103,6 +103,8 @@ export interface TunnelFormState {
   difficult_parking?: boolean;
   lift_required?: boolean;
   access_details?: string;
+  originAccessDetails?: string;
+  destinationAccessDetails?: string;
   
   // Autres besoins
   hasFragileItems: boolean;
@@ -213,6 +215,8 @@ const INITIAL_STATE: TunnelFormState = {
   difficult_parking: false,
   lift_required: false,
   access_details: "",
+  originAccessDetails: "",
+  destinationAccessDetails: "",
   
   hasFragileItems: false,
   specificNotes: "",
