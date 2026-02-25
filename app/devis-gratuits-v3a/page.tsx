@@ -793,8 +793,11 @@ function DevisGratuitsV3Content() {
     const surface = getEffectiveSurfaceForPricing();
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    // Comme v3: la surface (m²) est la source de vérité volume, on neutralise le type.
-    const housingType = "t2" as const;
+    const originIsHouse = isHouseType(state.originHousingType);
+    const destIsHouse = isHouseType(state.destinationHousingType);
+    const originIsBox = isBoxType(state.originHousingType);
+
+    const housingType = coerceHousingType(state.originHousingType);
     const density = (state.density || "normal") as "light" | "normal" | "dense";
 
     const distanceKm =
@@ -810,10 +813,6 @@ function DevisGratuitsV3Content() {
             state.destinationLon
           );
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
-
-    const originIsHouse = isHouseType(state.originHousingType);
-    const destIsHouse = isHouseType(state.destinationHousingType);
-    const originIsBox = isBoxType(state.originHousingType);
     const destIsBox = isBoxType(state.destinationHousingType);
 
     const originFloor =
@@ -915,7 +914,8 @@ function DevisGratuitsV3Content() {
 
   const activePricing = useMemo(() => {
     if (!pricingByFormule) return null;
-    return pricingByFormule[state.formule as PricingFormuleType] ?? null;
+    const key = (state.formule || "STANDARD") as PricingFormuleType;
+    return pricingByFormule[key] ?? null;
   }, [pricingByFormule, state.formule]);
 
   // Auto-select options liées à la formule
@@ -993,8 +993,13 @@ function DevisGratuitsV3Content() {
     const surface = getEffectiveSurfaceForPricing();
     if (!Number.isFinite(surface) || surface < 10 || surface > 500) return null;
 
-    const housingType = "t2" as const;
-    const typeCoefficient = TYPE_COEFFICIENTS.t2;
+    const originIsHouse = isHouseType(state.originHousingType);
+    const destIsHouse = isHouseType(state.destinationHousingType);
+    const originIsBox = isBoxType(state.originHousingType);
+    const destIsBox = isBoxType(state.destinationHousingType);
+
+    const housingType = coerceHousingType(state.originHousingType);
+    const typeCoefficient = TYPE_COEFFICIENTS[housingType];
     const densityCoefficient = DENSITY_COEFFICIENTS[(state.density || "normal") as keyof typeof DENSITY_COEFFICIENTS];
 
     const distanceKm =
@@ -1013,11 +1018,6 @@ function DevisGratuitsV3Content() {
       state.destinationUnknown ? null : routeDistanceKm != null ? "osrm" : "fallback";
 
     const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
-
-    const originIsHouse = isHouseType(state.originHousingType);
-    const destIsHouse = isHouseType(state.destinationHousingType);
-    const originIsBox = isBoxType(state.originHousingType);
-    const destIsBox = isBoxType(state.destinationHousingType);
 
     const originFloor =
       originIsHouse || originIsBox ? 0 : parseInt(state.originFloor || "0", 10) || 0;
@@ -1483,11 +1483,11 @@ function DevisGratuitsV3Content() {
                 state.destinationLon
               );
         const seasonFactor = getSeasonFactor(state.movingDate) * getUrgencyFactor(state.movingDate);
-        const housingType = "t2" as const;
-        const densityEffective = (state.density || "normal") as "light" | "normal" | "dense";
         const originIsHouse = isHouseType(state.originHousingType);
         const destIsHouse = isHouseType(state.destinationHousingType);
         const originIsBox = isBoxType(state.originHousingType);
+        const housingType = coerceHousingType(state.originHousingType);
+        const densityEffective = (state.density || "normal") as "light" | "normal" | "dense";
         const destIsBox = isBoxType(state.destinationHousingType);
         const originFloor =
           originIsHouse || originIsBox ? 0 : parseInt(state.originFloor || "0", 10) || 0;

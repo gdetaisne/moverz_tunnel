@@ -252,9 +252,9 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               💰 Fourchette{" "}
               {props.formule === "ECONOMIQUE"
                 ? "Éco"
-                : props.formule === "STANDARD"
-                ? "Standard"
-                : "Premium"}{" "}
+                : props.formule === "PREMIUM"
+                ? "Premium"
+                : "Standard"}{" "}
               :{" "}
               <strong className="text-[#0F172A]">
                 {props.pricing ? `${props.pricing.priceMin} - ${props.pricing.priceMax}€` : "—"}
