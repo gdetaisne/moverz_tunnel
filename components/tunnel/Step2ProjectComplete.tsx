@@ -191,8 +191,13 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   const isMovingDateTooSoon =
     Boolean(props.movingDate) && props.movingDate < minMovingDate;
 
-  // Avec l'autocomplete adresse (FR + Europe), on valide d'abord l'adresse + le logement.
-  // Le CP/ville peuvent être absents/incomplets (cas étranger) sans bloquer le parcours.
+  const originIsHouse = props.originHousingType === "house";
+  const destinationIsHouse = props.destinationHousingType === "house";
+  const originIsBox = props.originHousingType === "box";
+  const destinationIsBox = props.destinationHousingType === "box";
+  const originIsApartment = !originIsHouse && !originIsBox && !!props.originHousingType;
+  const destinationIsApartment = !destinationIsHouse && !destinationIsBox && !!props.destinationHousingType;
+
   const originBoxVolumeOk =
     !originIsBox || (Number.parseFloat(String(props.originBoxVolumeM3 || "")) > 0);
   const isOriginValid =
@@ -206,12 +211,6 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   
   const isDateValid = props.movingDate.length > 0 && !isMovingDateTooSoon;
   const isFormValid = isOriginValid && isDestinationValid && isDateValid;
-  const originIsHouse = props.originHousingType === "house";
-  const destinationIsHouse = props.destinationHousingType === "house";
-  const originIsBox = props.originHousingType === "box";
-  const destinationIsBox = props.destinationHousingType === "box";
-  const originIsApartment = !originIsHouse && !originIsBox && !!props.originHousingType;
-  const destinationIsApartment = !destinationIsHouse && !destinationIsBox && !!props.destinationHousingType;
 
   const setHousingCategory = (
     which: "origin" | "destination",
