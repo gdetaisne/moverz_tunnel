@@ -207,12 +207,6 @@ export default function ConfirmationPage({
               </div>
             )}
 
-            {confirmationState.status === "sending" && (
-              <p className="mt-3 text-xs text-[#1E293B]/60">Envoi en cours…</p>
-            )}
-            {confirmationState.status === "sent" && (
-              <p className="mt-3 text-xs text-green-700">{confirmationState.message}</p>
-            )}
             {confirmationState.status === "error" && (
               <p className="mt-3 text-xs text-amber-700">
                 {confirmationState.message} (pensez à vérifier vos spams)
