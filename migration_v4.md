@@ -8104,3 +8104,40 @@ Auto-sélectionné si adresse départ = adresse arrivée (même string normalis�
 
 ### SERVICES réordonnés
 Options liées aux formules en premier (emballage, nettoyage, assurance, déchets), puis les options indépendantes.
+
+---
+
+## Live sync BO + champs complets + modalités de calcul
+
+### Temporalité
+- **Lead créé** : au submit de Step 1 (dès qu'on a email + prénom)
+- **Live sync** : `useEffect` debounced (3s) sur tous les champs du state → `updateBackofficeLead` appelé automatiquement à chaque changement dès que `leadId` existe et `currentStep >= 2`
+
+### Champs remontés (exhaustif)
+Tout le payload est construit dans le live sync, incluant :
+- Coordonnées (firstName, lastName, email, phone)
+- Adresses complètes + GPS (originLat/Lon, destinationLat/Lon via `tunnelOptions.coordinates`)
+- Logement (type, étage, ascenseur, accès, furnitureLift, carryDistance, parkingAuth)
+- Date + flexibilité
+- Surface, densité, formule
+- accessV2 complet (flags + `originAccessDetails` et `destinationAccessDetails` individuels)
+- volumeAdjustments (cuisine, box)
+- Tous les services (8 services + piano + débarras)
+- Notes libres (`specificNotes`)
+- `hasFragileItems`
+
+### Modalités de calcul prix (`pricingSnapshot.calculationDetails`)
+Ajouté au payload Step 3, partageable avec le déménageur :
+- `surfaceM2`, `volumeM3`, `housingType`
+- `density`, `densityCoefficient`
+- `distanceKm`, `distanceBand`
+- `seasonFactor`
+- `originFloor`, `originElevator`, `originEtageCoefficient`
+- `destinationFloor`, `destinationElevator`, `destinationEtageCoefficient`
+- `typeCoefficient`, `formuleMultiplier`
+- `extraVolumeM3` (cuisine)
+- `services` (monteMeuble, piano, debarras)
+- `accessFlags` (narrow, longCarry, difficultParking, liftRequired)
+
+### Fichiers modifiés
+- `app/devis-gratuits-v3a/page.tsx` : live sync useEffect + helpers déplacés + calculationDetails dans pricingSnapshot

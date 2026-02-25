@@ -447,6 +447,147 @@ function DevisGratuitsV3Content() {
     }
   };
 
+  const isHouseType = (t: string | null | undefined) =>
+    !!t && (t === "house" || t.startsWith("house_"));
+  const isBoxType = (t: string | null | undefined) => !!t && t === "box";
+  const getBoxVolumeM3 = (raw: string | null | undefined): number | null => {
+    const n = Number.parseFloat(String(raw || "").replace(",", "."));
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return n;
+  };
+
+  // --- Live sync: debounced update vers le BO à chaque changement ---
+  const liveSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const liveSyncSkipRef = useRef(false);
+
+  useEffect(() => {
+    if (!state.leadId || state.currentStep < 2) return;
+    if (liveSyncSkipRef.current) { liveSyncSkipRef.current = false; return; }
+
+    if (liveSyncTimerRef.current) clearTimeout(liveSyncTimerRef.current);
+    liveSyncTimerRef.current = setTimeout(async () => {
+      try {
+        const originIsHouse = isHouseType(state.originHousingType);
+        const destIsHouse = isHouseType(state.destinationHousingType);
+        const originIsBox = isBoxType(state.originHousingType);
+        const originBoxVol = originIsBox ? getBoxVolumeM3(state.originBoxVolumeM3) : null;
+
+        const distanceKm = routeDistanceKm ?? estimateDistanceKm(
+          state.originPostalCode, state.destinationPostalCode,
+          state.originLat, state.originLon, state.destinationLat, state.destinationLon
+        );
+
+        const kitchenTouched = state.kitchenIncluded !== "" || (state.kitchenApplianceCount || "").trim().length > 0;
+        const kitchenAppliancesCount = Number.parseInt(String(state.kitchenApplianceCount || "").trim(), 10) || 0;
+        const extraVolumeM3 = kitchenTouched
+          ? (state.kitchenIncluded === "full" ? 6 : state.kitchenIncluded === "appliances" ? Math.max(0, kitchenAppliancesCount) * 0.6 : 0)
+          : 0;
+
+        const payload: any = {
+          firstName: state.firstName.trim() || undefined,
+          lastName: state.lastName.trim() || undefined,
+          email: state.email.trim().toLowerCase() || undefined,
+          phone: state.phone.trim() || undefined,
+          source,
+          estimationMethod: "FORM",
+          originAddress: state.originAddress || undefined,
+          originCity: state.originCity || undefined,
+          originPostalCode: state.originPostalCode || undefined,
+          destAddress: state.destinationUnknown ? undefined : state.destinationAddress || undefined,
+          destCity: state.destinationUnknown ? undefined : state.destinationCity || undefined,
+          destPostalCode: state.destinationUnknown ? undefined : state.destinationPostalCode || undefined,
+          movingDate: toIsoDate(state.movingDate),
+          dateFlexible: state.dateFlexible,
+          originHousingType: state.originHousingType || undefined,
+          originFloor: originIsHouse || originIsBox ? undefined : (state.originFloor ? Math.max(0, parseInt(state.originFloor, 10)) : undefined),
+          originElevator: originIsHouse || originIsBox ? undefined : (state.originElevator && state.originElevator !== "none" ? mapElevator(state.originElevator) : undefined),
+          originFurnitureLift: state.originFurnitureLift || undefined,
+          originCarryDistance: state.originCarryDistance || undefined,
+          originParkingAuth: state.originParkingAuth,
+          destHousingType: state.destinationUnknown ? undefined : state.destinationHousingType || undefined,
+          destFloor: state.destinationUnknown ? undefined : (destIsHouse ? undefined : (state.destinationFloor ? Math.max(0, parseInt(state.destinationFloor, 10)) : undefined)),
+          destElevator: state.destinationUnknown ? undefined : (destIsHouse ? undefined : (state.destinationElevator && state.destinationElevator !== "none" ? mapElevator(state.destinationElevator) : undefined)),
+          destFurnitureLift: state.destinationUnknown ? undefined : state.destinationFurnitureLift || undefined,
+          destCarryDistance: state.destinationUnknown ? undefined : state.destinationCarryDistance || undefined,
+          destParkingAuth: state.destinationUnknown ? undefined : state.destinationParkingAuth,
+          surfaceM2: parseInt(state.surfaceM2) || undefined,
+          density: state.density ? mapDensity(state.density) : undefined,
+          formule: state.formule || undefined,
+          tunnelOptions: {
+            pricing: {
+              distanceKm: distanceKm ?? undefined,
+              distanceProvider: routeDistanceProvider ?? undefined,
+            },
+            accessV2: {
+              access_type: state.access_type ?? "simple",
+              narrow_access: !!state.narrow_access,
+              long_carry: !!state.long_carry,
+              difficult_parking: !!state.difficult_parking,
+              lift_required: !!state.lift_required,
+              access_details: [state.originAccessDetails, state.destinationAccessDetails].filter(Boolean).join(" | ") || undefined,
+              originAccessDetails: state.originAccessDetails || undefined,
+              destinationAccessDetails: state.destinationAccessDetails || undefined,
+            },
+            volumeAdjustments: (() => {
+              const obj: any = {};
+              if (kitchenTouched) {
+                obj.kitchenIncluded = state.kitchenIncluded || "appliances";
+                obj.kitchenApplianceCount = state.kitchenIncluded === "" ? 3 : state.kitchenIncluded === "appliances" ? kitchenAppliancesCount : undefined;
+                obj.extraVolumeM3 = extraVolumeM3;
+              }
+              if (originIsBox && originBoxVol != null) obj.boxExactVolumeM3 = originBoxVol;
+              return Object.keys(obj).length > 0 ? obj : undefined;
+            })(),
+            services: {
+              furnitureStorage: state.serviceFurnitureStorage || undefined,
+              cleaning: state.serviceCleaning || undefined,
+              fullPacking: state.serviceFullPacking || undefined,
+              furnitureAssembly: state.serviceFurnitureAssembly || undefined,
+              insurance: state.serviceInsurance || undefined,
+              wasteRemoval: state.serviceWasteRemoval || undefined,
+              helpWithoutTruck: state.serviceHelpWithoutTruck || undefined,
+              specificSchedule: state.serviceSpecificSchedule || undefined,
+              piano: state.hasPiano || undefined,
+              debarras: state.serviceDebarras || undefined,
+            },
+            notes: state.specificNotes || undefined,
+            hasFragileItems: state.hasFragileItems || undefined,
+            coordinates: {
+              originLat: state.originLat, originLon: state.originLon,
+              destinationLat: state.destinationLat, destinationLon: state.destinationLon,
+            },
+          },
+        };
+        if (state.leadId) await updateBackofficeLead(state.leadId, payload);
+      } catch (err) {
+        console.warn("⚠️ Live sync failed:", err);
+      }
+    }, 3000);
+
+    return () => { if (liveSyncTimerRef.current) clearTimeout(liveSyncTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    state.leadId, state.currentStep,
+    state.firstName, state.lastName, state.email, state.phone,
+    state.originAddress, state.originCity, state.originPostalCode,
+    state.originHousingType, state.originFloor, state.originElevator,
+    state.originAccess, state.originAccessDetails, state.originBoxVolumeM3,
+    state.destinationAddress, state.destinationCity, state.destinationPostalCode,
+    state.destinationHousingType, state.destinationFloor, state.destinationElevator,
+    state.destinationAccess, state.destinationAccessDetails, state.destinationUnknown,
+    state.movingDate, state.dateFlexible,
+    state.surfaceM2, state.density, state.formule,
+    state.serviceFurnitureStorage, state.serviceCleaning, state.serviceFullPacking,
+    state.serviceFurnitureAssembly, state.serviceInsurance, state.serviceWasteRemoval,
+    state.serviceHelpWithoutTruck, state.serviceSpecificSchedule, state.serviceDebarras,
+    state.hasPiano, state.hasFragileItems, state.specificNotes,
+    state.kitchenIncluded, state.kitchenApplianceCount,
+    state.originFurnitureLift, state.destinationFurnitureLift,
+    state.originCarryDistance, state.destinationCarryDistance,
+    state.originParkingAuth, state.destinationParkingAuth,
+    state.access_type, state.narrow_access, state.long_carry, state.difficult_parking, state.lift_required,
+  ]);
+
   // --- helpers pricing (copiés de la V2, puis ajustés pour la V3) ---
   const estimateDistanceKm = (
     originPostalCode: string,
@@ -612,21 +753,11 @@ function DevisGratuitsV3Content() {
     return 1;
   };
 
-  const isHouseType = (t: string | null | undefined) =>
-    !!t && (t === "house" || t.startsWith("house_"));
-
   const toPricingElevator = (e: string): "yes" | "no" | "partial" => {
     if (!e || e === "none" || e === "no") return "no";
     if (e === "small" || e === "partial") return "partial";
     if (e === "other") return "partial";
     return "yes";
-  };
-
-  const isBoxType = (t: string | null | undefined) => !!t && t === "box";
-  const getBoxVolumeM3 = (raw: string | null | undefined): number | null => {
-    const n = Number.parseFloat(String(raw || "").replace(",", "."));
-    if (!Number.isFinite(n) || n <= 0) return null;
-    return n;
   };
   const getEffectiveSurfaceForPricing = (): number => {
     const boxVolume = getBoxVolumeM3(state.originBoxVolumeM3);
@@ -1489,6 +1620,35 @@ function DevisGratuitsV3Content() {
         const pricingSnapshot = {
           capturedAt: new Date().toISOString(),
           formule: state.formule,
+          calculationDetails: {
+            surfaceM2: surface,
+            volumeM3: pricingForSubmit.volumeM3,
+            housingType,
+            density: densityEffective,
+            distanceKm,
+            distanceBand: getDistanceBand(distanceKm),
+            seasonFactor,
+            originFloor,
+            originElevator,
+            originEtageCoefficient: getEtageCoefficient(originFloor, originElevator),
+            destinationFloor,
+            destinationElevator,
+            destinationEtageCoefficient: getEtageCoefficient(destinationFloor, destinationElevator),
+            densityCoefficient: DENSITY_COEFFICIENTS[densityEffective],
+            typeCoefficient: TYPE_COEFFICIENTS[housingType],
+            formuleMultiplier: FORMULE_MULTIPLIERS[(state.formule || "STANDARD") as PricingFormuleType],
+            extraVolumeM3: kitchenExtraVolumeM3,
+            services: { monteMeuble, piano, debarras: Boolean(state.serviceDebarras) },
+            longCarry,
+            difficultParking,
+            tightAccess,
+            accessFlags: {
+              narrow_access: !!state.narrow_access,
+              long_carry: !!state.long_carry,
+              difficult_parking: !!state.difficult_parking,
+              lift_required: !!state.lift_required,
+            },
+          },
           refinedMinEur: pricingForSubmit.prixMin,
           refinedMaxEur: pricingForSubmit.prixMax,
           refinedCenterEur,
