@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, FormEvent } from "react";
 import { MapPin, Home, Calendar, Building2, ArrowRight, Check, AlertCircle, X, Star, Users, Shield } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { DatePickerFr } from "./DatePickerFr";
+import { computeAccessV2FromUi, normalizeAccessChoice } from "@/lib/access/accessV2";
 
 interface Step2ProjectCompleteProps {
   // Départ
@@ -120,54 +121,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     });
   };
 
-  const normalizeAccessChoice = (raw: string): "simple" | "complicated" | "other" => {
-    if (raw === "constrained") return "complicated";
-    if (raw === "easy") return "simple";
-    if (raw === "simple" || raw === "complicated" || raw === "other") return raw;
-    return "simple";
-  };
-
-  const computeAccessV2FromUi = (params: {
-    originAccess: string;
-    destinationAccess: string;
-    originHousingType: string;
-    destinationHousingType: string;
-    originFloor: string;
-    destinationFloor: string;
-    originElevator: string;
-    destinationElevator: string;
-  }) => {
-    const originAccessChoice = normalizeAccessChoice(params.originAccess);
-    const destinationAccessChoice = normalizeAccessChoice(params.destinationAccess);
-    const originFloorNum = Number.parseInt(params.originFloor || "0", 10) || 0;
-    const destinationFloorNum = Number.parseInt(params.destinationFloor || "0", 10) || 0;
-    const originIsHouseLike = params.originHousingType === "house" || params.originHousingType === "box" || originFloorNum === 0;
-    const destIsHouseLike = params.destinationHousingType === "house" || params.destinationHousingType === "box" || destinationFloorNum === 0;
-
-    const originElevatorIsSmall = params.originElevator === "small" || params.originElevator === "partial";
-    const destElevatorIsSmall = params.destinationElevator === "small" || params.destinationElevator === "partial";
-
-    const anyOther =
-      originAccessChoice === "other" ||
-      destinationAccessChoice === "other" ||
-      params.originElevator === "other" ||
-      params.destinationElevator === "other";
-
-    const anyComplicated =
-      originAccessChoice === "complicated" || destinationAccessChoice === "complicated";
-
-    // Heuristique simple: on bascule en "constrained" si un accès est compliqué / autre, ou si petit ascenseur.
-    const access_type = anyComplicated || anyOther || originElevatorIsSmall || destElevatorIsSmall ? "constrained" : "simple";
-    const narrow_access = Boolean(originElevatorIsSmall || destElevatorIsSmall || (anyComplicated && (originIsHouseLike || destIsHouseLike)));
-    const long_carry = Boolean(anyComplicated && (originIsHouseLike || destIsHouseLike));
-    const difficult_parking = Boolean(anyComplicated);
-    const lift_required = Boolean(
-      (!originIsHouseLike && originFloorNum >= 4 && params.originElevator === "no") ||
-      (!destIsHouseLike && destinationFloorNum >= 4 && params.destinationElevator === "no")
-    );
-
-    return { access_type, narrow_access, long_carry, difficult_parking, lift_required, anyOther };
-  };
+  // computeAccessV2FromUi + normalizeAccessChoice importés (source de vérité unique)
 
   const syncAccessV2 = (overrides?: Partial<{
     originAccess: string;

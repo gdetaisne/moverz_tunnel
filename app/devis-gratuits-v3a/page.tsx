@@ -28,6 +28,7 @@ import {
   computeMoverzFeeProvision,
   getDisplayedCenter,
 } from "@/lib/pricing/scenarios";
+import { computeAccessV2FromUi } from "@/lib/access/accessV2";
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import TunnelHero from "@/components/tunnel/TunnelHero";
@@ -484,6 +485,26 @@ function DevisGratuitsV3Content() {
           ? (state.kitchenIncluded === "full" ? 6 : state.kitchenIncluded === "appliances" ? Math.max(0, kitchenAppliancesCount) * 0.6 : 0)
           : 0;
 
+        const av2 = computeAccessV2FromUi({
+          originAccess: state.originAccess,
+          destinationAccess: state.destinationAccess,
+          originHousingType: state.originHousingType,
+          destinationHousingType: state.destinationHousingType,
+          originFloor: state.originFloor,
+          destinationFloor: state.destinationFloor,
+          originElevator: state.originElevator,
+          destinationElevator: state.destinationElevator,
+        });
+        const originAccessDetails = (state.originAccessDetails || "").trim();
+        const destinationAccessDetails = (state.destinationAccessDetails || "").trim();
+        const accessDetailsConcat =
+          [
+            originAccessDetails ? `Départ: ${originAccessDetails}` : null,
+            destinationAccessDetails ? `Arrivée: ${destinationAccessDetails}` : null,
+          ]
+            .filter(Boolean)
+            .join(" | ") || undefined;
+
         const payload: any = {
           firstName: state.firstName.trim() || undefined,
           lastName: state.lastName.trim() || undefined,
@@ -517,19 +538,22 @@ function DevisGratuitsV3Content() {
           density: state.density ? mapDensity(state.density) : undefined,
           formule: state.formule || undefined,
           tunnelOptions: {
+            schemaVersion: "v3a.1",
             pricing: {
               distanceKm: distanceKm ?? undefined,
               distanceProvider: routeDistanceProvider ?? undefined,
             },
             accessV2: {
-              access_type: state.access_type ?? "simple",
-              narrow_access: !!state.narrow_access,
-              long_carry: !!state.long_carry,
-              difficult_parking: !!state.difficult_parking,
-              lift_required: !!state.lift_required,
-              access_details: [state.originAccessDetails, state.destinationAccessDetails].filter(Boolean).join(" | ") || undefined,
-              originAccessDetails: state.originAccessDetails || undefined,
-              destinationAccessDetails: state.destinationAccessDetails || undefined,
+              access_type: av2.access_type,
+              narrow_access: av2.narrow_access,
+              long_carry: av2.long_carry,
+              difficult_parking: av2.difficult_parking,
+              lift_required: av2.lift_required,
+              origin: av2.origin,
+              destination: av2.destination,
+              access_details: accessDetailsConcat,
+              originAccessDetails: originAccessDetails || undefined,
+              destinationAccessDetails: destinationAccessDetails || undefined,
             },
             volumeAdjustments: (() => {
               const obj: any = {};
@@ -1335,7 +1359,28 @@ function DevisGratuitsV3Content() {
         const originIsHouse = isHouseType(state.originHousingType);
         const destIsHouse = isHouseType(state.destinationHousingType);
 
+        const av2 = computeAccessV2FromUi({
+          originAccess: state.originAccess,
+          destinationAccess: state.destinationAccess,
+          originHousingType: state.originHousingType,
+          destinationHousingType: state.destinationHousingType,
+          originFloor: state.originFloor,
+          destinationFloor: state.destinationFloor,
+          originElevator: state.originElevator,
+          destinationElevator: state.destinationElevator,
+        });
+        const originAccessDetails = (state.originAccessDetails || "").trim();
+        const destinationAccessDetails = (state.destinationAccessDetails || "").trim();
+        const accessDetailsConcat =
+          [
+            originAccessDetails ? `Départ: ${originAccessDetails}` : null,
+            destinationAccessDetails ? `Arrivée: ${destinationAccessDetails}` : null,
+          ]
+            .filter(Boolean)
+            .join(" | ") || undefined;
+
         const tunnelOptions = {
+          schemaVersion: "v3a.1",
           pricing: {
             distanceKm:
               state.destinationUnknown
@@ -1352,12 +1397,16 @@ function DevisGratuitsV3Content() {
             distanceProvider: routeDistanceProvider ?? undefined,
           },
           accessV2: {
-            access_type: state.access_type ?? "simple",
-            narrow_access: !!state.narrow_access,
-            long_carry: !!state.long_carry,
-            difficult_parking: !!state.difficult_parking,
-            lift_required: !!state.lift_required,
-            access_details: [state.originAccessDetails, state.destinationAccessDetails].filter(Boolean).join(" | ") || undefined,
+            access_type: av2.access_type,
+            narrow_access: av2.narrow_access,
+            long_carry: av2.long_carry,
+            difficult_parking: av2.difficult_parking,
+            lift_required: av2.lift_required,
+            origin: av2.origin,
+            destination: av2.destination,
+            access_details: accessDetailsConcat,
+            originAccessDetails: originAccessDetails || undefined,
+            destinationAccessDetails: destinationAccessDetails || undefined,
           },
           volumeAdjustments: (() => {
             const originIsBox = isBoxType(state.originHousingType);
@@ -1836,19 +1885,44 @@ function DevisGratuitsV3Content() {
               },
         };
 
+        const av2 = computeAccessV2FromUi({
+          originAccess: state.originAccess,
+          destinationAccess: state.destinationAccess,
+          originHousingType: state.originHousingType,
+          destinationHousingType: state.destinationHousingType,
+          originFloor: state.originFloor,
+          destinationFloor: state.destinationFloor,
+          originElevator: state.originElevator,
+          destinationElevator: state.destinationElevator,
+        });
+        const originAccessDetails = (state.originAccessDetails || "").trim();
+        const destinationAccessDetails = (state.destinationAccessDetails || "").trim();
+        const accessDetailsConcat =
+          [
+            originAccessDetails ? `Départ: ${originAccessDetails}` : null,
+            destinationAccessDetails ? `Arrivée: ${destinationAccessDetails}` : null,
+          ]
+            .filter(Boolean)
+            .join(" | ") || undefined;
+
         const tunnelOptions = {
+          schemaVersion: "v3a.1",
           pricing: {
             // Stockage indicatif pour debug/analytics (Neon via JSON).
             distanceKm,
             distanceProvider: routeDistanceProvider ?? undefined,
           },
           accessV2: {
-            access_type: state.access_type ?? "simple",
-            narrow_access: !!state.narrow_access,
-            long_carry: !!state.long_carry,
-            difficult_parking: !!state.difficult_parking,
-            lift_required: !!state.lift_required,
-            access_details: [state.originAccessDetails, state.destinationAccessDetails].filter(Boolean).join(" | ") || undefined,
+            access_type: av2.access_type,
+            narrow_access: av2.narrow_access,
+            long_carry: av2.long_carry,
+            difficult_parking: av2.difficult_parking,
+            lift_required: av2.lift_required,
+            origin: av2.origin,
+            destination: av2.destination,
+            access_details: accessDetailsConcat,
+            originAccessDetails: originAccessDetails || undefined,
+            destinationAccessDetails: destinationAccessDetails || undefined,
           },
           volumeAdjustments: (() => {
             const originIsBox = isBoxType(state.originHousingType);
