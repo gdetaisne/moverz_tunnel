@@ -234,58 +234,9 @@ const INITIAL_STATE: TunnelFormState = {
 
 export function useTunnelState() {
   const [state, setState] = useState<TunnelFormState>(() => {
-    // Try to restore from localStorage
+    // Nettoyage: supprimer l'ancien localStorage s'il existe encore
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("moverz_tunnel_state");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved) as Partial<TunnelFormState>;
-          const merged: TunnelFormState = { ...INITIAL_STATE, ...parsed };
-
-          // Backward compat: si les flags n'existaient pas, on les déduit
-          // quand la valeur diffère de la valeur par défaut.
-          merged.originHousingTypeTouched =
-            typeof parsed.originHousingTypeTouched === "boolean"
-              ? parsed.originHousingTypeTouched
-              : merged.originHousingType !== INITIAL_STATE.originHousingType;
-          merged.originFloorTouched =
-            typeof parsed.originFloorTouched === "boolean"
-              ? parsed.originFloorTouched
-              : merged.originFloor !== INITIAL_STATE.originFloor;
-          merged.originElevatorTouched =
-            typeof parsed.originElevatorTouched === "boolean"
-              ? parsed.originElevatorTouched
-              : merged.originElevator !== INITIAL_STATE.originElevator;
-          merged.destinationHousingTypeTouched =
-            typeof parsed.destinationHousingTypeTouched === "boolean"
-              ? parsed.destinationHousingTypeTouched
-              : merged.destinationHousingType !== INITIAL_STATE.destinationHousingType;
-          merged.destinationFloorTouched =
-            typeof parsed.destinationFloorTouched === "boolean"
-              ? parsed.destinationFloorTouched
-              : merged.destinationFloor !== INITIAL_STATE.destinationFloor;
-          merged.destinationElevatorTouched =
-            typeof parsed.destinationElevatorTouched === "boolean"
-              ? parsed.destinationElevatorTouched
-              : merged.destinationElevator !== INITIAL_STATE.destinationElevator;
-
-          // Force "easy" si les champs d'accès sont vides (rétrocompatibilité + UX par défaut)
-          if (!merged.originAccess) merged.originAccess = "easy";
-          if (!merged.destinationAccess) merged.destinationAccess = "easy";
-
-          // Nettoyage: purger les strings "undefined" / "null" corrompues
-          for (const key of Object.keys(merged) as (keyof TunnelFormState)[]) {
-            const v = merged[key];
-            if (v === "undefined" || v === "null") {
-              (merged as any)[key] = INITIAL_STATE[key];
-            }
-          }
-
-          return merged;
-        } catch (e) {
-          console.error("Failed to parse saved state:", e);
-        }
-      }
+      try { localStorage.removeItem("moverz_tunnel_state"); } catch {}
     }
     return INITIAL_STATE;
   });
@@ -313,35 +264,13 @@ export function useTunnelState() {
       }
       if (field === "destinationFloor") next.destinationFloorTouched = true;
       if (field === "destinationElevator") next.destinationElevatorTouched = true;
-      
-      // Auto-save to localStorage
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("moverz_tunnel_state", JSON.stringify(next));
-        } catch (e) {
-          console.error("Failed to save state:", e);
-        }
-      }
-      
+
       return next;
     });
   }, []);
 
   const updateFields = useCallback((updates: Partial<TunnelFormState>) => {
-    setState((prev) => {
-      const next = { ...prev, ...updates };
-      
-      // Auto-save to localStorage
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("moverz_tunnel_state", JSON.stringify(next));
-        } catch (e) {
-          console.error("Failed to save state:", e);
-        }
-      }
-      
-      return next;
-    });
+    setState((prev) => ({ ...prev, ...updates }));
   }, []);
 
   const goToStep = useCallback((step: 1 | 2 | 3 | 4) => {
@@ -350,9 +279,6 @@ export function useTunnelState() {
 
   const reset = useCallback(() => {
     setState(INITIAL_STATE);
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("moverz_tunnel_state");
-    }
   }, []);
 
   return {
