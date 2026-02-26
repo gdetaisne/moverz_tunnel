@@ -470,6 +470,7 @@ function DevisGratuitsV3Content() {
         const originIsHouse = isHouseType(state.originHousingType);
         const destIsHouse = isHouseType(state.destinationHousingType);
         const originIsBox = isBoxType(state.originHousingType);
+        const destIsBox = isBoxType(state.destinationHousingType);
         const originBoxVol = originIsBox ? getBoxVolumeM3(state.originBoxVolumeM3) : null;
 
         const distanceKm = routeDistanceKm ?? estimateDistanceKm(
@@ -505,8 +506,8 @@ function DevisGratuitsV3Content() {
           originCarryDistance: state.originCarryDistance || undefined,
           originParkingAuth: state.originParkingAuth,
           destHousingType: state.destinationUnknown ? undefined : state.destinationHousingType || undefined,
-          destFloor: state.destinationUnknown ? undefined : (destIsHouse ? undefined : (state.destinationFloor ? Math.max(0, parseInt(state.destinationFloor, 10)) : undefined)),
-          destElevator: state.destinationUnknown ? undefined : (destIsHouse ? undefined : (state.destinationElevator && state.destinationElevator !== "none" ? mapElevator(state.destinationElevator) : undefined)),
+          destFloor: state.destinationUnknown ? undefined : (destIsHouse || destIsBox ? undefined : (state.destinationFloor ? Math.max(0, parseInt(state.destinationFloor, 10)) : undefined)),
+          destElevator: state.destinationUnknown ? undefined : (destIsHouse || destIsBox ? undefined : (state.destinationElevator && state.destinationElevator !== "none" ? mapElevator(state.destinationElevator) : undefined)),
           destFurnitureLift: state.destinationUnknown ? undefined : state.destinationFurnitureLift || undefined,
           destCarryDistance: state.destinationUnknown ? undefined : state.destinationCarryDistance || undefined,
           destParkingAuth: state.destinationUnknown ? undefined : state.destinationParkingAuth,
@@ -547,8 +548,16 @@ function DevisGratuitsV3Content() {
               wasteRemoval: state.serviceWasteRemoval || undefined,
               helpWithoutTruck: state.serviceHelpWithoutTruck || undefined,
               specificSchedule: state.serviceSpecificSchedule || undefined,
-              piano: state.hasPiano || undefined,
+              piano: state.servicePiano && state.servicePiano !== "none" ? state.servicePiano : undefined,
               debarras: state.serviceDebarras || undefined,
+              dismantling: state.serviceDismantling || undefined,
+            },
+            heavyFurniture: {
+              americanFridge: state.furnitureAmericanFridge || undefined,
+              safe: state.furnitureSafe || undefined,
+              billiard: state.furnitureBilliard || undefined,
+              aquarium: state.furnitureAquarium || undefined,
+              over25kg: state.furnitureOver25kg || undefined,
             },
             notes: state.specificNotes || undefined,
             hasFragileItems: state.hasFragileItems || undefined,
@@ -580,12 +589,14 @@ function DevisGratuitsV3Content() {
     state.serviceFurnitureStorage, state.serviceCleaning, state.serviceFullPacking,
     state.serviceFurnitureAssembly, state.serviceInsurance, state.serviceWasteRemoval,
     state.serviceHelpWithoutTruck, state.serviceSpecificSchedule, state.serviceDebarras,
+    state.servicePiano, state.serviceDismantling,
     state.hasPiano, state.hasFragileItems, state.specificNotes,
     state.kitchenIncluded, state.kitchenApplianceCount,
     state.originFurnitureLift, state.destinationFurnitureLift,
     state.originCarryDistance, state.destinationCarryDistance,
     state.originParkingAuth, state.destinationParkingAuth,
     state.access_type, state.narrow_access, state.long_carry, state.difficult_parking, state.lift_required,
+    state.furnitureAmericanFridge, state.furnitureSafe, state.furnitureBilliard, state.furnitureAquarium, state.furnitureOver25kg,
   ]);
 
   // --- helpers pricing (copiés de la V2, puis ajustés pour la V3) ---
@@ -926,6 +937,40 @@ function DevisGratuitsV3Content() {
     const key = (state.formule || "STANDARD") as PricingFormuleType;
     return pricingByFormule[key] ?? null;
   }, [pricingByFormule, state.formule]);
+
+  // Sync pricing vers le BO dès qu'il change (volume, prix, pricingSnapshot simplifié)
+  useEffect(() => {
+    if (!state.leadId || state.currentStep < 3 || !activePricing) return;
+    const timer = setTimeout(async () => {
+      try {
+        if (!state.leadId) return;
+        const fee = (activePricing as any).moverzFeeEur ?? 0;
+        await updateBackofficeLead(state.leadId, {
+          estimatedVolume: activePricing.volumeM3,
+          estimatedPriceMin: activePricing.prixMin,
+          estimatedPriceAvg: Math.round((activePricing.prixMin + activePricing.prixMax) / 2),
+          estimatedPriceMax: activePricing.prixMax,
+          formule: (state.formule || undefined) as any,
+          tunnelOptions: {
+            pricingSnapshot: {
+              capturedAt: new Date().toISOString(),
+              formule: state.formule || "STANDARD",
+              refinedMinEur: activePricing.prixMin,
+              refinedMaxEur: activePricing.prixMax,
+              refinedCenterEur: Math.round((activePricing.prixMin + activePricing.prixMax) / 2),
+              moverzFeeEur: fee,
+              volumeM3: activePricing.volumeM3,
+              isLiveSync: true,
+            },
+          },
+        });
+      } catch (err) {
+        console.warn("⚠️ Pricing sync failed:", err);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.leadId, state.currentStep, activePricing, state.formule]);
 
   // Auto-select options liées à la formule
   const prevFormuleRef = useRef(state.formule);

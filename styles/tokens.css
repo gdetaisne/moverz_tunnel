@@ -15,7 +15,8 @@
   --color-surface-primary: #FFFFFF;   /* Blanc pur */
   
   /* Text */
-  --color-text-primary: #0B0F19;      /* Noir profond */
+  --color-text-primary: #0F172A;      /* Noir profond (slate-900) */
+  --color-text-body: #1E293B;         /* Corps de texte (slate-800) */
   --color-text-secondary: #6B7280;    /* Gris moyen */
   --color-text-muted: #9CA3AF;        /* Gris clair */
   
@@ -35,10 +36,28 @@
   --color-surface: var(--color-surface-primary);
   --color-text: var(--color-text-primary);
   
+  /* Buttons */
+  --color-btn-primary: #0F172A;       /* Bouton primary bg */
+  --color-btn-primary-hover: #1E293B; /* Bouton primary hover */
+
+  /* Extended surfaces */
+  --color-surface-alt: #F8F9FA;       /* Surface secondaire légère */
+  --color-neutral: #D1D5DB;           /* Neutre (gris-300) */
+
   /* Semantic */
   --color-success: #16A34A;           /* Vert */
+  --color-success-light: #DCFCE7;     /* Vert clair (bg) */
   --color-danger: #DC2626;            /* Rouge */
+  --color-danger-light: #FEE2E2;      /* Rouge clair (bg) */
   --color-warning: #F59E0B;           /* Orange */
+  --color-warning-light: #FEF3C7;     /* Orange clair (bg) */
+  --color-warning-fg: #B45309;        /* Orange foncé (texte) */
+  --color-info: #1D4ED8;              /* Bleu */
+  --color-info-light: #DBEAFE;        /* Bleu clair (bg) */
+
+  /* Gradient panel estimation */
+  --color-gradient-panel-from: #A8E6D8;  /* Teal clair */
+  --color-gradient-panel-to: #A78BFA;    /* Violet clair */
   
   /* ===== TYPOGRAPHY ===== */
   

@@ -95,26 +95,26 @@ export default function Step1Contact({
       {/* Left: Form */}
       <div className="order-1">
         <div className="mb-4 md:mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
-            <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-turquoise/10 px-4 py-1.5 text-sm font-semibold text-text-primary mb-6">
+            <span className="h-2 w-2 rounded-full bg-turquoise" />
             Étape 1/4
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-black text-[#0F172A] mb-3 md:mb-4 leading-tight">
+          <h2 className="text-3xl md:text-5xl font-black text-text-primary mb-3 md:mb-4 leading-tight">
             Constituez votre dossier
           </h2>
           
-          <p className="hidden md:block text-lg text-[#1E293B]/70 leading-relaxed">
+          <p className="hidden md:block text-lg text-text-body/70 leading-relaxed">
             On a besoin de vos coordonnées pour vous transmettre les devis.{" "}
-            <span className="text-[#1E293B] font-medium">Jamais partagé ni revendu.</span>
+            <span className="text-text-body font-medium">Jamais partagé ni revendu.</span>
           </p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {/* Prénom */}
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
-              <User className="w-4 h-4 text-[#6BCFCF]" />
+            <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
+              <User className="w-4 h-4 text-turquoise" />
               Comment voulez-vous qu'on vous appelle ?
             </label>
             <div className="relative">
@@ -126,26 +126,26 @@ export default function Step1Contact({
                   setFirstNameTouched(true);
                   onFirstNameChange(e.target.value);
                 }}
-                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 pr-12 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                className="w-full rounded-xl border-2 border-border bg-white px-4 pr-12 py-3 text-base text-text-primary placeholder:text-text-body/40 focus:border-turquoise focus:outline-none focus:ring-2 focus:ring-turquoise/20 transition-all"
                 placeholder="Prénom ou surnom"
                 autoComplete="given-name"
               />
               {(firstNameTouched || showValidation) && (
                 <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
                   {isFirstNameValid ? (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100">
-                      <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success-light">
+                      <Check className="w-4 h-4 text-success" strokeWidth={3} />
                     </span>
                   ) : (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100">
-                      <X className="w-4 h-4 text-red-600" strokeWidth={3} />
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-danger-light">
+                      <X className="w-4 h-4 text-danger" strokeWidth={3} />
                     </span>
                   )}
                 </span>
               )}
             </div>
             {showFirstNameError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-danger">
                 Un prénom, nom ou surnom (minimum 2 caractères)
               </p>
             )}
@@ -153,8 +153,8 @@ export default function Step1Contact({
 
           {/* Email */}
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-[#0F172A]">
-              <Mail className="w-4 h-4 text-[#6BCFCF]" />
+            <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
+              <Mail className="w-4 h-4 text-turquoise" />
               Email de contact
             </label>
             <div className="relative">
@@ -167,10 +167,10 @@ export default function Step1Contact({
                   setEmailApiError(null);
                   onEmailChange(e.target.value);
                 }}
-                className={`w-full rounded-xl border-2 bg-white px-4 pr-12 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full rounded-xl border-2 bg-white px-4 pr-12 py-3 text-base text-text-primary placeholder:text-text-body/40 focus:outline-none focus:ring-2 transition-all ${
                   emailApiError
-                    ? "border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/15"
-                    : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:ring-[#6BCFCF]/20"
+                    ? "border-danger focus:border-danger focus:ring-danger/15"
+                    : "border-border focus:border-turquoise focus:ring-turquoise/20"
                 }`}
                 placeholder="vous@email.fr"
                 autoComplete="email"
@@ -182,24 +182,24 @@ export default function Step1Contact({
               ) : (emailTouched || showValidation) ? (
                 <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
                   {isEmailValid && !emailApiError ? (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100">
-                      <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success-light">
+                      <Check className="w-4 h-4 text-success" strokeWidth={3} />
                     </span>
                   ) : (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100">
-                      <X className="w-4 h-4 text-red-600" strokeWidth={3} />
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-danger-light">
+                      <X className="w-4 h-4 text-danger" strokeWidth={3} />
                     </span>
                   )}
                 </span>
               ) : null}
             </div>
             {showEmailError && !emailApiError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-danger">
                 Merci de saisir un email valide
               </p>
             )}
             {emailApiError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-danger">
                 {emailApiError}
               </p>
             )}
@@ -207,14 +207,14 @@ export default function Step1Contact({
 
           {/* Error message */}
           {error && (
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200">
-              <p className="text-sm text-red-900">{error}</p>
+            <div className="p-4 rounded-xl bg-danger-light/50 border border-danger/20">
+              <p className="text-sm text-text-primary">{error}</p>
             </div>
           )}
 
           {/* Validation summary */}
           {showValidation && missingFields.length > 0 && (
-            <div className="rounded-xl border border-[#E3E5E8] bg-[#F8F9FA] px-4 py-3 text-sm text-[#0F172A]/80">
+            <div className="rounded-xl border border-border bg-surface-alt px-4 py-3 text-sm text-text-primary/80">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">
                   {missingFields.length} champ{missingFields.length > 1 ? "s" : ""} manquant
@@ -225,7 +225,7 @@ export default function Step1Contact({
                     key={f.id}
                     type="button"
                     onClick={() => focusField(f.id)}
-                    className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#0F172A]/70 border border-[#E3E5E8] hover:border-[#6BCFCF]"
+                    className="rounded-full bg-white px-3 py-1 text-xs font-medium text-text-primary/70 border border-border hover:border-turquoise"
                   >
                     {f.label}
                   </button>
@@ -239,7 +239,7 @@ export default function Step1Contact({
             type="submit"
             disabled={busy}
             aria-disabled={busy || !isFormValid}
-            className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white hover:bg-[#1E293B] transition-all duration-200 ${
+            className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-btn-primary px-8 py-4 text-base font-semibold text-white hover:bg-btn-primary-hover transition-all duration-200 ${
               !isFormValid && !busy ? "opacity-50 cursor-not-allowed" : ""
             } ${busy ? "opacity-50 cursor-not-allowed" : ""}`}
           >
@@ -259,17 +259,17 @@ export default function Step1Contact({
           </button>
 
           {/* Trust signals */}
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4 text-sm text-[#1E293B]/60">
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4 text-sm text-text-body/60">
             <div className="flex items-center gap-1">
-              <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+              <Check className="w-4 h-4 text-success" strokeWidth={3} />
               <span>Gratuit</span>
             </div>
             <div className="flex items-center gap-1">
-              <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+              <Check className="w-4 h-4 text-success" strokeWidth={3} />
               <span>3 min</span>
             </div>
             <div className="flex items-center gap-1">
-              <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+              <Check className="w-4 h-4 text-success" strokeWidth={3} />
               <span>0 spam</span>
             </div>
           </div>
@@ -279,19 +279,19 @@ export default function Step1Contact({
       {/* Right: Mockup illustration */}
       <div className="order-2 relative hidden lg:block">
         <div className="relative w-full max-w-[360px] mx-auto">
-          <div className="absolute inset-0 bg-[#6BCFCF]/5 rounded-[3rem] blur-3xl" />
+          <div className="absolute inset-0 bg-turquoise/5 rounded-[3rem] blur-3xl" />
           
-          <div className="relative bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-8 border border-[#E3E5E8]">
+          <div className="relative bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-8 border border-border">
             <div className="space-y-6">
-              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-[#6BCFCF] mx-auto">
+              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-turquoise mx-auto">
                 <Check className="w-8 h-8 text-white" strokeWidth={3} />
               </div>
 
           <div className="text-center">
-            <h3 className="text-xl font-bold text-[#0F172A] mb-2">
+            <h3 className="text-xl font-bold text-text-primary mb-2">
               {isMobile ? "WhatsApp recommandé" : "Rapide et sécurisé"}
             </h3>
-            <p className="text-sm text-[#1E293B]/70">
+            <p className="text-sm text-text-body/70">
               {isMobile 
                 ? "Demande rapide depuis votre mobile" 
                 : "Vos données sont protégées et ne seront jamais partagées"}
@@ -299,45 +299,45 @@ export default function Step1Contact({
           </div>
 
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F9FA]">
-                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-green-100">
-                    <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt">
+                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-success-light">
+                    <Check className="w-4 h-4 text-success" strokeWidth={3} />
                   </div>
-                  <p className="text-sm text-[#0F172A]">
+                  <p className="text-sm text-text-primary">
                     <strong>3 à 5 devis</strong> comparables
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F9FA]">
-                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-green-100">
-                    <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt">
+                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-success-light">
+                    <Check className="w-4 h-4 text-success" strokeWidth={3} />
                   </div>
-                  <p className="text-sm text-[#0F172A]">
+                  <p className="text-sm text-text-primary">
                     Réponse sous <strong>48-72h</strong>
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F9FA]">
-                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-green-100">
-                    <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt">
+                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-success-light">
+                    <Check className="w-4 h-4 text-success" strokeWidth={3} />
                   </div>
-                  <p className="text-sm text-[#0F172A]">
+                  <p className="text-sm text-text-primary">
                     Déménageurs <strong>vérifiés</strong>
                   </p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#E3E5E8] text-center">
-                <p className="text-xs text-[#1E293B]/60">
+              <div className="pt-4 border-t border-border text-center">
+                <p className="text-xs text-text-body/60">
                   Connexion sécurisée • RGPD conforme
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="absolute -right-4 top-20 bg-white rounded-xl shadow-md px-4 py-2 border border-gray-100">
-            <p className="text-xs font-bold text-[#0F172A]">1200+</p>
-            <p className="text-xs text-[#1E293B]/60">déménagements</p>
+          <div className="absolute -right-4 top-20 bg-white rounded-xl shadow-md px-4 py-2 border border-border-light">
+            <p className="text-xs font-bold text-text-primary">1200+</p>
+            <p className="text-xs text-text-body/60">déménagements</p>
           </div>
         </div>
       </div>

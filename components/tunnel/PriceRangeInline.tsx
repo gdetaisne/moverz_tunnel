@@ -79,23 +79,23 @@ export function PriceRangeInline({
       {...rest}
     >
       <div className="text-left">
-        <p className={`${size.label} font-bold uppercase tracking-[0.2em] text-[#64748B]`}>
+        <p className={`${size.label} font-bold uppercase tracking-[0.2em] text-text-secondary`}>
           min
         </p>
-        <p className={`${size.side} font-bold text-emerald-500`}>{euro(minEur)}</p>
+        <p className={`${size.side} font-bold text-success`}>{euro(minEur)}</p>
       </div>
 
       <div className="text-center">
-        <p className={`${size.center} font-black text-[#0F172A] leading-[0.95]`}>
+        <p className={`${size.center} font-black text-text-primary leading-[0.95]`}>
           {euro(calc)}
         </p>
       </div>
 
       <div className="text-right">
-        <p className={`${size.label} font-bold uppercase tracking-[0.2em] text-[#64748B]`}>
+        <p className={`${size.label} font-bold uppercase tracking-[0.2em] text-text-secondary`}>
           max
         </p>
-        <p className={`${size.side} font-bold text-rose-400`}>{euro(maxEur)}</p>
+        <p className={`${size.side} font-bold text-danger`}>{euro(maxEur)}</p>
       </div>
     </div>
   );

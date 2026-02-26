@@ -69,7 +69,7 @@ export function LiveEstimatePanel({
     <>
       {/* Desktop: Panneau sticky */}
       <aside className={`hidden lg:block ${className}`}>
-        <div className="rounded-3xl bg-gradient-to-br from-[#A8E6D8] via-[#6BCFCF] to-[#A78BFA]/60 p-6 shadow-xl shadow-[#6BCFCF]/20 border border-white/20 relative overflow-hidden">
+        <div className="rounded-3xl bg-gradient-to-br from-gradient-panel-from via-turquoise to-gradient-panel-to/60 p-6 shadow-xl shadow-turquoise/20 border border-white/20 relative overflow-hidden">
           {/* Subtle white glow overlay */}
           <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
 
@@ -92,12 +92,12 @@ export function LiveEstimatePanel({
                 {/* Accent line top */}
                 <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#6BCFCF] to-transparent" />
 
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#0F172A]/50 mb-3">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-text-primary/50 mb-3">
                   Budget affiné
                 </p>
 
                 <div className="text-center mb-5">
-                  <p className="text-6xl font-black text-[#0F172A] leading-none tracking-tight tabular-nums">
+                  <p className="text-6xl font-black text-text-primary leading-none tracking-tight tabular-nums">
                     <CountUp
                       end={refinedCenterEur}
                       duration={200}
@@ -108,20 +108,20 @@ export function LiveEstimatePanel({
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#0F172A]/10">
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-text-primary/10">
                   <div className="text-left">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/40 mb-1.5">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-text-primary/40 mb-1.5">
                       Minimum
                     </p>
-                    <p className="text-lg font-semibold text-emerald-600 tabular-nums">
+                    <p className="text-lg font-semibold text-success tabular-nums">
                       {typeof refinedMinEur === "number" ? fmtEur(refinedMinEur) : "—"}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/40 mb-1.5">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-text-primary/40 mb-1.5">
                       Maximum
                     </p>
-                    <p className="text-lg font-semibold text-rose-500 tabular-nums">
+                    <p className="text-lg font-semibold text-danger tabular-nums">
                       {typeof refinedMaxEur === "number" ? fmtEur(refinedMaxEur) : "—"}
                     </p>
                   </div>
@@ -149,7 +149,7 @@ export function LiveEstimatePanel({
                         key={line.key}
                         className={[
                           "group flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-white/80 backdrop-blur-xl border border-white/60 hover:bg-white hover:border-white shadow-sm hover:shadow-md transition-all duration-200",
-                          isHighlighted && "ring-2 ring-[#6BCFCF] shadow-[0_0_20px_rgba(107,207,207,0.4)]",
+                          isHighlighted && "ring-2 ring-turquoise shadow-glow-turquoise",
                         ].join(" ")}
                         style={{
                           animation: isHighlighted ? "highlight 500ms ease-out" : undefined,
@@ -159,23 +159,23 @@ export function LiveEstimatePanel({
                           <span
                             className={`w-2 h-2 rounded-full ${
                               isPositive
-                                ? "bg-rose-500"
+                                ? "bg-danger"
                                 : isNegative
-                                ? "bg-emerald-500"
-                                : "bg-gray-300"
+                                ? "bg-success"
+                                : "bg-neutral"
                             }`}
                           />
-                          <p className="text-sm font-medium text-[#0F172A] truncate">
+                          <p className="text-sm font-medium text-text-primary truncate">
                             {line.label}
                           </p>
                         </div>
                         <p
                           className={`text-sm font-semibold tabular-nums transition-all duration-150 ${
                             isPositive
-                              ? "text-rose-500"
+                              ? "text-danger"
                               : isNegative
-                              ? "text-emerald-500"
-                              : "text-gray-400"
+                              ? "text-success"
+                              : "text-text-muted"
                           }`}
                         >
                           {line.amountEur > 0 ? "+" : ""}
@@ -220,15 +220,15 @@ export function LiveEstimatePanel({
                 <summary className="cursor-pointer list-none rounded-xl bg-white/60 backdrop-blur-xl border border-white/60 hover:bg-white/80 hover:border-white shadow-sm hover:shadow-md p-4 transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/50 mb-1">
-                        Première estimation
-                      </p>
-                      <p className="text-lg font-semibold text-[#0F172A]/80 tabular-nums">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-text-primary/50 mb-1">
+                      Première estimation
+                    </p>
+                    <p className="text-lg font-semibold text-text-primary/80 tabular-nums">
                         {fmtEur(firstEstimateCenterEur)}
                       </p>
                     </div>
                     <svg
-                      className="w-4 h-4 text-[#0F172A]/50 transition-transform group-open/details:rotate-180"
+                      className="w-4 h-4 text-text-primary/50 transition-transform group-open/details:rotate-180"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -244,20 +244,20 @@ export function LiveEstimatePanel({
                 </summary>
                 <div className="mt-3 grid grid-cols-2 gap-3 px-4 pb-4">
                   <div className="text-left">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/40 mb-1">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-text-primary/40 mb-1">
                       Min
                     </p>
-                    <p className="text-sm font-semibold text-emerald-600 tabular-nums">
+                    <p className="text-sm font-semibold text-success tabular-nums">
                       {typeof firstEstimateMinEur === "number"
                         ? fmtEur(firstEstimateMinEur)
                         : "—"}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/40 mb-1">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-text-primary/40 mb-1">
                       Max
                     </p>
-                    <p className="text-sm font-semibold text-rose-500 tabular-nums">
+                    <p className="text-sm font-semibold text-danger tabular-nums">
                       {typeof firstEstimateMaxEur === "number"
                         ? fmtEur(firstEstimateMaxEur)
                         : "—"}
@@ -289,31 +289,31 @@ export function LiveEstimatePanel({
         <button
           type="button"
           onClick={() => setShowMobileSheet(true)}
-          className="pointer-events-auto w-full rounded-xl border border-[#E3E5E8] bg-white/90 backdrop-blur px-4 py-3 flex items-center justify-between shadow-lg hover:shadow-xl transition-all duration-200"
+          className="pointer-events-auto w-full rounded-xl border border-border bg-white/90 backdrop-blur px-4 py-3 flex items-center justify-between shadow-lg hover:shadow-xl transition-all duration-200"
         >
           <div className="flex items-center gap-3">
             <Badge
               variant="success"
               size="sm"
-              className="bg-[#10B981]/10 border-[#10B981]/20 text-[#10B981]"
+              className="bg-success/10 border-success/20 text-success"
             >
               <span className="relative inline-flex h-2 w-2 mr-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
               </span>
               LIVE
             </Badge>
             <div className="text-left">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1E293B]/60">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-text-body/60">
                 Budget affiné
               </p>
-              <p className="text-xl font-black text-[#0F172A] tabular-nums">
+              <p className="text-xl font-black text-text-primary tabular-nums">
                 {typeof refinedCenterEur === "number" ? fmtEur(refinedCenterEur) : "—"}
               </p>
             </div>
           </div>
           <svg
-            className="w-5 h-5 text-[#6BCFCF]"
+            className="w-5 h-5 text-turquoise"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -339,7 +339,7 @@ export function LiveEstimatePanel({
 
           {/* Sheet */}
           <div
-            className="absolute bottom-0 left-0 right-0 max-h-[90vh] overflow-y-auto bg-gradient-to-br from-[#A8E6D8] via-[#6BCFCF] to-[#A78BFA]/60 rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300"
+            className="absolute bottom-0 left-0 right-0 max-h-[90vh] overflow-y-auto bg-gradient-to-br from-gradient-panel-from via-turquoise to-gradient-panel-to/60 rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Handle */}
@@ -364,28 +364,28 @@ export function LiveEstimatePanel({
               {/* Prix principal */}
               {typeof refinedCenterEur === "number" && (
                 <div className="rounded-2xl bg-white/90 backdrop-blur-xl p-6 border border-white/50 shadow-lg">
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#0F172A]/50 mb-3">
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-text-primary/50 mb-3">
                     Budget affiné
                   </p>
                   <div className="text-center mb-5">
-                    <p className="text-5xl font-black text-[#0F172A] leading-none tracking-tight tabular-nums">
+                    <p className="text-5xl font-black text-text-primary leading-none tracking-tight tabular-nums">
                       {fmtEur(refinedCenterEur)}
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#0F172A]/10">
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-text-primary/10">
                     <div className="text-left">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/40 mb-1.5">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-text-primary/40 mb-1.5">
                         Minimum
                       </p>
-                      <p className="text-base font-semibold text-emerald-600 tabular-nums">
+                      <p className="text-base font-semibold text-success tabular-nums">
                         {typeof refinedMinEur === "number" ? fmtEur(refinedMinEur) : "—"}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-[#0F172A]/40 mb-1.5">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-text-primary/40 mb-1.5">
                         Maximum
                       </p>
-                      <p className="text-base font-semibold text-rose-500 tabular-nums">
+                      <p className="text-base font-semibold text-danger tabular-nums">
                         {typeof refinedMaxEur === "number" ? fmtEur(refinedMaxEur) : "—"}
                       </p>
                     </div>
@@ -410,27 +410,27 @@ export function LiveEstimatePanel({
                           className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-white/80 backdrop-blur-xl border border-white/60 shadow-sm"
                         >
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <span
-                              className={`w-2 h-2 rounded-full ${
-                                isPositive
-                                  ? "bg-rose-500"
-                                  : isNegative
-                                  ? "bg-emerald-500"
-                                  : "bg-gray-300"
-                              }`}
-                            />
-                            <p className="text-sm font-medium text-[#0F172A] truncate">
-                              {line.label}
-                            </p>
-                          </div>
-                          <p
-                            className={`text-sm font-semibold tabular-nums ${
+                          <span
+                            className={`w-2 h-2 rounded-full ${
                               isPositive
-                                ? "text-rose-500"
+                                ? "bg-danger"
                                 : isNegative
-                                ? "text-emerald-500"
-                                : "text-gray-400"
+                                ? "bg-success"
+                                : "bg-neutral"
                             }`}
+                          />
+                          <p className="text-sm font-medium text-text-primary truncate">
+                            {line.label}
+                          </p>
+                        </div>
+                        <p
+                          className={`text-sm font-semibold tabular-nums ${
+                            isPositive
+                              ? "text-danger"
+                              : isNegative
+                              ? "text-success"
+                              : "text-text-muted"
+                          }`}
                           >
                             {line.amountEur > 0 ? "+" : ""}
                             {line.amountEur} €
@@ -476,15 +476,15 @@ export function LiveEstimatePanel({
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg max-h-[80vh] overflow-y-auto bg-white rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-[#E3E5E8] px-6 py-4 flex items-center justify-between rounded-t-3xl">
-              <h3 className="text-lg font-bold text-[#0F172A]">Détail du calcul</h3>
+            <div className="sticky top-0 bg-white border-b border-border px-6 py-4 flex items-center justify-between rounded-t-3xl">
+              <h3 className="text-lg font-bold text-text-primary">Détail du calcul</h3>
               <button
                 type="button"
                 onClick={() => setShowDetailDrawer(false)}
-                className="w-8 h-8 rounded-full bg-[#F8FAFB] hover:bg-[#E3E5E8] flex items-center justify-center transition-all"
+                className="w-8 h-8 rounded-full bg-surface-alt hover:bg-border flex items-center justify-center transition-all"
                 aria-label="Fermer"
               >
-                <X className="w-5 h-5 text-[#0F172A]" strokeWidth={2} />
+                <X className="w-5 h-5 text-text-primary" strokeWidth={2} />
               </button>
             </div>
 
@@ -493,21 +493,21 @@ export function LiveEstimatePanel({
               {displayedLines.map((line, idx) => (
                 <div
                   key={line.key}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-[#F8FAFB] border border-[#E3E5E8]"
+                  className="flex items-start gap-3 p-4 rounded-xl bg-surface-alt border border-border"
                 >
-                  <div className="w-8 h-8 rounded-full bg-[#6BCFCF]/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-[#6BCFCF]">{idx + 1}</span>
+                  <div className="w-8 h-8 rounded-full bg-turquoise/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-turquoise">{idx + 1}</span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-[#0F172A] mb-1">{line.label}</p>
-                    <p className="text-xs text-[#1E293B]/70 mb-2">{line.status}</p>
+                    <p className="text-sm font-bold text-text-primary mb-1">{line.label}</p>
+                    <p className="text-xs text-text-body/70 mb-2">{line.status}</p>
                     <p
                       className={`text-base font-bold tabular-nums ${
                         line.amountEur > 0
-                          ? "text-rose-500"
+                          ? "text-danger"
                           : line.amountEur < 0
-                          ? "text-emerald-500"
-                          : "text-gray-400"
+                          ? "text-success"
+                          : "text-text-muted"
                       }`}
                     >
                       {line.amountEur > 0 ? "+" : ""}
@@ -515,15 +515,15 @@ export function LiveEstimatePanel({
                     </p>
                   </div>
                   {line.amountEur > 0 ? (
-                    <TrendingUp className="w-5 h-5 text-rose-500 flex-shrink-0" strokeWidth={2} />
+                    <TrendingUp className="w-5 h-5 text-danger flex-shrink-0" strokeWidth={2} />
                   ) : line.amountEur < 0 ? (
-                    <TrendingDown className="w-5 h-5 text-emerald-500 flex-shrink-0" strokeWidth={2} />
+                    <TrendingDown className="w-5 h-5 text-success flex-shrink-0" strokeWidth={2} />
                   ) : null}
                 </div>
               ))}
 
-              <div className="pt-4 border-t border-[#E3E5E8]">
-                <p className="text-xs text-[#1E293B]/60 text-center">
+              <div className="pt-4 border-t border-border">
+                <p className="text-xs text-text-body/60 text-center">
                   Formule {formuleLabel} • Calcul basé sur vos données déclarées
                 </p>
               </div>

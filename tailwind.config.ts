@@ -32,6 +32,7 @@ const config: Config = {
         },
         surface: {
           primary: "var(--color-surface-primary)", /* #FFFFFF */
+          alt: "var(--color-surface-alt)",         /* #F8F9FA */
           /* Legacy */
           0: "rgb(var(--surface-0) / <alpha-value>)",
           1: "rgb(var(--surface-1) / <alpha-value>)",
@@ -39,7 +40,8 @@ const config: Config = {
           3: "rgb(var(--surface-3) / <alpha-value>)",
         },
         text: {
-          primary: "var(--color-text-primary)",      /* #0B0F19 */
+          primary: "var(--color-text-primary)",      /* #0F172A */
+          body: "var(--color-text-body)",            /* #1E293B */
           secondary: "var(--color-text-secondary)",  /* #6B7280 */
           muted: "var(--color-text-muted)",          /* #9CA3AF */
           /* Legacy */
@@ -60,10 +62,37 @@ const config: Config = {
           light: "var(--color-border-light)",        /* #F3F4F6 */
         },
         
+        /* Buttons */
+        btn: {
+          primary: "var(--color-btn-primary)",           /* #0F172A */
+          "primary-hover": "var(--color-btn-primary-hover)", /* #1E293B */
+        },
+        neutral: "var(--color-neutral)",                 /* #D1D5DB */
+
         /* Semantic */
-        success: "var(--color-success)",             /* #16A34A */
-        danger: "var(--color-danger)",               /* #DC2626 */
-        warning: "var(--color-warning)",             /* #F59E0B */
+        success: {
+          DEFAULT: "var(--color-success)",               /* #16A34A */
+          light: "var(--color-success-light)",           /* #DCFCE7 */
+        },
+        danger: {
+          DEFAULT: "var(--color-danger)",                /* #DC2626 */
+          light: "var(--color-danger-light)",            /* #FEE2E2 */
+        },
+        warning: {
+          DEFAULT: "var(--color-warning)",               /* #F59E0B */
+          light: "var(--color-warning-light)",           /* #FEF3C7 */
+          fg: "var(--color-warning-fg)",                 /* #B45309 */
+        },
+        info: {
+          DEFAULT: "var(--color-info)",                  /* #1D4ED8 */
+          light: "var(--color-info-light)",              /* #DBEAFE */
+        },
+
+        /* Gradient panel */
+        gradient: {
+          "panel-from": "var(--color-gradient-panel-from)", /* #A8E6D8 */
+          "panel-to": "var(--color-gradient-panel-to)",     /* #A78BFA */
+        },
       },
       
       /* ===== FONTS ===== */

@@ -122,32 +122,32 @@ export default function ConfirmationPage({
   return (
     <div className="max-w-3xl mx-auto">
       <div className="text-center space-y-4 mb-10">
-        <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+        <div className="inline-flex items-center gap-2 rounded-full bg-warning-light px-3 py-1 text-xs font-semibold text-warning-fg">
           <Mail className="w-3.5 h-3.5" strokeWidth={3} />
           Validation email requise
         </div>
 
-        <h1 className="text-3xl md:text-5xl font-black text-[#0F172A] leading-[1.1]">
+        <h1 className="text-3xl md:text-5xl font-black text-text-primary leading-[1.1]">
           Plus qu'une étape{firstName?.trim() ? `, ${firstName.trim()}` : ""} !
         </h1>
-        <p className="text-lg text-[#1E293B]/70">
+        <p className="text-lg text-text-body/70">
           Confirmez votre email pour que votre dossier soit transmis aux déménageurs.
         </p>
       </div>
 
-      <div className="rounded-2xl border border-[#E3E5E8] bg-white p-5 md:p-6">
+      <div className="rounded-2xl border border-border bg-white p-5 md:p-6">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#6BCFCF]/10">
-            <Mail className="h-5 w-5 text-[#2B7A78]" />
+          <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-turquoise/10">
+            <Mail className="h-5 w-5 text-accent" />
           </div>
 
           <div className="flex-1">
             {!isEditingEmail ? (
               <>
-                <p className="text-sm font-semibold text-[#0F172A]">
+                <p className="text-sm font-semibold text-text-primary">
                   Confirmez votre email pour recevoir vos devis
                 </p>
-                <p className="mt-1 text-sm text-[#1E293B]/70">
+                <p className="mt-1 text-sm text-text-body/70">
                   Cliquez sur le lien envoyé à <span className="font-mono">{normalizedEmail || "—"}</span>.
                 </p>
 
@@ -158,7 +158,7 @@ export default function ConfirmationPage({
                       setEmailDraft(email);
                       setIsEditingEmail(true);
                     }}
-                    className="inline-flex items-center gap-2 rounded-xl border border-[#E3E5E8] bg-white px-4 py-2 text-xs font-semibold text-[#0F172A] hover:border-[#6BCFCF]"
+                    className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-xs font-semibold text-text-primary hover:border-turquoise"
                   >
                     <Pencil className="h-4 w-4" />
                     Modifier mon email
@@ -167,7 +167,7 @@ export default function ConfirmationPage({
                   <button
                     type="button"
                     onClick={() => void sendConfirmation({ force: true })}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#0F172A] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1E293B]"
+                    className="inline-flex items-center gap-2 rounded-xl bg-btn-primary px-4 py-2 text-xs font-semibold text-white hover:bg-btn-primary-hover"
                   >
                     <RotateCcw className="h-4 w-4" />
                     Renvoyer l’email
@@ -176,11 +176,11 @@ export default function ConfirmationPage({
               </>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-[#0F172A]">Modifier votre email</p>
+                <p className="text-sm font-semibold text-text-primary">Modifier votre email</p>
                 <input
                   value={emailDraft}
                   onChange={(e) => setEmailDraft(e.target.value)}
-                  className="w-full rounded-xl border border-[#E3E5E8] px-4 py-2 text-sm"
+                  className="w-full rounded-xl border border-border px-4 py-2 text-sm"
                   placeholder="vous@email.fr"
                   inputMode="email"
                   autoComplete="email"
@@ -192,14 +192,14 @@ export default function ConfirmationPage({
                       setIsEditingEmail(false);
                       setEmailDraft(email);
                     }}
-                    className="rounded-xl border border-[#E3E5E8] bg-white px-4 py-2 text-xs font-semibold text-[#0F172A]"
+                    className="rounded-xl border border-border bg-white px-4 py-2 text-xs font-semibold text-text-primary"
                   >
                     Annuler
                   </button>
                   <button
                     type="button"
                     onClick={() => void saveEmail()}
-                    className="rounded-xl bg-[#0F172A] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1E293B]"
+                    className="rounded-xl bg-btn-primary px-4 py-2 text-xs font-semibold text-white hover:bg-btn-primary-hover"
                   >
                     Enregistrer & renvoyer
                   </button>
@@ -208,7 +208,7 @@ export default function ConfirmationPage({
             )}
 
             {confirmationState.status === "error" && (
-              <p className="mt-3 text-xs text-amber-700">
+              <p className="mt-3 text-xs text-warning-fg">
                 {confirmationState.message} (pensez à vérifier vos spams)
               </p>
             )}
@@ -216,25 +216,25 @@ export default function ConfirmationPage({
         </div>
       </div>
 
-      <div className="mt-8 rounded-2xl bg-[#F8F9FA] p-5 md:p-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E293B]/60">
+      <div className="mt-8 rounded-2xl bg-surface-alt p-5 md:p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-body/60">
           Prochaines étapes
         </p>
-        <div className="mt-4 space-y-3 text-sm text-[#1E293B]/70">
+        <div className="mt-4 space-y-3 text-sm text-text-body/70">
           <div className="flex items-start gap-2">
-            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700 text-xs font-bold">
+            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-success-light text-success text-xs font-bold">
               1
             </span>
             <p>Confirmez votre email pour valider votre demande.</p>
           </div>
           <div className="flex items-start gap-2">
-            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
+            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-info-light text-info text-xs font-bold">
               2
             </span>
             <p>Nous préparons votre dossier et le transmettons aux déménageurs.</p>
           </div>
           <div className="flex items-start gap-2">
-            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
+            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-info-light text-info text-xs font-bold">
               3
             </span>
             <p>Vous recevez 3 à 5 devis par email sous 5 à 7 jours.</p>
@@ -246,21 +246,21 @@ export default function ConfirmationPage({
             <button
               type="button"
               onClick={() => onGoToStep(1)}
-              className="rounded-xl border border-[#E3E5E8] bg-white px-4 py-2 text-xs font-semibold text-[#0F172A] hover:border-[#6BCFCF]"
+              className="rounded-xl border border-border bg-white px-4 py-2 text-xs font-semibold text-text-primary hover:border-turquoise"
             >
               Modifier contact
             </button>
             <button
               type="button"
               onClick={() => onGoToStep(2)}
-              className="rounded-xl border border-[#E3E5E8] bg-white px-4 py-2 text-xs font-semibold text-[#0F172A] hover:border-[#6BCFCF]"
+              className="rounded-xl border border-border bg-white px-4 py-2 text-xs font-semibold text-text-primary hover:border-turquoise"
             >
               Modifier projet
             </button>
             <button
               type="button"
               onClick={() => onGoToStep(3)}
-              className="rounded-xl border border-[#E3E5E8] bg-white px-4 py-2 text-xs font-semibold text-[#0F172A] hover:border-[#6BCFCF]"
+              className="rounded-xl border border-border bg-white px-4 py-2 text-xs font-semibold text-text-primary hover:border-turquoise"
             >
               Modifier formules
             </button>
