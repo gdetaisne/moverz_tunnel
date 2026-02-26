@@ -153,16 +153,9 @@
   --z-tooltip: 1070;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg-primary: var(--color-bg-dark);
-    --color-surface-primary: #1A1F26;
-    --color-text-primary: #F9FAFB;
-    --color-text-secondary: #D1D5DB;
-    --color-border: #374151;
-  }
-}
+/* Dark mode désactivé — le tunnel est light-only.
+   Les overrides étaient appliqués via prefers-color-scheme: dark,
+   ce qui rendait le texte blanc sur fond blanc pour les utilisateurs en dark mode OS. */
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {

@@ -11,6 +11,8 @@
    - Values are RGB triplets to support Tailwind alpha syntax.
 ------------------------------------------------------------ */
 :root {
+  color-scheme: light;
+
   /* Brand (aligned with moverz.fr - flat/sober) */
   --brand-navy: 15 23 42; /* #0F172A - dark navy */
   --brand-slate: 30 41 59; /* #1E293B - medium navy */
