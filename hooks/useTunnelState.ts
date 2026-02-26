@@ -273,6 +273,14 @@ export function useTunnelState() {
           if (!merged.originAccess) merged.originAccess = "easy";
           if (!merged.destinationAccess) merged.destinationAccess = "easy";
 
+          // Nettoyage: purger les strings "undefined" / "null" corrompues
+          for (const key of Object.keys(merged) as (keyof TunnelFormState)[]) {
+            const v = merged[key];
+            if (v === "undefined" || v === "null") {
+              (merged as any)[key] = INITIAL_STATE[key];
+            }
+          }
+
           return merged;
         } catch (e) {
           console.error("Failed to parse saved state:", e);
