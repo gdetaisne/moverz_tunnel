@@ -494,9 +494,11 @@ function DevisGratuitsV3Content() {
           originAddress: state.originAddress || undefined,
           originCity: state.originCity || undefined,
           originPostalCode: state.originPostalCode || undefined,
+          originCountryCode: state.originCountryCode || undefined,
           destAddress: state.destinationUnknown ? undefined : state.destinationAddress || undefined,
           destCity: state.destinationUnknown ? undefined : state.destinationCity || undefined,
           destPostalCode: state.destinationUnknown ? undefined : state.destinationPostalCode || undefined,
+          destCountryCode: state.destinationUnknown ? undefined : state.destinationCountryCode || undefined,
           movingDate: toIsoDate(state.movingDate),
           dateFlexible: state.dateFlexible,
           originHousingType: state.originHousingType || undefined,
@@ -1221,6 +1223,16 @@ function DevisGratuitsV3Content() {
         (document.getElementById("contact-email") as any)?.focus?.();
       });
       trackError("VALIDATION_ERROR", "Invalid email", 1, "CONTACT", "contact_v3");
+      return;
+    }
+
+    if (!state.phone.trim()) {
+      setShowValidationStep1(true);
+      requestAnimationFrame(() => {
+        document.getElementById("contact-phone")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (document.getElementById("contact-phone") as any)?.focus?.();
+      });
+      trackError("VALIDATION_ERROR", "Missing phone", 1, "CONTACT", "contact_v3");
       return;
     }
 
@@ -1958,8 +1970,10 @@ function DevisGratuitsV3Content() {
             <Step1Contact
               firstName={state.firstName}
               email={state.email}
+              phone={state.phone}
               onFirstNameChange={(value) => updateField("firstName", value)}
               onEmailChange={(value) => updateField("email", value)}
+              onPhoneChange={(value) => updateField("phone", value)}
               onSubmit={handleSubmitStep1}
               isSubmitting={false}
               error={null}

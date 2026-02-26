@@ -568,6 +568,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               props.onFieldChange("originAddress", s.addressLine ?? s.label);
               props.onFieldChange("originPostalCode", s.postalCode ?? "");
               props.onFieldChange("originCity", s.city ?? "");
+              props.onFieldChange("originCountryCode", s.countryCode ?? "fr");
               props.onFieldChange("originLat", s.lat ?? null);
               props.onFieldChange("originLon", s.lon ?? null);
             }}
@@ -841,6 +842,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   props.onFieldChange("destinationAddress", s.addressLine ?? s.label);
                   props.onFieldChange("destinationPostalCode", s.postalCode ?? "");
                   props.onFieldChange("destinationCity", s.city ?? "");
+                  props.onFieldChange("destinationCountryCode", s.countryCode ?? "fr");
                   props.onFieldChange("destinationLat", s.lat ?? null);
                   props.onFieldChange("destinationLon", s.lon ?? null);
                 }}

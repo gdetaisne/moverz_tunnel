@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { Mail, User, ArrowRight, Check, X, Loader2 } from "lucide-react";
+import { Mail, User, Phone, ArrowRight, Check, X, Loader2 } from "lucide-react";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 interface Step1ContactProps {
   firstName: string;
   email: string;
+  phone?: string;
   onFirstNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
+  onPhoneChange?: (value: string) => void;
   onSubmit: (e: FormEvent) => Promise<void>;
   isSubmitting: boolean;
   error: string | null;
@@ -40,8 +42,10 @@ async function checkEmailApi(email: string): Promise<{ ok: boolean; message: str
 export default function Step1Contact({
   firstName,
   email,
+  phone,
   onFirstNameChange,
   onEmailChange,
+  onPhoneChange,
   onSubmit,
   isSubmitting,
   error,
@@ -49,20 +53,25 @@ export default function Step1Contact({
 }: Step1ContactProps) {
   const [firstNameTouched, setFirstNameTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [emailChecking, setEmailChecking] = useState(false);
   const [emailApiError, setEmailApiError] = useState<string | null>(null);
   const { isMobile } = useDeviceDetection();
 
+  const hasPhone = onPhoneChange !== undefined;
   const isFirstNameValid = firstName.trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isFormValid = isFirstNameValid && isEmailValid;
+  const isPhoneValid = !hasPhone || (phone ?? "").trim().length >= 1;
+  const isFormValid = isFirstNameValid && isEmailValid && isPhoneValid;
 
   const missingFields: Array<{ id: string; label: string }> = [];
   if (!isFirstNameValid) missingFields.push({ id: "contact-firstName", label: "Prénom" });
   if (!isEmailValid) missingFields.push({ id: "contact-email", label: "Email" });
+  if (!isPhoneValid) missingFields.push({ id: "contact-phone", label: "Téléphone" });
 
   const showFirstNameError = (showValidation || firstNameTouched) && !isFirstNameValid;
   const showEmailError = (showValidation || emailTouched) && !isEmailValid;
+  const showPhoneError = hasPhone && (showValidation || phoneTouched) && !isPhoneValid;
 
   const focusField = (id: string) => {
     const el = document.getElementById(id);
@@ -204,6 +213,48 @@ export default function Step1Contact({
               </p>
             )}
           </div>
+
+          {/* Téléphone (optionnel selon les props) */}
+          {hasPhone && (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
+                <Phone className="w-4 h-4 text-turquoise" />
+                Téléphone
+              </label>
+              <div className="relative">
+                <input
+                  id="contact-phone"
+                  type="tel"
+                  value={phone ?? ""}
+                  onChange={(e) => {
+                    setPhoneTouched(true);
+                    onPhoneChange!(e.target.value);
+                  }}
+                  className="w-full rounded-xl border-2 border-border bg-white px-4 pr-12 py-3 text-base text-text-primary placeholder:text-text-body/40 focus:border-turquoise focus:outline-none focus:ring-2 focus:ring-turquoise/20 transition-all"
+                  placeholder="06 12 34 56 78"
+                  autoComplete="tel"
+                />
+                {(phoneTouched || showValidation) && (
+                  <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
+                    {isPhoneValid ? (
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success-light">
+                        <Check className="w-4 h-4 text-success" strokeWidth={3} />
+                      </span>
+                    ) : (
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-danger-light">
+                        <X className="w-4 h-4 text-danger" strokeWidth={3} />
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
+              {showPhoneError && (
+                <p className="text-sm text-danger">
+                  Merci de renseigner un numéro de téléphone
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Error message */}
           {error && (
