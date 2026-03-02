@@ -452,7 +452,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
               {/* Barre de progression auto-close */}
               <div className="h-1 bg-[#E3E5E8]">
                 <div
-                  className="h-full bg-[#6BCFCF] transition-all ease-linear"
+                  className="h-full bg-[#0EA5A6] transition-all ease-linear"
                   style={{ width: `${popupProgress}%`, transitionDuration: "50ms" }}
                 />
               </div>
@@ -501,8 +501,8 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     <Users className="w-3.5 h-3.5 text-blue-500" />
                     100+ avis clients
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6BCFCF]/10 border border-[#6BCFCF]/30 px-3 py-1.5 text-xs font-semibold text-[#0F172A]">
-                    <Shield className="w-3.5 h-3.5 text-[#6BCFCF]" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0EA5A6]/10 border border-[#0EA5A6]/30 px-3 py-1.5 text-xs font-semibold text-[#0F172A]">
+                    <Shield className="w-3.5 h-3.5 text-[#0EA5A6]" />
                     Score Moverz ≥ 80
                   </span>
                 </div>
@@ -511,7 +511,8 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 <button
                   type="button"
                   onClick={closePopup}
-                  className="w-full rounded-full bg-[#0F172A] px-6 py-3.5 text-sm font-semibold text-white hover:bg-[#1E293B] transition-colors"
+                  className="w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all hover:brightness-95 active:scale-[0.98]"
+                  style={{ background: "#F59E0B", color: "#111827", boxShadow: "0 4px 16px rgba(245,158,11,0.28)" }}
                 >
                   Continuer mon dossier
                 </button>
@@ -522,11 +523,6 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
       )}
 
       <div>
-        <div className="hidden md:inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
-          <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
-          Étape 2/4
-        </div>
-
         <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] mb-3 md:mb-4 leading-tight">
           Décrivez votre déménagement
         </h2>
@@ -540,7 +536,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
         {/* === DÉPART === */}
         <div className="pb-6 space-y-6 md:pb-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
           <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-[#6BCFCF]" />
+            <MapPin className="w-5 h-5 text-[#0EA5A6]" />
             <h3 className="text-lg font-bold text-[#0F172A]">Départ</h3>
           </div>
 
@@ -600,8 +596,8 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 onClick={() => setHousingCategory("origin", "apartment")}
                 className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                   originIsApartment
-                    ? "bg-[#6BCFCF] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    ? "bg-[#0EA5A6] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
                 }`}
               >
                 Appartement
@@ -611,8 +607,8 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 onClick={() => setHousingCategory("origin", "house")}
                 className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                   originIsHouse
-                    ? "bg-[#6BCFCF] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    ? "bg-[#0EA5A6] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
                 }`}
               >
                 Maison
@@ -622,8 +618,8 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                 onClick={() => setHousingCategory("origin", "box")}
                 className={`px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
                   originIsBox
-                    ? "bg-[#6BCFCF] text-white"
-                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    ? "bg-[#0EA5A6] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
                 }`}
               >
                 Box
@@ -644,7 +640,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                       props.originHousingType === type.value
                         ? "bg-[#0F172A] text-white"
-                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
                     }`}
                   >
                     {type.label}
@@ -678,7 +674,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   props.onFieldChange("originBoxVolumeM3", e.target.value);
                 }}
                 placeholder="Ex: 8"
-                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
               />
               {(showErrors || touchedFields.has("originBoxVolumeM3")) &&
                 (!props.originBoxVolumeM3 ||
@@ -721,7 +717,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                         }
                         syncAccessV2({ originFloor: nextFloor, originElevator: (Number.parseInt(nextFloor || "0", 10) || 0) === 0 ? "" : props.originElevator });
                       }}
-                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
                     >
                       <option value="" disabled>Sélectionnez</option>
                       {FLOOR_OPTIONS.map((o) => (
@@ -753,7 +749,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                         else props.onFieldChange("originFurnitureLift", "no");
                         syncAccessV2({ originElevator: next });
                       }}
-                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
                     >
                       <option value="" disabled>Sélectionnez</option>
                       <option value="yes">Ascenseur &gt; 3 places</option>
@@ -769,7 +765,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                         props.onFieldChange("originAccess", next);
                         syncAccessV2({ originAccess: next });
                       }}
-                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                      className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
                     >
                       <option value="" disabled>Sélectionnez</option>
                       <option value="simple">Accès simple</option>
@@ -793,7 +789,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                         placeholder={originIsHouse
                           ? "Ex : portail < 2,5 m, portage > 10 m, accès camion compliqué"
                           : "Ex : il faut prévoir de bloquer la rue, impossible de se garer devant"}
-                        className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/50 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                        className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/50 focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
                       />
                       {(showErrors || touchedFields.has("originAccessDetails")) &&
                         (props.originAccessDetails || "").trim().length < 10 && (
@@ -813,7 +809,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
         {/* === ARRIVÉE === */}
         <div className="pt-6 border-t border-[#E3E5E8] space-y-6 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]">
           <div className="flex items-center gap-2">
-            <Home className="w-5 h-5 text-[#6BCFCF]" />
+            <Home className="w-5 h-5 text-[#0EA5A6]" />
             <h3 className="text-lg font-bold text-[#0F172A]">Arrivée</h3>
           </div>
 
@@ -875,30 +871,30 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                     onClick={() => setHousingCategory("destination", "apartment")}
                     className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                       destinationIsApartment
-                        ? "bg-[#6BCFCF] text-white"
-                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                    }`}
-                  >
-                    Appartement
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setHousingCategory("destination", "house")}
-                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                      destinationIsHouse
-                        ? "bg-[#6BCFCF] text-white"
-                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
-                    }`}
-                  >
-                    Maison
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setHousingCategory("destination", "box")}
-                    className={`px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
-                      destinationIsBox
-                        ? "bg-[#6BCFCF] text-white"
-                        : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    ? "bg-[#0EA5A6] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
+                }`}
+              >
+                Appartement
+              </button>
+              <button
+                type="button"
+                onClick={() => setHousingCategory("destination", "house")}
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  destinationIsHouse
+                    ? "bg-[#0EA5A6] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
+                }`}
+              >
+                Maison
+              </button>
+              <button
+                type="button"
+                onClick={() => setHousingCategory("destination", "box")}
+                className={`px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
+                  destinationIsBox
+                    ? "bg-[#0EA5A6] text-white"
+                    : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
                     }`}
                   >
                     Box
@@ -919,7 +915,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                         className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                           props.destinationHousingType === type.value
                             ? "bg-[#0F172A] text-white"
-                            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
                         }`}
                       >
                         {type.label}
@@ -976,7 +972,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                                   : props.destinationElevator,
                             });
                           }}
-                          className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                          className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
                         >
                           <option value="" disabled>Sélectionnez</option>
                           {FLOOR_OPTIONS.map((o) => (
@@ -1008,7 +1004,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                             else props.onFieldChange("destinationFurnitureLift", "no");
                             syncAccessV2({ destinationElevator: next });
                           }}
-                          className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                          className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
                         >
                           <option value="" disabled>Sélectionnez</option>
                           <option value="yes">Ascenseur &gt; 3 places</option>
@@ -1024,7 +1020,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                             props.onFieldChange("destinationAccess", next);
                             syncAccessV2({ destinationAccess: next });
                           }}
-                          className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                          className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
                         >
                           <option value="" disabled>Sélectionnez</option>
                           <option value="simple">Accès simple</option>
@@ -1048,7 +1044,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                             placeholder={destinationIsHouse
                               ? "Ex : portail < 2,5 m, portage > 10 m, accès camion compliqué"
                               : "Ex : il faut prévoir de bloquer la rue, impossible de se garer devant"}
-                            className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/50 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                            className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/50 focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
                           />
                           {(showErrors || touchedFields.has("destinationAccessDetails")) &&
                             (props.destinationAccessDetails || "").trim().length < 10 && (
@@ -1069,7 +1065,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
         {/* === DATE === */}
         <div className="pt-6 border-t border-[#E3E5E8] space-y-4 md:pt-0 md:border-t-0 md:p-6 md:rounded-2xl md:bg-[#F8F9FA] md:border md:border-[#E3E5E8]" onFocusCapture={() => markVisitedUpTo("date")}>
           <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-[#6BCFCF]" />
+            <Calendar className="w-5 h-5 text-[#0EA5A6]" />
             <h3 className="text-lg font-bold text-[#0F172A]">Date souhaitée</h3>
             <BlockBadge blockId="date" />
           </div>
@@ -1091,12 +1087,12 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
             />
           </div>
 
-          <label className="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#E3E5E8] cursor-pointer hover:border-[#6BCFCF] transition-colors">
+          <label className="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#E3E5E8] cursor-pointer hover:border-[#0EA5A6] transition-colors">
             <input
               type="checkbox"
               checked={props.dateFlexible}
               onChange={(e) => props.onFieldChange("dateFlexible", e.target.checked)}
-              className="w-5 h-5 rounded border-[#E3E5E8] text-[#6BCFCF] focus:ring-2 focus:ring-[#6BCFCF]/20"
+              className="w-5 h-5 rounded border-[#E3E5E8] text-[#0EA5A6] focus:ring-2 focus:ring-[#0EA5A6]/20"
             />
             <span className="text-sm text-[#0F172A]">
               Je suis flexible sur la date (±1 semaine)
@@ -1133,7 +1129,7 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
                   key={f.id}
                   type="button"
                   onClick={() => focusField(f.id)}
-                  className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#0F172A]/70 border border-[#E3E5E8] hover:border-[#6BCFCF]"
+                  className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#0F172A]/70 border border-[#E3E5E8] hover:border-[#0EA5A6]"
                 >
                   {f.label}
                 </button>
@@ -1148,9 +1144,10 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           disabled={props.isSubmitting}
           aria-disabled={props.isSubmitting || !isFormValid}
           onFocus={() => markAllVisited()}
-          className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white hover:bg-[#1E293B] transition-all duration-200 ${
-            !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          className={`group w-full sm:max-w-sm sm:mx-auto inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-4 text-base font-bold transition-all duration-200 ${
+            !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:scale-[1.02] active:scale-[0.98]"
           } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+          style={{ background: "#F59E0B", color: "#111827", boxShadow: "0 4px 20px rgba(245,158,11,0.30)" }}
         >
           <span>{props.isSubmitting ? "Enregistrement..." : "Compléter mon dossier"}</span>
           {!props.isSubmitting && (

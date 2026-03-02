@@ -174,7 +174,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
         className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
           p.value === false
             ? "bg-[#0F172A] text-white"
-            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
         }`}
       >
         Non
@@ -184,8 +184,8 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
         onClick={() => p.onChange(true)}
         className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
           p.value === true
-            ? "bg-[#6BCFCF] text-white"
-            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    ? "bg-[#0EA5A6] text-white"
+            : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
         }`}
       >
         Oui
@@ -203,11 +203,6 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
   return (
     <div className="space-y-8">
       <div>
-        <div className="hidden md:inline-flex items-center gap-2 rounded-full bg-[#6BCFCF]/10 px-4 py-1.5 text-sm font-semibold text-[#0F172A] mb-6">
-          <span className="h-2 w-2 rounded-full bg-[#6BCFCF]" />
-          Étape 3/4
-        </div>
-
         <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] mb-3 md:mb-4 leading-tight">
           Choisissez votre niveau de service
         </h2>
@@ -231,7 +226,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               onChange={(e) => props.onFieldChange("surfaceM2", e.target.value)}
               min={10}
               max={500}
-              className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+              className="w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
               placeholder="60"
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1E293B]/60 text-sm">
@@ -265,12 +260,12 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               <button
                 type="button"
                 onClick={() => setShowDetails((v) => !v)}
-                className="rounded-full border border-[#E3E5E8] bg-white px-3 py-1 text-xs font-semibold text-[#0F172A]/70 shadow-sm hover:border-[#6BCFCF]/60 hover:text-[#0F172A] transition"
+                className="rounded-full border border-[#E3E5E8] bg-white px-3 py-1 text-xs font-semibold text-[#0F172A]/70 shadow-sm hover:border-[#0EA5A6]/60 hover:text-[#0F172A] transition"
               >
                 {showDetails ? "Masquer le détail" : "Voir le détail"}
               </button>
               {props.pricingDetails?.housingType && (
-                <span className="rounded-full bg-[#6BCFCF]/10 px-2.5 py-1 text-[11px] font-semibold text-[#0F172A]">
+                <span className="rounded-full bg-[#0EA5A6]/10 px-2.5 py-1 text-[11px] font-semibold text-[#0F172A]">
                   type {props.pricingDetails.housingType}
                 </span>
               )}
@@ -416,19 +411,19 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                 onClick={() => props.onFieldChange("formule", f.id)}
                 className={`relative p-6 rounded-2xl border-2 transition-all text-left ${
                   props.formule === f.id
-                    ? "border-[#6BCFCF] bg-[#6BCFCF]/5"
-                    : "border-[#E3E5E8] bg-white hover:border-[#6BCFCF]/50"
+                    ? "border-[#0EA5A6] bg-[#0EA5A6]/5"
+                    : "border-[#E3E5E8] bg-white hover:border-[#0EA5A6]/50"
                 }`}
               >
                 {f.recommended && (
-                  <div className="absolute -top-3 left-6 bg-[#6BCFCF] text-white px-3 py-1 rounded-full text-xs font-bold">
+                  <div className="absolute -top-3 left-6 bg-[#0EA5A6] text-white px-3 py-1 rounded-full text-xs font-bold">
                     Recommandé
                   </div>
                 )}
                 
                 <div className="flex items-start gap-4">
                   <div className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl ${
-                    props.formule === f.id ? "bg-[#6BCFCF] text-white" : "bg-[#F8F9FA] text-[#0F172A]"
+                    props.formule === f.id ? "bg-[#0EA5A6] text-white" : "bg-[#F8F9FA] text-[#0F172A]"
                   }`}>
                     {f.icon}
                   </div>
@@ -437,7 +432,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-bold text-[#0F172A]">{f.label}</h4>
                       {props.formule === f.id && (
-                        <Check className="w-5 h-5 text-[#6BCFCF]" strokeWidth={3} />
+                        <Check className="w-5 h-5 text-[#0EA5A6]" strokeWidth={3} />
                       )}
                     </div>
 
@@ -453,7 +448,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                     <ul className="space-y-1">
                       {f.features.map((feature, i) => (
                         <li key={i} className="text-sm text-[#1E293B]/70 flex items-center gap-2">
-                          <span className="text-[#6BCFCF]">•</span>
+                          <span className="text-[#0EA5A6]">•</span>
                           {feature}
                         </li>
                       ))}
@@ -474,8 +469,8 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               onClick={() => setShowOptions(false)}
               className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                 !showOptions
-                  ? "bg-[#6BCFCF] text-white"
-                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    ? "bg-[#0EA5A6] text-white"
+                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
               }`}
             >
               Aucune
@@ -485,8 +480,8 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               onClick={() => setShowOptions(true)}
               className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                 showOptions
-                  ? "bg-[#6BCFCF] text-white"
-                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#6BCFCF]"
+                    ? "bg-[#0EA5A6] text-white"
+                  : "bg-white border-2 border-[#E3E5E8] text-[#0F172A] hover:border-[#0EA5A6]"
               }`}
             >
               Personnaliser
@@ -507,7 +502,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-medium text-[#0F172A]">{service.label}</p>
                           {isIncluded && (
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[#6BCFCF] bg-[#6BCFCF]/10 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[#0EA5A6] bg-[#0EA5A6]/10 px-1.5 py-0.5 rounded">
                               inclus
                             </span>
                           )}
@@ -526,7 +521,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               onChange={(e) => props.onFieldChange("specificNotes", e.target.value)}
                   placeholder="Ex: rue étroite, horaires, objets fragiles, contraintes particulières..."
               rows={3}
-                  className="mt-2 w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-sm text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#6BCFCF] focus:outline-none focus:ring-2 focus:ring-[#6BCFCF]/20 transition-all"
+                  className="mt-2 w-full rounded-xl border-2 border-[#E3E5E8] bg-white px-4 py-3 text-sm text-[#0F172A] placeholder:text-[#1E293B]/40 focus:border-[#0EA5A6] focus:outline-none focus:ring-2 focus:ring-[#0EA5A6]/20 transition-all"
             />
           </div>
             </div>
@@ -553,7 +548,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
                   key={f.id}
                   type="button"
                   onClick={() => focusField(f.id)}
-                  className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#0F172A]/70 border border-[#E3E5E8] hover:border-[#6BCFCF]"
+                  className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#0F172A]/70 border border-[#E3E5E8] hover:border-[#0EA5A6]"
                 >
                   {f.label}
                 </button>
@@ -567,9 +562,10 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
           type="submit"
           disabled={props.isSubmitting}
           aria-disabled={props.isSubmitting || !isFormValid}
-          className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 py-4 text-base font-semibold text-white hover:bg-[#1E293B] transition-all duration-200 ${
-            !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          className={`group w-full sm:max-w-sm sm:mx-auto inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-4 text-base font-bold transition-all duration-200 ${
+            !isFormValid && !props.isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:scale-[1.02] active:scale-[0.98]"
           } ${props.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+          style={{ background: "#F59E0B", color: "#111827", boxShadow: "0 4px 20px rgba(245,158,11,0.30)" }}
         >
           <span>{props.isSubmitting ? "Envoi du dossier..." : "Envoyer mon dossier"}</span>
           {!props.isSubmitting && (

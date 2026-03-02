@@ -167,7 +167,8 @@ export default function ConfirmationPage({
                   <button
                     type="button"
                     onClick={() => void sendConfirmation({ force: true })}
-                    className="inline-flex items-center gap-2 rounded-xl bg-btn-primary px-4 py-2 text-xs font-semibold text-white hover:bg-btn-primary-hover"
+                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold"
+                    style={{ background: "#F59E0B", color: "#111827" }}
                   >
                     <RotateCcw className="h-4 w-4" />
                     Renvoyer l’email
@@ -199,7 +200,8 @@ export default function ConfirmationPage({
                   <button
                     type="button"
                     onClick={() => void saveEmail()}
-                    className="rounded-xl bg-btn-primary px-4 py-2 text-xs font-semibold text-white hover:bg-btn-primary-hover"
+                    className="rounded-xl px-4 py-2 text-xs font-bold"
+                    style={{ background: "#F59E0B", color: "#111827" }}
                   >
                     Enregistrer & renvoyer
                   </button>

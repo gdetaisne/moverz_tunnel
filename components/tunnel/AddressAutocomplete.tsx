@@ -559,13 +559,13 @@ export function AddressAutocomplete({
             "w-full rounded-xl border-2 bg-white px-4 py-3 pr-10 text-base text-[#0F172A] placeholder:text-[#1E293B]/40 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all",
             errorMessage
               ? "border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/15"
-              : "border-[#E3E5E8] focus:border-[#6BCFCF] focus:ring-[#6BCFCF]/40",
+              : "border-[#E3E5E8] focus:border-[#0EA5A6] focus:ring-[#0EA5A6]/40",
           ].join(" ")}
         />
 
         {selectionValidated && !errorMessage && !selectionInvalidated && (
           <span
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6BCFCF]"
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#0EA5A6]"
             aria-hidden="true"
             title="Coordonnées OK"
           >
@@ -656,7 +656,7 @@ export function AddressAutocomplete({
                     onClick={() => void commitSelection(r)}
                     className={[
                       "w-full px-4 py-3 text-left text-sm transition-colors",
-                      active ? "bg-[#6BCFCF]/10" : "hover:bg-[#6BCFCF]/5",
+                      active ? "bg-[#0EA5A6]/10" : "hover:bg-[#0EA5A6]/5",
                     ].join(" ")}
                   >
                     <div className="font-medium text-[#0F172A]">{r.label}</div>

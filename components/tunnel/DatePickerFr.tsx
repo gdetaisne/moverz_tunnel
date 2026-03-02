@@ -272,7 +272,7 @@ export function DatePickerFr({
           "w-full rounded-xl border-2 bg-white px-3 py-2.5 transition-all flex items-center gap-2",
           error || manualError
             ? "border-[#EF4444] focus-within:ring-2 focus-within:ring-[#EF4444]/15"
-            : "border-[#E3E5E8] hover:border-[#6BCFCF] focus-within:ring-2 focus-within:ring-[#6BCFCF]/20",
+            : "border-[#E3E5E8] hover:border-[#0EA5A6] focus-within:ring-2 focus-within:ring-[#0EA5A6]/20",
         ].join(" ")}
         onClick={
           openOnFieldClick
@@ -366,9 +366,9 @@ export function DatePickerFr({
                     textClass = "text-gray-300";
                     borderClass = "border-gray-100";
                   } else if (isSelected) {
-                    bgClass = "bg-[#6BCFCF]";
+                    bgClass = "bg-[#0EA5A6]";
                     textClass = "text-white";
-                    borderClass = "border-[#6BCFCF]";
+                    borderClass = "border-[#0EA5A6]";
                   } else {
                     bgClass = "bg-white hover:bg-[#F8F9FA]";
                     textClass = "text-[#0F172A]";
@@ -411,7 +411,7 @@ export function DatePickerFr({
                 <button
                   type="button"
                   onClick={() => setPhase("months")}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-[#6BCFCF] hover:bg-[#F0FAFA] transition"
+                  className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-[#0EA5A6] hover:bg-[#F0FAFA] transition"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Mois
@@ -459,8 +459,8 @@ export function DatePickerFr({
                         disabled
                           ? "text-[#1E293B]/30 cursor-not-allowed"
                           : "text-[#0F172A] hover:bg-[#F0FAFA] cursor-pointer",
-                        isSelectedDay ? "bg-[#6BCFCF] text-white hover:bg-[#6BCFCF]" : "",
-                        !isSelectedDay && isToday ? "border border-[#6BCFCF]/40" : "",
+                        isSelectedDay ? "bg-[#0EA5A6] text-white hover:bg-[#0EA5A6]" : "",
+                        !isSelectedDay && isToday ? "border border-[#0EA5A6]/40" : "",
                       ].join(" ")}
                     >
                       {c.day}

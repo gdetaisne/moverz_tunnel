@@ -178,7 +178,7 @@ export default function Step1Contact({
               />
               {emailChecking ? (
                 <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
-                  <Loader2 className="w-5 h-5 text-[#6BCFCF] animate-spin" />
+                  <Loader2 className="w-5 h-5 text-[#0EA5A6] animate-spin" />
                 </span>
               ) : (emailTouched || showValidation) ? (
                 <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
