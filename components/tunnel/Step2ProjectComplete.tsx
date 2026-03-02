@@ -447,74 +447,87 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
           />
 
           {/* Panel : bottom sheet mobile, modal centré desktop */}
-          <div className="fixed z-50 bottom-0 left-0 right-0 md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-md md:w-full px-4 pb-safe md:px-0">
+          <div className="fixed z-50 bottom-0 left-0 right-0 md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-sm md:w-full px-0 md:px-4">
             <div className="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
-              {/* Barre de progression auto-close */}
-              <div className="h-1 bg-[#E3E5E8]">
-                <div
-                  className="h-full bg-[#0EA5A6] transition-all ease-linear"
-                  style={{ width: `${popupProgress}%`, transitionDuration: "50ms" }}
-                />
+
+              {/* Header teal */}
+              <div className="relative px-6 pt-6 pb-5" style={{ background: "linear-gradient(135deg, #0EA5A6 0%, #0d9090 100%)" }}>
+                {/* Barre de progression auto-close */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-white/20">
+                  <div
+                    className="h-full bg-white/80 transition-all ease-linear"
+                    style={{ width: `${popupProgress}%`, transitionDuration: "50ms" }}
+                  />
+                </div>
+
+                {/* Fermer */}
+                <button
+                  type="button"
+                  onClick={closePopup}
+                  className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors p-1"
+                  aria-label="Fermer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Icône + titre */}
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
+                    <Check className="w-6 h-6 text-white" strokeWidth={3} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">Bonne nouvelle !</p>
+                    <div className="flex items-baseline justify-center gap-2">
+                      <span className="text-6xl font-black text-white leading-none tabular-nums">{moversCount}</span>
+                      <span className="text-base font-semibold text-white/80 leading-tight text-left">déménageurs<br />vérifiés</span>
+                    </div>
+                    <p className="text-sm text-white/70 mt-1">vous attendent pour ce déménagement</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="p-6 pt-5">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 shrink-0">
-                      <Check className="w-5 h-5 text-green-600" strokeWidth={3} />
+              {/* Corps */}
+              <div className="px-6 pt-4 pb-6">
+                {/* Critères en liste verticale */}
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#475569] mb-3">Nos critères de sélection</p>
+                <ul className="space-y-2.5 mb-5">
+                  <li className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0EA5A6]/10">
+                      <Star className="w-4 h-4 fill-[#0EA5A6] text-[#0EA5A6]" />
                     </div>
-                    <p className="text-sm font-semibold text-green-700">Bonne nouvelle !</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={closePopup}
-                    className="text-[#1E293B]/40 hover:text-[#1E293B] transition-colors p-1 -mr-1"
-                    aria-label="Fermer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Chiffre principal */}
-                <div className="mb-4 text-center">
-                  <div className="flex items-baseline justify-center gap-2 mb-1">
-                    <span className="text-7xl font-black text-[#0F172A] leading-none tabular-nums">
-                      {moversCount}
-                    </span>
-                    <span className="text-lg font-bold text-[#0F172A]/60 leading-tight mt-2">
-                      déménageurs<br />disponibles
-                    </span>
-                  </div>
-                  <p className="text-sm text-[#1E293B]/60">
-                    correspondront à votre déménagement
-                  </p>
-                </div>
-
-                {/* Critères */}
-                <div className="flex flex-wrap gap-2 justify-center mb-5">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-800">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    Note &gt; 4,5 / 5
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-800">
-                    <Users className="w-3.5 h-3.5 text-blue-500" />
-                    100+ avis clients
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0EA5A6]/10 border border-[#0EA5A6]/30 px-3 py-1.5 text-xs font-semibold text-[#0F172A]">
-                    <Shield className="w-3.5 h-3.5 text-[#0EA5A6]" />
-                    Score Moverz ≥ 80
-                  </span>
-                </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#111827]">Note &gt; 4,5 / 5</p>
+                      <p className="text-xs text-[#475569]">Moyenne pondérée des avis vérifiés</p>
+                    </div>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0EA5A6]/10">
+                      <Users className="w-4 h-4 text-[#0EA5A6]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#111827]">100+ avis clients</p>
+                      <p className="text-xs text-[#475569]">Volume suffisant pour être représentatif</p>
+                    </div>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0EA5A6]/10">
+                      <Shield className="w-4 h-4 text-[#0EA5A6]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#111827]">Score Moverz ≥ 80</p>
+                      <p className="text-xs text-[#475569]">Notre indice qualité global exclusif</p>
+                    </div>
+                  </li>
+                </ul>
 
                 {/* CTA */}
                 <button
                   type="button"
                   onClick={closePopup}
-                  className="w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all hover:brightness-95 active:scale-[0.98]"
+                  className="w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
                   style={{ background: "#F59E0B", color: "#111827", boxShadow: "0 4px 16px rgba(245,158,11,0.28)" }}
                 >
-                  Continuer mon dossier
+                  Continuer mon dossier →
                 </button>
               </div>
             </div>

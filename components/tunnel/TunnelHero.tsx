@@ -9,7 +9,7 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
   const progress = (currentStep / totalSteps) * 100;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#E5E7EB]">
+    <header className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#E5E7EB]">
       <div className="flex items-center justify-between px-4 sm:px-6 h-14">
         {/* Logo */}
         <div className="flex items-center gap-2">
@@ -21,7 +21,9 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
         <div className="flex items-center gap-2 text-sm font-medium text-[#475569]">
           <span className="tabular-nums">Étape {currentStep}/{totalSteps}</span>
           <span className="text-[#D1D5DB]">·</span>
-          <span className="text-[#0EA5A6]">~3 min</span>
+          <span className="text-[#0EA5A6]">
+            {currentStep === 1 ? "~3 min" : currentStep === 2 ? "~2 min" : "~1 min"}
+          </span>
         </div>
       </div>
 

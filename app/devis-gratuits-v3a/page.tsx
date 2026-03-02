@@ -1954,6 +1954,8 @@ function DevisGratuitsV3Content() {
     <main className="min-h-screen bg-gradient-to-b from-[#F8F9FA] to-white">
       {/* Hero with progress */}
       <TunnelHero currentStep={state.currentStep} totalSteps={STEPS.length} />
+      {/* Spacer compensant la hauteur du header fixed (h-14 + barre 4px = 60px) */}
+      <div className="h-[60px]" aria-hidden="true" />
       <ReassuranceBar />
 
       {/* Main content */}
