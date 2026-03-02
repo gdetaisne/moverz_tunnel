@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { Mail, User, Phone, ArrowRight, Check, X, Loader2 } from "lucide-react";
-import { useDeviceDetection } from "@/hooks/useDeviceDetection";
+import { Mail, User, Phone, ArrowRight, Check, X, Loader2, Shield, TrendingUp, PhoneOff } from "lucide-react";
 
 interface Step1ContactProps {
   firstName: string;
@@ -56,8 +55,6 @@ export default function Step1Contact({
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [emailChecking, setEmailChecking] = useState(false);
   const [emailApiError, setEmailApiError] = useState<string | null>(null);
-  const { isMobile } = useDeviceDetection();
-
   const hasPhone = onPhoneChange !== undefined;
   const isFirstNameValid = firstName.trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -104,11 +101,6 @@ export default function Step1Contact({
       {/* Left: Form */}
       <div className="order-1">
         <div className="mb-4 md:mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full bg-turquoise/10 px-4 py-1.5 text-sm font-semibold text-text-primary mb-6">
-            <span className="h-2 w-2 rounded-full bg-turquoise" />
-            Étape 1/4
-          </div>
-
           <h2 className="text-3xl md:text-5xl font-black text-text-primary mb-3 md:mb-4 leading-tight">
             Constituez votre dossier
           </h2>
@@ -290,9 +282,16 @@ export default function Step1Contact({
             type="submit"
             disabled={busy}
             aria-disabled={busy || !isFormValid}
-            className={`group w-full inline-flex items-center justify-center gap-2 rounded-full bg-btn-primary px-8 py-4 text-base font-semibold text-white hover:bg-btn-primary-hover transition-all duration-200 ${
-              !isFormValid && !busy ? "opacity-50 cursor-not-allowed" : ""
+            className={`group w-full sm:max-w-sm sm:mx-auto inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-4 text-base font-bold transition-all duration-200 ${
+              !isFormValid && !busy
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:scale-[1.02] active:scale-[0.98]"
             } ${busy ? "opacity-50 cursor-not-allowed" : ""}`}
+            style={{
+              background: "#F59E0B",
+              color: "#111827",
+              boxShadow: "0 4px 20px rgba(245,158,11,0.30)",
+            }}
           >
             <span>
               {emailChecking
@@ -327,69 +326,56 @@ export default function Step1Contact({
         </form>
       </div>
 
-      {/* Right: Mockup illustration */}
-      <div className="order-2 relative hidden lg:block">
-        <div className="relative w-full max-w-[360px] mx-auto">
-          <div className="absolute inset-0 bg-turquoise/5 rounded-[3rem] blur-3xl" />
-          
-          <div className="relative bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-8 border border-border">
-            <div className="space-y-6">
-              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-turquoise mx-auto">
-                <Check className="w-8 h-8 text-white" strokeWidth={3} />
-              </div>
-
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-text-primary mb-2">
-              {isMobile ? "WhatsApp recommandé" : "Rapide et sécurisé"}
-            </h3>
-            <p className="text-sm text-text-body/70">
-              {isMobile 
-                ? "Demande rapide depuis votre mobile" 
-                : "Vos données sont protégées et ne seront jamais partagées"}
-            </p>
+      {/* Right: Value proposition */}
+      <div className="order-2 hidden lg:flex flex-col justify-center gap-6">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#0EA5A6]/10 px-4 py-1.5 text-sm font-semibold text-[#0EA5A6] mb-4">
+            <span className="h-2 w-2 rounded-full bg-[#0EA5A6]" />
+            Ce qui nous différencie
           </div>
+          <h3 className="text-2xl font-black text-[#111827] leading-tight mb-2">
+            Pourquoi choisir<br />
+            <span className="text-[#0EA5A6]">Moverz ?</span>
+          </h3>
+          <p className="text-sm text-[#475569] leading-relaxed">
+            Moverz ne compare pas seulement des devis.{" "}
+            <strong className="text-[#111827]">Moverz compare des entreprises, leur fiabilité et le risque associé.</strong>
+          </p>
+        </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt">
-                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-success-light">
-                    <Check className="w-4 h-4 text-success" strokeWidth={3} />
-                  </div>
-                  <p className="text-sm text-text-primary">
-                    <strong>3 à 5 devis</strong> comparables
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt">
-                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-success-light">
-                    <Check className="w-4 h-4 text-success" strokeWidth={3} />
-                  </div>
-                  <p className="text-sm text-text-primary">
-                    Réponse sous <strong>48-72h</strong>
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt">
-                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-success-light">
-                    <Check className="w-4 h-4 text-success" strokeWidth={3} />
-                  </div>
-                  <p className="text-sm text-text-primary">
-                    Déménageurs <strong>vérifiés</strong>
-                  </p>
-                </div>
+        <div className="space-y-3">
+          {[
+            {
+              icon: Shield,
+              title: "Pros vérifiés",
+              sub: "3 analyses de risque /100 (financier, juridique, avis)",
+            },
+            {
+              icon: TrendingUp,
+              title: "Devis comparables",
+              sub: "Même base (dossier standardisé) pour tous",
+            },
+            {
+              icon: PhoneOff,
+              title: "Sans démarchage",
+              sub: "Téléphone masqué jusqu'à votre choix",
+            },
+          ].map(({ icon: Icon, title, sub }) => (
+            <div
+              key={title}
+              className="flex items-start gap-4 p-4 rounded-xl bg-white border border-[#E5E7EB]"
+              style={{ boxShadow: "0 2px 8px rgba(2,6,23,0.04)" }}
+            >
+              <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-[#0EA5A6]/08"
+                style={{ background: "rgba(14,165,166,0.08)" }}>
+                <Icon className="w-4.5 h-4.5 text-[#0EA5A6]" style={{ width: "18px", height: "18px" }} strokeWidth={2} />
               </div>
-
-              <div className="pt-4 border-t border-border text-center">
-                <p className="text-xs text-text-body/60">
-                  Connexion sécurisée • RGPD conforme
-                </p>
+              <div>
+                <p className="text-sm font-semibold text-[#111827]">{title}</p>
+                <p className="text-xs text-[#475569] mt-0.5">{sub}</p>
               </div>
             </div>
-          </div>
-
-          <div className="absolute -right-4 top-20 bg-white rounded-xl shadow-md px-4 py-2 border border-border-light">
-            <p className="text-xs font-bold text-text-primary">1200+</p>
-            <p className="text-xs text-text-body/60">déménagements</p>
-          </div>
+          ))}
         </div>
       </div>
     </div>

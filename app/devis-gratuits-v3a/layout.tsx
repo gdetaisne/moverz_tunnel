@@ -16,7 +16,7 @@ export default function DevisGratuitsV3aLayout({
   const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID;
 
   return (
-    <main className="min-h-screen bg-[#B8E6E3] text-slate-900">
+      <main className="min-h-screen bg-[#E0F7F7] text-slate-900">
       {GA4_ID ? (
         <>
           <Script
@@ -35,7 +35,7 @@ export default function DevisGratuitsV3aLayout({
         </>
       ) : null}
 
-      <div className="relative mx-auto flex max-w-5xl flex-col px-4 pt-8 pb-24 sm:px-8 lg:px-12 sm:pb-12">
+      <div className="relative mx-auto flex max-w-5xl flex-col px-4 pt-2 pb-24 sm:px-8 lg:px-12 sm:pb-12">
         {children}
       </div>
     </main>

@@ -35,7 +35,7 @@ import Step1Contact from "@/components/tunnel/Step1Contact";
 import Step2ProjectComplete from "@/components/tunnel/Step2ProjectComplete";
 import Step3VolumeServices from "@/components/tunnel/Step3VolumeServices";
 import ConfirmationPage from "@/components/tunnel/ConfirmationPage";
-import TrustSignals from "@/components/tunnel/TrustSignals";
+import { ReassuranceBar } from "@/components/ReassuranceBar";
 
 const STEPS = [
   { id: 1, label: "Coordonnées" },
@@ -1954,15 +1954,10 @@ function DevisGratuitsV3Content() {
     <main className="min-h-screen bg-gradient-to-b from-[#F8F9FA] to-white">
       {/* Hero with progress */}
       <TunnelHero currentStep={state.currentStep} totalSteps={STEPS.length} />
+      <ReassuranceBar />
 
       {/* Main content */}
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Trust signals */}
-        {state.currentStep < 4 && (
-          <div className="mb-12 hidden md:block">
-            <TrustSignals />
-          </div>
-        )}
 
         {/* Step content */}
         <div className="bg-white rounded-2xl md:rounded-3xl shadow-md md:shadow-lg p-4 sm:p-6 md:p-12">
