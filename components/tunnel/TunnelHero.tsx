@@ -9,8 +9,8 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
   const progress = (currentStep / totalSteps) * 100;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#E5E7EB]">
-      <div className="flex items-center justify-between px-3 sm:px-5 h-10">
+    <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl z-40 bg-white/95 backdrop-blur-sm border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between px-4 sm:px-8 lg:px-12 h-10">
         {/* Logo */}
         <div className="flex items-center gap-1.5">
           <img src="/icon.png" alt="Moverz" className="h-5 w-auto" />
@@ -34,15 +34,8 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
           aria-valuenow={currentStep}
           aria-valuemin={1}
           aria-valuemax={totalSteps}
-          style={{
-            width: `${progress}%`,
-            height: "100%",
-            background: "linear-gradient(90deg, #0EA5A6, #67E8F9, #0EA5A6)",
-            backgroundSize: "200% 100%",
-            animation: "shimmer 2s ease-in-out infinite",
-            boxShadow: "0 0 8px rgba(14,165,166,0.5)",
-            transition: "width 700ms cubic-bezier(0.34,1.56,0.64,1)",
-          }}
+          className="h-full bg-[#0EA5A6] transition-all duration-500 ease-out"
+          style={{ width: `${progress}%` }}
         />
       </div>
     </header>

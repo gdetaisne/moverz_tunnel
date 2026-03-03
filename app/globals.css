@@ -197,9 +197,4 @@ body {
   scrollbar-color: var(--color-border) var(--color-border-light);
 }
 
-@keyframes shimmer {
-  0%   { background-position: 200% center; }
-  100% { background-position: -200% center; }
-}
-
 
