@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 
 interface TunnelHeroProps {
   currentStep: number;
@@ -7,6 +8,15 @@ interface TunnelHeroProps {
 
 export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps) {
   const progress = (currentStep / totalSteps) * 100;
+  const [flashing, setFlashing] = useState(false);
+  const isFirst = useRef(true);
+
+  useEffect(() => {
+    if (isFirst.current) { isFirst.current = false; return; }
+    setFlashing(true);
+    const t = setTimeout(() => setFlashing(false), 900);
+    return () => clearTimeout(t);
+  }, [currentStep]);
 
   return (
     <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl z-40 bg-white/95 backdrop-blur-sm border-b border-[#E5E7EB]">
@@ -34,7 +44,7 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
           aria-valuenow={currentStep}
           aria-valuemin={1}
           aria-valuemax={totalSteps}
-          className="h-full bg-[#0EA5A6] transition-all duration-500 ease-out"
+          className={`h-full bg-[#0EA5A6] transition-all duration-500 ease-out${flashing ? " progress-flash-anim" : ""}`}
           style={{ width: `${progress}%` }}
         />
       </div>

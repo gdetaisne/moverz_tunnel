@@ -197,4 +197,13 @@ body {
   scrollbar-color: var(--color-border) var(--color-border-light);
 }
 
+@keyframes progress-flash {
+  0%   { filter: brightness(1.5); }
+  60%  { filter: brightness(1.15); }
+  100% { filter: brightness(1); }
+}
+.progress-flash-anim {
+  animation: progress-flash 900ms ease-out forwards;
+}
+
 
