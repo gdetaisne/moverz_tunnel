@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mail, RotateCcw, Pencil } from "lucide-react";
+import { Mail, RotateCcw, Pencil, Phone } from "lucide-react";
 import { requestBackofficeConfirmation, updateBackofficeLead } from "@/lib/api/client";
 
 interface ConfirmationPageProps {
@@ -14,6 +14,10 @@ interface ConfirmationPageProps {
   estimateMinEur?: number | null;
   estimateMaxEur?: number | null;
   estimateIsIndicative?: boolean;
+
+  // Collecte téléphone optionnelle (variante B uniquement)
+  phone?: string;
+  onPhoneChange?: (value: string) => void;
 
   onGoToStep?: (step: 1 | 2 | 3) => void;
   onEmailChange?: (value: string) => void;
@@ -37,6 +41,8 @@ export default function ConfirmationPage({
   firstName,
   email,
   leadId,
+  phone,
+  onPhoneChange,
   onGoToStep,
   onEmailChange,
 }: ConfirmationPageProps) {
@@ -47,11 +53,35 @@ export default function ConfirmationPage({
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState(email);
 
+  // Phone debounce sync to BO
+  const phoneSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSyncedPhoneRef = useRef<string>("");
+
   const normalizedEmail = normalizeEmail(email);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Debounce sync du téléphone vers le BO (variante B)
+  useEffect(() => {
+    if (!onPhoneChange || !leadId || !phone || phone.trim().length < 6) return;
+    if (phone === lastSyncedPhoneRef.current) return;
+
+    if (phoneSyncTimerRef.current) clearTimeout(phoneSyncTimerRef.current);
+    phoneSyncTimerRef.current = setTimeout(async () => {
+      try {
+        await updateBackofficeLead(leadId, { phone: phone.trim() });
+        lastSyncedPhoneRef.current = phone;
+      } catch {
+        // Silencieux — ne pas bloquer l'UX
+      }
+    }, 2000);
+
+    return () => {
+      if (phoneSyncTimerRef.current) clearTimeout(phoneSyncTimerRef.current);
+    };
+  }, [phone, leadId, onPhoneChange]);
 
   const sendConfirmation = async (opts?: { force?: boolean }) => {
     if (!leadId) {
@@ -217,6 +247,40 @@ export default function ConfirmationPage({
           </div>
         </div>
       </div>
+
+      {/* Bloc téléphone optionnel (variante B) */}
+      {onPhoneChange && (
+        <div className="mt-6 rounded-2xl border border-border bg-white p-5 md:p-6">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-turquoise/10">
+              <Phone className="h-5 w-5 text-accent" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-text-primary">
+                Votre numéro de téléphone{" "}
+                <span className="font-normal text-text-body/50">(optionnel)</span>
+              </p>
+              <p className="mt-0.5 text-xs text-text-body/60">
+                Pour un accompagnement personnalisé par nos équipes.
+              </p>
+              <input
+                type="tel"
+                value={phone ?? ""}
+                onChange={(e) => onPhoneChange(e.target.value)}
+                placeholder="06 12 34 56 78"
+                inputMode="tel"
+                autoComplete="tel"
+                className="mt-3 w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-turquoise focus:outline-none"
+              />
+              <p className="mt-3 text-xs text-text-body/50 leading-relaxed">
+                🔒 Votre numéro ne sera <strong className="text-text-body/70">jamais partagé</strong> sans votre accord formel.
+                Il est utilisé uniquement par les équipes internes Moverz pour vous accompagner dans votre projet.
+                Zéro harcèlement garanti.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 rounded-2xl bg-surface-alt p-5 md:p-6">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-body/60">

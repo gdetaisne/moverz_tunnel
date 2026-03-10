@@ -8251,3 +8251,46 @@ Pour changer la charte graphique, **une seule source de vérité** : `styles/tok
 
 **Schéma DB** : inchangé. Pas de migration.
 **API routes** : inchangées.
+
+---
+
+## 2026-03-10 — AB Test V3a vs V3b : téléphone déplacé au step 4
+
+**Hypothèse** : le champ téléphone obligatoire au step 1 (coordonnées) cause du churn. Le déplacer en step 4 (confirmation), optionnel et accompagné d'un message rassurant, devrait améliorer le taux de conversion.
+
+### Architecture
+
+| Variante | URL | Téléphone |
+|---|---|---|
+| A (référence) | `/devis-gratuits-v3a` | Step 1, obligatoire |
+| B (test) | `/devis-gratuits-v3b` | Step 4, optionnel + message rassurant |
+
+**Split** : 50/50 via cookie `moverz_ab_variant` (30 jours).
+
+### Modifications
+
+- **`app/devis-gratuits-v3b/`** (nouveau) : copie de v3a avec :
+  - `source` par défaut → `"v3b"`, `from` → `"/devis-gratuits-v3b"`
+  - `screenId` → `contact_v3b`, `project_v3b`, `formules_v3b`, `confirmation_v3b`
+  - `onPhoneChange` retiré de `Step1Contact` (plus de phone au step 1)
+  - `phone` + `onPhoneChange` passés à `ConfirmationPage`
+  - `trackBlock("phone_capture", "THANK_YOU", "confirmation_v3b")` déclenché à la 1re saisie téléphone
+  - Validation "Missing phone" supprimée du `handleSubmitStep1`
+
+- **`components/tunnel/ConfirmationPage.tsx`** :
+  - Nouvelles props optionnelles : `phone?`, `onPhoneChange?`
+  - Bloc UI téléphone affiché uniquement si `onPhoneChange` est fourni (zero breaking change pour v3a)
+  - Message rassurant : "Votre numéro ne sera jamais partagé sans votre accord formel..."
+  - Debounce 2s → `updateBackofficeLead(leadId, { phone })` pour sync BO silencieux
+
+- **`app/devis-gratuits/redirect.tsx`** : `AB_SPLIT_RATIO` 1.0 → 0.5, variante B → `/devis-gratuits-v3b`
+
+- **`lib/analytics/neon.ts`** : patterns `getAbTestData` mis à jour (`%devis-gratuits-v3%` → `%v3b%`) pour éviter les faux positifs
+
+### Champs envoyés au BO
+
+Aucun champ nouveau ni supprimé. `phone` reste dans le payload (optionnel côté v3b, collecté plus tard).
+
+### Pour revenir à 100% V3a
+
+Modifier `redirect.tsx` : `AB_SPLIT_RATIO = 1.0`.

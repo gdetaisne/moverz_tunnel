@@ -668,7 +668,7 @@ export async function getAbTestData(
   const variantCase = sql`
     CASE
       WHEN te_path.url_path LIKE '%v3a%' THEN 'A'
-      WHEN te_path.url_path LIKE '%devis-gratuits-v3%' THEN 'B'
+      WHEN te_path.url_path LIKE '%v3b%' THEN 'B'
       ELSE 'unknown'
     END
   `;
@@ -680,7 +680,7 @@ export async function getAbTestData(
         session_id,
         CASE
           WHEN url_path LIKE '%v3a%' THEN 'A'
-          WHEN url_path LIKE '%devis-gratuits-v3%' THEN 'B'
+          WHEN url_path LIKE '%v3b%' THEN 'B'
           ELSE 'unknown'
         END as variant
       FROM tunnel_events
@@ -716,7 +716,7 @@ export async function getAbTestData(
         session_id,
         CASE
           WHEN url_path LIKE '%v3a%' THEN 'A'
-          WHEN url_path LIKE '%devis-gratuits-v3%' THEN 'B'
+          WHEN url_path LIKE '%v3b%' THEN 'B'
           ELSE 'unknown'
         END as variant
       FROM tunnel_events
@@ -754,7 +754,7 @@ export async function getAbTestData(
         session_id,
         CASE
           WHEN url_path LIKE '%v3a%' THEN 'A'
-          WHEN url_path LIKE '%devis-gratuits-v3%' THEN 'B'
+          WHEN url_path LIKE '%v3b%' THEN 'B'
           ELSE 'unknown'
         END as variant
       FROM tunnel_events

@@ -17,7 +17,7 @@ function setVariantCookie(variant: string) {
 }
 
 // Split ratio: 1.0 = 100% A, 0.5 = 50/50, 0.0 = 100% B
-const AB_SPLIT_RATIO = 1.0;
+const AB_SPLIT_RATIO = 0.5;
 
 function pickVariant(): "A" | "B" {
   return Math.random() < AB_SPLIT_RATIO ? "A" : "B";
@@ -44,7 +44,7 @@ export default function RedirectToV3() {
 
     const target = variant === "A"
       ? `/devis-gratuits-v3a?${params.toString()}`
-      : `/devis-gratuits-v3?${params.toString()}`;
+      : `/devis-gratuits-v3b?${params.toString()}`;
 
     window.location.href = target;
   }, [searchParams]);
