@@ -53,9 +53,9 @@ export default function ConfirmationPage({
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState(email);
 
-  // Phone debounce sync to BO
-  const phoneSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Phone sync to BO
   const lastSyncedPhoneRef = useRef<string>("");
+  const [phoneSaveState, setPhoneSaveState] = useState<"idle" | "saving" | "saved">("idle");
 
   const normalizedEmail = normalizeEmail(email);
 
@@ -63,25 +63,20 @@ export default function ConfirmationPage({
     setMounted(true);
   }, []);
 
-  // Debounce sync du téléphone vers le BO (variante B)
-  useEffect(() => {
-    if (!onPhoneChange || !leadId || !phone || phone.trim().length < 6) return;
+  // Sync téléphone vers le BO (déclenché manuellement via bouton)
+  const savePhone = async () => {
+    if (!leadId || !phone || phone.trim().length < 6) return;
     if (phone === lastSyncedPhoneRef.current) return;
 
-    if (phoneSyncTimerRef.current) clearTimeout(phoneSyncTimerRef.current);
-    phoneSyncTimerRef.current = setTimeout(async () => {
-      try {
-        await updateBackofficeLead(leadId, { phone: phone.trim() });
-        lastSyncedPhoneRef.current = phone;
-      } catch {
-        // Silencieux — ne pas bloquer l'UX
-      }
-    }, 2000);
-
-    return () => {
-      if (phoneSyncTimerRef.current) clearTimeout(phoneSyncTimerRef.current);
-    };
-  }, [phone, leadId, onPhoneChange]);
+    setPhoneSaveState("saving");
+    try {
+      await updateBackofficeLead(leadId, { phone: phone.trim() });
+      lastSyncedPhoneRef.current = phone;
+      setPhoneSaveState("saved");
+    } catch {
+      setPhoneSaveState("idle");
+    }
+  };
 
   const sendConfirmation = async (opts?: { force?: boolean }) => {
     if (!leadId) {
@@ -263,20 +258,48 @@ export default function ConfirmationPage({
               <p className="mt-0.5 text-xs text-text-body/60">
                 Pour un accompagnement personnalisé par nos équipes.
               </p>
-              <input
-                type="tel"
-                value={phone ?? ""}
-                onChange={(e) => onPhoneChange(e.target.value)}
-                placeholder="06 12 34 56 78"
-                inputMode="tel"
-                autoComplete="tel"
-                className="mt-3 w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-turquoise focus:outline-none"
-              />
-              <p className="mt-3 text-xs text-text-body/50 leading-relaxed">
-                🔒 Votre numéro ne sera <strong className="text-text-body/70">jamais partagé</strong> sans votre accord formel.
-                Il est utilisé uniquement par les équipes internes Moverz pour vous accompagner dans votre projet.
-                Zéro harcèlement garanti.
-              </p>
+
+              {phoneSaveState === "saved" ? (
+                <div className="mt-3 flex items-center gap-2 rounded-xl border border-success-light bg-success-light/30 px-4 py-2.5">
+                  <span className="text-success text-sm font-semibold">✓ Numéro enregistré</span>
+                  <button
+                    type="button"
+                    onClick={() => { setPhoneSaveState("idle"); lastSyncedPhoneRef.current = ""; }}
+                    className="ml-auto text-xs text-text-body/50 hover:text-text-primary underline"
+                  >
+                    Modifier
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      type="tel"
+                      value={phone ?? ""}
+                      onChange={(e) => { onPhoneChange(e.target.value); setPhoneSaveState("idle"); }}
+                      onKeyDown={(e) => { if (e.key === "Enter") void savePhone(); }}
+                      placeholder="06 12 34 56 78"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      className="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm focus:border-turquoise focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void savePhone()}
+                      disabled={phoneSaveState === "saving" || !phone || phone.trim().length < 6}
+                      className="rounded-xl px-4 py-2.5 text-sm font-bold disabled:opacity-40 transition-opacity"
+                      style={{ background: "#F59E0B", color: "#111827" }}
+                    >
+                      {phoneSaveState === "saving" ? "…" : "Valider"}
+                    </button>
+                  </div>
+                  <p className="mt-3 text-xs text-text-body/50 leading-relaxed">
+                    🔒 Votre numéro ne sera <strong className="text-text-body/70">jamais partagé</strong> sans votre accord formel.
+                    Il est utilisé uniquement par les équipes internes Moverz pour vous accompagner dans votre projet.
+                    Zéro harcèlement garanti.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
