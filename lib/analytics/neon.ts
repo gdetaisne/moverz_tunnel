@@ -233,6 +233,12 @@ export interface FunnelRow {
   sessions: number;
 }
 
+export interface FunnelCrossRow {
+  logical_step: string;
+  device: string;
+  sessions: number;
+}
+
 export interface SourceRow {
   source: string;
   sessions: number;
@@ -275,6 +281,7 @@ export interface DashboardData {
 
   // Breakdowns
   funnel: FunnelRow[];
+  funnelCross: FunnelCrossRow[];
   sources: SourceRow[];
   devices: DeviceRow[];
   countries: CountryRow[];
@@ -439,6 +446,23 @@ export async function getDashboardData(
     ORDER BY sessions DESC
   `;
 
+  // Funnel cross: count distinct sessions per logical_step × device (exclude bots)
+  const funnelCrossRows = await sql`
+    SELECT
+      logical_step,
+      COALESCE(device, 'unknown') as device,
+      COUNT(DISTINCT session_id) as sessions
+    FROM tunnel_events
+    WHERE created_at >= ${periodStartIso}
+      AND created_at <= ${periodEndIso}
+      AND event_type = 'TUNNEL_STEP_VIEWED'
+      AND logical_step IS NOT NULL
+      AND (${!excludeTests} OR is_test_user = false)
+      AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
+    GROUP BY logical_step, device
+    ORDER BY sessions DESC
+  `;
+
   // Top sources (exclude bot sessions)
   const sourceRows = await sql`
     SELECT 
@@ -548,6 +572,7 @@ export async function getDashboardData(
   // Cast results to any[] for type safety (neon returns FullQueryResults)
   const kpiArr = kpiRows as unknown as any[];
   const funnelArr = funnelRows as unknown as any[];
+  const funnelCrossArr = funnelCrossRows as unknown as any[];
   const sourceArr = sourceRows as unknown as any[];
   const deviceArr = deviceRows as unknown as any[];
   const countryArr = countryRows as unknown as any[];
@@ -567,6 +592,11 @@ export async function getDashboardData(
 
     funnel: funnelArr.map((r: any) => ({
       logical_step: r.logical_step,
+      sessions: Number(r.sessions),
+    })),
+    funnelCross: funnelCrossArr.map((r: any) => ({
+      logical_step: r.logical_step,
+      device: r.device,
       sessions: Number(r.sessions),
     })),
     sources: sourceArr.map((r: any) => ({

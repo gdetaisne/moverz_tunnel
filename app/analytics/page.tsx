@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { DashboardData, JournalResult, JournalEvent, AbTestData, AbTestVariantData } from "@/lib/analytics/neon";
+import type { DashboardData, JournalResult, JournalEvent, AbTestData, AbTestVariantData, FunnelCrossRow } from "@/lib/analytics/neon";
 
 // ============================================================
 // Helpers
@@ -532,6 +532,7 @@ function Dashboard({ password }: { password: string }) {
   const [compareCustomTo, setCompareCustomTo] = useState("");
   const [blockDeviceSplit, setBlockDeviceSplit] = useState(false);
   const [blockEntryFilter, setBlockEntryFilter] = useState<string>("all");
+  const [funnelDeviceSplit, setFunnelDeviceSplit] = useState(false);
   const [versions, setVersions] = useState<AnalyticsVersion[]>([]);
   const [showVersionForm, setShowVersionForm] = useState(false);
   const [showVersionManager, setShowVersionManager] = useState(false);
@@ -612,6 +613,29 @@ function Dashboard({ password }: { password: string }) {
 
   const funnel = sortFunnel(data.funnel);
   const maxFunnel = Math.max(...funnel.map((f) => f.sessions), 1);
+
+  // Funnel cross helpers (step × device)
+  const getFunnelByDevice = (device?: string): { logical_step: string; sessions: number }[] => {
+    const cross: FunnelCrossRow[] = data.funnelCross || [];
+    const filtered = device ? cross.filter(r => r.device === device) : cross;
+    const agg = new Map<string, number>();
+    for (const r of filtered) agg.set(r.logical_step, (agg.get(r.logical_step) ?? 0) + r.sessions);
+    return sortFunnel(STEP_ORDER.map(step => ({ logical_step: step, sessions: agg.get(step) ?? 0 })));
+  };
+  const funnelMobile = getFunnelByDevice('mobile');
+  const funnelDesktop = getFunnelByDevice('desktop');
+  const funnelSplitMax = Math.max(
+    ...funnelMobile.map(f => f.sessions),
+    ...funnelDesktop.map(f => f.sessions),
+    1
+  );
+  const funnelDeviceCounts = { mobile: 0, desktop: 0 };
+  for (const r of (data.funnelCross || [])) {
+    if (r.logical_step === STEP_ORDER[0]) {
+      if (r.device === 'mobile') funnelDeviceCounts.mobile += r.sessions;
+      else if (r.device === 'desktop') funnelDeviceCounts.desktop += r.sessions;
+    }
+  }
 
   const compareFunnelMap: Record<string, number> = {};
   if (compareData) {
@@ -841,18 +865,123 @@ function Dashboard({ password }: { password: string }) {
         {/* Funnel */}
         {funnel.length > 0 && (
           <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-            <h2 className="text-sm font-semibold text-gray-300 mb-4">🔻 Funnel par étape</h2>
-            <div className="space-y-3">
-              {funnel.map((f) => (
-                <FunnelBar
-                  key={f.logical_step}
-                  step={f.logical_step}
-                  sessions={f.sessions}
-                  maxSessions={maxFunnel}
-                  prevSessions={compareFunnelMap[f.logical_step]}
-                />
-              ))}
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h2 className="text-sm font-semibold text-gray-300">🔻 Funnel par étape</h2>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setFunnelDeviceSplit(false)}
+                  className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
+                    !funnelDeviceSplit ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  Tous
+                </button>
+                <button
+                  onClick={() => setFunnelDeviceSplit(true)}
+                  className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
+                    funnelDeviceSplit ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  Split mobile / desktop
+                </button>
+              </div>
             </div>
+
+            {!funnelDeviceSplit ? (
+              /* Vue agrégée */
+              <div className="space-y-3">
+                {funnel.map((f) => (
+                  <FunnelBar
+                    key={f.logical_step}
+                    step={f.logical_step}
+                    sessions={f.sessions}
+                    maxSessions={maxFunnel}
+                    prevSessions={compareFunnelMap[f.logical_step]}
+                  />
+                ))}
+              </div>
+            ) : (
+              /* Vue split mobile / desktop */
+              <div className="flex gap-4">
+                {/* Labels */}
+                <div className="flex-shrink-0 space-y-3 pt-0">
+                  {funnel.map(f => (
+                    <div key={f.logical_step} className="h-6 flex items-center justify-end">
+                      <span className="text-gray-400 text-xs text-right w-28 truncate">
+                        {STEP_LABELS_EARLY[f.logical_step] || f.logical_step}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {/* Mobile */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-blue-400 font-semibold mb-1.5">
+                    📱 Mobile{funnelDeviceCounts.mobile ? ` (${funnelDeviceCounts.mobile})` : ''}
+                  </p>
+                  <div className="space-y-3">
+                    {funnelMobile.map((f, i) => {
+                      const prev = funnelMobile[i - 1];
+                      const pct = funnelSplitMax > 0 ? (f.sessions / funnelSplitMax) * 100 : 0;
+                      const dropoff = prev && prev.sessions > 0
+                        ? ((prev.sessions - f.sessions) / prev.sessions * 100).toFixed(1)
+                        : null;
+                      const colors: Record<string, string> = {
+                        CONTACT: "bg-pink-500", PROJECT: "bg-purple-500",
+                        RECAP: "bg-indigo-500", THANK_YOU: "bg-green-500",
+                      };
+                      return (
+                        <div key={f.logical_step} className="flex items-center gap-1.5">
+                          {dropoff && <span className="text-red-400 text-[10px] w-10 text-right flex-shrink-0">-{dropoff}%</span>}
+                          {!dropoff && <span className="w-10 flex-shrink-0" />}
+                          <div className="flex-1 bg-gray-800 rounded-full h-6 overflow-hidden">
+                            <div
+                              className={`h-full ${colors[f.logical_step] || 'bg-gray-500'} rounded-full transition-all duration-500 flex items-center justify-end pr-1.5`}
+                              style={{ width: `${Math.max(pct, f.sessions > 0 ? 8 : 2)}%` }}
+                            >
+                              <span className="text-white text-[10px] font-semibold">{f.sessions}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                {/* Desktop */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-orange-400 font-semibold mb-1.5">
+                    🖥️ Desktop{funnelDeviceCounts.desktop ? ` (${funnelDeviceCounts.desktop})` : ''}
+                  </p>
+                  <div className="space-y-3">
+                    {funnelDesktop.map((f, i) => {
+                      const prev = funnelDesktop[i - 1];
+                      const pct = funnelSplitMax > 0 ? (f.sessions / funnelSplitMax) * 100 : 0;
+                      const dropoff = prev && prev.sessions > 0
+                        ? ((prev.sessions - f.sessions) / prev.sessions * 100).toFixed(1)
+                        : null;
+                      const colors: Record<string, string> = {
+                        CONTACT: "bg-pink-500", PROJECT: "bg-purple-500",
+                        RECAP: "bg-indigo-500", THANK_YOU: "bg-green-500",
+                      };
+                      return (
+                        <div key={f.logical_step} className="flex items-center gap-1.5">
+                          {dropoff && <span className="text-red-400 text-[10px] w-10 text-right flex-shrink-0">-{dropoff}%</span>}
+                          {!dropoff && <span className="w-10 flex-shrink-0" />}
+                          <div className="flex-1 bg-gray-800 rounded-full h-6 overflow-hidden">
+                            <div
+                              className={`h-full ${colors[f.logical_step] || 'bg-gray-500'} rounded-full transition-all duration-500 flex items-center justify-end pr-1.5`}
+                              style={{ width: `${Math.max(pct, f.sessions > 0 ? 8 : 2)}%` }}
+                            >
+                              <span className="text-white text-[10px] font-semibold">{f.sessions}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Drop-off rates */}
             {funnel.length >= 2 && (
               <div className="mt-4 pt-4 border-t border-gray-800">
