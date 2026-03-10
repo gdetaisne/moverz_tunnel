@@ -17,7 +17,7 @@ function setVariantCookie(variant: string) {
 }
 
 // Split ratio: 1.0 = 100% A, 0.5 = 50/50, 0.0 = 100% B
-const AB_SPLIT_RATIO = 0.5;
+const AB_SPLIT_RATIO: number = 0.5;
 
 function pickVariant(): "A" | "B" {
   return Math.random() < AB_SPLIT_RATIO ? "A" : "B";
