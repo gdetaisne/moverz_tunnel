@@ -1,5 +1,17 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-03-10 — Pricing : suppression de la décote -20%
+
+**Contexte** : retours des déménageurs partenaires indiquant que les prix estimés affichés dans le tunnel sont systématiquement trop bas par rapport aux devis réels.
+
+**Décision** : passer `DECOTE` de `-0.2` à `0` (factor 1.0 = pas de décote).
+
+**Impact** : les prix affichés dans les 3 cartes de formule (Step 3) et en Step 2 augmentent d'environ +25% (car ×0.8 → ×1.0).
+
+**Fichier modifié** : `lib/pricing/constants.ts`
+
+---
+
 ## 2026-03-10 — Formules Step 3 : détail dépliable + envoi JSON
 
 **Objectif** : enrichir les cartes de formules (Step 3) avec un contenu précis et envoyer le détail dans le lead.
