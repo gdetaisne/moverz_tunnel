@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Package, Home, Sparkles, ArrowRight, Check } from "lucide-react";
+import { Package, Home, Sparkles, ArrowRight, Check, ChevronDown } from "lucide-react";
+import { FORMULE_DETAILS, getAllDetails, type FormuleId } from "@/lib/pricing/formuleDetails";
 
 type FormuleType = "" | "ECONOMIQUE" | "STANDARD" | "PREMIUM";
 
@@ -135,6 +136,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
   const isFormuleSelected = !!props.formule;
   const isFormValid = isSurfaceValid && isFormuleSelected;
   const [showOptions, setShowOptions] = useState(false);
+  const [openDetail, setOpenDetail] = useState<FormuleId | null>(null);
 
   useEffect(() => {
     const anySelected = SERVICES.some(
@@ -404,59 +406,96 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
           )}
           
           <div className="grid gap-4">
-            {FORMULES.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => props.onFieldChange("formule", f.id)}
-                className={`relative p-6 rounded-2xl border-2 transition-all text-left ${
-                  props.formule === f.id
-                    ? "border-[#0EA5A6] bg-[#0EA5A6]/5"
-                    : "border-[#E3E5E8] bg-white hover:border-[#0EA5A6]/50"
-                }`}
-              >
-                {f.recommended && (
-                  <div className="absolute -top-3 left-6 bg-[#0EA5A6] text-white px-3 py-1 rounded-full text-xs font-bold">
-                    Recommandé
-                  </div>
-                )}
-                
-                <div className="flex items-start gap-4">
-                  <div className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl ${
-                    props.formule === f.id ? "bg-[#0EA5A6] text-white" : "bg-[#F8F9FA] text-[#0F172A]"
-                  }`}>
-                    {f.icon}
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-bold text-[#0F172A]">{f.label}</h4>
-                      {props.formule === f.id && (
-                        <Check className="w-5 h-5 text-[#0EA5A6]" strokeWidth={3} />
-                      )}
-                    </div>
+            {FORMULES.map((f) => {
+              const fId = f.id as FormuleId;
+              const detail = FORMULE_DETAILS[fId];
+              const detailOpen = openDetail === fId;
+              const allDetailItems = getAllDetails(fId);
 
-                    <div className="mb-3 text-sm text-[#1E293B]/70">
-                      💰{" "}
-                      <span className="font-semibold text-[#0F172A]">
-                        {props.pricingByFormule?.[f.id]
-                          ? `${props.pricingByFormule[f.id]!.priceMin} - ${props.pricingByFormule[f.id]!.priceMax}€`
-                          : "—"}
-                      </span>
+              return (
+                <div
+                  key={f.id}
+                  className={`relative rounded-2xl border-2 transition-all text-left ${
+                    props.formule === f.id
+                      ? "border-[#0EA5A6] bg-[#0EA5A6]/5"
+                      : "border-[#E3E5E8] bg-white hover:border-[#0EA5A6]/50"
+                  }`}
+                >
+                  {f.recommended && (
+                    <div className="absolute -top-3 left-6 bg-[#0EA5A6] text-white px-3 py-1 rounded-full text-xs font-bold">
+                      Recommandé
                     </div>
-                    
-                    <ul className="space-y-1">
-                      {f.features.map((feature, i) => (
-                        <li key={i} className="text-sm text-[#1E293B]/70 flex items-center gap-2">
-                          <span className="text-[#0EA5A6]">•</span>
-                          {feature}
+                  )}
+
+                  {/* Zone de sélection */}
+                  <button
+                    type="button"
+                    onClick={() => props.onFieldChange("formule", f.id)}
+                    className="w-full p-6 text-left"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl ${
+                        props.formule === f.id ? "bg-[#0EA5A6] text-white" : "bg-[#F8F9FA] text-[#0F172A]"
+                      }`}>
+                        {f.icon}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-bold text-[#0F172A]">{f.label}</h4>
+                          {props.formule === f.id && (
+                            <Check className="w-5 h-5 text-[#0EA5A6]" strokeWidth={3} />
+                          )}
+                        </div>
+
+                        <div className="mb-3 text-sm text-[#1E293B]/70">
+                          💰{" "}
+                          <span className="font-semibold text-[#0F172A]">
+                            {props.pricingByFormule?.[f.id]
+                              ? `${props.pricingByFormule[f.id]!.priceMin} - ${props.pricingByFormule[f.id]!.priceMax}€`
+                              : "—"}
+                          </span>
+                        </div>
+
+                        <ul className="space-y-1">
+                          {detail.summary.map((s, i) => (
+                            <li key={i} className="text-sm text-[#1E293B]/70 flex items-center gap-2">
+                              <span className="text-[#0EA5A6]">•</span>
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Toggle détail */}
+                  <button
+                    type="button"
+                    onClick={() => setOpenDetail(detailOpen ? null : fId)}
+                    className="flex items-center gap-1 px-6 pb-4 text-xs font-semibold text-[#0EA5A6] hover:underline"
+                  >
+                    <ChevronDown
+                      className="w-3.5 h-3.5 transition-transform duration-200"
+                      style={{ transform: detailOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                    />
+                    {detailOpen ? "Masquer le détail" : "Voir le détail"}
+                  </button>
+
+                  {/* Détail dépliable */}
+                  {detailOpen && (
+                    <ul className="px-6 pb-5 space-y-1.5 border-t border-[#E3E5E8] pt-3">
+                      {allDetailItems.map((item, i) => (
+                        <li key={i} className="text-sm text-[#1E293B]/70 flex items-start gap-2">
+                          <span className="text-[#0EA5A6] mt-0.5">✓</span>
+                          {item}
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  )}
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         </div>
 
