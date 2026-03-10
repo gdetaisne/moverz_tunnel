@@ -357,38 +357,21 @@ export async function getBlockFunnel(
     ORDER BY median_duration_ms ASC
   ` as unknown as any[];
 
-  // Cross-tab: block × device × entry_type (for segmented funnel)
+  // Cross-tab: block × device (V3a always starts from contact_info — no entry_type distinction)
   const crossRows = await sql`
-    WITH session_first_block AS (
-      SELECT DISTINCT ON (session_id)
-        session_id,
-        extra->>'blockId' as first_block_id
-      FROM tunnel_events
-      WHERE event_type = 'BLOCK_ENTERED'
-        AND extra->>'blockId' IS NOT NULL
-        AND created_at >= ${periodStartIso}
-        AND created_at <= ${periodEndIso}
-        AND (${!excludeTests} OR is_test_user = false)
-        AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
-      ORDER BY session_id, created_at ASC
-    )
     SELECT
       te.extra->>'blockId' as block_id,
       COALESCE(te.device, 'unknown') as device,
-      CASE
-        WHEN sfb.first_block_id = 'cities_surface' THEN 'direct'
-        ELSE 'home_entry'
-      END as entry_type,
+      'direct' as entry_type,
       COUNT(DISTINCT te.session_id) as sessions
     FROM tunnel_events te
-    JOIN session_first_block sfb ON te.session_id = sfb.session_id
     WHERE te.event_type = 'BLOCK_ENTERED'
       AND te.extra->>'blockId' IS NOT NULL
       AND te.created_at >= ${periodStartIso}
       AND te.created_at <= ${periodEndIso}
       AND (${!excludeTests} OR te.is_test_user = false)
       AND (te.user_agent IS NULL OR te.user_agent !~* ${BOT_UA_SQL_PATTERN})
-    GROUP BY te.extra->>'blockId', te.device, entry_type
+    GROUP BY te.extra->>'blockId', te.device
     ORDER BY sessions DESC
   ` as unknown as any[];
 

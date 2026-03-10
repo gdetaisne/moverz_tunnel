@@ -8203,6 +8203,51 @@ Pour changer la charte graphique, **une seule source de vérité** : `styles/tok
 - Fermeture manuelle possible (bouton ×, CTA "Continuer mon dossier", backdrop).
 - Design : bottom sheet mobile, modal centré desktop (backdrop blur).
 
+
 **Fichier modifié** : `components/tunnel/Step2ProjectComplete.tsx`
 
 **Champs envoyés au BO** : aucun nouveau champ. Popup purement UI/réassurance.
+
+---
+
+## 2026-03-10 — Refonte analytics pour le tunnel V3a
+
+**Objectif** : Aligner toute la stack analytics (tracking, SQL, dashboard UI) sur le tunnel V3a qui a ses propres `logicalStep`, `screenId` et blocs granulaires.
+
+### Problème initial
+- Le dashboard analytics avait été construit pour l'ancien tunnel V3 (order: PROJECT → RECAP → CONTACT → THANK_YOU).
+- V3a a un ordre différent (CONTACT → PROJECT → RECAP → THANK_YOU) et des `screenId` différents.
+- V3a n'émettait **aucun** `BLOCK_ENTERED` — le funnel granulaire était vide pour ce tunnel.
+- La logique `entry_type` (direct vs home_entry) était basée sur le bloc `cities_surface` qui n'existe plus.
+
+### Steps V3a
+| Step | `logicalStep` | `screenId` |
+|---|---|---|
+| 1 | `CONTACT` | `contact_v3` |
+| 2 | `PROJECT` | `project_v3` |
+| 3 | `RECAP` | `formules_v3` |
+| 4 | `THANK_YOU` | `confirmation_v3` |
+
+### Blocs granulaires V3a (nouveaux)
+| `blockId` | Step | Déclencheur |
+|---|---|---|
+| `contact_info` | 1 | Entrée step 1 |
+| `origin_address` | 2 | Première sélection `originHousingType` |
+| `destination_address` | 2 | Première sélection `destinationHousingType` |
+| `moving_date` | 2 | Première saisie de `movingDate` |
+| `surface_volume` | 3 | Entrée step 3 |
+| `formule` | 3 | Première sélection de formule |
+| `options` | 3 | Activation d'un service optionnel |
+| `confirmation` | 4 | Entrée step 4 |
+
+### Modifications
+- **`app/devis-gratuits-v3a/page.tsx`** : extraction de `trackBlock` depuis `useTunnelTracking`, ajout de `useEffect` pour chaque bloc, refs pour éviter les doublons.
+- **`lib/analytics/neon.ts`** : simplification du cross-tab `getBlockFunnel` — suppression de la CTE `session_first_block` et de la logique `entry_type` (V3a commence toujours par `contact_info`).
+- **`app/analytics/page.tsx`** :
+  - `STEP_ORDER` : `["CONTACT", "PROJECT", "RECAP", "THANK_YOU"]`
+  - `BLOCK_ORDER` : 8 blocs V3a
+  - `BLOCK_LABELS`, `BLOCK_LABELS_SIMPLE`, `STEP_LABELS`, `SCREEN_LABELS`, `STEP_LABELS_EARLY` mis à jour
+  - Filtre "Entrée tunnel" simplifié (suppression de l'option `home_entry`)
+
+**Schéma DB** : inchangé. Pas de migration.
+**API routes** : inchangées.

@@ -367,7 +367,7 @@ function DevisGratuitsV3Content() {
     }
   }, [state.originHousingType]);
   
-  const { trackStep, trackStepChange, trackCompletion, trackError } = useTunnelTracking({
+  const { trackStep, trackStepChange, trackCompletion, trackError, trackBlock } = useTunnelTracking({
     source,
     from,
     leadId: state.leadId,
@@ -386,7 +386,7 @@ function DevisGratuitsV3Content() {
     }
   }, [source, from]);
 
-  // Track step views
+  // Track step views + bloc d'entrée automatique pour les steps 1, 3 et 4
   useEffect(() => {
     const stepMap = {
       1: { logical: "CONTACT" as const, screen: "contact_v3" },
@@ -399,7 +399,64 @@ function DevisGratuitsV3Content() {
     if (current) {
       trackStep(state.currentStep, current.logical, current.screen);
     }
+
+    if (state.currentStep === 1) {
+      trackBlock("contact_info", "CONTACT", "contact_v3");
+    } else if (state.currentStep === 3) {
+      trackBlock("surface_volume", "RECAP", "formules_v3");
+    } else if (state.currentStep === 4) {
+      trackBlock("confirmation", "THANK_YOU", "confirmation_v3");
+    }
   }, [state.currentStep]);
+
+  // Track bloc formule quand une formule est sélectionnée pour la première fois
+  const formulaTrackedRef = useRef(false);
+  useEffect(() => {
+    if (state.formule && !formulaTrackedRef.current && state.currentStep === 3) {
+      formulaTrackedRef.current = true;
+      trackBlock("formule", "RECAP", "formules_v3");
+    }
+  }, [state.formule, state.currentStep]);
+
+  // Track blocs step 2 : origin, destination, date
+  const originBlockTrackedRef = useRef(false);
+  useEffect(() => {
+    if (state.currentStep === 2 && state.originHousingType && !originBlockTrackedRef.current) {
+      originBlockTrackedRef.current = true;
+      trackBlock("origin_address", "PROJECT", "project_v3");
+    }
+  }, [state.currentStep, state.originHousingType]);
+
+  const destBlockTrackedRef = useRef(false);
+  useEffect(() => {
+    if (state.currentStep === 2 && state.destinationHousingType && !destBlockTrackedRef.current) {
+      destBlockTrackedRef.current = true;
+      trackBlock("destination_address", "PROJECT", "project_v3");
+    }
+  }, [state.currentStep, state.destinationHousingType]);
+
+  const dateBlockTrackedRef = useRef(false);
+  useEffect(() => {
+    if (state.currentStep === 2 && state.movingDate && !dateBlockTrackedRef.current) {
+      dateBlockTrackedRef.current = true;
+      trackBlock("moving_date", "PROJECT", "project_v3");
+    }
+  }, [state.currentStep, state.movingDate]);
+
+  // Track bloc options step 3 : quand un service optionnel est activé
+  const optionsBlockTrackedRef = useRef(false);
+  const hasAnyService = !!(
+    state.serviceFurnitureStorage || state.serviceCleaning || state.serviceFullPacking ||
+    state.serviceFurnitureAssembly || state.serviceInsurance || state.serviceWasteRemoval ||
+    state.serviceHelpWithoutTruck || state.serviceSpecificSchedule || state.serviceDebarras ||
+    state.servicePiano
+  );
+  useEffect(() => {
+    if (state.currentStep === 3 && hasAnyService && !optionsBlockTrackedRef.current) {
+      optionsBlockTrackedRef.current = true;
+      trackBlock("options", "RECAP", "formules_v3");
+    }
+  }, [state.currentStep, hasAnyService]);
 
   const mapDensity = (d: string): "LIGHT" | "MEDIUM" | "HEAVY" =>
     d === "light" ? "LIGHT" : d === "dense" ? "HEAVY" : "MEDIUM";

@@ -20,7 +20,7 @@ function formatPct(n: number): string {
   return `${(n || 0).toFixed(1)}%`;
 }
 
-const STEP_ORDER = ["ENTRY", "PROJECT", "RECAP", "CONTACT", "THANK_YOU"];
+const STEP_ORDER = ["CONTACT", "PROJECT", "RECAP", "THANK_YOU"];
 
 type PricingSimulatorHypotheses = {
   displayCenterBias: number;
@@ -140,43 +140,34 @@ type PricingSimulatorResponse = {
   };
 };
 
-// Block-level funnel order (detailed tunnel flow)
+// Block-level funnel order (V3a tunnel flow)
 const BLOCK_ORDER = [
-  "cities_surface",
-  "validate_step1",
-  "estimation_recap",
-  "validate_step2",
-  "route_housing",
-  "moving_date",
-  "volume_density",
-  "formule",
   "contact_info",
-  "optional_details",
-  "validate_step3",
+  "origin_address",
+  "destination_address",
+  "moving_date",
+  "surface_volume",
+  "formule",
+  "options",
   "confirmation",
 ];
 
 const BLOCK_LABELS: Record<string, { emoji: string; label: string; color: string }> = {
-  cities_surface:    { emoji: "🏙️", label: "Villes & m²",          color: "bg-blue-500" },
-  validate_step1:    { emoji: "✅", label: "Validation étape 1",    color: "bg-blue-600" },
-  estimation_recap:  { emoji: "💰", label: "Estimation budget",     color: "bg-indigo-500" },
-  validate_step2:    { emoji: "✅", label: "Validation étape 2",    color: "bg-indigo-600" },
-  route_housing:     { emoji: "🚛", label: "Trajet & logements",    color: "bg-purple-500" },
-  moving_date:       { emoji: "📅", label: "Date de déménagement",  color: "bg-purple-600" },
-  volume_density:    { emoji: "📦", label: "Volume & densité",      color: "bg-violet-500" },
-  formule:           { emoji: "⭐", label: "Formule",               color: "bg-pink-500" },
-  contact_info:      { emoji: "📞", label: "Coordonnées",           color: "bg-pink-600" },
-  optional_details:  { emoji: "📝", label: "Précisions (facultatif)", color: "bg-rose-500" },
-  validate_step3:    { emoji: "✅", label: "Validation étape 3",    color: "bg-green-500" },
-  confirmation:      { emoji: "🎉", label: "Confirmation",          color: "bg-green-600" },
+  contact_info:          { emoji: "📞", label: "Coordonnées",           color: "bg-blue-500" },
+  origin_address:        { emoji: "🏠", label: "Adresse départ",        color: "bg-blue-600" },
+  destination_address:   { emoji: "📍", label: "Adresse arrivée",       color: "bg-indigo-500" },
+  moving_date:           { emoji: "📅", label: "Date déménagement",     color: "bg-indigo-600" },
+  surface_volume:        { emoji: "📐", label: "Surface & volume",      color: "bg-purple-500" },
+  formule:               { emoji: "⭐", label: "Formule",               color: "bg-purple-600" },
+  options:               { emoji: "📝", label: "Options (services)",    color: "bg-pink-500" },
+  confirmation:          { emoji: "🎉", label: "Confirmation",          color: "bg-green-600" },
 };
 
 const STEP_LABELS_EARLY: Record<string, string> = {
-  ENTRY:    "🏠 Entrée",
-  PROJECT:  "📦 Formulaire",
-  RECAP:    "📋 Récapitulatif",
-  CONTACT:  "📞 Contact",
-  THANK_YOU:"🎉 Confirmation",
+  CONTACT:  "📞 Coordonnées",
+  PROJECT:  "🚛 Votre projet",
+  RECAP:    "⭐ Formule & budget",
+  THANK_YOU:"🎉 Dossier envoyé",
 };
 
 function sortFunnel(rows: { logical_step: string; sessions: number }[]) {
@@ -1021,8 +1012,7 @@ function Dashboard({ password }: { password: string }) {
                   <span className="text-[10px] text-gray-500 uppercase tracking-wider">Entrée tunnel:</span>
                   {[
                     { id: 'all', label: 'Tous' },
-                    { id: 'direct', label: `Directe — step 1${directCount ? ` (${directCount})` : ''}` },
-                    { id: 'home_entry', label: `Depuis home — step 3${homeCount ? ` (${homeCount})` : ''}` },
+                    { id: 'direct', label: `Directe${directCount ? ` (${directCount})` : ''}` },
                   ].map(e => (
                     <button
                       key={e.id}
@@ -1193,34 +1183,28 @@ const EVENT_LABELS: Record<string, { emoji: string; label: string; color: string
 };
 
 const STEP_LABELS: Record<string, string> = {
-  ENTRY:    "🏠 Entrée",
-  PROJECT:  "📦 Projet (Formulaire)",
-  RECAP:    "📋 Récapitulatif",
-  CONTACT:  "📞 Contact",
-  THANK_YOU:"🎉 Confirmation",
+  CONTACT:  "📞 Coordonnées",
+  PROJECT:  "🚛 Votre projet",
+  RECAP:    "⭐ Formule & budget",
+  THANK_YOU:"🎉 Dossier envoyé",
 };
 
 const SCREEN_LABELS: Record<string, string> = {
-  acces_v2:        "Formulaire détaillé",
-  qualification_v2:"Villes & surface",
-  estimation_v2:   "Estimation prix",
   contact_v3:      "Coordonnées",
-  confirmation_v2: "Confirmation finale",
+  project_v3:      "Votre projet",
+  formules_v3:     "Formule & budget",
+  confirmation_v3: "Confirmation",
 };
 
 const BLOCK_LABELS_SIMPLE: Record<string, string> = {
-  cities_surface:   "Villes & surface",
-  estimation_recap: "Estimation prix",
-  route_housing:    "Trajet & logements",
-  moving_date:      "Date déménagement",
-  volume_density:   "Volume & densité",
-  formule:          "Choix formule",
-  contact_info:     "Coordonnées contact",
-  optional_details: "Précisions optionnelles",
-  validate_step1:   "✅ Validation étape 1",
-  validate_step2:   "✅ Validation étape 2",
-  validate_step3:   "✅ Validation étape 3",
-  confirmation:     "Page confirmation",
+  contact_info:        "Coordonnées",
+  origin_address:      "Adresse départ",
+  destination_address: "Adresse arrivée",
+  moving_date:         "Date déménagement",
+  surface_volume:      "Surface & volume",
+  formule:             "Choix formule",
+  options:             "Options services",
+  confirmation:        "Page confirmation",
 };
 
 function getEventInfo(type: string) {
