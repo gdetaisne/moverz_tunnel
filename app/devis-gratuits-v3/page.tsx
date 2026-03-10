@@ -39,6 +39,7 @@ import {
   getDistanceBand,
   LA_POSTE_RATES_EUR_PER_M3,
 } from "@/lib/pricing/constants";
+import { FORMULE_DETAILS, getAllDetails } from "@/lib/pricing/formuleDetails";
 import {
   computeBaselineEstimate,
   computeBaselineEstimateByFormule,
@@ -2754,6 +2755,15 @@ function DevisGratuitsV3Content() {
             return merged || undefined;
           })(),
           pricingSnapshot: pricingSnapshot,
+          formuleDetail: (() => {
+            const fId = (state.formule || "STANDARD") as "ECONOMIQUE" | "STANDARD" | "PREMIUM";
+            return {
+              id: fId,
+              label: FORMULE_DETAILS[fId].label,
+              summary: FORMULE_DETAILS[fId].summary,
+              details: getAllDetails(fId),
+            };
+          })(),
         },
       };
 

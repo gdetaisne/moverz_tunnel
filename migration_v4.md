@@ -1,5 +1,24 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-03-10 — Formules Step 3 : détail dépliable + envoi JSON
+
+**Objectif** : enrichir les cartes de formules (Step 3) avec un contenu précis et envoyer le détail dans le lead.
+
+**Contenu des formules** (source : nomenclature métier fournie) :
+
+- **Éco** : transport & manutention, stationnement, protection mobilier/literie/HiFi, fournitures.
+- **Standard** (= Éco + ) : emballage fragiles & vaisselle, démontage/remontage, penderies, décrochage mural.
+- **Premium** (= Standard + ) : emballage non-fragiles, vêtements hors cintres, assurance renforcée, évacuation déchets.
+
+**Changements** :
+- Nouveau fichier `lib/pricing/formuleDetails.ts` — source de vérité partagée (label, summary 2 bullets, détails complets, héritage).
+- `StepAccessLogisticsV4.tsx` — cartes reformatées : 2 bullets synthétiques + bouton "Voir le détail" dépliable (liste complète avec héritage).
+- `app/devis-gratuits-v3/page.tsx` — `tunnelOptions.formuleDetail` injecté dans le JSON du lead (`id`, `label`, `summary`, `details` complet).
+
+**Tracking** : aucun changement de `logicalStep` ni de `screenId`.
+
+---
+
 ## 2026-02-24 — AB test UX : version 9-fév (A) vs version actuelle (B)
 
 **Objectif** :

@@ -31,6 +31,7 @@ import { DatePickerFr } from "@/components/tunnel/DatePickerFr";
 import { CardV4 } from "@/components/tunnel-v4";
 import { uploadLeadPhotos, type UploadedPhoto } from "@/lib/api/client";
 import { DENSITY_COEFFICIENTS, TYPE_COEFFICIENTS } from "@/lib/pricing/constants";
+import { FORMULE_DETAILS, getAllDetails, type FormuleId } from "@/lib/pricing/formuleDetails";
 
 type QuestionKey = "narrow_access" | "long_carry" | "difficult_parking" | "lift_required";
 
@@ -309,6 +310,7 @@ export function StepAccessLogisticsV4(props: StepAccessLogisticsV4Props) {
   const [formuleExplicitChoice, setFormuleExplicitChoice] = useState(
     props.selectedFormule !== "STANDARD" || !!props.leadId
   );
+  const [openDetail, setOpenDetail] = useState<FormuleId | null>(null);
   const [contactValidated, setContactValidated] = useState(
     !!props.leadId && isFirstNameValid && isEmailValid
   );
@@ -2599,39 +2601,20 @@ ${EXTRA_NOTES_BLOCK_END}`;
             </p>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {([
-                {
-                  id: "ECONOMIQUE" as const,
-                  label: "Éco",
-                  recommended: false,
-                  bullets: ["Transport uniquement", "Vous emballez"],
-                },
-                {
-                  id: "STANDARD" as const,
-                  label: "Standard",
-                  recommended: true,
-                  bullets: ["Transport + aide", "Emballage basique"],
-                },
-                {
-                  id: "PREMIUM" as const,
-                  label: "Premium",
-                  recommended: false,
-                  bullets: ["Tout inclus", "Emballage complet"],
-                },
-              ] as const).map((f) => {
-                const price = props.pricingByFormule![f.id];
+              {(["ECONOMIQUE", "STANDARD", "PREMIUM"] as const).map((fId) => {
+                const f = FORMULE_DETAILS[fId];
+                const price = props.pricingByFormule![fId];
                 const selected =
                   (formuleExplicitChoice || props.selectedFormule !== "STANDARD") &&
-                  props.selectedFormule === f.id;
+                  props.selectedFormule === fId;
+                const isRecommended = fId === "STANDARD";
+                const detailOpen = openDetail === fId;
+                const allDetailItems = getAllDetails(fId);
+
                 return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => {
-                      setFormuleExplicitChoice(true);
-                      props.onFormuleChange(f.id);
-                    }}
-                    className="relative rounded-xl p-4 text-left transition-all"
+                  <div
+                    key={fId}
+                    className="relative rounded-xl text-left transition-all"
                     style={{
                       background: selected
                         ? "var(--color-accent-light)"
@@ -2641,35 +2624,77 @@ ${EXTRA_NOTES_BLOCK_END}`;
                       }`,
                     }}
                   >
-                    {f.recommended && (
-                      <div
-                        className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold"
-                        style={{
-                          background: "var(--color-accent)",
-                          color: "#FFFFFF",
-                        }}
-                      >
-                        + Top
-                      </div>
-                    )}
-                    <p
-                      className="text-lg font-bold mb-2"
-                      style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
+                    {/* Zone de sélection */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormuleExplicitChoice(true);
+                        props.onFormuleChange(fId);
+                      }}
+                      className="w-full p-4 text-left"
                     >
-                      {f.label}
-                    </p>
-                    <p
-                      className="text-sm font-bold mb-3"
+                      {isRecommended && (
+                        <div
+                          className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold"
+                          style={{
+                            background: "var(--color-accent)",
+                            color: "#FFFFFF",
+                          }}
+                        >
+                          + Top
+                        </div>
+                      )}
+                      <p
+                        className="text-lg font-bold mb-2"
+                        style={{ fontFamily: "var(--font-sora)", color: "var(--color-text)" }}
+                      >
+                        {f.label}
+                      </p>
+                      <p
+                        className="text-sm font-bold mb-3"
+                        style={{ color: "var(--color-accent)" }}
+                      >
+                        {fmtEur(price?.priceMin ?? 0)} – {fmtEur(price?.priceMax ?? 0)}
+                      </p>
+                      <ul className="space-y-1 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                        {f.summary.map((b, i) => (
+                          <li key={i}>• {b}</li>
+                        ))}
+                      </ul>
+                    </button>
+
+                    {/* Toggle détail */}
+                    <button
+                      type="button"
+                      onClick={() => setOpenDetail(detailOpen ? null : fId)}
+                      className="flex items-center gap-1 w-full px-4 pb-3 text-xs transition-colors"
                       style={{ color: "var(--color-accent)" }}
                     >
-                      {fmtEur(price?.priceMin ?? 0)} – {fmtEur(price?.priceMax ?? 0)}
-                    </p>
-                    <ul className="space-y-1 text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                      {f.bullets.map((b, i) => (
-                        <li key={i}>• {b}</li>
-                      ))}
-                    </ul>
-                  </button>
+                      <ChevronDown
+                        className="w-3 h-3 transition-transform duration-200"
+                        style={{ transform: detailOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                      />
+                      {detailOpen ? "Masquer le détail" : "Voir le détail"}
+                    </button>
+
+                    {/* Détail dépliable */}
+                    {detailOpen && (
+                      <ul
+                        className="px-4 pb-4 space-y-1 text-xs border-t pt-3"
+                        style={{
+                          color: "var(--color-text-secondary)",
+                          borderColor: "var(--color-border)",
+                        }}
+                      >
+                        {allDetailItems.map((item, i) => (
+                          <li key={i} className="flex items-start gap-1.5">
+                            <span style={{ color: "var(--color-accent)" }}>✓</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 );
               })}
             </div>
