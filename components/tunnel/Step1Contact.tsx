@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useRef, FormEvent } from "react";
 import { Mail, User, Phone, ArrowRight, Check, X, Loader2, Shield, TrendingUp, PhoneOff } from "lucide-react";
 
 interface Step1ContactProps {
@@ -16,24 +16,35 @@ interface Step1ContactProps {
   showValidation?: boolean;
 }
 
-async function checkEmailApi(email: string): Promise<{ ok: boolean; message: string }> {
+async function checkEmailApi(
+  email: string
+): Promise<{ ok: boolean; message: string; corrected?: string }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
   try {
     const res = await fetch("/api/email/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     if (!res.ok) return { ok: true, message: "" };
     const data = (await res.json()) as {
       ok?: boolean;
-      verdict?: "valid" | "invalid" | "unknown";
+      verdict?: "valid" | "invalid" | "unknown" | "typo_corrected";
       reason?: string;
+      corrected?: string;
     };
     if (data.verdict === "invalid") {
       return { ok: false, message: data.reason || "Adresse email non recevable." };
     }
-    return { ok: true, message: data.reason || "" };
+    if (data.verdict === "typo_corrected" && data.corrected) {
+      return { ok: true, message: "", corrected: data.corrected };
+    }
+    return { ok: true, message: "" };
   } catch {
+    clearTimeout(timeout);
     return { ok: true, message: "" };
   }
 }
@@ -55,6 +66,8 @@ export default function Step1Contact({
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [emailChecking, setEmailChecking] = useState(false);
   const [emailApiError, setEmailApiError] = useState<string | null>(null);
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+  const submittingRef = useRef(false);
   const hasPhone = onPhoneChange !== undefined;
   const isFirstNameValid = firstName.trim().length >= 2;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -80,18 +93,27 @@ export default function Step1Contact({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!isFormValid || isSubmitting || emailChecking) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
 
     setEmailApiError(null);
+    setEmailSuggestion(null);
     setEmailChecking(true);
     const check = await checkEmailApi(email.trim());
     setEmailChecking(false);
 
     if (!check.ok) {
+      submittingRef.current = false;
       setEmailApiError(check.message);
       return;
     }
 
+    if (check.corrected) {
+      onEmailChange(check.corrected);
+    }
+
     await onSubmit(e);
+    submittingRef.current = false;
   };
 
   const busy = isSubmitting || emailChecking;
@@ -166,6 +188,7 @@ export default function Step1Contact({
                 onChange={(e) => {
                   setEmailTouched(true);
                   setEmailApiError(null);
+                  setEmailSuggestion(null);
                   onEmailChange(e.target.value);
                 }}
                 className={`w-full rounded-xl border-2 bg-white px-4 pr-12 py-3 text-base text-text-primary placeholder:text-text-body/40 focus:outline-none focus:ring-2 transition-all ${
