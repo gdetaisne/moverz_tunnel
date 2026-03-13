@@ -20,9 +20,6 @@ function getSQL() {
     );
   }
 
-  // fetchConnectionCache enables HTTP connection caching (better perf in serverless)
-  neonConfig.fetchConnectionCache = true;
-
   _sql = neon(url);
   return _sql;
 }
