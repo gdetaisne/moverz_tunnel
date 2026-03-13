@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { DashboardData, JournalResult, JournalEvent, AbTestData, AbTestVariantData, FunnelCrossRow } from "@/lib/analytics/neon";
+import type { DashboardData, JournalResult, JournalEvent, AbTestData, AbTestVariantData, FunnelCrossRow, SessionRow, SessionsResult } from "@/lib/analytics/neon";
 
 // ============================================================
 // Helpers
@@ -1429,6 +1429,9 @@ function Dashboard({ password }: { password: string }) {
           )}
         </div>
 
+        {/* Sessions table */}
+        <SessionsTable password={password} periodStart={data.periodStart} periodEnd={data.periodEnd} />
+
         {/* Footer */}
         <div className="text-center text-gray-600 text-xs pb-8">
           Moverz Tunnel Analytics — Données Neon Postgres
@@ -1439,10 +1442,237 @@ function Dashboard({ password }: { password: string }) {
 }
 
 // ============================================================
-// Journal — raw events timeline + session filter
+// Sessions table — one row per session
 // ============================================================
 
-function TimeAgo({ date }: { date: string }) {
+const BLOCK_ORDER_SHORT = ["contact_info","origin_address","destination_address","moving_date","surface_volume","formule","options","confirmation"];
+const BLOCK_SHORT: Record<string, string> = {
+  contact_info: "Coord", origin_address: "Départ", destination_address: "Arrivée",
+  moving_date: "Date", surface_volume: "Surface", formule: "Formule",
+  options: "Options", confirmation: "Confirm",
+};
+
+function BlockPills({ blocks }: { blocks: string[] }) {
+  const set = new Set(blocks);
+  return (
+    <div className="flex gap-0.5 flex-wrap">
+      {BLOCK_ORDER_SHORT.map(id => (
+        <span
+          key={id}
+          className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
+            set.has(id) ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-600"
+          }`}
+        >
+          {BLOCK_SHORT[id] ?? id}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function SessionsTable({ password, periodStart, periodEnd }: { password: string; periodStart: string; periodEnd: string }) {
+  const [data, setData] = useState<SessionsResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<SessionRow | null>(null);
+  const [variantFilter, setVariantFilter] = useState<'all' | 'A' | 'B'>('all');
+  const [deviceFilter, setDeviceFilter] = useState<string>('all');
+  const [completedFilter, setCompletedFilter] = useState<string>('all');
+  const [offset, setOffset] = useState(0);
+  const LIMIT = 50;
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        password,
+        from: periodStart,
+        to: periodEnd,
+        limit: String(LIMIT),
+        offset: String(offset),
+      });
+      if (variantFilter !== 'all') params.set('variant', variantFilter);
+      if (deviceFilter !== 'all') params.set('device', deviceFilter);
+      if (completedFilter !== 'all') params.set('completed', completedFilter);
+      const res = await fetch(`/api/analytics/sessions?${params}`);
+      if (res.ok) setData(await res.json());
+    } finally {
+      setLoading(false);
+    }
+  }, [password, periodStart, periodEnd, variantFilter, deviceFilter, completedFilter, offset]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  return (
+    <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+      <div className="p-4 border-b border-gray-800 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold text-gray-300">👤 Sessions individuelles</h2>
+        <div className="flex items-center gap-3 flex-wrap text-[11px]">
+          <div className="flex items-center gap-1">
+            <span className="text-gray-500 uppercase tracking-wider text-[10px]">Variante:</span>
+            {(['all','A','B'] as const).map(v => (
+              <button key={v} onClick={() => { setVariantFilter(v); setOffset(0); }}
+                className={`px-2 py-1 rounded-lg transition ${variantFilter === v ? (v === 'B' ? 'bg-purple-600 text-white' : 'bg-blue-600 text-white') : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
+                {v === 'all' ? 'Toutes' : v === 'A' ? '🅰 A' : '🅱 B'}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-gray-500 uppercase tracking-wider text-[10px]">Device:</span>
+            {['all','mobile','desktop'].map(d => (
+              <button key={d} onClick={() => { setDeviceFilter(d); setOffset(0); }}
+                className={`px-2 py-1 rounded-lg transition ${deviceFilter === d ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
+                {d === 'all' ? 'Tous' : d === 'mobile' ? '📱 Mobile' : '🖥 Desktop'}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-gray-500 uppercase tracking-wider text-[10px]">Statut:</span>
+            {[{v:'all',l:'Tous'},{v:'true',l:'✅ Converti'},{v:'false',l:'❌ Abandonné'}].map(({v,l}) => (
+              <button key={v} onClick={() => { setCompletedFilter(v); setOffset(0); }}
+                className={`px-2 py-1 rounded-lg transition ${completedFilter === v ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
+                {l}
+              </button>
+            ))}
+          </div>
+          {data && <span className="text-gray-500">{data.total} sessions</span>}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="p-8 text-center text-gray-500 text-sm animate-pulse">Chargement…</div>
+      ) : !data || data.sessions.length === 0 ? (
+        <div className="p-8 text-center text-gray-600 text-sm">Aucune session</div>
+      ) : (
+        <div className="flex">
+          {/* Table */}
+          <div className="flex-1 min-w-0 overflow-x-auto">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="border-b border-gray-800 text-gray-500 text-[10px] uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left">Date</th>
+                  <th className="px-3 py-2 text-left">Var.</th>
+                  <th className="px-3 py-2 text-left">Device</th>
+                  <th className="px-3 py-2 text-left">Source</th>
+                  <th className="px-3 py-2 text-left">Statut</th>
+                  <th className="px-3 py-2 text-left">Durée</th>
+                  <th className="px-3 py-2 text-left">Email</th>
+                  <th className="px-3 py-2 text-left">Parcours blocs</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.sessions.map(s => (
+                  <tr
+                    key={s.session_id}
+                    onClick={() => setSelected(selected?.session_id === s.session_id ? null : s)}
+                    className={`border-b border-gray-800/50 cursor-pointer transition hover:bg-gray-800/40 ${selected?.session_id === s.session_id ? 'bg-gray-800/60' : ''}`}
+                  >
+                    <td className="px-3 py-2 text-gray-400 whitespace-nowrap">
+                      {new Date(s.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' })}
+                      <span className="text-gray-600 ml-1">{new Date(s.created_at).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })}</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${s.variant === 'A' ? 'bg-blue-900 text-blue-300' : 'bg-purple-900 text-purple-300'}`}>
+                        {s.variant}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-gray-400">{s.device === 'mobile' ? '📱' : s.device === 'desktop' ? '🖥' : s.device ?? '?'}</td>
+                    <td className="px-3 py-2 text-gray-400 truncate max-w-[80px]">{s.source ?? '—'}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      {s.completed
+                        ? <span className="text-green-400 font-semibold">✅ Converti</span>
+                        : <span className="text-gray-500">❌ {STEP_LABELS_EARLY[s.last_step ?? ''] || s.last_step || '—'}</span>
+                      }
+                    </td>
+                    <td className="px-3 py-2 text-gray-400 whitespace-nowrap">{s.total_duration_ms ? formatDuration(s.total_duration_ms) : '—'}</td>
+                    <td className="px-3 py-2 text-gray-400 truncate max-w-[120px]">{s.email ?? '—'}</td>
+                    <td className="px-3 py-2"><BlockPills blocks={s.blocks_visited} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {data.total > LIMIT && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800">
+                <span className="text-gray-500 text-[11px]">{offset + 1}–{Math.min(offset + LIMIT, data.total)} sur {data.total}</span>
+                <div className="flex gap-2">
+                  <button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - LIMIT))}
+                    className="px-3 py-1 text-[11px] bg-gray-800 text-gray-400 rounded-lg disabled:opacity-30 hover:bg-gray-700">← Préc.</button>
+                  <button disabled={offset + LIMIT >= data.total} onClick={() => setOffset(offset + LIMIT)}
+                    className="px-3 py-1 text-[11px] bg-gray-800 text-gray-400 rounded-lg disabled:opacity-30 hover:bg-gray-700">Suiv. →</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Detail panel */}
+          {selected && (
+            <div className="w-72 flex-shrink-0 border-l border-gray-800 p-4 space-y-4 text-[11px] overflow-y-auto max-h-[600px]">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-gray-300">Détail session</span>
+                <button onClick={() => setSelected(null)} className="text-gray-500 hover:text-gray-300 text-xs">✕</button>
+              </div>
+              <div className="space-y-1.5 text-gray-400">
+                <div><span className="text-gray-500">ID :</span> <span className="font-mono text-[10px] break-all">{selected.session_id.slice(-12)}</span></div>
+                <div><span className="text-gray-500">Variante :</span> <span className={`font-bold ml-1 ${selected.variant === 'A' ? 'text-blue-400' : 'text-purple-400'}`}>{selected.variant}</span></div>
+                <div><span className="text-gray-500">Device :</span> <span className="ml-1">{selected.device ?? '?'}</span></div>
+                <div><span className="text-gray-500">Pays :</span> <span className="ml-1">{selected.country ?? '?'}</span></div>
+                <div><span className="text-gray-500">Source :</span> <span className="ml-1">{selected.source ?? '—'}</span></div>
+                {selected.utm_source && <div><span className="text-gray-500">UTM :</span> <span className="ml-1">{selected.utm_source}</span></div>}
+                {selected.referrer && <div><span className="text-gray-500">Referrer :</span> <span className="ml-1 break-all text-[10px]">{selected.referrer}</span></div>}
+                {selected.landing_url && <div><span className="text-gray-500">Landing :</span> <span className="ml-1 break-all text-[10px]">{selected.landing_url}</span></div>}
+                <div><span className="text-gray-500">Email :</span> <span className="ml-1">{selected.email ?? '—'}</span></div>
+                <div><span className="text-gray-500">Durée :</span> <span className="ml-1">{selected.total_duration_ms ? formatDuration(selected.total_duration_ms) : '—'}</span></div>
+                <div><span className="text-gray-500">Statut :</span> <span className="ml-1">{selected.completed ? <span className="text-green-400">✅ Converti</span> : <span className="text-gray-400">❌ Abandonné à {STEP_LABELS_EARLY[selected.last_step ?? ''] || selected.last_step || '—'}</span>}</span></div>
+              </div>
+
+              <div>
+                <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-2">Parcours blocs</p>
+                <div className="space-y-1">
+                  {BLOCK_ORDER_SHORT.map((id, i) => {
+                    const visited = selected.blocks_visited.includes(id);
+                    return (
+                      <div key={id} className={`flex items-center gap-2 px-2 py-1 rounded text-[11px] ${visited ? 'bg-blue-900/40 text-blue-200' : 'text-gray-700'}`}>
+                        <span className="text-gray-600 w-4">{i + 1}</span>
+                        <span className="flex-1">{BLOCK_SHORT[id] ?? id}</span>
+                        {visited && <span className="text-green-400 text-[10px]">✓</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {selected.last_form_snapshot && Object.keys(selected.last_form_snapshot).length > 0 && (
+                <div>
+                  <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-2">Champs remplis</p>
+                  <div className="space-y-1">
+                    {Object.entries(selected.last_form_snapshot).map(([k, v]) => (
+                      <div key={k} className="flex gap-2">
+                        <span className="text-gray-500 w-24 truncate flex-shrink-0">{k}</span>
+                        <span className="text-gray-300 truncate">{String(v)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selected.last_pricing_snapshot && (
+                <div>
+                  <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-2">Pricing snapshot</p>
+                  <pre className="text-[10px] text-gray-400 bg-gray-800/50 p-2 rounded overflow-x-auto max-h-40 overflow-y-auto">
+                    {JSON.stringify(selected.last_pricing_snapshot, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// Journal — raw events timeline + session filter
+// ============================================================
   const d = new Date(date);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
@@ -1642,6 +1872,7 @@ function Journal({ password }: { password: string }) {
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [sessionDetail, setSessionDetail] = useState<SessionRow | null>(null);
   const [eventTypeFilter, setEventTypeFilter] = useState("");
   const [days, setDays] = useState(30);
   const [page, setPage] = useState(0);
@@ -1717,10 +1948,23 @@ function Journal({ password }: { password: string }) {
     setActiveSessionId(sessionId);
     setSearchQuery("");
     fetchJournal({ sessionId, resetPage: true });
+    // Fetch session detail (parcours reconstitué)
+    const daysBack = days;
+    const from = new Date(Date.now() - daysBack * 86400000).toISOString();
+    const to = new Date().toISOString();
+    fetch(`/api/analytics/sessions?password=${encodeURIComponent(password)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&limit=500`)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { sessions?: SessionRow[] } | null) => {
+        if (!d?.sessions) return;
+        const found = d.sessions.find((s: SessionRow) => s.session_id === sessionId);
+        setSessionDetail(found ?? null);
+      })
+      .catch(() => {});
   };
 
   const clearFilters = () => {
     setActiveSessionId(null);
+    setSessionDetail(null);
     setSearchQuery("");
     setEventTypeFilter("");
     setPage(0);
@@ -1814,6 +2058,41 @@ function Journal({ password }: { password: string }) {
                   <p className="text-gray-600 text-xs">Aucune session trouvée</p>
                 )}
               </div>
+
+              {/* Session detail panel */}
+              {sessionDetail && activeSessionId && (
+                <div className="mt-4 pt-4 border-t border-gray-800 space-y-3 text-[11px]">
+                  <p className="text-gray-500 uppercase tracking-wider text-[10px]">Parcours reconstitué</p>
+                  <div className="space-y-1">
+                    {BLOCK_ORDER_SHORT.map((id, i) => {
+                      const visited = sessionDetail.blocks_visited.includes(id);
+                      return (
+                        <div key={id} className={`flex items-center gap-2 px-2 py-1 rounded ${visited ? 'bg-blue-900/40 text-blue-200' : 'text-gray-700'}`}>
+                          <span className="text-gray-600 text-[10px] w-4">{i + 1}</span>
+                          <span className="flex-1">{BLOCK_SHORT[id] ?? id}</span>
+                          {visited && <span className="text-green-400 text-[10px]">✓</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {sessionDetail.last_form_snapshot && Object.keys(sessionDetail.last_form_snapshot).length > 0 && (
+                    <div>
+                      <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-1.5">Champs remplis</p>
+                      <div className="space-y-1">
+                        {Object.entries(sessionDetail.last_form_snapshot).map(([k, v]) => (
+                          <div key={k} className="flex gap-2">
+                            <span className="text-gray-500 w-20 truncate flex-shrink-0 text-[10px]">{k}</span>
+                            <span className="text-gray-300 truncate text-[10px]">{String(v)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {!sessionDetail.last_form_snapshot && (
+                    <p className="text-gray-600 text-[10px]">Aucun champ rempli tracké</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

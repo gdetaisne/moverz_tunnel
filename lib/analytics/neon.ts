@@ -1098,3 +1098,185 @@ export async function getJournalEvents(filters: JournalFilters): Promise<Journal
     }),
   };
 }
+
+// ============================================================
+// Read: Sessions — one row per session with full journey
+// ============================================================
+
+export interface SessionRow {
+  session_id: string;
+  created_at: string;
+  device: string | null;
+  country: string | null;
+  source: string | null;
+  variant: string;
+  completed: boolean;
+  last_step: string | null;
+  max_step_index: number | null;
+  total_duration_ms: number | null;
+  email: string | null;
+  blocks_visited: string[];
+  last_form_snapshot: Record<string, unknown> | null;
+  last_pricing_snapshot: Record<string, unknown> | null;
+  utm_source: string | null;
+  referrer: string | null;
+  landing_url: string | null;
+}
+
+export interface SessionsResult {
+  sessions: SessionRow[];
+  total: number;
+  periodStart: string;
+  periodEnd: string;
+}
+
+export interface SessionsFilters {
+  periodStartIso: string;
+  periodEndIso: string;
+  excludeTests?: boolean;
+  variant?: 'A' | 'B' | 'all';
+  device?: string;
+  completed?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export async function getSessionsData(filters: SessionsFilters): Promise<SessionsResult> {
+  const sql = getSQL();
+  const excludeTests = filters.excludeTests ?? true;
+  const limit = Math.min(filters.limit ?? 100, 500);
+  const offset = filters.offset ?? 0;
+
+  const hasVariantFilter = filters.variant && filters.variant !== 'all';
+  const variantValue = hasVariantFilter ? filters.variant! : null;
+  const hasDeviceFilter = !!filters.device;
+  const hasCompletedFilter = filters.completed !== undefined;
+
+  const rows = await sql`
+    WITH session_variant AS (
+      SELECT DISTINCT ON (session_id)
+        session_id,
+        CASE
+          WHEN url_path LIKE '%v3a%' THEN 'A'
+          WHEN url_path LIKE '%v3b%' THEN 'B'
+          ELSE 'other'
+        END as variant
+      FROM tunnel_events
+      WHERE created_at >= ${filters.periodStartIso}
+        AND created_at <= ${filters.periodEndIso}
+        AND url_path LIKE '%devis-gratuits-v3%'
+        AND (${!excludeTests} OR is_test_user = false)
+        AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
+      ORDER BY session_id, created_at ASC
+    ),
+    session_blocks AS (
+      SELECT
+        session_id,
+        ARRAY_AGG(DISTINCT extra->>'blockId' ORDER BY extra->>'blockId') FILTER (
+          WHERE extra->>'blockId' IS NOT NULL
+        ) as blocks_visited
+      FROM tunnel_events
+      WHERE created_at >= ${filters.periodStartIso}
+        AND created_at <= ${filters.periodEndIso}
+        AND event_type = 'BLOCK_ENTERED'
+      GROUP BY session_id
+    ),
+    session_snapshots AS (
+      SELECT DISTINCT ON (session_id)
+        session_id,
+        form_snapshot,
+        pricing_snapshot
+      FROM tunnel_events
+      WHERE created_at >= ${filters.periodStartIso}
+        AND created_at <= ${filters.periodEndIso}
+        AND form_snapshot IS NOT NULL
+      ORDER BY session_id, created_at DESC
+    )
+    SELECT
+      ts.session_id,
+      ts.created_at,
+      ts.device,
+      ts.country,
+      ts.source,
+      sv.variant,
+      ts.completed,
+      ts.last_step,
+      ts.max_step_index,
+      ts.total_duration_ms,
+      ts.email,
+      ts.utm_source,
+      ts.referrer,
+      ts.landing_url,
+      COALESCE(sb.blocks_visited, ARRAY[]::text[]) as blocks_visited,
+      ss.form_snapshot as last_form_snapshot,
+      ss.pricing_snapshot as last_pricing_snapshot
+    FROM tunnel_sessions ts
+    JOIN session_variant sv ON sv.session_id = ts.session_id
+    LEFT JOIN session_blocks sb ON sb.session_id = ts.session_id
+    LEFT JOIN session_snapshots ss ON ss.session_id = ts.session_id
+    WHERE ts.created_at >= ${filters.periodStartIso}
+      AND ts.created_at <= ${filters.periodEndIso}
+      AND (${!excludeTests} OR ts.is_test_user = false)
+      AND sv.variant IN ('A', 'B')
+      AND (${!hasVariantFilter} OR sv.variant = ${variantValue ?? ''})
+      AND (${!hasDeviceFilter} OR ts.device = ${filters.device ?? ''})
+      AND (${!hasCompletedFilter} OR ts.completed = ${filters.completed ?? false})
+    ORDER BY ts.created_at DESC
+    LIMIT ${limit}
+    OFFSET ${offset}
+  ` as unknown as any[];
+
+  const countRows = await sql`
+    WITH session_variant AS (
+      SELECT DISTINCT ON (session_id)
+        session_id,
+        CASE
+          WHEN url_path LIKE '%v3a%' THEN 'A'
+          WHEN url_path LIKE '%v3b%' THEN 'B'
+          ELSE 'other'
+        END as variant
+      FROM tunnel_events
+      WHERE created_at >= ${filters.periodStartIso}
+        AND created_at <= ${filters.periodEndIso}
+        AND url_path LIKE '%devis-gratuits-v3%'
+        AND (${!excludeTests} OR is_test_user = false)
+        AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
+      ORDER BY session_id, created_at ASC
+    )
+    SELECT COUNT(*) as total
+    FROM tunnel_sessions ts
+    JOIN session_variant sv ON sv.session_id = ts.session_id
+    WHERE ts.created_at >= ${filters.periodStartIso}
+      AND ts.created_at <= ${filters.periodEndIso}
+      AND (${!excludeTests} OR ts.is_test_user = false)
+      AND sv.variant IN ('A', 'B')
+      AND (${!hasVariantFilter} OR sv.variant = ${variantValue ?? ''})
+      AND (${!hasDeviceFilter} OR ts.device = ${filters.device ?? ''})
+      AND (${!hasCompletedFilter} OR ts.completed = ${filters.completed ?? false})
+  ` as unknown as any[];
+
+  return {
+    sessions: (rows as any[]).map((r: any) => ({
+      session_id: r.session_id,
+      created_at: r.created_at,
+      device: r.device,
+      country: r.country,
+      source: r.source,
+      variant: r.variant,
+      completed: r.completed,
+      last_step: r.last_step,
+      max_step_index: r.max_step_index != null ? Number(r.max_step_index) : null,
+      total_duration_ms: r.total_duration_ms != null ? Number(r.total_duration_ms) : null,
+      email: r.email,
+      blocks_visited: r.blocks_visited ?? [],
+      last_form_snapshot: r.last_form_snapshot ?? null,
+      last_pricing_snapshot: r.last_pricing_snapshot ?? null,
+      utm_source: r.utm_source,
+      referrer: r.referrer,
+      landing_url: r.landing_url,
+    })),
+    total: Number((countRows as any[])[0]?.total ?? 0),
+    periodStart: filters.periodStartIso,
+    periodEnd: filters.periodEndIso,
+  };
+}
