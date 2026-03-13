@@ -236,6 +236,19 @@ export interface FunnelRow {
 export interface FunnelCrossRow {
   logical_step: string;
   device: string;
+  variant?: string;
+  sessions: number;
+}
+
+export interface BlockFunnelVariantRow {
+  block_id: string;
+  variant: string;
+  sessions: number;
+}
+
+export interface FunnelVariantRow {
+  logical_step: string;
+  variant: string;
   sessions: number;
 }
 
@@ -282,6 +295,7 @@ export interface DashboardData {
   // Breakdowns
   funnel: FunnelRow[];
   funnelCross: FunnelCrossRow[];
+  funnelVariant: FunnelVariantRow[];
   sources: SourceRow[];
   devices: DeviceRow[];
   countries: CountryRow[];
@@ -292,6 +306,7 @@ export interface DashboardData {
   blockFunnel: BlockFunnelRow[];
   blockDurations: BlockDurationRow[];
   blockFunnelCross: BlockFunnelCrossRow[];
+  blockFunnelVariant: BlockFunnelVariantRow[];
 
   // Period
   periodStart: string;
@@ -382,6 +397,28 @@ export async function getBlockFunnel(
     ORDER BY sessions DESC
   ` as unknown as any[];
 
+  // Cross-tab: block × variant (A/B)
+  const variantRows = await sql`
+    SELECT
+      te.extra->>'blockId' as block_id,
+      CASE
+        WHEN te.url_path LIKE '%v3a%' THEN 'A'
+        WHEN te.url_path LIKE '%v3b%' THEN 'B'
+        ELSE 'other'
+      END as variant,
+      COUNT(DISTINCT te.session_id) as sessions
+    FROM tunnel_events te
+    WHERE te.event_type = 'BLOCK_ENTERED'
+      AND te.extra->>'blockId' IS NOT NULL
+      AND te.url_path LIKE '%devis-gratuits-v3%'
+      AND te.created_at >= ${periodStartIso}
+      AND te.created_at <= ${periodEndIso}
+      AND (${!excludeTests} OR te.is_test_user = false)
+      AND (te.user_agent IS NULL OR te.user_agent !~* ${BOT_UA_SQL_PATTERN})
+    GROUP BY te.extra->>'blockId', variant
+    ORDER BY sessions DESC
+  ` as unknown as any[];
+
   return {
     funnel: funnelRows.map((r: any) => ({
       block_id: r.block_id,
@@ -397,6 +434,11 @@ export async function getBlockFunnel(
       block_id: r.block_id,
       device: r.device,
       entry_type: r.entry_type,
+      sessions: Number(r.sessions),
+    })),
+    variant: variantRows.map((r: any) => ({
+      block_id: r.block_id,
+      variant: r.variant,
       sessions: Number(r.sessions),
     })),
   };
@@ -460,6 +502,28 @@ export async function getDashboardData(
       AND (${!excludeTests} OR is_test_user = false)
       AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
     GROUP BY logical_step, device
+    ORDER BY sessions DESC
+  `;
+
+  // Funnel variant: count distinct sessions per logical_step × variant (A/B)
+  const funnelVariantRows = await sql`
+    SELECT
+      logical_step,
+      CASE
+        WHEN url_path LIKE '%v3a%' THEN 'A'
+        WHEN url_path LIKE '%v3b%' THEN 'B'
+        ELSE 'other'
+      END as variant,
+      COUNT(DISTINCT session_id) as sessions
+    FROM tunnel_events
+    WHERE created_at >= ${periodStartIso}
+      AND created_at <= ${periodEndIso}
+      AND event_type = 'TUNNEL_STEP_VIEWED'
+      AND logical_step IS NOT NULL
+      AND url_path LIKE '%devis-gratuits-v3%'
+      AND (${!excludeTests} OR is_test_user = false)
+      AND (user_agent IS NULL OR user_agent !~* ${BOT_UA_SQL_PATTERN})
+    GROUP BY logical_step, variant
     ORDER BY sessions DESC
   `;
 
@@ -573,6 +637,7 @@ export async function getDashboardData(
   const kpiArr = kpiRows as unknown as any[];
   const funnelArr = funnelRows as unknown as any[];
   const funnelCrossArr = funnelCrossRows as unknown as any[];
+  const funnelVariantArr = funnelVariantRows as unknown as any[];
   const sourceArr = sourceRows as unknown as any[];
   const deviceArr = deviceRows as unknown as any[];
   const countryArr = countryRows as unknown as any[];
@@ -597,6 +662,11 @@ export async function getDashboardData(
     funnelCross: funnelCrossArr.map((r: any) => ({
       logical_step: r.logical_step,
       device: r.device,
+      sessions: Number(r.sessions),
+    })),
+    funnelVariant: funnelVariantArr.map((r: any) => ({
+      logical_step: r.logical_step,
+      variant: r.variant,
       sessions: Number(r.sessions),
     })),
     sources: sourceArr.map((r: any) => ({
@@ -632,6 +702,7 @@ export async function getDashboardData(
     blockFunnel: blockData.funnel,
     blockDurations: blockData.durations,
     blockFunnelCross: blockData.cross,
+    blockFunnelVariant: blockData.variant,
 
     periodStart: periodStartIso,
     periodEnd: periodEndIso,

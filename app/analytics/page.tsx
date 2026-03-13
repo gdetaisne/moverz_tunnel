@@ -531,8 +531,10 @@ function Dashboard({ password }: { password: string }) {
   const [compareCustomFrom, setCompareCustomFrom] = useState("");
   const [compareCustomTo, setCompareCustomTo] = useState("");
   const [blockDeviceSplit, setBlockDeviceSplit] = useState(false);
+  const [blockAbSplit, setBlockAbSplit] = useState(false);
   const [blockEntryFilter, setBlockEntryFilter] = useState<string>("all");
   const [funnelDeviceSplit, setFunnelDeviceSplit] = useState(false);
+  const [funnelAbSplit, setFunnelAbSplit] = useState(false);
   const [versions, setVersions] = useState<AnalyticsVersion[]>([]);
   const [showVersionForm, setShowVersionForm] = useState(false);
   const [showVersionManager, setShowVersionManager] = useState(false);
@@ -634,6 +636,28 @@ function Dashboard({ password }: { password: string }) {
     if (r.logical_step === STEP_ORDER[0]) {
       if (r.device === 'mobile') funnelDeviceCounts.mobile += r.sessions;
       else if (r.device === 'desktop') funnelDeviceCounts.desktop += r.sessions;
+    }
+  }
+
+  // Funnel split A/B helpers
+  const getFunnelByVariant = (variant: string): { logical_step: string; sessions: number }[] => {
+    const rows = (data.funnelVariant || []).filter(r => r.variant === variant);
+    const agg = new Map<string, number>();
+    for (const r of rows) agg.set(r.logical_step, (agg.get(r.logical_step) ?? 0) + r.sessions);
+    return sortFunnel(STEP_ORDER.map(step => ({ logical_step: step, sessions: agg.get(step) ?? 0 })));
+  };
+  const funnelA = getFunnelByVariant('A');
+  const funnelB = getFunnelByVariant('B');
+  const funnelAbSplitMax = Math.max(
+    ...funnelA.map(f => f.sessions),
+    ...funnelB.map(f => f.sessions),
+    1
+  );
+  const funnelAbCounts = { A: 0, B: 0 };
+  for (const r of (data.funnelVariant || [])) {
+    if (r.logical_step === STEP_ORDER[0]) {
+      if (r.variant === 'A') funnelAbCounts.A += r.sessions;
+      else if (r.variant === 'B') funnelAbCounts.B += r.sessions;
     }
   }
 
@@ -869,25 +893,33 @@ function Dashboard({ password }: { password: string }) {
               <h2 className="text-sm font-semibold text-gray-300">🔻 Funnel par étape</h2>
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => setFunnelDeviceSplit(false)}
+                  onClick={() => { setFunnelDeviceSplit(false); setFunnelAbSplit(false); }}
                   className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
-                    !funnelDeviceSplit ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    !funnelDeviceSplit && !funnelAbSplit ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                   }`}
                 >
                   Tous
                 </button>
                 <button
-                  onClick={() => setFunnelDeviceSplit(true)}
+                  onClick={() => { setFunnelDeviceSplit(true); setFunnelAbSplit(false); }}
                   className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
                     funnelDeviceSplit ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                   }`}
                 >
                   Split mobile / desktop
                 </button>
+                <button
+                  onClick={() => { setFunnelAbSplit(true); setFunnelDeviceSplit(false); }}
+                  className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
+                    funnelAbSplit ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  Split A/B
+                </button>
               </div>
             </div>
 
-            {!funnelDeviceSplit ? (
+            {!funnelDeviceSplit && !funnelAbSplit ? (
               /* Vue agrégée */
               <div className="space-y-3">
                 {funnel.map((f) => (
@@ -955,6 +987,86 @@ function Dashboard({ password }: { password: string }) {
                     {funnelDesktop.map((f, i) => {
                       const prev = funnelDesktop[i - 1];
                       const pct = funnelSplitMax > 0 ? (f.sessions / funnelSplitMax) * 100 : 0;
+                      const dropoff = prev && prev.sessions > 0
+                        ? ((prev.sessions - f.sessions) / prev.sessions * 100).toFixed(1)
+                        : null;
+                      const colors: Record<string, string> = {
+                        CONTACT: "bg-pink-500", PROJECT: "bg-purple-500",
+                        RECAP: "bg-indigo-500", THANK_YOU: "bg-green-500",
+                      };
+                      return (
+                        <div key={f.logical_step} className="flex items-center gap-1.5">
+                          {dropoff && <span className="text-red-400 text-[10px] w-10 text-right flex-shrink-0">-{dropoff}%</span>}
+                          {!dropoff && <span className="w-10 flex-shrink-0" />}
+                          <div className="flex-1 bg-gray-800 rounded-full h-6 overflow-hidden">
+                            <div
+                              className={`h-full ${colors[f.logical_step] || 'bg-gray-500'} rounded-full transition-all duration-500 flex items-center justify-end pr-1.5`}
+                              style={{ width: `${Math.max(pct, f.sessions > 0 ? 8 : 2)}%` }}
+                            >
+                              <span className="text-white text-[10px] font-semibold">{f.sessions}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Vue split A/B */
+              <div className="flex gap-4">
+                {/* Labels */}
+                <div className="flex-shrink-0 space-y-3 pt-0">
+                  {funnel.map(f => (
+                    <div key={f.logical_step} className="h-6 flex items-center justify-end">
+                      <span className="text-gray-400 text-xs text-right w-28 truncate">
+                        {STEP_LABELS_EARLY[f.logical_step] || f.logical_step}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {/* Variante A */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-blue-400 font-semibold mb-1.5">
+                    🅰 Variante A{funnelAbCounts.A ? ` (${funnelAbCounts.A})` : ''}
+                  </p>
+                  <div className="space-y-3">
+                    {funnelA.map((f, i) => {
+                      const prev = funnelA[i - 1];
+                      const pct = funnelAbSplitMax > 0 ? (f.sessions / funnelAbSplitMax) * 100 : 0;
+                      const dropoff = prev && prev.sessions > 0
+                        ? ((prev.sessions - f.sessions) / prev.sessions * 100).toFixed(1)
+                        : null;
+                      const colors: Record<string, string> = {
+                        CONTACT: "bg-pink-500", PROJECT: "bg-purple-500",
+                        RECAP: "bg-indigo-500", THANK_YOU: "bg-green-500",
+                      };
+                      return (
+                        <div key={f.logical_step} className="flex items-center gap-1.5">
+                          {dropoff && <span className="text-red-400 text-[10px] w-10 text-right flex-shrink-0">-{dropoff}%</span>}
+                          {!dropoff && <span className="w-10 flex-shrink-0" />}
+                          <div className="flex-1 bg-gray-800 rounded-full h-6 overflow-hidden">
+                            <div
+                              className={`h-full ${colors[f.logical_step] || 'bg-gray-500'} rounded-full transition-all duration-500 flex items-center justify-end pr-1.5`}
+                              style={{ width: `${Math.max(pct, f.sessions > 0 ? 8 : 2)}%` }}
+                            >
+                              <span className="text-white text-[10px] font-semibold">{f.sessions}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                {/* Variante B */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-purple-400 font-semibold mb-1.5">
+                    🅱 Variante B{funnelAbCounts.B ? ` (${funnelAbCounts.B})` : ''}
+                  </p>
+                  <div className="space-y-3">
+                    {funnelB.map((f, i) => {
+                      const prev = funnelB[i - 1];
+                      const pct = funnelAbSplitMax > 0 ? (f.sessions / funnelAbSplitMax) * 100 : 0;
                       const dropoff = prev && prev.sessions > 0
                         ? ((prev.sessions - f.sessions) / prev.sessions * 100).toFixed(1)
                         : null;
@@ -1055,6 +1167,22 @@ function Dashboard({ password }: { password: string }) {
           const mobileBlocks = buildBlocks(aggCross('mobile'));
           const desktopBlocks = buildBlocks(aggCross('desktop'));
 
+          // A/B split blocks
+          const aggVariant = (variant: string) => {
+            if (!data.blockFunnelVariant?.length) return data.blockFunnel;
+            const filtered = data.blockFunnelVariant.filter(r => r.variant === variant);
+            const agg = new Map<string, number>();
+            for (const r of filtered) agg.set(r.block_id, (agg.get(r.block_id) ?? 0) + r.sessions);
+            return Array.from(agg.entries()).map(([block_id, sessions]) => ({ block_id, sessions }));
+          };
+          const aBlocks = buildBlocks(aggVariant('A'));
+          const bBlocks = buildBlocks(aggVariant('B'));
+          const abVariantCounts: Record<string, number> = {};
+          for (const r of (data.blockFunnelVariant || [])) {
+            if (r.block_id === 'contact_info') abVariantCounts[r.variant] = (abVariantCounts[r.variant] ?? 0) + r.sessions;
+          }
+          const abSplitMax = Math.max(...aBlocks.map(b => b.sessions), ...bBlocks.map(b => b.sessions), 1);
+
           // Render a single funnel column
           const renderFunnel = (blocks: { block_id: string; sessions: number }[], maxSess: number, compact?: boolean) => (
             <div className="space-y-1.5">
@@ -1121,20 +1249,28 @@ function Dashboard({ password }: { password: string }) {
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] text-gray-500 uppercase tracking-wider">Device:</span>
                   <button
-                    onClick={() => setBlockDeviceSplit(false)}
+                    onClick={() => { setBlockDeviceSplit(false); setBlockAbSplit(false); }}
                     className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
-                      !blockDeviceSplit ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      !blockDeviceSplit && !blockAbSplit ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
                     Tous
                   </button>
                   <button
-                    onClick={() => setBlockDeviceSplit(true)}
+                    onClick={() => { setBlockDeviceSplit(true); setBlockAbSplit(false); }}
                     className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
                       blockDeviceSplit ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
                     Split mobile / desktop
+                  </button>
+                  <button
+                    onClick={() => { setBlockAbSplit(true); setBlockDeviceSplit(false); }}
+                    className={`px-2.5 py-1 text-[11px] rounded-lg transition ${
+                      blockAbSplit ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    Split A/B
                   </button>
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -1158,10 +1294,10 @@ function Dashboard({ password }: { password: string }) {
                 </div>
               </div>
 
-              {!blockDeviceSplit ? (
+              {!blockDeviceSplit && !blockAbSplit ? (
                 /* Single funnel — Tous */
                 renderFunnel(allBlocks, allMax)
-              ) : (
+              ) : blockDeviceSplit ? (
                 /* Split: Mobile | Desktop side by side */
                 <div className="flex gap-4">
                   {/* Labels column */}
@@ -1184,6 +1320,31 @@ function Dashboard({ password }: { password: string }) {
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] text-indigo-400 font-semibold mb-1.5">🖥 Desktop{deviceCounts.desktop ? ` (${deviceCounts.desktop})` : ''}</p>
                     {renderFunnel(desktopBlocks, splitMax, true)}
+                  </div>
+                </div>
+              ) : (
+                /* Split: A | B side by side */
+                <div className="flex gap-4">
+                  {/* Labels column */}
+                  <div className="flex-shrink-0 space-y-1.5 pt-7">
+                    {BLOCK_ORDER.map(id => {
+                      const info = BLOCK_LABELS[id] || { emoji: "•", label: id };
+                      return (
+                        <div key={id} className="h-6 flex items-center justify-end">
+                          <span className="text-gray-400 text-[10px] text-right truncate w-36">{info.emoji} {info.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Variante A */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-blue-400 font-semibold mb-1.5">🅰 Variante A{abVariantCounts['A'] ? ` (${abVariantCounts['A']})` : ''}</p>
+                    {renderFunnel(aBlocks, abSplitMax, true)}
+                  </div>
+                  {/* Variante B */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-purple-400 font-semibold mb-1.5">🅱 Variante B{abVariantCounts['B'] ? ` (${abVariantCounts['B']})` : ''}</p>
+                    {renderFunnel(bBlocks, abSplitMax, true)}
                   </div>
                 </div>
               )}
@@ -2436,7 +2597,7 @@ function PricingLab({ password }: { password: string }) {
 // AB Test comparison tab
 // ============================================================
 
-const STEP_ORDER_AB = ["CONTACT", "PROJECT", "ESTIMATION", "PRECISION", "COMPLETION"];
+const STEP_ORDER_AB = ["CONTACT", "PROJECT", "RECAP", "THANK_YOU"];
 
 function AbTestTab({ password }: { password: string }) {
   const [data, setData] = useState<AbTestData | null>(null);
