@@ -340,7 +340,7 @@ export async function getBlockFunnel(
   periodStartIso: string,
   periodEndIso: string,
   excludeTests: boolean = true
-): Promise<{ funnel: BlockFunnelRow[]; durations: BlockDurationRow[]; cross: BlockFunnelCrossRow[] }> {
+): Promise<{ funnel: BlockFunnelRow[]; durations: BlockDurationRow[]; cross: BlockFunnelCrossRow[]; variant: BlockFunnelVariantRow[] }> {
   const sql = getSQL();
 
   // Block funnel: distinct sessions per block
