@@ -39,7 +39,10 @@ export default function RedirectToV3() {
       }
     }
 
-    const params = new URLSearchParams(searchParams.toString());
+    // Lire window.location.search en priorité pour capturer _gl= et autres
+    // params ajoutés dynamiquement par GA4 (cross-domain tracking)
+    const rawSearch = typeof window !== "undefined" ? window.location.search : "";
+    const params = new URLSearchParams(rawSearch || searchParams.toString());
     params.set("ab", variant);
 
     const target = variant === "A"
