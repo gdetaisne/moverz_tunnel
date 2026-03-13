@@ -1673,6 +1673,8 @@ function SessionsTable({ password, periodStart, periodEnd }: { password: string;
 // ============================================================
 // Journal — raw events timeline + session filter
 // ============================================================
+
+function TimeAgo({ date }: { date: string }) {
   const d = new Date(date);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
