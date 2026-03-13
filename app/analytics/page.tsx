@@ -932,7 +932,7 @@ function Dashboard({ password }: { password: string }) {
                   />
                 ))}
               </div>
-            ) : (
+            ) : funnelDeviceSplit ? (
               /* Vue split mobile / desktop */
               <div className="flex gap-4">
                 {/* Labels */}
