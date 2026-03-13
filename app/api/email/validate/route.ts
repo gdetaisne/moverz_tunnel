@@ -1,4 +1,3 @@
-import { resolveMx } from "node:dns/promises";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -62,16 +61,6 @@ const findLikelyTypo = (domain: string): string | null => {
   return best?.target ?? null;
 };
 
-const hasMxRoute = async (domain: string): Promise<boolean> => {
-  try {
-    const mx = await resolveMx(domain);
-    if (mx.length > 0) return true;
-  } catch {
-    // ignore
-  }
-  return false;
-};
-
 export async function POST(req: NextRequest) {
   try {
     const raw = await req.json();
@@ -106,31 +95,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Typo détectée : autocorrect silencieux, on laisse passer sans message
     const likelyTypo = findLikelyTypo(domain);
     if (likelyTypo && likelyTypo !== domain) {
       return NextResponse.json(
-        {
-          ok: false,
-          verdict: "invalid",
-          reason: `Domaine suspect. Voulez-vous dire ${local}@${likelyTypo} ?`,
-        },
-        { status: 200 }
-      );
-    }
-
-    const roleLike = /^(noreply|no-reply|do-not-reply|donotreply|contact|info|admin)$/i.test(local);
-    const deliverableDomain = await hasMxRoute(domain);
-
-    if (!deliverableDomain) {
-      return NextResponse.json(
-        { ok: false, verdict: "invalid", reason: "Ce domaine email ne semble pas avoir de boîte mail active (MX)." },
-        { status: 200 }
-      );
-    }
-
-    if (roleLike) {
-      return NextResponse.json(
-        { ok: true, verdict: "unknown", reason: "Adresse générique détectée, vérifiez bien l'accès à la boîte." },
+        { ok: true, verdict: "typo_corrected", corrected: `${local}@${likelyTypo}` },
         { status: 200 }
       );
     }
