@@ -93,6 +93,7 @@ function DevisGratuitsV3Content() {
   const [densityAiNote, setDensityAiNote] = useState("");
   const [collapseStep3OnEnterToken, setCollapseStep3OnEnterToken] = useState(0);
   const [isSavingStep4Enrichment, setIsSavingStep4Enrichment] = useState(false);
+  const [isSubmittingStep3, setIsSubmittingStep3] = useState(false);
   const precreateLeadPromiseRef = useRef<Promise<string | null> | null>(null);
   const precreateLeadAttemptKeyRef = useRef<string>("");
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2542,6 +2543,7 @@ function DevisGratuitsV3Content() {
     // Cancel any pending auto-save — the final submit sends the complete payload
     if (autoSaveTimerRef.current) { clearTimeout(autoSaveTimerRef.current); autoSaveTimerRef.current = null; }
 
+    setIsSubmittingStep3(true);
     // Création / MAJ lead Back Office à la fin de Step 3 (avant les photos)
     try {
       const kitchenExtraVolumeM3 = (() => {
@@ -2800,6 +2802,8 @@ function DevisGratuitsV3Content() {
     } catch (err: any) {
       console.error("Error creating/updating lead (V2 Step 3):", err);
       trackError("API_ERROR", err.message || "Failed to create/update lead", 3, "PROJECT", "acces_v2");
+    } finally {
+      setIsSubmittingStep3(false);
     }
   };
 
@@ -3077,6 +3081,7 @@ function DevisGratuitsV3Content() {
                   }}
                   ctaLabel="Lancer ma demande de devis"
                   onSubmit={handleSubmitAccessV2}
+                  isLoading={isSubmittingStep3}
                   progressCompleted={step3Progress.completed}
                   progressTotal={step3Progress.total}
                   precisionScore={step3Progress.score}

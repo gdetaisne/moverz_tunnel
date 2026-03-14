@@ -1,5 +1,16 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-03-14 — Fix: bouton bloqué après 502 + CORS tunnel-events
+
+**Contexte** : En prod, le Back Office répond parfois 502 (CapRover). Deux bugs constatés :
+1. Le bouton "Lancer ma demande de devis" (Step 3) restait grisé/inactif après une erreur API car aucun state `isSubmitting` n'était géré.
+2. Les appels `tunnel-events` depuis le navigateur échouaient avec CORS car ils ciblaient directement le BO (`moverz-backoffice.gslv.cloud`).
+
+**Corrections** :
+- `page.tsx` : ajout du state `isSubmittingStep3` + `setIsSubmittingStep3(true)` avant le `try` et `finally { setIsSubmittingStep3(false) }`. Prop `isLoading={isSubmittingStep3}` passée à `SmartCart`.
+- `lib/api/client.ts` : `trackTunnelEvent` passe désormais par `/api/backoffice/tunnel-events` (proxy same-origin) au lieu d'appeler le BO directement.
+- `app/api/backoffice/tunnel-events/route.ts` : nouveau proxy Next.js (même pattern que `/api/backoffice/leads`).
+
 ## 2026-03-10 — Pricing : suppression de la décote -20%
 
 **Contexte** : retours des déménageurs partenaires indiquant que les prix estimés affichés dans le tunnel sont systématiquement trop bas par rapport aux devis réels.

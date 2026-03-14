@@ -218,7 +218,6 @@ function getOrCreateTunnelSessionId(): string {
 
 export async function trackTunnelEvent(input: TrackTunnelEventInput): Promise<void> {
   try {
-    const API_BASE_URL = getApiBaseUrl();
     const sessionId = getOrCreateTunnelSessionId();
 
     const payload: Record<string, unknown> = {
@@ -238,7 +237,7 @@ export async function trackTunnelEvent(input: TrackTunnelEventInput): Promise<vo
       extra: input.extra,
     };
 
-    await fetch(`${API_BASE_URL}/public/tunnel-events`, {
+    await fetch("/api/backoffice/tunnel-events", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
