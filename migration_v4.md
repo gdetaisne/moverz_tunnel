@@ -11,13 +11,15 @@
 - `lib/api/client.ts` : `trackTunnelEvent` passe désormais par `/api/backoffice/tunnel-events` (proxy same-origin) au lieu d'appeler le BO directement.
 - `app/api/backoffice/tunnel-events/route.ts` : nouveau proxy Next.js (même pattern que `/api/backoffice/leads`).
 
-## 2026-03-10 — Pricing : suppression de la décote -20%
+## 2026-03-10 — Pricing : suppression de la décote -20% (ANNULÉE — voir ci-dessous)
 
 **Contexte** : retours des déménageurs partenaires indiquant que les prix estimés affichés dans le tunnel sont systématiquement trop bas par rapport aux devis réels.
 
-**Décision** : passer `DECOTE` de `-0.2` à `0` (factor 1.0 = pas de décote).
+**Décision initiale** : passer `DECOTE` de `-0.2` à `0` (factor 1.0 = pas de décote).
 
-**Impact** : les prix affichés dans les 3 cartes de formule (Step 3) et en Step 2 augmentent d'environ +25% (car ×0.8 → ×1.0).
+**Annulée le même jour** : la suppression a tué la conversion — prix trop élevés pour les clients. `DECOTE` rétablie à `-0.2`.
+
+**Arbitrage** : le curseur conversion clients prime sur les retours déménageurs. Le sujet "prix trop bas pour les déménageurs" reste ouvert mais ne se résout pas par ce levier seul.
 
 **Fichier modifié** : `lib/pricing/constants.ts`
 

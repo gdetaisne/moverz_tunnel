@@ -40,10 +40,10 @@ export const OBJETS_SPECIFIQUES_PRIX = {
   meublesTresLourd: 100,
 } as const;
 
-// Décote globale (pricing base). 0 => pas de décote (factor 1.0).
-// Historique: était à -0.2 (-20%) depuis 2026-02-06, retirée 2026-03-10 suite
-// aux retours déménageurs (prix affichés trop bas).
-export const DECOTE = 0 as const;
+// Décote globale (pricing base). -0.2 => -20% (factor 0.8).
+// Option A: appliquée à `rateEurPerM3` + `COEF_DISTANCE` uniquement (pas au socle, ni aux services).
+// Retablie 2026-03-10 : la suppression a tué la conversion (prix trop élevés pour les clients).
+export const DECOTE = -0.2 as const;
 
 // Coefficients de base (alignés sur le tunnel Marseille / La Poste)
 // Ces valeurs viennent de `moverz_main` et ont déjà été calibrées sur les cas réels.
