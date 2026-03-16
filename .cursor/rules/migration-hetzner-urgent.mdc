@@ -1,0 +1,17 @@
+---
+description: URGENT — devis.moverz.fr migré vers Hetzner/Coolify le 16/03/2026. Lire MIGRATION_HETZNER.md avant tout déploiement ou modification.
+globs:
+alwaysApply: true
+---
+
+# URGENT — Migration Hetzner Mars 2026
+
+**Ce repo (`devis.moverz.fr`) tourne maintenant sur Hetzner (`116.203.177.139`) via Coolify.**
+
+À l'ouverture de ce repo :
+1. Lire `MIGRATION_HETZNER.md` pour l'état complet
+2. **`/api/ai/analyze-photos`** : route désactivée (incident malware) — ne pas réactiver sans audit
+3. **SQLite** : données locales dans le container — à risque si container recréé
+4. Format repo Coolify : `gdetaisne/moverz_tunnel` (pas l'URL GitHub complète)
+
+**Ancienne URL** : `devis-gratuit.gslv.cloud` — obsolète, ne plus utiliser.
