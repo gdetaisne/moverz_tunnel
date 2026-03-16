@@ -1,7 +1,7 @@
 # Guide de déploiement — Refonte UI "Unicorn-Grade"
 
 > **Refonte 100% UI-only, aucun breaking change backoffice**  
-> Prêt à déployer sur prod (CapRover) via push sur `main`
+> Prêt à déployer sur prod (`devis.moverz.fr`) via push sur `main` et auto-deploy Coolify
 
 ---
 
@@ -31,7 +31,7 @@
 npm run lint
 npm run typecheck
 
-# Build (optionnel, CapRover build automatiquement)
+# Build (optionnel, Coolify build automatiquement)
 npm run build
 ```
 
@@ -55,12 +55,12 @@ git commit -m "feat: Refonte UI unicorn-grade du tunnel (Steps 1,2,4 premium + d
 - Documentation: BACKOFFICE_CONTRACT.md, REFONTE_UI_LOG.md
 - migration_v4.md à jour"
 
-# Push sur main (déclenche le déploiement CapRover automatique)
+# Push sur main (déclenche le déploiement Coolify automatique)
 git push origin main
 ```
 
-### Étape 3 : CapRover déploiement automatique
-CapRover détecte le push sur `main` et lance automatiquement :
+### Étape 3 : Déploiement automatique Coolify
+Coolify détecte le push sur `main` et lance automatiquement :
 1. Pull du code depuis le repo
 2. Build Next.js (`npm run build`)
 3. Démarrage du serveur (`npm run start`)
@@ -73,7 +73,7 @@ CapRover détecte le push sur `main` et lance automatiquement :
 ## 🧪 Tests en prod (après déploiement)
 
 ### URL de prod
-Accéder à : `https://[votre-domaine-caprover]/devis-gratuits-v3`
+Accéder à : `https://devis.moverz.fr/devis-gratuits-v3`
 
 ### Checklist de tests
 
@@ -152,11 +152,11 @@ Accéder à : `https://[votre-domaine-caprover]/devis-gratuits-v3`
 
 Si un bug critique est détecté en prod, rollback immédiat :
 
-### Option 1 : Rollback via CapRover UI
-1. Aller sur CapRover UI → Apps → [Nom app]
-2. Section "Deployment" → cliquer sur "Previous versions"
-3. Sélectionner la version précédente (avant le dernier push)
-4. Cliquer sur "Deploy this version"
+### Option 1 : Rollback via Coolify
+1. Aller sur Coolify → application `devis.moverz.fr`
+2. Ouvrir l'historique des déploiements
+3. Sélectionner le dernier déploiement stable
+4. Relancer un redeploy de cette révision si nécessaire
 
 ### Option 2 : Rollback via Git
 ```bash
@@ -199,7 +199,7 @@ import { StepEstimationV2 } from "@/components/tunnel/v2/StepEstimationV2";
 ### KPIs Tech
 - **Temps de chargement Step 2** : Doit rester < 2s
 - **Erreurs JS** : Doit rester à 0 (surveiller Sentry si activé)
-- **Erreurs API** : Doit rester < 1% (surveiller logs CapRover)
+- **Erreurs API** : Doit rester < 1% (surveiller logs Coolify / reverse proxy)
 
 ---
 
@@ -219,10 +219,11 @@ import { StepEstimationV2 } from "@/components/tunnel/v2/StepEstimationV2";
 ## 📞 Support
 
 En cas de problème critique en prod :
-1. Vérifier les logs CapRover : `CapRover UI → Apps → [Nom app] → Logs`
-2. Vérifier les logs Back Office : `CapRover UI → Apps → [Nom BO] → Logs`
-3. Rollback si nécessaire (voir section ci-dessus)
-4. Documenter le bug dans un ticket GitHub/Notion
+1. Vérifier les logs Coolify de l'application `devis.moverz.fr`
+2. Vérifier les logs du reverse proxy / serveur Hetzner si l'erreur vient de l'infra
+3. Vérifier les logs du Back Office séparément si l'erreur vient de `NEXT_PUBLIC_API_URL`
+4. Rollback si nécessaire (voir section ci-dessus)
+5. Documenter le bug dans un ticket GitHub/Notion
 
 ---
 

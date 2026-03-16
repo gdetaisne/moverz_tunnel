@@ -10,7 +10,7 @@ Répondre en français, concis.
 
 ### Règles de sécurité (NON NÉGOCIABLE)
 - Travailler sur la branche **`main`**.
-- **Interdit de tester en local**. Les tests se font **uniquement sur prod** (CapRover) après push.
+- **Interdit de tester en local**. Les tests se font **uniquement sur prod** (`devis.moverz.fr` via Coolify/Hetzner) après push.
 - **DB / Prisma** : interdit de modifier `prisma/schema.prisma`, `prisma/migrations/**` (aucune migration, aucun changement de schéma).
 - **Champs** : interdit de supprimer des champs / inputs existants du tunnel (ils doivent rester disponibles pour les clients).
 - **Nouveaux inputs** : en principe interdits. Si prototypage exceptionnel :

@@ -1,5 +1,20 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-03-16 — Nettoyage des traces CapRover / DNS obsolètes
+
+**Contexte** : après la migration du tunnel vers Hetzner/Coolify (`devis.moverz.fr`), plusieurs docs et règles internes mentionnaient encore CapRover, l'ancien domaine tunnel ou l'ancien workflow de déploiement.
+
+**Nettoyage effectué** :
+- `.cursorrules` : test prod requalifié vers `devis.moverz.fr` via Coolify/Hetzner.
+- `Contexte de lancement/05-RULES-CURSOR.md` : section `staging` marquée comme historique, avec renvoi vers le workflow actuel.
+- `DEPLOY_GUIDE.md`, `README_V4.md`, `QUICK_START_V4.md`, `TUNNEL_V4_DOCUMENTATION.md`, `components/tunnel/README.md`, `app/devis-gratuits-v3/STEP3_REFACTOR_SUMMARY.md` : remplacement des mentions d'auto-deploy CapRover / URL placeholder par le flux actuel Coolify + `devis.moverz.fr`.
+- `captain-definition` : supprimé (config CapRover résiduelle, non référencée).
+
+**Volontairement conservé** :
+- `MIGRATION_HETZNER.md` et `.cursor/rules/migration-hetzner-urgent.mdc` gardent les références historiques CapRover / `devis-gratuit.gslv.cloud` pour documenter la migration.
+- `migration_v4.md` conserve aussi ses anciennes mentions CapRover dans les entrées historiques passées.
+- `NEXT_PUBLIC_API_URL` pointant vers `moverz-backoffice.gslv.cloud` n'a pas été modifié, car il s'agit du Back Office et non du tunnel public.
+
 ## 2026-03-16 — Fix: champ "Email de contact" fiabilisé sur v3a/v3b
 
 **Bugs observés** :

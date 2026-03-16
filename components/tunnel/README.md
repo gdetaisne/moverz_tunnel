@@ -407,7 +407,7 @@ They simply wrap existing inputs/logic with premium styling.
 2. Replace inline styling with design tokens
 3. Test all steps (1-4) on mobile and desktop
 4. Verify no regression on tracking / API calls
-5. Deploy to production (CapRover)
+5. Deploy to production (Coolify / `devis.moverz.fr`)
 
 ---
 

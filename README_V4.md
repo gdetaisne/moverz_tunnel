@@ -212,7 +212,7 @@ Touch targets : >= 44px (WCAG)
 # Build
 npm run build
 
-# Push sur main → Auto-deploy CapRover
+# Push sur main → Auto-deploy Coolify (`devis.moverz.fr`)
 git add -A
 git commit -m "feat: ..."
 git push origin main

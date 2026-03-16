@@ -189,7 +189,7 @@ npm run build
 # Start prod
 npm start
 
-# Push sur main → Auto-deploy CapRover
+# Push sur main → Auto-deploy Coolify (`devis.moverz.fr`)
 git push origin main
 ```
 

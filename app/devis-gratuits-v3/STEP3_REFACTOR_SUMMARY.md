@@ -146,4 +146,4 @@
 - **UX** : Mobile-first, micro-interactions premium, trust line rassurante
 - **Évolutivité** : Props interface claire, composant réutilisable (Step 4 future ?)
 
-**Prochaine étape** : Push sur `main` → Test en prod (CapRover) selon `DEPLOY_GUIDE.md`
+**Prochaine étape** : Push sur `main` → Test en prod (`devis.moverz.fr` via Coolify) selon `DEPLOY_GUIDE.md`

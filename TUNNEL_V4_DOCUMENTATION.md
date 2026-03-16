@@ -1036,7 +1036,7 @@ Pour toute question ou modification :
 1. **Vérifier cette doc** : 90% des réponses sont ici
 2. **Lire le code** : Commentaires détaillés dans chaque composant
 3. **Tester en local** : `npm run dev`
-4. **Tester en prod** : Push sur `main` → CapRover auto-deploy
+4. **Tester en prod** : Push sur `main` → déploiement automatique Coolify sur `devis.moverz.fr`
 
 **Règle d'or** : Si tu modifies le design, **ne casse pas le back-office** ! 🔒
 

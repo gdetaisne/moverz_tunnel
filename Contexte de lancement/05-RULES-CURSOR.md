@@ -103,9 +103,11 @@ Objectif: permettre une refonte UX/UI en staging **sans risque** pour prod / DB 
 
 ### Branches & déploiement
 
+> Note historique : cette section décrit l'ancien workflow `staging` sur CapRover. Pour le workflow actuel, se référer à `.cursorrules` et `MIGRATION_HETZNER.md` (prod `devis.moverz.fr` via Coolify/Hetzner).
+
 - **Interdit de toucher à `main`** (aucun commit, aucune PR, aucune modif).
 - Travailler **uniquement** sur la branche `staging`.
-- **Interdit de tester en local**: les tests se font **uniquement sur staging** (CapRover) après push.
+- **Interdit de tester en local**: les tests se faisaient **uniquement sur staging** (CapRover) après push.
 - Faire des **commits fréquents** (petites étapes), pour tester en conditions réelles rapidement.
 
 ### DB / Prisma (zéro migration)
