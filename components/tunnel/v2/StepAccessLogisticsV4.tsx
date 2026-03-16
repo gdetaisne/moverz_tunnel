@@ -827,6 +827,8 @@ ${EXTRA_NOTES_BLOCK_END}`;
     photos: UploadedPhoto[],
     forcedContext?: PhotoAnalysisContext
   ) => {
+    // Analyse IA désactivée (incident malware mars 2026 — route /api/ai/analyze-photos coupée).
+    // Les photos sont uploadées mais aucun appel Claude n'est effectué.
     const analysisContext = forcedContext ?? photoAnalysisContext;
     const isDensityFlow = analysisContext === "density";
     if (photos.length === 0) {
@@ -842,89 +844,16 @@ ${EXTRA_NOTES_BLOCK_END}`;
       }
       return;
     }
-    setIsAnalyzingPhotos(true);
+    const fallbackInsights = [`${photos.length} photo(s) reçue(s).`];
+    setMoverInsights(fallbackInsights);
     if (isDensityFlow) {
-      setDensityPhotoStatus("analyzing");
-    }
-    setPhotoPanelError(null);
-    try {
-      const res = await fetch("/api/ai/analyze-photos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          leadId: props.leadId ?? undefined,
-          analysisContext,
-          photos: photos.map((p) => ({
-            id: p.id,
-            storageKey: p.storageKey,
-            originalFilename: p.originalFilename,
-            url: p.url ?? undefined,
-          })),
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("L'analyse IA a échoué.");
-      }
-
-      const data = (await res.json()) as {
-        moverInsights?: string[];
-        rooms?: any[];
-        densitySuggestion?: "light" | "normal" | "dense";
-        densityRationale?: string;
-      };
-      const explicitInsights = Array.isArray(data.moverInsights)
-        ? data.moverInsights.filter((v): v is string => typeof v === "string" && v.trim().length > 0)
-        : [];
-      if (explicitInsights.length > 0) {
-        setMoverInsights(explicitInsights);
-        if (isDensityFlow) {
-          const densityText = formatInsightsToText(explicitInsights);
-          setDensityReturnIaText(densityText);
-          const suggestedDensity = data.densitySuggestion;
-          if (suggestedDensity) {
-            props.onFieldChange("density", suggestedDensity);
-          }
-          const rationale = (data.densityRationale || explicitInsights[0] || "").trim();
-          const note = rationale
-            ? `Analyse photo : ${rationale}`
-            : `Analyse photo : densité ${densityLabelFromId(
-                suggestedDensity || (props.density || "normal")
-              ).toLowerCase()} suggérée.`;
-          setDensityAiNote(note);
-          props.onDensityAiNoteChange?.(note);
-          setDensityPhotoStatus("done");
-        } else {
-          setConstraintsReturnIaText(formatInsightsToText(explicitInsights));
-          props.onAiInsightsChange?.(explicitInsights);
-        }
-        return;
-      }
-
-      // Fallback visuel robuste si l'IA ne renvoie pas de synthèse textuelle.
-      const roomCount = Array.isArray(data.rooms) ? data.rooms.length : 0;
-      const fallbackInsights = [
-        `${photos.length} photo(s) analysée(s).`,
-        roomCount > 0 ? `${roomCount} zone(s) de chargement potentielle(s) détectée(s).` : "Peu de signal exploitable, ajouter d'autres photos pour affiner.",
-      ];
-      setMoverInsights(fallbackInsights);
-      if (isDensityFlow) {
-        setDensityReturnIaText(formatInsightsToText(fallbackInsights));
-        const note = `Analyse photo : ${fallbackInsights[0]}`;
-        setDensityAiNote(note);
-        props.onDensityAiNoteChange?.(note);
-        setDensityPhotoStatus("done");
-      } else {
-        setConstraintsReturnIaText(formatInsightsToText(fallbackInsights));
-        props.onAiInsightsChange?.(fallbackInsights);
-      }
-    } catch (error) {
-      if (isDensityFlow) {
-        setDensityPhotoStatus("error");
-      }
-      setPhotoPanelError(error instanceof Error ? error.message : "Erreur IA.");
-    } finally {
-      setIsAnalyzingPhotos(false);
+      setDensityReturnIaText(formatInsightsToText(fallbackInsights));
+      setDensityAiNote("");
+      props.onDensityAiNoteChange?.("");
+      setDensityPhotoStatus("done");
+    } else {
+      setConstraintsReturnIaText(formatInsightsToText(fallbackInsights));
+      props.onAiInsightsChange?.(fallbackInsights);
     }
   };
 
