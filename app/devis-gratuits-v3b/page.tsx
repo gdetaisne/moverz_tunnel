@@ -66,6 +66,9 @@ function DevisGratuitsV3Content() {
   const [showValidationStep1, setShowValidationStep1] = useState(false);
   const [showValidationStep2, setShowValidationStep2] = useState(false);
   const [showValidationStep3, setShowValidationStep3] = useState(false);
+  const [isSubmittingStep1, setIsSubmittingStep1] = useState(false);
+  const [isSubmittingStep2, setIsSubmittingStep2] = useState(false);
+  const [isSubmittingStep3, setIsSubmittingStep3] = useState(false);
 
   const toInputDate = (raw: string | null | undefined): string | undefined => {
     if (!raw) return undefined;
@@ -1296,6 +1299,7 @@ function DevisGratuitsV3Content() {
       return;
     }
 
+    setIsSubmittingStep1(true);
     try {
       if (effectiveEmail !== state.email) {
         updateField("email", effectiveEmail);
@@ -1336,6 +1340,8 @@ function DevisGratuitsV3Content() {
     } catch (err: any) {
       console.error("Error creating/updating lead:", err);
       trackError("API_ERROR", err.message || "Failed to create/update lead", 1, "CONTACT", "contact_v3b");
+    } finally {
+      setIsSubmittingStep1(false);
     }
   }
 
@@ -1393,6 +1399,7 @@ function DevisGratuitsV3Content() {
       return;
     }
 
+    setIsSubmittingStep2(true);
     try {
       const effectiveLeadId = await ensureBackofficeLeadId();
       if (effectiveLeadId) {
@@ -1542,17 +1549,20 @@ function DevisGratuitsV3Content() {
       goToStep(3);
       window.scrollTo({ top: 0, behavior: "instant" });
       requestAnimationFrame(() => {
-        (document.getElementById("surfaceM2") as HTMLInputElement | null)?.focus();
+        if (!/Mobi|Android/i.test(navigator.userAgent)) {
+          (document.getElementById("surfaceM2") as HTMLInputElement | null)?.focus();
+        }
       });
     } catch (err: any) {
       console.error("Error updating lead:", err);
       trackError("API_ERROR", err.message || "Failed to update lead", 2, "PROJECT", "project_v3b");
+    } finally {
+      setIsSubmittingStep2(false);
     }
   }
 
   async function handleSubmitStep3(e: FormEvent) {
     e.preventDefault();
-
     const originIsBoxStep3 = isBoxType(state.originHousingType);
     const originBoxVolumeM3 = getBoxVolumeM3(state.originBoxVolumeM3);
     if (originIsBoxStep3 && originBoxVolumeM3 == null) {
@@ -1585,6 +1595,7 @@ function DevisGratuitsV3Content() {
       return;
     }
 
+    setIsSubmittingStep3(true);
     try {
       const effectiveLeadId = await ensureBackofficeLeadId();
       if (effectiveLeadId && state.leadId !== effectiveLeadId) {
@@ -2011,6 +2022,8 @@ function DevisGratuitsV3Content() {
     } catch (err: any) {
       console.error("Error finalizing lead:", err);
       trackError("API_ERROR", err.message || "Failed to finalize lead", 3, "RECAP", "formules_v3b");
+    } finally {
+      setIsSubmittingStep3(false);
     }
   }
 
@@ -2018,8 +2031,8 @@ function DevisGratuitsV3Content() {
     <main className="min-h-screen bg-gradient-to-b from-[#F8F9FA] to-white">
       {/* Hero with progress */}
       <TunnelHero currentStep={state.currentStep} totalSteps={STEPS.length} />
-      {/* Spacer compensant la hauteur du header fixed (h-10 + barre 6px = 46px) */}
-      <div className="h-[46px]" aria-hidden="true" />
+      {/* Spacer compensant la hauteur du header fixed (h-10 + barre 6px = 46px) + safe-area iOS */}
+      <div className="h-14" aria-hidden="true" />
       <ReassuranceBar />
 
       {/* Main content */}
@@ -2034,7 +2047,7 @@ function DevisGratuitsV3Content() {
               onFirstNameChange={(value) => updateField("firstName", value)}
               onEmailChange={(value) => updateField("email", value)}
               onSubmit={handleSubmitStep1}
-              isSubmitting={false}
+              isSubmitting={isSubmittingStep1}
               error={null}
               showValidation={showValidationStep1}
             />
@@ -2076,7 +2089,7 @@ function DevisGratuitsV3Content() {
               destinationAccessDetails={state.destinationAccessDetails || ""}
               onFieldChange={(field, value) => updateField(field as any, value)}
               onSubmit={handleSubmitStep2}
-              isSubmitting={false}
+              isSubmitting={isSubmittingStep2}
               error={null}
               showValidation={showValidationStep2}
             />
@@ -2135,7 +2148,7 @@ function DevisGratuitsV3Content() {
                 updateField(field as any, value);
               }}
               onSubmit={handleSubmitStep3}
-              isSubmitting={false}
+              isSubmitting={isSubmittingStep3}
               error={null}
               showValidation={showValidationStep3}
             />
@@ -2234,15 +2247,17 @@ function DevisGratuitsV3Content() {
                     }
                   }}
                   disabled={step >= state.currentStep && state.currentStep < 4}
-                  className={`w-2 h-2 rounded-full transition-all ${
+                  className="p-3 -m-1"
+                  aria-label={`Étape ${step}`}
+                >
+                  <span className={`block w-2 h-2 rounded-full transition-all ${
                     step === state.currentStep
                       ? "bg-[#6BCFCF] w-8"
                       : step < state.currentStep || state.currentStep === 4
                       ? "bg-[#6BCFCF]/50 cursor-pointer hover:bg-[#6BCFCF]/70"
                       : "bg-[#E3E5E8]"
-                  }`}
-                  aria-label={`Étape ${step}`}
-                />
+                  }`} />
+                </button>
               ))}
             </div>
           </div>

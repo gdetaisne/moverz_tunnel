@@ -1,6 +1,36 @@
 # Migration V4 — journal de refonte UX/UI
 
-## 2026-03-16 — Nettoyage des traces CapRover / DNS obsolètes
+## 2026-03-16 — Correctifs mobile v3a / v3b (audit conversion)
+
+**Contexte** : audit mobile du tunnel (taux de conversion desktop > mobile). 6 correctifs appliqués sur les deux variantes actives.
+
+**[S-1] Spacer header : `h-[46px]` → `h-14` (56px)**
+- Fichiers : `app/devis-gratuits-v3a/page.tsx`, `app/devis-gratuits-v3b/page.tsx`
+- Raison : safe-area iOS (notch / dynamic island) pouvait masquer le premier élément visible sous le header fixed.
+
+**[S-3] Popup déménageurs Step 2 : délai 600ms avant ouverture**
+- Fichier : `components/tunnel/Step2ProjectComplete.tsx`
+- Raison : sur iOS, l'ouverture immédiate d'un bottom sheet `fixed` au moment où un input perd le focus (fermeture du clavier) peut provoquer un freeze visuel. Le délai laisse le clavier se fermer proprement avant d'afficher le backdrop + panel.
+
+**[S-4] Debug panel "Voir le détail" pricing : masqué en prod**
+- Fichier : `components/tunnel/Step3VolumeServices.tsx`
+- Raison : le panneau de détails de calcul (distance OSRM, coefficients, etc.) est un outil de debug exposé en prod. Conditionné à `NODE_ENV === "development"`.
+
+**[M-5] `isSubmitting` branché sur les 3 steps**
+- Fichiers : `app/devis-gratuits-v3a/page.tsx`, `app/devis-gratuits-v3b/page.tsx`
+- Raison : `isSubmitting={false}` était hardcodé sur les 3 steps. Ajout de `isSubmittingStep1/2/3` avec `setIsSubmitting(true)` avant le `try` et `finally { setIsSubmitting(false) }`. Empêche les double-soumissions sur connexion mobile lente.
+
+**[M-6] Focus auto `surfaceM2` désactivé sur mobile**
+- Fichiers : `app/devis-gratuits-v3a/page.tsx`, `app/devis-gratuits-v3b/page.tsx`
+- Raison : le focus programmatique sur l'input surface à la transition Step2→Step3 déclenchait l'ouverture du clavier virtuel iOS immédiatement après un `scrollTo({ top:0 })`, causant un scroll erratique. Désactivé via `!/Mobi|Android/i.test(navigator.userAgent)`.
+
+**[M-4] Dots de navigation : zone tactile agrandie à ~44×44px**
+- Fichiers : `app/devis-gratuits-v3a/page.tsx`, `app/devis-gratuits-v3b/page.tsx`
+- Raison : les boutons `w-2 h-2` (8px) étaient impossibles à toucher précisément au pouce. Wrappés dans un `<button className="p-3 -m-1">` avec un `<span>` interne pour l'apparence.
+
+**Tracking** : aucun changement de `logicalStep`, `screenId` ou payload BO.
+
+
 
 **Contexte** : après la migration du tunnel vers Hetzner/Coolify (`devis.moverz.fr`), plusieurs docs et règles internes mentionnaient encore CapRover, l'ancien domaine tunnel ou l'ancien workflow de déploiement.
 

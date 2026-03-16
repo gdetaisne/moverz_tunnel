@@ -256,30 +256,36 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
     (!originNeedsAccess || !!props.originAccess) &&
     (!originIsOtherAccess || (props.originAccessDetails || "").trim().length >= 10);
 
-  // Déclencher la popup une seule fois quand le bloc départ est complet
+  // Déclencher la popup une seule fois quand le bloc départ est complet.
+  // Délai 600ms : laisse le clavier virtuel iOS se fermer avant l'ouverture
+  // du bottom sheet pour éviter le freeze clavier + backdrop simultanés.
   useEffect(() => {
     if (isOriginBlockComplete && !popupShownRef.current) {
       popupShownRef.current = true;
-      setShowMoversPopup(true);
-      setPopupProgress(100);
+      const openDelay = setTimeout(() => {
+        setShowMoversPopup(true);
+        setPopupProgress(100);
 
-      const DURATION = 5000;
-      const TICK = 50;
-      let elapsed = 0;
-      popupIntervalRef.current = setInterval(() => {
-        elapsed += TICK;
-        setPopupProgress(Math.max(0, 100 - (elapsed / DURATION) * 100));
-      }, TICK);
+        const DURATION = 5000;
+        const TICK = 50;
+        let elapsed = 0;
+        popupIntervalRef.current = setInterval(() => {
+          elapsed += TICK;
+          setPopupProgress(Math.max(0, 100 - (elapsed / DURATION) * 100));
+        }, TICK);
 
-      popupTimerRef.current = setTimeout(() => {
-        clearInterval(popupIntervalRef.current!);
-        setShowMoversPopup(false);
-      }, DURATION);
+        popupTimerRef.current = setTimeout(() => {
+          clearInterval(popupIntervalRef.current!);
+          setShowMoversPopup(false);
+        }, DURATION);
+      }, 600);
+
+      return () => {
+        clearTimeout(openDelay);
+        if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+        if (popupIntervalRef.current) clearInterval(popupIntervalRef.current);
+      };
     }
-    return () => {
-      if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
-      if (popupIntervalRef.current) clearInterval(popupIntervalRef.current);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOriginBlockComplete]);
 

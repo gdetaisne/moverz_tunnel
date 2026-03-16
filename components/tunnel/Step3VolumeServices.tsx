@@ -259,13 +259,15 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
             </p>
 
             <div className="mt-3 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setShowDetails((v) => !v)}
-                className="rounded-full border border-[#E3E5E8] bg-white px-3 py-1 text-xs font-semibold text-[#0F172A]/70 shadow-sm hover:border-[#0EA5A6]/60 hover:text-[#0F172A] transition"
-              >
-                {showDetails ? "Masquer le détail" : "Voir le détail"}
-              </button>
+              {process.env.NODE_ENV === "development" && (
+                <button
+                  type="button"
+                  onClick={() => setShowDetails((v) => !v)}
+                  className="rounded-full border border-[#E3E5E8] bg-white px-3 py-1 text-xs font-semibold text-[#0F172A]/70 shadow-sm hover:border-[#0EA5A6]/60 hover:text-[#0F172A] transition"
+                >
+                  {showDetails ? "Masquer le détail" : "Voir le détail"}
+                </button>
+              )}
               {props.pricingDetails?.housingType && (
                 <span className="rounded-full bg-[#0EA5A6]/10 px-2.5 py-1 text-[11px] font-semibold text-[#0F172A]">
                   type {props.pricingDetails.housingType}
@@ -273,7 +275,7 @@ export default function Step3VolumeServices(props: Step3VolumeServicesProps) {
               )}
             </div>
 
-            {showDetails && props.pricingDetails && (
+            {process.env.NODE_ENV === "development" && showDetails && props.pricingDetails && (
               <div className="mt-4 rounded-2xl border border-[#E3E5E8] bg-white/80 p-4 text-xs text-[#0F172A]/80 shadow-[0_6px_20px_rgba(0,0,0,0.05)]">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm font-semibold text-[#0F172A]">Détails du calcul</div>
