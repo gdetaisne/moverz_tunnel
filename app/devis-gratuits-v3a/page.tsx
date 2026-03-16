@@ -31,7 +31,7 @@ import {
 import { useTunnelState } from "@/hooks/useTunnelState";
 import { useTunnelTracking } from "@/hooks/useTunnelTracking";
 import TunnelHero from "@/components/tunnel/TunnelHero";
-import Step1Contact from "@/components/tunnel/Step1Contact";
+import Step1Contact, { type Step1ContactSubmitOptions } from "@/components/tunnel/Step1Contact";
 import Step2ProjectComplete from "@/components/tunnel/Step2ProjectComplete";
 import Step3VolumeServices from "@/components/tunnel/Step3VolumeServices";
 import ConfirmationPage from "@/components/tunnel/ConfirmationPage";
@@ -43,6 +43,14 @@ const STEPS = [
   { id: 3, label: "Formule & budget" },
   { id: 4, label: "Dossier envoyé" },
 ] as const;
+
+function normalizeEmail(value: string | null | undefined) {
+  return (value || "").trim().toLowerCase();
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
 
 function DevisGratuitsV3Content() {
   const router = useRouter();
@@ -109,7 +117,7 @@ function DevisGratuitsV3Content() {
           next.lastName = lead.lastName;
         }
         if (typeof lead.email === "string" && lead.email.trim()) {
-          next.email = lead.email;
+          next.email = normalizeEmail(lead.email);
         }
         if (typeof lead.phone === "string" && lead.phone.trim()) {
           next.phone = lead.phone;
@@ -367,10 +375,13 @@ function DevisGratuitsV3Content() {
     }
   }, [state.originHousingType]);
   
+  const normalizedCurrentEmail = normalizeEmail(state.email);
+
   const { trackStep, trackStepChange, trackCompletion, trackError, trackBlock } = useTunnelTracking({
     source,
     from,
     leadId: state.leadId,
+    email: normalizedCurrentEmail || undefined,
   });
 
   // Track initial entry
@@ -481,8 +492,8 @@ function DevisGratuitsV3Content() {
     if (state.leadId && !options?.forceNew) return state.leadId;
 
     const trimmedFirstName = state.firstName.trim();
-    const trimmedEmail = state.email.trim().toLowerCase();
-    if (!trimmedFirstName || !trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
+    const trimmedEmail = normalizeEmail(state.email);
+    if (!trimmedFirstName || !isValidEmail(trimmedEmail)) {
       return null;
     }
 
@@ -1260,8 +1271,9 @@ function DevisGratuitsV3Content() {
     state.serviceDebarras,
   ]);
 
-  async function handleSubmitStep1(e: FormEvent) {
+  async function handleSubmitStep1(e: FormEvent, options?: Step1ContactSubmitOptions) {
     e.preventDefault();
+    const effectiveEmail = options?.normalizedEmail ?? normalizeEmail(state.email);
 
     if (!state.firstName.trim() || state.firstName.trim().length < 2) {
       setShowValidationStep1(true);
@@ -1273,7 +1285,7 @@ function DevisGratuitsV3Content() {
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) {
+    if (!isValidEmail(effectiveEmail)) {
       setShowValidationStep1(true);
       requestAnimationFrame(() => {
         document.getElementById("contact-email")?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1294,9 +1306,13 @@ function DevisGratuitsV3Content() {
     }
 
     try {
+      if (effectiveEmail !== state.email) {
+        updateField("email", effectiveEmail);
+      }
+
       const payload = {
         firstName: state.firstName.trim(),
-        email: state.email.trim().toLowerCase(),
+        email: effectiveEmail,
         lastName: state.lastName.trim() || undefined,
         phone: state.phone.trim() || undefined,
         source,

@@ -3,6 +3,10 @@
 import { useState, useRef, FormEvent } from "react";
 import { Mail, User, Phone, ArrowRight, Check, X, Loader2, Shield, TrendingUp, PhoneOff } from "lucide-react";
 
+export interface Step1ContactSubmitOptions {
+  normalizedEmail?: string;
+}
+
 interface Step1ContactProps {
   firstName: string;
   email: string;
@@ -10,10 +14,14 @@ interface Step1ContactProps {
   onFirstNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onPhoneChange?: (value: string) => void;
-  onSubmit: (e: FormEvent) => Promise<void>;
+  onSubmit: (e: FormEvent, options?: Step1ContactSubmitOptions) => Promise<void>;
   isSubmitting: boolean;
   error: string | null;
   showValidation?: boolean;
+}
+
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
 }
 
 async function checkEmailApi(
@@ -66,11 +74,11 @@ export default function Step1Contact({
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [emailChecking, setEmailChecking] = useState(false);
   const [emailApiError, setEmailApiError] = useState<string | null>(null);
-  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
   const submittingRef = useRef(false);
   const hasPhone = onPhoneChange !== undefined;
   const isFirstNameValid = firstName.trim().length >= 2;
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const normalizedEmail = normalizeEmail(email);
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
   const isPhoneValid = !hasPhone || (phone ?? "").trim().length >= 1;
   const isFormValid = isFirstNameValid && isEmailValid && isPhoneValid;
 
@@ -92,28 +100,34 @@ export default function Step1Contact({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!isFormValid || isSubmitting || emailChecking) return;
+    if (isSubmitting || emailChecking) return;
+    if (!isFormValid) {
+      await onSubmit(e, { normalizedEmail });
+      return;
+    }
     if (submittingRef.current) return;
     submittingRef.current = true;
 
     setEmailApiError(null);
-    setEmailSuggestion(null);
     setEmailChecking(true);
-    const check = await checkEmailApi(email.trim());
-    setEmailChecking(false);
+    try {
+      const check = await checkEmailApi(normalizedEmail);
 
-    if (!check.ok) {
+      if (!check.ok) {
+        setEmailApiError(check.message);
+        return;
+      }
+
+      const nextEmail = check.corrected ? normalizeEmail(check.corrected) : normalizedEmail;
+      if (check.corrected) {
+        onEmailChange(nextEmail);
+      }
+
+      await onSubmit(e, { normalizedEmail: nextEmail });
+    } finally {
+      setEmailChecking(false);
       submittingRef.current = false;
-      setEmailApiError(check.message);
-      return;
     }
-
-    if (check.corrected) {
-      onEmailChange(check.corrected);
-    }
-
-    await onSubmit(e);
-    submittingRef.current = false;
   };
 
   const busy = isSubmitting || emailChecking;
@@ -188,7 +202,6 @@ export default function Step1Contact({
                 onChange={(e) => {
                   setEmailTouched(true);
                   setEmailApiError(null);
-                  setEmailSuggestion(null);
                   onEmailChange(e.target.value);
                 }}
                 className={`w-full rounded-xl border-2 bg-white px-4 pr-12 py-3 text-base text-text-primary placeholder:text-text-body/40 focus:outline-none focus:ring-2 transition-all ${

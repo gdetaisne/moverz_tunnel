@@ -1,5 +1,29 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-03-16 — Fix: champ "Email de contact" fiabilisé sur v3a/v3b
+
+**Bugs observés** :
+1. Le CTA Step 1 pouvait sembler inerte quand l'email était invalide, car `Step1Contact` bloquait le submit avant de laisser la page afficher la vraie validation (scroll/focus/résumé).
+2. Une autocorrection silencieuse de domaine (`gmail.cm` -> `gmail.com`) pouvait être perdue au submit à cause d'une course entre `setState` et `handleSubmitStep1`.
+3. La normalisation de l'email n'était pas homogène entre saisie, hydratation BO, fallback de création lead et tracking enrichi.
+
+**Corrections** :
+- `components/tunnel/Step1Contact.tsx` :
+  - validation regex basée sur l'email normalisé (`trim().toLowerCase()`),
+  - submit invalide laissé remonter au parent pour réactiver `showValidation`,
+  - email corrigé transmis explicitement au parent pour éviter la race de state.
+- `app/devis-gratuits-v3a/page.tsx` et `app/devis-gratuits-v3b/page.tsx` :
+  - helpers `normalizeEmail()` / `isValidEmail()`,
+  - hydratation BO de `lead.email` normalisée,
+  - `ensureBackofficeLeadId()` durci avec la même validation email,
+  - `handleSubmitStep1()` consomme l'email normalisé/corrigé reçu du composant,
+  - `useTunnelTracking()` reçoit désormais l'email normalisé pour les events enrichis.
+
+**Impact** :
+- meilleure robustesse UX sur Step 1,
+- plus de perte de correction email au moment critique de création/mise à jour du lead,
+- comportement homogène entre reprise dossier, submit et analytics.
+
 ## 2026-03-14 — Fix: bouton bloqué après 502 + CORS tunnel-events
 
 **Contexte** : En prod, le Back Office répond parfois 502 (CapRover). Deux bugs constatés :
