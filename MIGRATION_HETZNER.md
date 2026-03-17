@@ -22,6 +22,16 @@
 - **Build** : Dockerfile existant (`node:20-bullseye-slim`)
 - **Branche** : `main`
 
+### API Coolify (accès agent)
+
+- **Token** : `COOLIFY_API_TOKEN` dans `.env.local` (ne pas commiter)
+- **Base URL** : `http://116.203.177.139:8000/api/v1`
+- **Commandes utiles** :
+  - Statut app : `GET /applications/59e59ec2-5be6-4fdb-b924-18265abe36ac`
+  - Déclencher un deploy : `POST /applications/59e59ec2-5be6-4fdb-b924-18265abe36ac/start`
+  - Logs de build : via l'interface web uniquement (non exposé en API REST)
+- **Note** : l'endpoint `/deployments?application_uuid=...` retourne `[]` (bug connu Coolify, les logs détaillés sont dans l'UI web)
+
 ## DNS — Cloudflare
 
 | Enregistrement | Type | Valeur | Proxy |
