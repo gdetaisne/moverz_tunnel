@@ -8,9 +8,9 @@
 - Fichiers : `app/devis-gratuits-v3a/page.tsx`, `app/devis-gratuits-v3b/page.tsx`
 - Raison : safe-area iOS (notch / dynamic island) pouvait masquer le premier élément visible sous le header fixed.
 
-**[S-3] Popup déménageurs Step 2 : délai 600ms avant ouverture**
+**[S-3] Popup déménageurs Step 2 : supprimée complètement**
 - Fichier : `components/tunnel/Step2ProjectComplete.tsx`
-- Raison : sur iOS, l'ouverture immédiate d'un bottom sheet `fixed` au moment où un input perd le focus (fermeture du clavier) peut provoquer un freeze visuel. Le délai laisse le clavier se fermer proprement avant d'afficher le backdrop + panel.
+- Raison : friction sur mobile, suppression complète du bottom sheet / modal de réassurance (states, refs, useEffect, JSX, imports Star/Users/Shield).
 
 **[S-4] Debug panel "Voir le détail" pricing : masqué en prod**
 - Fichier : `components/tunnel/Step3VolumeServices.tsx`
