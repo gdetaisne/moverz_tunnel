@@ -160,6 +160,16 @@ export default function ConfirmationPage({
         </p>
       </div>
 
+      {/* Vidéo de présentation */}
+      <div className="mb-8 overflow-hidden rounded-2xl shadow-md" style={{ aspectRatio: "16/9" }}>
+        <iframe
+          src="https://player.vimeo.com/video/1172433971?badge=0&autopause=0&player_id=0&app_id=58479"
+          allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+          className="h-full w-full"
+          title="Présentation Moverz"
+        />
+      </div>
+
       <div className="rounded-2xl border border-border bg-white p-5 md:p-6">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-turquoise/10">
