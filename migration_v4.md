@@ -1,5 +1,11 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-03-16 — Vidéo Vimeo Step 4 (confirmation)
+
+**Fichier** : `components/tunnel/ConfirmationPage.tsx`
+- Ajout d'un embed Vimeo (`video/1172433971`) en ratio 16/9, entre le header et le bloc email.
+- Présent sur v3a et v3b (composant partagé).
+
 ## 2026-03-16 — Correctifs mobile v3a / v3b (audit conversion)
 
 **Contexte** : audit mobile du tunnel (taux de conversion desktop > mobile). 6 correctifs appliqués sur les deux variantes actives.
