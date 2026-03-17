@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, FormEvent } from "react";
-import { MapPin, Home, Calendar, Building2, ArrowRight, Check, AlertCircle, X, Star, Users, Shield } from "lucide-react";
+import { MapPin, Home, Calendar, Building2, ArrowRight, Check, AlertCircle, X } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { DatePickerFr } from "./DatePickerFr";
 
@@ -86,12 +86,6 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   }, [props.destinationUnknown]);
 
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
-  const [showMoversPopup, setShowMoversPopup] = useState(false);
-  const [moversCount] = useState(() => Math.floor(Math.random() * 14) + 7);
-  const [popupProgress, setPopupProgress] = useState(100);
-  const popupShownRef = useRef(false);
-  const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const popupIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function markTouched(field: string) {
     setTouchedFields((prev) => new Set(prev).add(field));
@@ -247,54 +241,6 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
   const originNeedsElevator = originIsApartment && originFloorNum > 0;
   const originNeedsAccess = originIsHouse || originIsBox || (originIsApartment && originFloorNum === 0);
   const originIsOtherAccess = props.originElevator === "other" || normalizeAccessChoice(props.originAccess) === "other";
-  const isOriginBlockComplete =
-    props.originAddress.trim().length >= 5 &&
-    props.originHousingType.length > 0 &&
-    originBoxVolumeOk &&
-    (!originIsApartment || !!props.originFloor) &&
-    (!originNeedsElevator || !!props.originElevator) &&
-    (!originNeedsAccess || !!props.originAccess) &&
-    (!originIsOtherAccess || (props.originAccessDetails || "").trim().length >= 10);
-
-  // Déclencher la popup une seule fois quand le bloc départ est complet.
-  // Délai 600ms : laisse le clavier virtuel iOS se fermer avant l'ouverture
-  // du bottom sheet pour éviter le freeze clavier + backdrop simultanés.
-  useEffect(() => {
-    if (isOriginBlockComplete && !popupShownRef.current) {
-      popupShownRef.current = true;
-      const openDelay = setTimeout(() => {
-        setShowMoversPopup(true);
-        setPopupProgress(100);
-
-        const DURATION = 5000;
-        const TICK = 50;
-        let elapsed = 0;
-        popupIntervalRef.current = setInterval(() => {
-          elapsed += TICK;
-          setPopupProgress(Math.max(0, 100 - (elapsed / DURATION) * 100));
-        }, TICK);
-
-        popupTimerRef.current = setTimeout(() => {
-          clearInterval(popupIntervalRef.current!);
-          setShowMoversPopup(false);
-        }, DURATION);
-      }, 600);
-
-      return () => {
-        clearTimeout(openDelay);
-        if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
-        if (popupIntervalRef.current) clearInterval(popupIntervalRef.current);
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOriginBlockComplete]);
-
-  const closePopup = () => {
-    if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
-    if (popupIntervalRef.current) clearInterval(popupIntervalRef.current);
-    setShowMoversPopup(false);
-  };
-
   const getBlockStatus = (blockId: string): { valid: boolean; errorMsg: string } | null => {
     if (!visitedBlocks.has(blockId)) return null;
     switch (blockId) {
@@ -443,104 +389,6 @@ export default function Step2ProjectComplete(props: Step2ProjectCompleteProps) {
 
   return (
     <div className="space-y-8">
-      {/* === POPUP RÉASSURANCE DÉMÉNAGEURS === */}
-      {showMoversPopup && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
-            onClick={closePopup}
-          />
-
-          {/* Panel : bottom sheet mobile, modal centré desktop */}
-          <div className="fixed z-50 bottom-0 left-0 right-0 md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-sm md:w-full px-0 md:px-4">
-            <div className="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
-
-              {/* Header teal */}
-              <div className="relative px-6 pt-6 pb-5" style={{ background: "linear-gradient(135deg, #0EA5A6 0%, #0d9090 100%)" }}>
-                {/* Barre de progression auto-close */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-white/20">
-                  <div
-                    className="h-full bg-white/80 transition-all ease-linear"
-                    style={{ width: `${popupProgress}%`, transitionDuration: "50ms" }}
-                  />
-                </div>
-
-                {/* Fermer */}
-                <button
-                  type="button"
-                  onClick={closePopup}
-                  className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors p-1"
-                  aria-label="Fermer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-
-                {/* Icône + titre */}
-                <div className="flex flex-col items-center text-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                    <Check className="w-6 h-6 text-white" strokeWidth={3} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">Bonne nouvelle !</p>
-                    <div className="flex items-baseline justify-center gap-2">
-                      <span className="text-6xl font-black text-white leading-none tabular-nums">{moversCount}</span>
-                      <span className="text-base font-semibold text-white/80 leading-tight text-left">déménageurs<br />vérifiés</span>
-                    </div>
-                    <p className="text-sm text-white/70 mt-1">vous attendent pour ce déménagement</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Corps */}
-              <div className="px-6 pt-4 pb-6">
-                {/* Critères en liste verticale */}
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#475569] mb-3">Nos critères de sélection</p>
-                <ul className="space-y-2.5 mb-5">
-                  <li className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0EA5A6]/10">
-                      <Star className="w-4 h-4 fill-[#0EA5A6] text-[#0EA5A6]" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[#111827]">Note &gt; 4,5 / 5</p>
-                      <p className="text-xs text-[#475569]">Moyenne pondérée des avis vérifiés</p>
-                    </div>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0EA5A6]/10">
-                      <Users className="w-4 h-4 text-[#0EA5A6]" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[#111827]">100+ avis clients</p>
-                      <p className="text-xs text-[#475569]">Volume suffisant pour être représentatif</p>
-                    </div>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0EA5A6]/10">
-                      <Shield className="w-4 h-4 text-[#0EA5A6]" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[#111827]">Score Moverz ≥ 80</p>
-                      <p className="text-xs text-[#475569]">Notre indice qualité global exclusif</p>
-                    </div>
-                  </li>
-                </ul>
-
-                {/* CTA */}
-                <button
-                  type="button"
-                  onClick={closePopup}
-                  className="w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ background: "#F59E0B", color: "#111827", boxShadow: "0 4px 16px rgba(245,158,11,0.28)" }}
-                >
-                  Continuer mon dossier →
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
       <div>
         <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] mb-3 md:mb-4 leading-tight">
           Décrivez votre déménagement
