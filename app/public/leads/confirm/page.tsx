@@ -69,7 +69,7 @@ function ConfirmLeadInner() {
     <PremiumShell containerClassName="flex items-center justify-center">
       <div className="w-full max-w-md text-center moverz-animate-fade-in">
         <div className="mb-8">
-          <img src="/icon.png" alt="Moverz" className="h-10 w-auto mx-auto" />
+          <img src="/logo-transparent.png" alt="Moverz" className="h-10 w-auto mx-auto" />
         </div>
 
         <div className="rounded-3xl border border-[#E3E5E8] bg-white/85 p-6 shadow-brand moverz-glass sm:p-8">

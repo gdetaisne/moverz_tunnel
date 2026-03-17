@@ -64,12 +64,9 @@ export function StepHeader({
           <div className="flex-shrink-0">
             <Link
               href={logoHref}
-              className="
-                text-xl font-bold text-text-primary
-                hover:opacity-80 transition-opacity duration-fast
-              "
+              className="hover:opacity-80 transition-opacity duration-fast"
             >
-              Moverz
+              <img src="/logo-transparent.png" alt="Moverz" className="h-8 w-auto" />
             </Link>
           </div>
 

@@ -23,8 +23,7 @@ export default function TunnelHero({ currentStep, totalSteps }: TunnelHeroProps)
       <div className="flex items-center justify-between px-4 sm:px-8 lg:px-12 h-10">
         {/* Logo */}
         <div className="flex items-center gap-1.5">
-          <img src="/icon.png" alt="Moverz" className="h-5 w-auto" />
-          <span className="text-sm font-bold tracking-tight text-[#111827]">Moverz</span>
+          <img src="/logo-transparent.png" alt="Moverz" className="h-8 w-auto" />
         </div>
 
         {/* Step + timing */}
