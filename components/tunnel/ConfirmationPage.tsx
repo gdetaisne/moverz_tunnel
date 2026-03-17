@@ -163,7 +163,7 @@ export default function ConfirmationPage({
       {/* Vidéo de présentation */}
       <div className="mb-8 overflow-hidden rounded-2xl shadow-md" style={{ aspectRatio: "16/9" }}>
         <iframe
-          src="https://player.vimeo.com/video/1172433971?badge=0&autopause=0&player_id=0&app_id=58479"
+          src="https://player.vimeo.com/video/1172433971?badge=0&autopause=0&player_id=0&app_id=58479&dnt=1&loop=1"
           allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
           className="h-full w-full"
           title="Présentation Moverz"
