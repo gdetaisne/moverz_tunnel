@@ -1,5 +1,397 @@
 # Migration V4 — journal de refonte UX/UI
 
+## 2026-03-18 — `tunnel_v2` : analyse IA locale pour `Éléments spécifiques`
+
+**Contexte** : ajout d'une aide IA sur la branche `Éléments spécifiques` du nouveau step 3 volume, afin d'enrichir le texte libre et d'estimer un volume en m3.
+
+**Modifications** :
+- ajout d'une route locale `tunnel_v2/app/api/ai/specific-items/route.ts`
+- appel LLM direct via variables d'env centralisées dans `tunnel_v2/lib/env.ts` :
+  - `CLAUDE_API_KEY`
+  - `CLAUDE_MODEL_SPECIFIC_ITEMS`
+- ajout d'un fallback heuristique si la clé IA n'est pas configurée ou si la réponse n'est pas exploitable
+- ajout du bouton `Analyser` dans `tunnel_v2/components/tunnel/Step3MoveScope.tsx`
+  - activé à partir de 5 caractères saisis
+  - remonte un texte enrichi
+  - remonte un volume IA en m3
+- ajout du champ d'état `specificItemsVolumeM3` dans `tunnel_v2/hooks/useTunnelState.ts`
+- affichage du volume IA dans le tunnel sans lever le mode `Sur devis` de l'écran formules
+- archivage du texte enrichi et du volume IA dans `tunnelOptions.volumeAdjustments`
+
+**Impact produit** :
+- meilleure qualité du texte libre transmis au déménageur
+- première estimation de volume disponible même sans inventaire structuré
+- les formules restent volontairement sans prix sur cette branche
+
+## 2026-03-18 — `tunnel_v2` : option `Certaines pièces` retirée temporairement
+
+**Contexte** : après ajout du nouveau step 3 volume, décision produit de retirer temporairement l'option `Certaines pièces`.
+
+**Modifications** :
+- suppression de la carte `Certaines pièces` dans `tunnel_v2/components/tunnel/Step3MoveScope.tsx`
+- ajout d'un garde-fou dans `tunnel_v2/app/devis-gratuits-v3a/page.tsx` :
+  - si un état résiduel `movingScope === "rooms"` apparaît, il est automatiquement rebasculé sur `household`
+
+**Impact produit** :
+- le step 3 ne propose plus que :
+  - `Logement complet`
+  - `Éléments spécifiques`
+- la logique `rooms` reste présente dans le code, mais n'est plus exposée dans l'UI pour l'instant
+
+## 2026-03-18 — `tunnel_v2` : nouveau step 3 volume avant les formules
+
+**Contexte** : ajout dans le nouveau tunnel d'une étape intermédiaire entre le projet et les formules, pour mieux qualifier le volume à déménager avant d'afficher les offres.
+
+**Modifications** :
+- passage du tunnel de 4 à 5 étapes dans `tunnel_v2`
+- insertion d'un nouveau `step 3` dédié au type de volume :
+  - `household`
+  - `rooms`
+  - `items`
+- l'ancien écran `Formule & budget` devient visuellement `step 4`
+- la confirmation devient visuellement `step 5`
+
+**Nouveau step 3** :
+- nouveau composant `tunnel_v2/components/tunnel/Step3MoveScope.tsx`
+- nouvelles données d'état dans `tunnel_v2/hooks/useTunnelState.ts` :
+  - `movingScope`
+  - `selectedRooms`
+  - `specificItemsText`
+- branche `household` :
+  - surface
+  - densité
+- branche `rooms` :
+  - sélection détaillée de pièces selon le type de logement saisi en step 2
+  - densité
+- branche `items` :
+  - champ libre descriptif
+
+**Pricing / volume** :
+- ajout de `tunnel_v2/lib/pricing/moveScope.ts`
+- mapping détaillé `pièce -> m3`
+- calcul d'une surface équivalente pour la branche `rooms`, afin de réutiliser le moteur pricing existant sans casser `calculatePricing`
+- la densité reste appliquée au calcul
+- coefficient `light` ajusté à `0.9` dans `tunnel_v2/lib/pricing/constants.ts` pour coller à la règle produit `Faible = -10%`
+
+**Écran formules** :
+- `tunnel_v2/components/tunnel/Step3VolumeServices.tsx` devient compatible avec 3 modes :
+  - `household` : comportement normal
+  - `rooms` : volume estimé à partir des pièces
+  - `items` : cartes de formules conservées mais montants masqués (`Sur devis`)
+
+**Tracking** :
+- `logicalStep` métier conservé :
+  - step 1 = `CONTACT`
+  - step 2 = `PROJECT`
+  - nouveau step 3 = `PROJECT`
+  - écran formules = `RECAP`
+  - confirmation = `THANK_YOU`
+- nouveau `screenId` explicite pour l'écran intermédiaire :
+  - `volume_scope_v3`
+
+**Impact produit** :
+- meilleure qualification du besoin avant pricing
+- ouverture d'un cas d'usage `certaines pièces`
+- ouverture d'un cas d'usage `éléments spécifiques` sans faux sentiment de précision tarifaire
+- base plus évolutive pour une future logique d'inventaire plus poussée
+
+## 2026-03-18 — Tunnel local `tunnel_v2` : mode no-op BO / analytics
+
+**Contexte** : besoin de modifier le nouveau tunnel en local sans impacter le Back Office distant ni l'analytics enrichie.
+
+**Modifications** :
+- ajout de `isLocalNoopMode()` dans `tunnel_v2/lib/env.ts`
+- coupure des proxys serveur en local dev :
+  - `tunnel_v2/app/api/backoffice/leads/route.ts`
+  - `tunnel_v2/app/api/backoffice/leads/[id]/route.ts`
+  - `tunnel_v2/app/api/backoffice/tunnel-events/route.ts`
+  - `tunnel_v2/app/api/analytics/events/route.ts`
+- réponses simulées compatibles avec le tunnel :
+  - création lead BO locale avec id factice `local-bo-*`
+  - update / get lead no-op
+  - tracking tunnel no-op
+  - analytics Neon no-op
+- coupure des appels BO directs restants côté client :
+  - `tunnel_v2/lib/api/client.ts`
+  - `requestBackofficeConfirmation()` simulé
+  - `saveBackofficeInventory()` simulé
+
+**Impact produit** :
+- `http://localhost:3005/devis-gratuits` reste navigable pour itérer UI / UX
+- aucun appel BO ni analytics enrichie ne part en local dev
+- le comportement prod n'est pas modifié
+
+## 2026-03-18 — Veille concurrentielle : points saillants retenus sur `Sirelo`
+
+**Contexte** : retour produit sur les éléments de `Sirelo` jugés réellement intéressants pour Moverz.
+
+**Modifications** :
+- enrichissement du bloc `Récap rapide vs nous` dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- ajout explicite de 2 inspirations prioritaires :
+  - la possibilité de demander un déménagement partiel
+  - la modale d'inventaire / calcul de volume comme étape intermédiaire avant un futur système basé sur des photos
+
+**Lecture produit** :
+- le déménagement partiel ouvre un cas d'usage aujourd'hui peu ou pas couvert dans notre tunnel
+- la modale d'inventaire est une piste UX utile à court / moyen terme, sans préjuger du futur système photo
+
+## 2026-03-18 — Veille concurrentielle : synthèses ajoutées en tête de docs
+
+**Contexte** : arrêt de la documentation concurrentielle `Movinga` et `Sirelo`, avec besoin d'ajouter un résumé immédiatement exploitable en haut de chaque document.
+
+**Modifications** :
+- ajout dans `tunnel_v2/.cursor/docs/concurrence/movinga.md` d'un bloc :
+  - `Récap rapide vs nous`
+  - différences principales vs `v3a`
+  - analyse rapide
+- ajout dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md` d'un bloc :
+  - `Récap rapide vs nous`
+  - différences principales vs `v3a`
+  - analyse rapide
+
+**Lecture produit** :
+- `Movinga` se distingue surtout par sa logique checkout / prix / paiement plus poussée
+- `Sirelo` se distingue surtout par sa fluidité, sa validation de donnée et son CRM post-conversion
+- ces synthèses rendent les docs beaucoup plus utiles pour une lecture de benchmark rapide
+
+## 2026-03-18 — Veille concurrentielle : ouverture de `sirelo.com`
+
+**Contexte** : après la documentation de `movinga.de`, ouverture d'un nouveau support de veille pour `sirelo.com`.
+
+**Modifications** :
+- création de `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- préparation d'une trame identique à `movinga.md` pour documenter le tunnel étape par étape à partir des captures partagées en chat
+
+**Impact produit** :
+- aucun impact runtime
+- travail de benchmark uniquement
+- facilite la comparaison structurée entre concurrents
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 1 documentée
+
+**Contexte** : première capture du tunnel `sirelo.com` analysée pour structurer le benchmark.
+
+**Modifications** :
+- ajout de l'étape 1 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation de l'écran d'origine du déménagement :
+  - question principale `Where exactly are you moving from?`
+  - champs `Country`, `Address`, `Postcode`, `City`
+  - barre de progression `15% progress`
+  - CTA `Continue`
+
+**Lecture UX** :
+- entrée de tunnel très simple, focalisée sur une seule tâche
+- progression visible très tôt
+- interface illustrative mais sobre
+- probable validation progressive avant affichage / activation claire du CTA
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 2 documentée
+
+**Contexte** : deuxième écran du tunnel `sirelo.com` analysé après l'adresse de départ.
+
+**Modifications** :
+- ajout de l'étape 2 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation du bloc de qualification du logement actuel :
+  - choix `House` vs `Apartment / flat`
+  - apparition conditionnelle d'une seconde question
+  - sélection de taille via `1-bedroom` à `4-bedroom`
+  - CTA `Back` / `Continue`
+
+**Lecture UX** :
+- micro-parcours très guidé
+- révélation progressive des champs
+- modèle mental simple basé sur le type de bien puis le nombre de chambres
+- faible charge cognitive
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 3 documentée
+
+**Contexte** : troisième écran du tunnel `sirelo.com`, dédié à l'étage du logement de départ.
+
+**Modifications** :
+- ajout de l'étape 3 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation de l'écran :
+  - question `Which floor do you live on?`
+  - sélecteur `Select your floor`
+  - options visibles `0` à `4`
+  - progression `25% progress`
+  - CTA `Back` / `Continue`
+
+**Lecture UX** :
+- poursuite de la logique un écran = une donnée
+- collecte explicite d'un critère logistique clé
+- composant de réponse très simple, sans surcharge visuelle
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 4 documentée
+
+**Contexte** : quatrième écran du tunnel `sirelo.com`, dédié à la présence d'un ascenseur.
+
+**Modifications** :
+- ajout de l'étape 4 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation de l'écran :
+  - question `Is there a lift available?`
+  - options `Yes` / `No`
+  - sélection par grands boutons
+
+**Lecture UX** :
+- continuité logique après l'étage
+- collecte d'un critère opérationnel très utile au chiffrage
+- interaction instantanée grâce au format binaire
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 5 documentée
+
+**Contexte** : cinquième écran du tunnel `sirelo.com`, dédié à l'adresse d'arrivée.
+
+**Modifications** :
+- ajout de l'étape 5 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation de l'écran :
+  - question `Where are you moving to?`
+  - champs `Country`, `Address`, `Postcode`, `City`
+  - progression `40% progress`
+  - CTA `Back` / `Continue`
+
+**Lecture UX** :
+- réutilisation du pattern de l'étape 1
+- cohérence forte entre départ et arrivée
+- sensation d'avancement accélérée grâce à la progression affichée
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 6 documentée
+
+**Contexte** : sixième écran du tunnel `sirelo.com`, dédié au type de logement d'arrivée.
+
+**Modifications** :
+- ajout de l'étape 6 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation de l'écran :
+  - question `What is your new property type?`
+  - options `House` / `Apartment / flat`
+  - progression `55% progress`
+  - CTA `Back` / `Continue`
+
+**Lecture UX** :
+- symétrie volontaire avec l'étape 2
+- continuité forte entre qualification départ et arrivée
+- écran très léger avec une seule décision binaire
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 7 documentée
+
+**Contexte** : septième écran du tunnel `sirelo.com`, point de bifurcation sur le volume à déménager.
+
+**Modifications** :
+- ajout de l'étape 7 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation de l'écran :
+  - question `What are you moving?`
+  - options `Complete household`, `Part of household`, `Few pieces of furniture`, `Some boxes or luggage`
+  - sélection observée : `Complete household`
+- ajout d'une note de cadrage : la suite de l'analyse suivra la branche `Complete household`, jugée la plus proche de la logique `v3a`
+
+**Lecture UX** :
+- introduction d'une segmentation métier structurante
+- adaptation probable du tunnel selon la complexité du besoin
+- choix pertinent pour benchmarker la branche `Complete household` contre Moverz `v3a`
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 8 documentée
+
+**Contexte** : écran suivant de la branche `Complete household`, avec remarques libres et accès au calculateur de volume.
+
+**Modifications** :
+- ajout de l'étape 8 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation de l'écran :
+  - question `Do you have any additional remarks?`
+  - textarea libre avec exemples de besoins spécifiques
+  - aide contextuelle `For more accurate quotes, calculate the volume here`
+  - CTA secondaire `Volume calculator`
+- documentation du clic `Volume calculator` :
+  - ouverture d'une modale overlay
+  - inventaire structuré par pièces / catégories
+  - quantités par objets
+  - affichage du volume total
+  - CTA `Save calculation`
+
+**Lecture UX** :
+- enrichissement facultatif, non bloquant
+- bon compromis entre tunnel léger et précision métier
+- logique d'inventaire modale intéressante car elle ajoute de la profondeur sans sortir du flux principal
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 9 documentée
+
+**Contexte** : écran de sélection de la date de déménagement dans la branche `Complete household`.
+
+**Modifications** :
+- ajout de l'étape 9 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation de l'écran :
+  - question `When are you moving?`
+  - texte d'aide pour sélectionner la date la plus tôt possible si la date exacte n'est pas connue
+  - calendrier inline avec navigation mensuelle
+  - progression `80% progress`
+  - CTA `Back` / `Continue`
+
+**Lecture UX** :
+- bon wording pour capter aussi les prospects encore incertains
+- composant calendrier plus engageant qu'un champ date classique
+- réduction de friction grâce à l'option implicite de date approximative
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 10 documentée
+
+**Contexte** : écran final de capture contact du tunnel `sirelo.com`, après qualification avancée du besoin.
+
+**Modifications** :
+- ajout de l'étape 10 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation de l'écran :
+  - question `Almost there! Where can we send the quotes?`
+  - champs `Name`, `Email`, `Phone number`
+  - sélecteur pays sur le téléphone
+  - progression `90% progress`
+- documentation des validations observées :
+  - nom complet requis avec message `Please enter your full name.`
+  - exemple `e.g. John Smith`
+  - suggestion de correction email sur `gdetaisne@gmai.com` vers `gdetaisne@gmail.com`
+
+**Lecture UX** :
+- capture lead très tardive, après forte qualification
+- bon équilibre entre friction et qualité de donnée
+- pattern de suggestion email particulièrement pertinent pour réduire les erreurs de contact
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 11 documentée
+
+**Contexte** : post-conversion observée après soumission du formulaire `sirelo.com`.
+
+**Modifications** :
+- ajout de l'étape 11 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation de la séquence :
+  - écran de succès `Success! Redirecting to your Personal Dashboard...`
+  - CTA `Go to Dashboard`
+  - redirection vers un espace personnel
+  - affichage d'une modale de questionnaire complémentaire
+- questions visibles relevées :
+  - motivation de comparaison
+  - budget approximatif
+  - raison du déménagement
+  - prise en charge employeur
+  - canal de contact préféré
+
+**Lecture UX** :
+- stratégie post-conversion orientée CRM / enrichissement de profil
+- séparation nette entre conversion principale et collecte de données additionnelles
+- dashboard propriétaire intéressant pour prolonger la relation et préparer l'activation commerciale
+
+## 2026-03-18 — Veille concurrentielle : `sirelo.com` étape 12 documentée
+
+**Contexte** : analyse complémentaire du `Personal Dashboard` Sirelo via URL directe après redirection post-conversion.
+
+**Modifications** :
+- ajout de l'étape 12 dans `tunnel_v2/.cursor/docs/concurrence/sirelo.md`
+- documentation détaillée du dashboard :
+  - sidebar `Dashboard`, `Moving Details`, `Moving Companies`
+  - message d'erreur `Something went wrong`
+  - modules destination, aide/projet, conversion de devise, profil personnel
+  - survey complémentaire avec `Selected: 0 / 5`
+  - bloc commercial `Another Moving Company Wants to Help You`
+  - formulaire de contact / support
+
+**Lecture UX** :
+- Sirelo pousse une logique CRM / espace personnel beaucoup plus large que le simple lead form
+- enrichissement de profil et relances commerciales intégrés après conversion
+- présence d'une erreur visible à l'écran, signalant une fragilité produit dans la phase dashboard
+
 ## 2026-03-16 — Vidéo Vimeo Step 4 (confirmation)
 
 **Fichier** : `components/tunnel/ConfirmationPage.tsx`
