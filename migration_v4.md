@@ -8805,3 +8805,26 @@ Aucun champ nouveau ni supprimé. `phone` reste dans le payload (optionnel côt�
 ### Pour revenir à 100% V3a
 
 Modifier `redirect.tsx` : `AB_SPLIT_RATIO = 1.0`.
+
+## 2026-03-23 10:36:18 +07 — Hardening SEO tunnel query params
+
+### Objectif
+
+Empêcher l'indexation des URLs tunnel avec query params (`city_slug`, `from`, `src`, etc.) sans casser le tracking, le préremplissage ni le split A/B existant.
+
+### Modifications
+
+- **`app/devis-gratuits/layout.tsx`** : ajout `robots: noindex,follow` + canonical fixe vers `https://devis.moverz.fr/devis-gratuits`
+- **`app/devis-gratuits-v3/layout.tsx`** (nouveau) : wrapper serveur minimal pour exposer les metadata SEO sans modifier la page client existante
+- **`app/devis-gratuits-v3a/layout.tsx`** : ajout `robots: noindex,follow` + canonical consolidée vers `https://devis.moverz.fr/devis-gratuits-v3`
+- **`app/devis-gratuits-v3b/layout.tsx`** : ajout `robots: noindex,follow` + canonical consolidée vers `https://devis.moverz.fr/devis-gratuits-v3`
+
+### Décision canonical
+
+`/devis-gratuits-v3a` et `/devis-gratuits-v3b` sont traitées comme deux variantes A/B d'un même tunnel, donc canonical consolidée vers `/devis-gratuits-v3` pour éviter de laisser fuiter plusieurs URLs indexables pour une même landing.
+
+### Impact
+
+- Aucun changement sur les query params runtime
+- Aucun changement sur la redirection client-side A/B dans `app/devis-gratuits/redirect.tsx`
+- Aucun changement sur le tracking GA4 / BO
