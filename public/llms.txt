@@ -14,10 +14,9 @@ Moverz est une plateforme française de mise en relation avec des déménageurs 
 - Société : GSLV EURL
 - SIREN : 914499876
 - Siège social : 5 Rue Jean Coyttar, 17290 Thairé, France
-- Contact : contact@moverz.fr
-
-- Cofondateur : Guillaume Stehelin de Taisne — guillaume@moverz.fr
-Lucie Stehelin de Taisne - lucie@moverz.fr
+- Contact B2C : contact@moverz.fr
+- Contact B2B : lucie@moverz.fr
+- Cofondateurs : Lucie Stehelin de Taisne — lucie@moverz.fr ; Guillaume Stehelin de Taisne — guillaume@moverz.fr
 
 ## Ce que fait ce sous-domaine
 

@@ -8863,3 +8863,38 @@ Conserver `X-Robots-Tag: all` sur `https://devis.moverz.fr/llms.txt` tout en gar
 
 - `llms.txt` reste public et répond avec ses headers dédiés
 - les autres routes du host `devis.moverz.fr` continuent à recevoir le header global de non-indexation
+
+## 2026-03-24 11:46:53 +07 — Correction des contacts dans `llms.txt`
+
+### Objectif
+
+Corriger les coordonnées affichées dans `llms.txt` pour distinguer clairement le contact B2C, le contact B2B et les deux cofondateurs.
+
+### Modifications
+
+- **`public/llms.txt`** :
+  - `Contact` devient `Contact B2C : contact@moverz.fr`
+  - ajout `Contact B2B : lucie@moverz.fr`
+  - remplacement par `Cofondateurs : Lucie Stehelin de Taisne — lucie@moverz.fr ; Guillaume Stehelin de Taisne — guillaume@moverz.fr`
+
+### Impact
+
+- Correction éditoriale uniquement
+- Aucun changement sur le comportement SEO, les headers ou le runtime du tunnel
+
+## 2026-03-24 11:51:29 +07 — Ajustement cofondateurs dans `llms.txt`
+
+### Objectif
+
+Confirmer que `llms.txt` mentionne bien Lucie et Guillaume comme cofondateurs.
+
+### Modifications
+
+- **`public/llms.txt`** :
+  - `Cofondateur` devient `Cofondateurs`
+  - Lucie Stehelin de Taisne et Guillaume Stehelin de Taisne sont listés ensemble
+
+### Impact
+
+- Correction éditoriale uniquement
+- Aucun changement sur le comportement SEO, les headers ou le runtime du tunnel
