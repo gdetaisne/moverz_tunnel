@@ -47,6 +47,23 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/llms.txt",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "text/plain; charset=utf-8",
+          },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
+          },
+          {
+            key: "X-Robots-Tag",
+            value: "all",
+          },
+        ],
+      },
       // Tunnel pages: no proxy/CDN caching to ensure fresh deploys are visible immediately.
       // CORS pour /api/estimate (appelé depuis moverz.fr)
       {

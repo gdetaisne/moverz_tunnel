@@ -8828,3 +8828,23 @@ Empêcher l'indexation des URLs tunnel avec query params (`city_slug`, `from`, `
 - Aucun changement sur les query params runtime
 - Aucun changement sur la redirection client-side A/B dans `app/devis-gratuits/redirect.tsx`
 - Aucun changement sur le tracking GA4 / BO
+
+## 2026-03-24 11:31:04 +07 — Publication de `llms.txt`
+
+### Objectif
+
+Exposer un fichier public `https://devis.moverz.fr/llms.txt` pour documenter l'entité Moverz, le rôle du sous-domaine `devis.moverz.fr` et les pages de référence, sans modifier la stratégie SEO des pages HTML du tunnel.
+
+### Modifications
+
+- **`public/llms.txt`** (nouveau) : contenu éditorial public destiné aux assistants et moteurs
+- **`next.config.ts`** : headers dédiés sur `/llms.txt`
+  - `Content-Type: text/plain; charset=utf-8`
+  - `Cache-Control: public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400`
+  - `X-Robots-Tag: all`
+
+### Impact
+
+- Aucun changement sur la logique métier du tunnel
+- Aucun changement sur les pages HTML existantes et leurs metadata SEO
+- Pas de nouvelle route App Router nécessaire : le fichier est servi statiquement depuis `public/`

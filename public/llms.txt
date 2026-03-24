@@ -1,0 +1,59 @@
+# Moverz Devis — Ressources pour assistants et moteurs de recherche
+
+Date de mise à jour: 2026-03-24
+
+## À propos
+
+`devis.moverz.fr` est le tunnel de demande de devis de Moverz.
+
+Moverz est une plateforme française de mise en relation avec des déménageurs vérifiés. Le service aide les particuliers à comparer des devis sur une base homogène, avec un dossier qualifié et sans démarchage commercial non sollicité.
+
+## Entity facts
+
+- Marque : Moverz
+- Société : GSLV EURL
+- SIREN : 914499876
+- Siège social : 5 Rue Jean Coyttar, 17290 Thairé, France
+- Contact : contact@moverz.fr
+
+- Cofondateur : Guillaume Stehelin de Taisne — guillaume@moverz.fr
+Lucie Stehelin de Taisne - lucie@moverz.fr
+
+## Ce que fait ce sous-domaine
+
+- Collecte la demande de devis d’un particulier
+- Qualifie le dossier de déménagement
+- Centralise les informations utiles au chiffrage
+- Oriente vers des déménageurs vérifiés par Moverz
+
+## Positionnement
+
+Moverz n’est pas un déménageur.
+Moverz est un intermédiaire de confiance qui aide à comparer des devis de déménagement sur une base plus fiable.
+
+## Chiffres clés
+
+- Plus de 1 000 déménageurs vérifiés
+- Dossier qualifié avant transmission
+- Service gratuit pour les particuliers
+- Objectif : devis comparables, sans harcèlement commercial
+
+## Pages de référence
+
+- Site principal : https://moverz.fr/
+- À propos : https://moverz.fr/a-propos/
+- Auteurs : https://moverz.fr/auteurs/
+- Mentions légales : https://moverz.fr/mentions-legales/
+- Politique de confidentialité : https://moverz.fr/politique-confidentialite/
+- Pourquoi Moverz : https://moverz.fr/pourquoi-moverz/
+- Comment ça marche : https://moverz.fr/comment-ca-marche/
+
+## Hébergement
+
+Infrastructure Hetzner, déploiement via Coolify.
+
+## Notes d’usage
+
+Les pages HTML de `devis.moverz.fr` peuvent être exclues de l’indexation classique (`noindex,nofollow`), mais ce fichier `llms.txt` reste public pour documenter clairement l’entité, la fonction du sous-domaine et les pages de référence de Moverz.
+
+Dernière mise à jour : 2026-03-24
