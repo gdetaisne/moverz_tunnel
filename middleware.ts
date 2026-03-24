@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const url = request.nextUrl;
+  const isLlmsTxt = url.pathname === "/llms.txt";
 
   // Behind proxies/CDNs, x-forwarded-host can be a comma-separated list.
   const hostHeader =
@@ -14,7 +15,7 @@ export function middleware(request: NextRequest) {
   const isTunnelHost = hostname === "devis.moverz.fr";
 
   const withNoIndex = (res: NextResponse) => {
-    if (isTunnelHost) {
+    if (isTunnelHost && !isLlmsTxt) {
       res.headers.set("X-Robots-Tag", "noindex, nofollow");
     }
     return res;

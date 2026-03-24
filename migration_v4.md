@@ -8848,3 +8848,18 @@ Exposer un fichier public `https://devis.moverz.fr/llms.txt` pour documenter l'e
 - Aucun changement sur la logique métier du tunnel
 - Aucun changement sur les pages HTML existantes et leurs metadata SEO
 - Pas de nouvelle route App Router nécessaire : le fichier est servi statiquement depuis `public/`
+
+## 2026-03-24 11:36:04 +07 — Exception middleware pour `llms.txt`
+
+### Objectif
+
+Conserver `X-Robots-Tag: all` sur `https://devis.moverz.fr/llms.txt` tout en gardant le `noindex,nofollow` global sur les pages HTML du tunnel.
+
+### Modifications
+
+- **`middleware.ts`** : exclusion ciblée de `/llms.txt` du header global `X-Robots-Tag: noindex, nofollow`
+
+### Impact
+
+- `llms.txt` reste public et répond avec ses headers dédiés
+- les autres routes du host `devis.moverz.fr` continuent à recevoir le header global de non-indexation
